@@ -1,11 +1,10 @@
 ldi B 0
+ldi A 5
 
-:lus
-    ldi A 5
+:lus   
     addi B 1
-    sub A B
-    tst A 0
-jmpf :lus
+    tstg A B
+jmpt :lus
 
 
 

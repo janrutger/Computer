@@ -115,8 +115,26 @@ def init_rom():
             ("set_status_bit", "FALSE"),
             ("set_cpu_state", "FETCH")
         ],
-
-
+        # INC r mem (opcode 80)
+        # eg: INC R1 100 -> 801100
+        # op1: register, op2: memory address
+        "80": [
+            ("read_mem_adres", "arg2", "Ra"),   # Read value from memory(op2) into internal register Ra
+            ("move_reg", "arg1", "Ra"),         # Move the original value from Ra to the destination register op1
+            ("alu_inc",),                       # Increment the value in Ra
+            ("store_mem_adres", "arg2", "Ra"),  # Store the incremented value back to memory(op2)
+            ("set_cpu_state", "FETCH")
+        ],
+        # DEC r mem (opcode 81)
+        # eg: DEC R1 100 -> 811100
+        # op1: register, op2: memory address
+        "81": [
+            ("read_mem_adres", "arg2", "Ra")    # Read value from memory(op2) into internal register Ra
+            ("alu_dec,"),                       # Decrement the value in Ra
+            ("move_reg", "arg1", "Ra"),         # Move the decremented value from Ra to the destination register op1
+            ("store_mem_adres", "arg2", "Ra"),  # Store the decremented value back to memory(op2)
+            ("set_cpu_state", "FETCH")
+        ],
         # Example: PUSH (Push register to stack) - one operand (register)
         "90": [
             ("move_reg", "Ra", "SP"),        # Move SP content to internal Ra
@@ -130,7 +148,7 @@ def init_rom():
             ("move_reg", "Ra", "SP"),        # Move SP content to internal Ra
             ("alu_inc",),                    # Increment SP (Ra = Ra + 1)
             ("move_reg", "SP", "Ra"),        # Move incremented Ra back to SP
-            ("read_mem_reg", "arg1", "SP"),   # read mem[sp] > R
+            ("read_mem_reg", "arg1", "SP"),  # read mem[sp] > R
             ("set_cpu_state", "FETCH")
         ]
     }

@@ -22,7 +22,7 @@ for line in program:
 # run the CPU ticks
 while cpu.state != "HALT":
     cpu.tick()
-    # sleep(0.01) # You might want to comment this out for faster execution
+    sleep(0.01) # You might want to comment this out for faster execution
 
 
 # after running
