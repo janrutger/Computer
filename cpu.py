@@ -38,14 +38,14 @@ class CPU:
     def tick(self):
         if self.state != "HALT":
             if self.state == "FETCH":
-                print("Fetching instruction")
+                #print("Fetching instruction")
                 self.MIR = self.memory.read(self.registers["PC"])
                 self.registers["PC"] += 1
-
+                print(f"Fetched instruction: {self.MIR}")
                 self.state = "DECODE"
 
             elif self.state == "DECODE":
-                print("Decoding instruction")
+                #print("Decoding instruction")
                 opcode   = (self.MIR[:2])
                 type     = (self.MIR[0])
                 self.operand1 = str(0)
@@ -59,6 +59,8 @@ class CPU:
                 else:                               # else Two operand type  
                     self.operand1 = self.MIR[2]
                     self.operand2 = self.MIR[3:]
+
+                print(f"Decoded instruction: {opcode}, {self.operand1}, {self.operand2}")
                 
                 if opcode in self.microcode_rom:
                     self.current_microcode_sequence = self.microcode_rom[opcode]
@@ -72,11 +74,11 @@ class CPU:
                 
 
             elif self.state == "EXECUTE":
-                print("Executing instruction")
+                #print("Executing instruction")
                 if self.microcode_step_index < len(self.current_microcode_sequence):
                     microcode_step = self.current_microcode_sequence[self.microcode_step_index]
                     self.microcode_step_index += 1
-
+                    print(f"Executing microcode step: {microcode_step} :: {self.operand1}, {self.operand2}")
                     self.execute_microcode_step(microcode_step, self.operand1, self.operand2)
                 else:
                     self.state = "FETCH"
@@ -90,12 +92,46 @@ class CPU:
     def execute_microcode_step(self, microcode_step, operand1, operand2):
         if microcode_step[0] == "set_cpu_state":
             self.state = microcode_step[1]
-            
-        elif microcode_step[0] == "set_cpu_state":
+
+        elif microcode_step[0] == "set_status_bit":
             if microcode_step[1] == "TRUE":
                 self.flags["S"] = True
             else:
                 self.flags["S"] = False
+            
+
+        # bra(n-lines)   branch Always   
+        # (plus or minus lines in the microcode)
+        elif microcode_step[0] == "bra":
+            self.microcode_step_index += int(microcode_step[1])
+
+        # beq(n-lines)   branch Equal    
+        # (plus or minus lines in the microcode)
+        elif microcode_step[0] == "beq":
+            if self.flags["E"]:
+                self.microcode_step_index += int(microcode_step[1])
+
+
+        # brz(n-lines)   branch Zero     
+        # (plus or minus lines in the microcode)
+        elif microcode_step[0] == "brz":
+            if self.flags["Z"]:
+                self.microcode_step_index += int(microcode_step[1])
+
+
+        # brn(n-lines)   branch Negative 
+        # (plus or minus lines in the microcode)
+        elif microcode_step[0] == "brn":
+            if self.flags["N"]:
+                self.microcode_step_index += int(microcode_step[1])
+
+        # brs(n-lines)   branch when statusbit is set
+        # (plus or minus lines in the microcode)
+        elif microcode_step[0] == "brs":
+            if self.flags["S"]:
+                self.microcode_step_index += int(microcode_step[1])
+
+        
 
         # load_immediate(reg, value)       eg load_immediate(9, 42)  loading 42 in register R9
         #                                 eg load_immediate(SP, 1024)
@@ -129,6 +165,17 @@ class CPU:
             self.registers["Ra"] -= self.registers["Rb"]
             self._set_flags()
 
+        # alu_mul                         Ra * Rb -> Ra (set status flags)
+        elif microcode_step[0] == "alu_mul":
+            self.registers["Ra"] *= self.registers["Rb"]
+            self._set_flags()
+
+        # alu_div                         Ra / Rb -> Ra (set status flags)
+        elif microcode_step[0] == "alu_div":
+            self.registers["Ra"] /= self.registers["Rb"]
+            self._set_flags()
+
+
         # alu_dec                  Ra - 1  -> Ra (set status flags)   
         elif microcode_step[0] == "alu_dec":
             self.registers["Ra"] -= 1
@@ -138,6 +185,11 @@ class CPU:
         elif microcode_step[0] == "alu_inc":
             self.registers["Ra"] += 1
             self._set_flags()
+
+        # alu_cmp                  set status flags based on content of Ra Rb
+        elif microcode_step[0] == "alu_cmp":
+            self._set_flags()
+
 
 
         # store_mem_adres(adres, Rx)      Stores the value of Rx at the adres
@@ -170,6 +222,8 @@ class CPU:
 
 
 
+
+
     # end of core logic, microcode steps
 
     # Helpers from here
@@ -196,16 +250,14 @@ class CPU:
             self.flags["E"] = True
         else:
             self.flags["E"] = False
-
-
-
-
     
 
-
-            
-            
-
-            
-        
-    
+    def dump_state(self):
+        print("CPU State:")
+        print(f"  State: {self.state}")
+        print(f"  PC: {self.registers['PC']:<5} SP: {self.registers['SP']:<5} MIR: {self.MIR}")
+        print(f"  Flags: Z:{int(self.flags['Z'])} N:{int(self.flags['N'])} E:{int(self.flags['E'])} S:{int(self.flags['S'])}")
+        print("  General Purpose Registers:")
+        for i in range(5):
+            print(f"    R{i}: {self.registers[str(i)]:<5} R{i+5}: {self.registers[str(i+5)]}")
+        print(f"  Internal Registers: Ra={self.registers['Ra']} Rb={self.registers['Rb']}")

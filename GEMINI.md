@@ -32,7 +32,7 @@ this is an example of the ISA
 
 The memory stores the data as variable lenght numeric strings, "15879" is valid, and "dg4895" is not
 
-the insctruction decoding 
+the instruction decoding 
 
 Zero Operand
     opcode                      eg nop = "10", halt = "11"
@@ -50,7 +50,7 @@ two operand
 The ISA is taking care of the different adressing methods by having an instruction per method.
 like LD LDI LDM LDX
 
-the microcode is executed by the executer, for each CPU instrcuction, ISA + fetching, an sequence of
+the microcode is executed by an executer in the CPU, for each CPU instrcuction of the ISA, an sequence of
 microcode instructions is stored in an python dictonary, acting as an rom-file
 the executer is called with the code to execute and the (max 2) arguments
 
@@ -58,28 +58,6 @@ eg nop = "10"           -> executer(10)
 eg push R2 = "902"      -> executer(9, 2)
 eg add  R2 R1  = "5021" -> executer(50, 2, 1)
 
-
-
-An Overview proces cycle
-
-Initial state of the CPU is FETCH
-    While fetching
-        mem_read_reg(PC, MIR)
-        move_reg(Ra, PC)
-        alu_inc
-        move_reg(PC, Ra)
-
-    The new state of the CPU is DECODE
-
-While decoding 
-    in Python: split the value in the IR register to opcode, arg1, arg2
-    and start the executer with the given arguments
-
-    The next state of the CPU is EXECUTE
-
-While executing
-    the executer runs one microcode instruction per cycle and keeps the status of the CPU on EXECUTE
-    after finish the microcode the CPU state is set to FETCH
 
 
 Supported microcode instructions
@@ -94,26 +72,29 @@ Supported microcode instructions
                                  eg move_reg(Rb, R7) moves facing R7 into internal register Rb
 *alu_add                         Ra + Rb -> Ra (set status flags)
 *alu_sub                         Ra - Rb -> Ra (set status flags)
-alu_mul                         Ra * Rb -> Ra (set status flags)
-alu_div                         Ra / Rb -> Ra (set status flags)
+*alu_mul                         Ra * Rb -> Ra (set status flags)
+*alu_div                         Ra / Rb -> Ra (set status flags)
 *alu_inc                         Ra + 1  -> Ra (set status flags)
 *alu_dec                         Ra - 1  -> Ra (set status flags)
-alu_cmp                         set status flags
+*alu_cmp                         set status flags
 
 
 *store_mem_reg(Rx, Ry)           Stores the value of Ry at the adres in Rx
 *store_mem_adres(adres, Rx)      Stores the value of Rx at the adres
 
-bra(n-lines)                    branch Always   (plus or minus lines in the microcode)
-brz(n-lines)                    branch Zero     (plus or minus lines in the microcode)
-brn(n-lines)                    branch Negative (plus or minus lines in the microcode)
-beq(n-lines)                    branch Equal    (plus or minus lines in the microcode)
+*bra(n-lines)                    branch Always   (plus or minus lines in the microcode)
+*brz(n-lines)                    branch Zero     (plus or minus lines in the microcode)
+*brn(n-lines)                    branch Negative (plus or minus lines in the microcode)
+*beq(n-lines)                    branch Equal    (plus or minus lines in the microcode)
 
-set_cpu_state(FETCH | DECODE | EXECUTE | HALT)  eg set_cpu_state(FETCH)
-set_status_bit(TRUE | FALSE)                    eg set_status_bit(TRUE)
+*set_cpu_state(FETCH | DECODE | EXECUTE | HALT)  eg set_cpu_state(FETCH)
+*set_status_bit(TRUE | FALSE)                    eg set_status_bit(TRUE)
+
+
+
 
  computer
-    memory
+    memory << program.bin << Assembler << test.asm
     cpu(memory)
         general purpose registers (GPR)
         Special Registers         (SR)
@@ -125,7 +106,11 @@ set_status_bit(TRUE | FALSE)                    eg set_status_bit(TRUE)
     SIO(memory)
 
 
-    Overview of all ISA instructions
+
+I reused the assembler from an older project, and so the complete ISA
+the assembly language. the assembler creates an program.bin file with i can read
+in memory (like an Z80 in the early days of computers, this is the design, not all instructions are implemented)
+    Overview of all ISA instructions supported by the assembler
     self.instructions = {
             "nop": '10', "halt": '11', "ret": '12', "ei": '13', "di": '14', "rti": '15',
             "jmpf": '20', "jmpt": '21', "jmp": '22', "jmpx": '23', "call": '24', "callx": '25', "int": '26', "ctxsw": '27',

@@ -15,8 +15,21 @@ def init_rom():
         "11": [
             ("set_cpu_state", "HALT")
         ],
+        # jmpf Instruction: jmpf adres eg jmpf 10 jumps to adres 10 when statusbit is false 
+        "20": [
+            ("brs", "1"),
+            ("load_immediate", "PC", "arg1"),
+            ("set_cpu_state", "FETCH")
+        ],
+        # jmpt Instruction: jmpf adres eg jmpf 10 jumps to adres 10 when statusbit is true
+        "21": [
+            ("brs", "1"),
+            ("bra", "1"),
+            ("load_immediate", "PC", "arg1"),
+            ("set_cpu_state", "FETCH")
+        ],
+
         # Example: JMP (Jump to address) - one operand (address)
-        # This is a placeholder. Actual JMP would involve setting PC.
         "22": [
             ("load_immediate", "PC", "arg1"), # Assuming arg1 is the target address
             ("set_cpu_state", "FETCH")
@@ -49,6 +62,14 @@ def init_rom():
             ("move_reg", "arg1", "Ra"),
             ("set_cpu_state", "FETCH")
         ],
+        # ADDI Instruction: addi Rx value
+        "51": [
+            ("move_reg", "Ra", "arg1"),
+            ("load_immediate", "Rb", "arg2"),
+            ("alu_add",),
+            ("move_reg", "arg1", "Ra"),
+            ("set_cpu_state", "FETCH")
+        ],
         # SUB instruction: sub Rx Ry
         "52": [
             ("move_reg", "Ra", "arg1"),
@@ -57,6 +78,45 @@ def init_rom():
             ("move_reg", "arg1", "Ra"),
             ("set_cpu_state", "FETCH")
         ],
+        # TST instruction: tst Rx value (tst A 10) 
+        # true when Rx == value
+        "70": [
+            ("move_reg", "Ra", "arg1"),
+            ("load_immediate", "Rb", "arg2"),
+            ("alu_cmp",),
+            ("beq", "+2"),
+            ("set_status_bit", "FALSE"),
+            ("bra", "+1"),
+            ("set_status_bit", "TRUE"),
+            ("set_cpu_state", "FETCH")
+        ],
+        # TSTE instruction: tst Rx Ry (tste A B)
+        # true when Rx == Ry
+        "71": [
+            ("move_reg", "Ra", "arg1"),
+            ("move_reg", "Rb", "arg2"),
+            ("alu_cmp",),
+            ("beq", "+2"),
+            ("set_status_bit", "FALSE"),
+            ("bra", "+1"),
+            ("set_status_bit", "TRUE"),
+            ("set_cpu_state", "FETCH")
+        ],
+        # TSTG instruction: tstg Rx Ry (tste A B)
+        # true when Rx > Ry
+        "72": [
+            ("move_reg", "Ra", "arg1"),
+            ("move_reg", "Rb", "arg2"),
+            ("alu_sub",),
+            ("brz", "+3"),          # If Rx == Ry (Z flag is true), branch to set S to FALSE
+            ("brn", "+2"),          # If Rx  < Ry (N flag is true), branch to set S to FALSE
+            ("set_status_bit", "TRUE"),
+            ("bra", "+1"),          # Executed if Rx <= Ry (either Z or N was true)
+            ("set_status_bit", "FALSE"),
+            ("set_cpu_state", "FETCH")
+        ],
+
+
         # Example: PUSH (Push register to stack) - one operand (register)
         "90": [
             ("move_reg", "Ra", "SP"),        # Move SP content to internal Ra

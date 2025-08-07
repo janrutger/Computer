@@ -1,16 +1,13 @@
-. $test 1
+ldi B 0
 
-nop 
-ldi A 12
-ldi B 30
-add A B 
-sto A $test
-push A
+:lus
+    ldi A 5
+    addi B 1
+    sub A B
+    tst A 0
+jmpf :lus
 
-ldm K $test
 
-ld A L
 
-pop M
 
 INCLUDE include
