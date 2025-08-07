@@ -6,7 +6,7 @@ The CPU is following the ´standard' fetch-decode-execute cycle
 
 The CPU has 10 general purpose register R0 - R9 where R0 is also the desinated Index register
 The CPU has an Zero-flag, a negative-flag, and an equal_flag (since the similation works with variable lenght values, carry-flag and overflow-flag are not needed)
-special registers PC=Programcounter, SP=Stackpointer, IR=Instructionregister
+special registers PC=Programcounter, SP=Stackpointer, MIR=MemoryInstructionRegister
 
 
 The CPU has 3 type of instructions, the opcode followed by:
@@ -64,7 +64,7 @@ An Overview proces cycle
 
 Initial state of the CPU is FETCH
     While fetching
-        mem_read_reg(PC, IR)
+        mem_read_reg(PC, MIR)
         move_reg(Ra, PC)
         alu_inc
         move_reg(PC, Ra)
@@ -85,8 +85,8 @@ While executing
 Supported microcode instructions
 
 
-read_mem_reg(Rx, Ry)            eg mem_read_reg(PC, IR) Reads the memory adres in PC and place the value in IR
-read_mem_adres(adres, Rx)       eg mem_read_adres(42, R3) Reads the memory adres 42 and place the value in R3
+read_mem_reg(Rx, Ry)            eg mem_read_reg(PC, MIR) Reads the memory adres in PC and place the value in IR
+*read_mem_adres(adres, Rx)       eg mem_read_adres(42, R3) Reads the memory adres 42 and place the value in R3
 
 *load_immediate(Rx, value)       eg load_immediate(R9, 42)  loading 42 in register R9
 *move_reg(Rx, Ry)                moves Ry into Rx 
@@ -96,12 +96,12 @@ read_mem_adres(adres, Rx)       eg mem_read_adres(42, R3) Reads the memory adres
 *alu_sub                         Ra - Rb -> Ra (set status flags)
 alu_mul                         Ra * Rb -> Ra (set status flags)
 alu_div                         Ra / Rb -> Ra (set status flags)
-alu_inc                         Ra + 1  -> Ra (set status flags)
-alu_dec                         Ra - 1  -> Ra (set status flags)
+*alu_inc                         Ra + 1  -> Ra (set status flags)
+*alu_dec                         Ra - 1  -> Ra (set status flags)
 alu_cmp                         set status flags
 
 
-store_mem_reg(Rx, Ry)           Stores the value of Ry at the adres in Rx
+*store_mem_reg(Rx, Ry)           Stores the value of Ry at the adres in Rx
 *store_mem_adres(adres, Rx)      Stores the value of Rx at the adres
 
 bra(n-lines)                    branch Always   (plus or minus lines in the microcode)
@@ -116,7 +116,7 @@ beq(n-lines)                    branch Equal    (plus or minus lines in the micr
         general purpose registers (GPR)
         Special Registers         (SR)
         Flags                     (FLAGS)
-        core(microcode, memory, GPR, SR, FLAGS)
+        microcode executer
 (future)
     keyboard(memory)
     display(memory)

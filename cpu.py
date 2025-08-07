@@ -12,11 +12,10 @@ class CPU:
         self.registers = {str(i): 0 for i in range(10)}
 
         # Special Registers
-        self.registers["PC"] = 0  # Program Counter
-        self.registers["SP"] = 0  # Stack Pointer
+        self.registers["PC"] = 0                       # Program Counter
+        self.registers["SP"] = self.memory.size - 1    # Stack Pointer, starts at the top of memory
 
-        #SP = self.memory.size - 1  # Stack Pointer, starts at the top of memory
-        self.MIR = 0  # Memory Instruction Register
+        self.MIR = "0"  # Memory Instruction Register
 
         # Flags
         self.flags = {"Z": False, "N": False, "E": False}
@@ -118,11 +117,37 @@ class CPU:
             self.registers["Ra"] -= self.registers["Rb"]
             self._set_flags()
 
+        # alu_dec                  Ra - 1  -> Ra (set status flags)   
+        elif microcode_step[0] == "alu_dec":
+            self.registers["Ra"] -= 1
+            self._set_flags()
+
+        # alu_inc                  Ra + 1  -> Ra (set status flags)
+        elif microcode_step[0] == "alu_inc":
+            self.registers["Ra"] += 1
+            self._set_flags()
+
+
         # store_mem_adres(adres, Rx)      Stores the value of Rx at the adres
         elif microcode_step[0] == "store_mem_adres":
             adres = self._resolve_arg(microcode_step[1], operand1, operand2)
             Rx = self._resolve_arg(microcode_step[2], operand1, operand2)
             self.memory.write(int(adres), self.registers[Rx])
+
+        # store_mem_reg(Rx, Ry)           Stores the value of Ry at the adres in Rx
+        elif microcode_step[0] == "store_mem_reg":
+            Rx = self._resolve_arg(microcode_step[1], operand1, operand2)
+            Ry = self._resolve_arg(microcode_step[2], operand1, operand2)
+            self.memory.write(int(self.registers[Rx]), self.registers[Ry])
+
+        # read_mem_adres(adres, Rx)     eg mem_read_adres(42, 3)  
+        #  Reads the memory adres 42 and place the value in R3
+        elif microcode_step[0] == "read_mem_adres":
+            adres = self._resolve_arg(microcode_step[1], operand1, operand2)
+            Rx = self._resolve_arg(microcode_step[2], operand1, operand2)
+            self.registers[Rx] = int(self.memory.read(int(adres)))
+
+
 
 
 
