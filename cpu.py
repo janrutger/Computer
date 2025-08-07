@@ -18,7 +18,7 @@ class CPU:
         self.MIR = "0"  # Memory Instruction Register
 
         # Flags
-        self.flags = {"Z": False, "N": False, "E": False}
+        self.flags = {"Z": False, "N": False, "E": False, "S": False}
 
         # Internal CPU registers for ALU operations
         self.registers["Ra"] = 0
@@ -60,10 +60,16 @@ class CPU:
                     self.operand1 = self.MIR[2]
                     self.operand2 = self.MIR[3:]
                 
-                self.current_microcode_sequence = self.microcode_rom[opcode]
-                self.microcode_step_index = 0
+                if opcode in self.microcode_rom:
+                    self.current_microcode_sequence = self.microcode_rom[opcode]
+                    self.microcode_step_index = 0
+
+                    self.state = "EXECUTE"
+                else:
+                    print(f"Invalid opcode for this ROM: {opcode}")
+                    self.state = "HALT"
         
-                self.state = "EXECUTE"
+                
 
             elif self.state == "EXECUTE":
                 print("Executing instruction")
@@ -84,6 +90,12 @@ class CPU:
     def execute_microcode_step(self, microcode_step, operand1, operand2):
         if microcode_step[0] == "set_cpu_state":
             self.state = microcode_step[1]
+            
+        elif microcode_step[0] == "set_cpu_state":
+            if microcode_step[1] == "TRUE":
+                self.flags["S"] = True
+            else:
+                self.flags["S"] = False
 
         # load_immediate(reg, value)       eg load_immediate(9, 42)  loading 42 in register R9
         #                                 eg load_immediate(SP, 1024)
@@ -146,6 +158,13 @@ class CPU:
             adres = self._resolve_arg(microcode_step[1], operand1, operand2)
             Rx = self._resolve_arg(microcode_step[2], operand1, operand2)
             self.registers[Rx] = int(self.memory.read(int(adres)))
+            
+        # read_mem_reg(Rx, Ry)           eg mem_read_reg(SP, 7 ) 
+        # Reads the memory adres in SP and place the value in R7    
+        elif microcode_step[0] == "read_mem_reg":
+            Rx = self._resolve_arg(microcode_step[1], operand1, operand2)
+            Ry = self._resolve_arg(microcode_step[2], operand1, operand2)
+            self.registers[Rx] = int(self.memory.read(self.registers[Ry]))
 
 
 

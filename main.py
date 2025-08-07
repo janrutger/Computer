@@ -25,3 +25,4 @@ while cpu.state != "HALT":
     sleep(0.01)
 
 print("Computer stopped.")
+

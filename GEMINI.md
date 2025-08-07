@@ -5,7 +5,7 @@ the computer has 4K of RAM memory and an CPU where the CPU executes on every tic
 The CPU is following the ´standard' fetch-decode-execute cycle
 
 The CPU has 10 general purpose register R0 - R9 where R0 is also the desinated Index register
-The CPU has an Zero-flag, a negative-flag, and an equal_flag (since the similation works with variable lenght values, carry-flag and overflow-flag are not needed)
+The CPU has an Zero-flag, a negative-flag, and an equal_flag (since the similation works with variable lenght values, carry-flag and overflow-flag are not needed) for inernal use, the status flag ("S") is used as facing flag to the CPU, (to be compatible with the ISA tst, tste, tstg instructions)
 special registers PC=Programcounter, SP=Stackpointer, MIR=MemoryInstructionRegister
 
 
@@ -85,13 +85,13 @@ While executing
 Supported microcode instructions
 
 
-read_mem_reg(Rx, Ry)            eg mem_read_reg(PC, MIR) Reads the memory adres in PC and place the value in IR
+*read_mem_reg(Rx, Ry)            eg mem_read_reg(Rx, Ry ) Reads the memory adres in Rx and place the value in Ry
 *read_mem_adres(adres, Rx)       eg mem_read_adres(42, R3) Reads the memory adres 42 and place the value in R3
 
 *load_immediate(Rx, value)       eg load_immediate(R9, 42)  loading 42 in register R9
 *move_reg(Rx, Ry)                moves Ry into Rx 
-                                eg move_reg(Ra, R6) moves facing R6 into internal register Ra
-                                eg move_reg(Rb, R7) moves facing R7 into internal register Rb
+                                 eg move_reg(Ra, R6) moves facing R6 into internal register Ra
+                                 eg move_reg(Rb, R7) moves facing R7 into internal register Rb
 *alu_add                         Ra + Rb -> Ra (set status flags)
 *alu_sub                         Ra - Rb -> Ra (set status flags)
 alu_mul                         Ra * Rb -> Ra (set status flags)
@@ -109,6 +109,8 @@ brz(n-lines)                    branch Zero     (plus or minus lines in the micr
 brn(n-lines)                    branch Negative (plus or minus lines in the microcode)
 beq(n-lines)                    branch Equal    (plus or minus lines in the microcode)
 
+set_cpu_state(FETCH | DECODE | EXECUTE | HALT)  eg set_cpu_state(FETCH)
+set_status_bit(TRUE | FALSE)                    eg set_status_bit(TRUE)
 
  computer
     memory
@@ -121,3 +123,17 @@ beq(n-lines)                    branch Equal    (plus or minus lines in the micr
     keyboard(memory)
     display(memory)
     SIO(memory)
+
+
+    Overview of all ISA instructions
+    self.instructions = {
+            "nop": '10', "halt": '11', "ret": '12', "ei": '13', "di": '14', "rti": '15',
+            "jmpf": '20', "jmpt": '21', "jmp": '22', "jmpx": '23', "call": '24', "callx": '25', "int": '26', "ctxsw": '27',
+            "ld": '30', "ldi": '31', "ldm": '32', "ldx": '33',
+            "sto": '40', "stx": '41',
+            "add": '50', "addi": '51', "sub": '52', "subi": '53', "subr": '54',
+            "mul": '60', "muli": '61', "div": '62', "divi": '63', "divr": '64', "dmod": '65',
+            "tst": '70', "tste": '71', "tstg": '72',
+            "inc": '80', "dec": '81', "andi": '82', "xorx": '83',
+            "push": '90', "pop": '91'
+        }

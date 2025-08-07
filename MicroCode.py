@@ -21,6 +21,11 @@ def init_rom():
             ("load_immediate", "PC", "arg1"), # Assuming arg1 is the target address
             ("set_cpu_state", "FETCH")
         ],
+        # LD Instruction ld Rx Ry  (GPR)
+        "30": [
+            ("move_reg", "arg1", "arg2"),
+            ("set_cpu_state", "FETCH")
+        ],
         # LDI Instruction: ldi Rx value (general purpose registers)
         "31": [
             ("load_immediate", "arg1", "arg2"),
@@ -53,12 +58,19 @@ def init_rom():
             ("set_cpu_state", "FETCH")
         ],
         # Example: PUSH (Push register to stack) - one operand (register)
-        # This is a placeholder. Actual PUSH would involve SP and memory write.
         "90": [
             ("move_reg", "Ra", "SP"),        # Move SP content to internal Ra
             ("store_mem_reg", "SP", "arg1"), # Store register content at new SP
             ("alu_dec",),                    # Decrement SP (Ra = Ra - 1)
             ("move_reg", "SP", "Ra"),        # Move decremented Ra back to SP
+            ("set_cpu_state", "FETCH")
+        ],
+        # Example: POP (Pop stack to register) - one operand (register)
+        "91": [
+            ("move_reg", "Ra", "SP"),        # Move SP content to internal Ra
+            ("alu_inc",),                    # Increment SP (Ra = Ra + 1)
+            ("move_reg", "SP", "Ra"),        # Move incremented Ra back to SP
+            ("read_mem_reg", "arg1", "SP"),   # read mem[sp] > R
             ("set_cpu_state", "FETCH")
         ]
     }

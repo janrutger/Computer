@@ -13,14 +13,14 @@ class Assembler:
         self.NextVarPointer = var_pointer
         self.instructions = {
             "nop": '10', "halt": '11', "ret": '12', "ei": '13', "di": '14', "rti": '15',
-            "jmpf": '20', "jmpt": '21', "jmp": '22', "jmpx": '23', "call": '24', "callx": '25', "int": '26', "ctxsw": '27',
+            "jmpf": '20', "jmpt": '21', "jmp": '22', "jmpx": '23', "call": '24', "callx": '25', "int": '26',
             "ld": '30', "ldi": '31', "ldm": '32', "ldx": '33',
             "sto": '40', "stx": '41',
             "add": '50', "addi": '51', "sub": '52', "subi": '53', "subr": '54',
             "mul": '60', "muli": '61', "div": '62', "divi": '63', "divr": '64', "dmod": '65',
             "tst": '70', "tste": '71', "tstg": '72',
-            "inc": '80', "dec": '81', "andi": '82', "xorx": '83',
-            "push": '90', "pop": '91'
+            "inc": '80', "dec": '81',
+            "andi": '90', "xorx": '91', "read": '98', "write": '99'
         }
         self.registers = {
             "I": '0', "A": '1', "B": '2', "C": '3', "K": '4', "L": '5', "M": '6', "X": '7', "Y": '8', "Z": '9'
@@ -368,7 +368,7 @@ class Assembler:
                     value = self.get_value(val_str, current_line_num_for_error, current_line_content_for_error)
                     newLine = (current_pc, self.instructions[op] + self.registers[reg_str] + value)
 
-                elif op in ['ldm', 'sto', 'inc', 'dec', 'stx', 'ldx', 'xorx']:
+                elif op in ['ldm', 'sto', 'inc', 'dec', 'read', 'write', 'stx', 'ldx', 'xorx']:
                     expected_args = 3
                     if num_args != expected_args: raise IndexError(f"needs register and address/symbol arguments")
                     reg_str, addr_str = instruction[1], instruction[2]
@@ -384,20 +384,13 @@ class Assembler:
                     address = self.get_adres(addr_str, current_line_num_for_error, current_line_content_for_error)
                     newLine = (current_pc, self.instructions[op] + address)
 
-                elif op in ['int', 'ctxsw']:
+                elif op in ['int']:
                     expected_args = 2
                     if num_args != expected_args: raise IndexError(f"needs one integer value argument")
                     val_str = instruction[1]
                     # get_value handles constants here too
                     value = self.get_value(val_str, current_line_num_for_error, current_line_content_for_error)
                     newLine = (current_pc, self.instructions[op] + value)
-
-                elif op in ['push', 'pop']:
-                    expected_args = 2
-                    if num_args != expected_args: raise IndexError(f"needs one register argument")
-                    reg_str = instruction[1]
-                    if reg_str not in self.registers: raise ValueError(f"Invalid register '{reg_str}'")
-                    newLine = (current_pc, self.instructions[op] + self.registers[reg_str])
 
                 else:
                     raise ValueError(f"Unknown instruction '{op}'")
