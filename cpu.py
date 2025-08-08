@@ -60,7 +60,7 @@ class CPU:
                     self.operand1 = self.MIR[2]
                     self.operand2 = self.MIR[3:]
 
-                print(f"Decoded instruction: {opcode}, {self.operand1}, {self.operand2}")
+                print(f"Decoded instruction: {opcode}, arg1: {self.operand1}, arg2: {self.operand2}")
                 
                 if opcode in self.microcode_rom:
                     self.current_microcode_sequence = self.microcode_rom[opcode]
@@ -78,7 +78,7 @@ class CPU:
                 if self.microcode_step_index < len(self.current_microcode_sequence):
                     microcode_step = self.current_microcode_sequence[self.microcode_step_index]
                     self.microcode_step_index += 1
-                    print(f"Executing microcode step: {microcode_step} :: {self.operand1}, {self.operand2}")
+                    print(f"    Executing cycle: {microcode_step[0]} {microcode_step[1:]}")
                     self.execute_microcode_step(microcode_step, self.operand1, self.operand2)
                 else:
                     self.state = "FETCH"
@@ -216,7 +216,7 @@ class CPU:
         elif microcode_step[0] == "read_mem_reg":
             Rx = self._resolve_arg(microcode_step[1], operand1, operand2)
             Ry = self._resolve_arg(microcode_step[2], operand1, operand2)
-            self.registers[Rx] = int(self.memory.read(self.registers[Ry]))
+            self.registers[Ry] = int(self.memory.read(self.registers[Rx]))
 
 
 

@@ -129,7 +129,7 @@ def init_rom():
         # eg: DEC R1 100 -> 811100
         # op1: register, op2: memory address
         "81": [
-            ("read_mem_adres", "arg2", "Ra")    # Read value from memory(op2) into internal register Ra
+            ("read_mem_adres", "arg2", "Ra"),   # Read value from memory(op2) into internal register Ra
             ("alu_dec,"),                       # Decrement the value in Ra
             ("move_reg", "arg1", "Ra"),         # Move the decremented value from Ra to the destination register op1
             ("store_mem_adres", "arg2", "Ra"),  # Store the decremented value back to memory(op2)
@@ -148,7 +148,7 @@ def init_rom():
             ("move_reg", "Ra", "SP"),        # Move SP content to internal Ra
             ("alu_inc",),                    # Increment SP (Ra = Ra + 1)
             ("move_reg", "SP", "Ra"),        # Move incremented Ra back to SP
-            ("read_mem_reg", "arg1", "SP"),  # read mem[sp] > R
+            ("read_mem_reg", "SP", "arg1"),  # read mem[sp] > R
             ("set_cpu_state", "FETCH")
         ]
     }
