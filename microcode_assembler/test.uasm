@@ -1,0 +1,18 @@
+.name "test_rom"
+
+# This is a comment line, it should be ignored.
+
+def 10=NOP {
+    set_cpu_state(FETCH) ; Set state to FETCH
+}
+
+def 11=HALT {
+    set_cpu_state(HALT)
+}
+
+# An example of a multi-line routine with a label
+def 22=JMP {
+    :loop
+    load_immediate(PC, 1) ; Assuming arg1 is the target address
+    bra(loop) ; An endless loop for testing
+}

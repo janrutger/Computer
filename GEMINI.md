@@ -86,6 +86,7 @@ Supported microcode instructions
 *brz(n-lines)                    branch Zero     (plus or minus lines in the microcode)
 *brn(n-lines)                    branch Negative (plus or minus lines in the microcode)
 *beq(n-lines)                    branch Equal    (plus or minus lines in the microcode)
+*brs(n-lines)                    branch statusbit    (plus or minus lines in the microcode)
 
 *set_cpu_state(FETCH | DECODE | EXECUTE | HALT)  eg set_cpu_state(FETCH)
 *set_status_bit(TRUE | FALSE)                    eg set_status_bit(TRUE)
@@ -122,3 +123,94 @@ in memory (like an Z80 in the early days of computers, this is the design, not a
             "inc": '80', "dec": '81', "andi": '82', "xorx": '83',
             "push": '90', "pop": '91'
         }
+
+
+-- 8aug --
+
+an new assembler to compile microcode asssembly needs to have an assembly language
+lets try some thing
+
+the output must be like this, in json format
+rom = {
+        # NOP: No operation
+        "10": [
+            ("set_cpu_state", "FETCH")
+        ],
+        # HALT: Stop the CPU
+        "11": [
+            ("set_cpu_state", "HALT")
+        ],
+        # jmpf Instruction: jmpf adres eg jmpf 10 jumps to adres 10 when statusbit is false 
+        "20": [
+            ("brs", "1"),
+            ("load_immediate", "PC", "arg1"),
+            ("set_cpu_state", "FETCH")
+        ],
+        # jmpt Instruction: jmpf adres eg jmpf 10 jumps to adres 10 when statusbit is true
+        "21": [
+            ("brs", "1"),
+            ("bra", "1"),
+            ("load_immediate", "PC", "arg1"),
+            ("set_cpu_state", "FETCH")
+        ],
+
+so the rom contains sections, who are uniqely numberd (as an rom adres) and has an readible name
+each section containts one or more microcode instruction
+list of microcode instructions, see MicroCode.py and this document all implemented instrcutions are *
+
+
+it must be posible to merge the outputifan new assembly file to an existing json
+inline comments show op in the json in a way the can be used as log/debug information, see examples below
+
+"72": [
+            ("move_reg", "Ra", "arg1"),
+            ("move_reg", "Rb", "arg2"),
+            ("alu_sub",),
+            ("brz", "+3"),          # If Rx == Ry (Z flag is true), branch to set S to FALSE
+            ("brn", "+2"),          # If Rx  < Ry (N flag is true), branch to set S to FALSE
+            ("set_status_bit", "TRUE"),
+            ("bra", "+1"),          # Executed if Rx <= Ry (either Z or N was true)
+            ("set_status_bit", "FALSE"),
+            ("set_cpu_state", "FETCH")
+        ],
+
+
+syntax
+
+.name   name_of_rom             Define the output name
+.append name_of_file            Append to an existing file, if exist, but save it as .name 
+
+def id=name { instructions }    define an routine with unique ID and name, must be unique when inserting
+                                a routine contains ine or more instructions
+def id=name {..} /replace       If the definition is followed by /replace, it will replace the current routine, when exist
+                                i added /replace to the def component, so i can replace routines in a current json file, without to change the original source
+
+all instructions have (for now) the current name of the instruction(arg1, arg2), where the arguments can be optinal
+
+alu_sub()               ; no arguments
+set_status_bit(False)   ; one argument
+load_immediate(PC, 10)  ; two arguments
+
+when an argument is expected during runtime in assembly we use $1 $2, reflex to arg1 and arg2 in microcode instructions
+Special register are named as SP, PC, Ra Rb 
+the GPR are named as R0 - R9, reflex to an single number 0-9 in the microcode instruction
+
+for the branching instructions i use labels, like most assemblers, and will be calculated off-set
+the labelnames aren local, only valid in this routine
+this example will create and endless loop
+eg:
+:start
+bra(end)
+
+:end
+bra(start)
+
+about comments, line comments starting with "#" are ignored
+inline 'comment' after an instruction using ";" are handle as part of the instruction and added to a field in the json outputfile, so it can be used for logging/debugging
+
+the MicroCode.py file can be used as een valis example of the output format (as in an python dictonary)
+
+
+error handeling
+    Stop compiling at an invalid instruction, directive
+    stop compiling at duplicate ID, in the current and appended file,

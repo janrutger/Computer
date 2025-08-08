@@ -1,0 +1,16 @@
+.name "final_rom"
+
+# Base ROM definitions
+
+def 10=NOP {
+    set_cpu_state(FETCH)
+}
+
+def 11=HALT {
+    set_cpu_state(HALT)
+}
+
+# A routine that will be replaced
+def 99=PLACEHOLDER {
+    nop()
+}

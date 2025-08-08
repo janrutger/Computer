@@ -1,0 +1,12 @@
+{
+    "10": [
+        "('set_cpu_state', 'FETCH') # Set state to FETCH"
+    ],
+    "11": [
+        "('set_cpu_state', 'HALT')"
+    ],
+    "22": [
+        "('load_immediate', 'PC', '$1')",
+        "('bra', 'loop') # An endless loop for testing"
+    ]
+}

@@ -1,0 +1,12 @@
+.name "final_rom"
+.append "final_rom.json"
+
+# Add a new routine
+def 22=JMP {
+    load_immediate(PC, $1)
+}
+
+# Replace an existing routine
+def 99=CUSTOM /replace {
+    set_status_bit(TRUE) ; This is the updated routine
+}

@@ -1,0 +1,46 @@
+{
+    "10": {
+        "name": "NOP",
+        "code": [
+            {
+                "instruction": [
+                    "set_cpu_state",
+                    "FETCH"
+                ],
+                "comment": "Set state to FETCH"
+            }
+        ]
+    },
+    "11": {
+        "name": "HALT",
+        "code": [
+            {
+                "instruction": [
+                    "set_cpu_state",
+                    "HALT"
+                ],
+                "comment": null
+            }
+        ]
+    },
+    "22": {
+        "name": "JMP",
+        "code": [
+            {
+                "instruction": [
+                    "load_immediate",
+                    "PC",
+                    "1"
+                ],
+                "comment": "Assuming arg1 is the target address"
+            },
+            {
+                "instruction": [
+                    "bra",
+                    "-2"
+                ],
+                "comment": "An endless loop for testing"
+            }
+        ]
+    }
+}
