@@ -41,6 +41,7 @@ VALID_INSTRUCTIONS.update({
     "alu_inc": 0, "alu_dec": 0, "alu_cmp": 0, "nop": 0,
 })
 
+
 class Parser:
     """
     Parses a .uasm microcode assembly file.
@@ -129,12 +130,15 @@ class Parser:
                             cleaned_body.append(last_body_line)
                     elif not first_body_line: # Case for def {} on a single line with no content
                         pass # Already handled by first_body_line
+                
+                parsed_code, routine_format = self._parse_routine_code(cleaned_body)
 
                 self.routines[routine_id] = {
                     'id': routine_id,
                     'name': routine_name,
                     'replace': replace_flag,
-                    'code': self._parse_routine_code(cleaned_body)
+                    'format': routine_format,
+                    'code': parsed_code
                 }
                 i = j # Move index past the processed routine
             else:
@@ -142,9 +146,19 @@ class Parser:
 
     def _parse_routine_code(self, code_lines):
         parsed_code = []
+        routine_format = "zero" # Default format
         for line in code_lines:
             line = line.strip()
             if not line: continue
+
+            if line.startswith('.format'):
+                parts = line.split()
+                if len(parts) == 2:
+                    routine_format = parts[1]
+                else:
+                    raise SyntaxError(f"Invalid .format directive: {line}")
+                continue
+
             comment = None
             if ';' in line:
                 parts = line.split(';', 1)
@@ -169,4 +183,4 @@ class Parser:
                     if not any(validator(arg) for validator in validators[i]):
                         raise SyntaxError(f"Invalid arg '{arg}' for '{instruction_name}' at pos {i}.")
             parsed_code.append({'type': 'instruction', 'name': instruction_name, 'args': args, 'comment': comment})
-        return parsed_code
+        return parsed_code, routine_format

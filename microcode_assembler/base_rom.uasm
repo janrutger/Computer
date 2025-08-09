@@ -3,14 +3,17 @@
 # Base ROM definitions for the STERN instruction set
 
 def 10=NOP {
+    .format zero
     set_cpu_state(FETCH)
 }
 
 def 11=HALT {
+    .format zero
     set_cpu_state(HALT)
 }
 
 def 20=JMPF {
+    .format one_addr
     brs(false)      ; jump when the status bit is set to true
     load_immediate(PC, $1)
 :false
@@ -18,6 +21,7 @@ def 20=JMPF {
 }
 
 def 21=JMPT {
+    .format one_addr
     brs(true)
     bra(end)
 :true
@@ -27,31 +31,37 @@ def 21=JMPT {
 }
 
 def 22=JMP {
+    .format one_addr
     load_immediate(PC, $1)
     set_cpu_state(FETCH)
 }
 
 def 30=LD {
+    .format two_reg_reg
     move_reg($1, $2)
     set_cpu_state(FETCH)
 }
 
 def 31=LDI {
+    .format two_reg_val
     load_immediate($1, $2)
     set_cpu_state(FETCH)
 }
 
 def 32=LDM {
+    .format two_reg_addr
     read_mem_adres($2, $1)
     set_cpu_state(FETCH)
 }
 
 def 40=STO {
+    .format two_reg_addr
     store_mem_adres($2, $1)
     set_cpu_state(FETCH)
 }
 
 def 50=ADD {
+    .format two_reg_reg
     move_reg(Ra, $1)
     move_reg(Rb, $2)
     alu_add()
@@ -60,6 +70,7 @@ def 50=ADD {
 }
 
 def 51=ADDI {
+    .format two_reg_val
     move_reg(Ra, $1)
     load_immediate(Rb, $2)
     alu_add()
@@ -68,6 +79,7 @@ def 51=ADDI {
 }
 
 def 52=SUB {
+    .format two_reg_reg
     move_reg(Ra, $1)
     move_reg(Rb, $2)
     alu_sub()
@@ -76,12 +88,13 @@ def 52=SUB {
 }
 
 def 70=TST {
+    .format two_reg_val
     move_reg(Ra, $1)
     load_immediate(Rb, $2)
     alu_cmp()
     beq(true)                 ; jump to true
     set_status_bit(FALSE)
-    bra(end)                  ; jump to end 
+    bra(end)                  ; jump to end
 :true
     set_status_bit(TRUE)
 :end
@@ -89,12 +102,13 @@ def 70=TST {
 }
 
 def 71=TSTE {
+    .format two_reg_reg
     move_reg(Ra, $1)
     move_reg(Rb, $2)
     alu_cmp()
     beq(true)                 ; jump to true
     set_status_bit(FALSE)
-    bra(end)                  ; jump to end 
+    bra(end)                  ; jump to end
 :true
     set_status_bit(TRUE)
 :end
@@ -102,13 +116,14 @@ def 71=TSTE {
 }
 
 def 72=TSTG {
+    .format two_reg_reg
     move_reg(Ra, $1)
     move_reg(Rb, $2)
     alu_sub()
     brz(true)                 ; jump to true
     brn(true)                 ; jump to true
     set_status_bit(TRUE)
-    bra(end)                  ; jump to end 
+    bra(end)                  ; jump to end
 :true
     set_status_bit(FALSE)
 :end
@@ -119,6 +134,7 @@ def 72=TSTG {
 # eg: INC R1 100 -> 801100
 # op1: register, op2: memory address
 def 80=INC {
+    .format two_reg_addr
     read_mem_adres($2, Ra)   ; Read value from memory(op2) into internal register Ra
     move_reg($1, Ra)         ; Move the original value from Ra to the destination register op1
     alu_inc()                ; Increment the value in Ra
@@ -130,6 +146,7 @@ def 80=INC {
 # eg: DEC R1 100 -> 811100
 # op1: register, op2: memory address
 def 81=DEC {
+    .format two_reg_addr
     read_mem_adres($2, Ra)   ; Read value from memory(op2) into internal register Ra
     alu_dec()                ; Decrement the value in Ra
     move_reg($1, Ra)         ; Move the decremented value back to the destination register op1
@@ -138,6 +155,7 @@ def 81=DEC {
 }
 
 def 90=PUSH {
+    .format one_reg
     move_reg(Ra, SP)
     store_mem_reg(SP, $1)
     alu_dec()
@@ -146,6 +164,7 @@ def 90=PUSH {
 }
 
 def 91=POP {
+    .format one_reg
     read_mem_reg(Ra, SP)
     alu_inc()
     move_reg(SP, Ra)

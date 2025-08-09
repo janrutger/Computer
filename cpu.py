@@ -4,7 +4,9 @@ import json
 class CPU:
     def __init__(self, memory: Memory, rom_path="stern_rom.json"):
         self.memory = memory
-        self.microcode_rom = self._load_microcode_from_json(rom_path)
+        self.microcode_rom = {}
+        self.instruction_formats = {}
+        self._load_microcode_from_json(rom_path)
 
         # General Purpose Registers (R0-R9)
         self.registers = {str(i): 0 for i in range(10)}
@@ -35,13 +37,12 @@ class CPU:
         with open(file_path, 'r') as f:
             json_data = json.load(f)
 
-        microcode_rom = {}
         for opcode, data in json_data.items():
             code_sequence = []
             for item in data["code"]:
                 code_sequence.append(tuple(item["instruction"]))
-            microcode_rom[opcode] = code_sequence
-        return microcode_rom
+            self.microcode_rom[opcode] = code_sequence
+            self.instruction_formats[opcode] = data.get("format", "zero") # Default to zero if format is missing
 
     def tick(self):
         if self.state != "HALT":
@@ -53,30 +54,39 @@ class CPU:
                 self.state = "DECODE"
 
             elif self.state == "DECODE":
-                #print("Decoding instruction")
-                opcode   = (self.MIR[:2])
-                type     = (self.MIR[0])
+                opcode = self.MIR[:2]
                 self.operand1 = str(0)
                 self.operand2 = str(0)
 
+                if opcode in self.instruction_formats:
+                    format = self.instruction_formats[opcode]
+                    if format == "zero":
+                        pass # No operands
+                    elif format == "one_addr":
+                        self.operand1 = self.MIR[2:]
+                    elif format == "one_reg":
+                        self.operand1 = self.MIR[2]
+                    elif format == "two_reg_reg":
+                        self.operand1 = self.MIR[2]
+                        self.operand2 = self.MIR[3]
+                    elif format == "two_reg_addr" or format == "two_reg_val":
+                        self.operand1 = self.MIR[2]
+                        self.operand2 = self.MIR[3:]
+                    else:
+                        print(f"Unknown instruction format: {format}")
+                        self.state = "HALT"
 
-                if type == "1":                     # Zero operand type
-                    pass
-                elif type == "2" or type == "9":    # One operand type
-                    self.operand1 = self.MIR[2:]
-                else:                               # else Two operand type
-                    self.operand1 = self.MIR[2]
-                    self.operand2 = self.MIR[3:]
+                    print(f"Decoded instruction: {opcode}, format: {format}, arg1: {self.operand1}, arg2: {self.operand2}")
 
-                print(f"Decoded instruction: {opcode}, arg1: {self.operand1}, arg2: {self.operand2}")
-
-                if opcode in self.microcode_rom:
-                    self.current_microcode_sequence = self.microcode_rom[opcode]
-                    self.microcode_step_index = 0
-
-                    self.state = "EXECUTE"
+                    if opcode in self.microcode_rom:
+                        self.current_microcode_sequence = self.microcode_rom[opcode]
+                        self.microcode_step_index = 0
+                        self.state = "EXECUTE"
+                    else:
+                        print(f"Invalid opcode for this ROM: {opcode}")
+                        self.state = "HALT"
                 else:
-                    print(f"Invalid opcode for this ROM: {opcode}")
+                    print(f"Invalid opcode: {opcode}")
                     self.state = "HALT"
 
 

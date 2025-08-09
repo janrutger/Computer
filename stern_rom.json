@@ -1,6 +1,7 @@
 {
     "10": {
         "name": "NOP",
+        "format": "zero",
         "code": [
             {
                 "instruction": [
@@ -13,6 +14,7 @@
     },
     "11": {
         "name": "HALT",
+        "format": "zero",
         "code": [
             {
                 "instruction": [
@@ -25,6 +27,7 @@
     },
     "20": {
         "name": "JMPF",
+        "format": "one_addr",
         "code": [
             {
                 "instruction": [
@@ -52,6 +55,7 @@
     },
     "21": {
         "name": "JMPT",
+        "format": "one_addr",
         "code": [
             {
                 "instruction": [
@@ -86,6 +90,7 @@
     },
     "22": {
         "name": "JMP",
+        "format": "one_addr",
         "code": [
             {
                 "instruction": [
@@ -106,6 +111,7 @@
     },
     "30": {
         "name": "LD",
+        "format": "two_reg_reg",
         "code": [
             {
                 "instruction": [
@@ -126,6 +132,7 @@
     },
     "31": {
         "name": "LDI",
+        "format": "two_reg_val",
         "code": [
             {
                 "instruction": [
@@ -146,6 +153,7 @@
     },
     "32": {
         "name": "LDM",
+        "format": "two_reg_addr",
         "code": [
             {
                 "instruction": [
@@ -166,6 +174,7 @@
     },
     "40": {
         "name": "STO",
+        "format": "two_reg_addr",
         "code": [
             {
                 "instruction": [
@@ -186,6 +195,7 @@
     },
     "50": {
         "name": "ADD",
+        "format": "two_reg_reg",
         "code": [
             {
                 "instruction": [
@@ -228,6 +238,7 @@
     },
     "51": {
         "name": "ADDI",
+        "format": "two_reg_val",
         "code": [
             {
                 "instruction": [
@@ -270,6 +281,7 @@
     },
     "52": {
         "name": "SUB",
+        "format": "two_reg_reg",
         "code": [
             {
                 "instruction": [
@@ -312,6 +324,7 @@
     },
     "70": {
         "name": "TST",
+        "format": "two_reg_val",
         "code": [
             {
                 "instruction": [
@@ -374,6 +387,7 @@
     },
     "71": {
         "name": "TSTE",
+        "format": "two_reg_reg",
         "code": [
             {
                 "instruction": [
@@ -436,6 +450,7 @@
     },
     "72": {
         "name": "TSTG",
+        "format": "two_reg_reg",
         "code": [
             {
                 "instruction": [
@@ -505,6 +520,7 @@
     },
     "80": {
         "name": "INC",
+        "format": "two_reg_addr",
         "code": [
             {
                 "instruction": [
@@ -547,6 +563,7 @@
     },
     "81": {
         "name": "DEC",
+        "format": "two_reg_addr",
         "code": [
             {
                 "instruction": [
@@ -589,6 +606,7 @@
     },
     "90": {
         "name": "PUSH",
+        "format": "one_reg",
         "code": [
             {
                 "instruction": [
@@ -631,6 +649,7 @@
     },
     "91": {
         "name": "POP",
+        "format": "one_reg",
         "code": [
             {
                 "instruction": [

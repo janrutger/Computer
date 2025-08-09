@@ -13,6 +13,7 @@ class ROM:
         """
         routine_id = routine_data['id']
         routine_name = routine_data['name']
+        routine_format = routine_data['format']
         code = routine_data['code']
         branch_instructions = {"bra", "brz", "brn", "beq", "brs"}
 
@@ -70,6 +71,7 @@ class ROM:
         
         self.routines[routine_id] = {
             "name": routine_name,
+            "format": routine_format,
             "code": final_code
         }
 
