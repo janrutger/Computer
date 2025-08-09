@@ -2,7 +2,7 @@ from memory import Memory
 import json
 
 class CPU:
-    def __init__(self, memory: Memory, rom_path="stern_rom.json"):
+    def __init__(self, memory: Memory, rom_path="bin/stern_rom.json"):
         self.memory = memory
         self.microcode_rom = {}
         self.instruction_formats = {}
@@ -37,7 +37,7 @@ class CPU:
         with open(file_path, 'r') as f:
             json_data = json.load(f)
 
-        for opcode, data in json_data.items():
+        for opcode, data in json_data["instructions"].items():
             code_sequence = []
             for item in data["code"]:
                 code_sequence.append(tuple(item["instruction"]))

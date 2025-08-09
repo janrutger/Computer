@@ -1,4 +1,5 @@
 .name "stern_rom"
+.registers I A B C K L M X Y Z
 
 # Base ROM definitions for the STERN instruction set
 

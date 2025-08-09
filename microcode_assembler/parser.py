@@ -70,6 +70,12 @@ class Parser:
             elif stripped_line.startswith('.append'):
                 match = re.match(r'\.append\s+"(.*?)"', stripped_line)
                 if match: self.directives['append'] = match.group(1)
+            elif stripped_line.startswith('.registers'):
+                parts = stripped_line.split()
+                if len(parts) > 1:
+                    self.directives['registers'] = parts[1:]
+                else:
+                    raise SyntaxError("Invalid .registers directive: must be followed by register names")
 
     def _parse_routines(self, lines):
         i = 0
@@ -110,8 +116,6 @@ class Parser:
                     raise SyntaxError(f"Unmatched braces in routine '{routine_id}'")
 
                 # Extract content between braces and clean up
-                # The first line might contain the opening brace and some code
-                # The last line might contain the closing brace and some code
                 cleaned_body = []
                 if routine_body_lines:
                     # Handle the first line (after the opening brace)
@@ -184,3 +188,4 @@ class Parser:
                         raise SyntaxError(f"Invalid arg '{arg}' for '{instruction_name}' at pos {i}.")
             parsed_code.append({'type': 'instruction', 'name': instruction_name, 'args': args, 'comment': comment})
         return parsed_code, routine_format
+

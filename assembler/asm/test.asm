@@ -7,6 +7,6 @@ ldi A 5
 jmpt :lus
 
 
-
+halt
 
 INCLUDE include

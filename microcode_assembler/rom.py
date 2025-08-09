@@ -6,6 +6,7 @@ class ROM:
     """
     def __init__(self):
         self.routines = {}
+        self.register_map = {}
 
     def add_routine(self, routine_data):
         """
@@ -47,16 +48,16 @@ class ROM:
                     offset = target_index - (current_index + 1)
                     args[0] = f"{offset:+}"
                 
-                # Translate runtime arguments ($1, $2)
+                # Translate runtime arguments ($1, $2) and register names (R0-R9)
                 translated_args = []
                 for arg in args:
                     if arg == '$1':
                         translated_args.append('arg1')
                     elif arg == '$2':
                         translated_args.append('arg2')
-                    elif arg.startswith('R') and len(arg) == 2 and arg[1].isdigit():
+                    elif arg.startswith('R') and len(arg) > 1 and arg[1:].isdigit():
                         # Translate GPRs (R0-R9) to their numeric equivalent (0-9)
-                        translated_args.append(arg[1])
+                        translated_args.append(arg[1:])
                     else:
                         translated_args.append(arg)
                 
@@ -81,15 +82,36 @@ class ROM:
         """
         try:
             with open(file_path, 'r') as f:
-                self.routines = json.load(f)
+                data = json.load(f)
+                # Handle both old and new formats
+                if 'instructions' in data and 'register_map' in data:
+                    self.routines = data['instructions']
+                    self.register_map = data['register_map']
+                else:
+                    self.routines = data
         except FileNotFoundError:
-            raise FileNotFoundError(f"Append file not found: {file_path}")
+            # It's not an error if the append file doesn't exist yet
+            pass
+        except json.JSONDecodeError as e:
+            raise SyntaxError(f"Error decoding JSON from {file_path}: {e}")
 
-    def save_to_file(self, file_path):
+    def save_to_file(self, file_path, directives):
         """
-        Saves the ROM to a standard JSON file.
+        Saves the ROM to a standard JSON file, including the register map.
         """
+        # Create the register map from directives if it exists
+        if 'registers' in directives:
+            gpr_names = directives['registers']
+            self.register_map = {name: str(i) for i, name in enumerate(gpr_names)}
+
+        # Sort routines for consistent, predictable output
+        sorted_routines = dict(sorted(self.routines.items()))
+
+        # Final ROM structure
+        final_rom = {
+            "register_map": self.register_map,
+            "instructions": sorted_routines
+        }
+
         with open(file_path, 'w') as f:
-            # Sort keys for consistent, predictable output
-            sorted_routines = dict(sorted(self.routines.items()))
-            json.dump(sorted_routines, f, indent=4)
+            json.dump(final_rom, f, indent=4)

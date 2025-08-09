@@ -1,4 +1,3 @@
-
 import argparse
 import json
 import os
@@ -50,16 +49,22 @@ def main():
                  raise SyntaxError(f"Duplicate routine ID '{routine_id}' found. Use /replace to overwrite.")
 
         # 5. Determine output file name
-        output_file = args.output
-        if not output_file:
+        output_dir = "bin"
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        output_filename = args.output
+        if not output_filename:
             if 'name' in parser.directives:
-                output_file = f"{parser.directives['name']}.json"
+                output_filename = f"{parser.directives['name']}.json"
             else:
                 base_name = os.path.splitext(os.path.basename(args.input_file))[0]
-                output_file = f"{base_name}.json"
+                output_filename = f"{base_name}.json"
+        
+        output_file = os.path.join(output_dir, output_filename)
 
         # 6. Save the final ROM
-        rom.save_to_file(output_file)
+        rom.save_to_file(output_file, parser.directives)
         print(f"Assembly complete. ROM saved to {output_file}")
 
     except (SyntaxError, FileNotFoundError) as e:

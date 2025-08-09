@@ -13,7 +13,7 @@ memory = Memory()
 cpu = CPU(memory)
 
 # load a program
-program = readFile("./assembler/bin/program.bin", 0)
+program = readFile("./bin/program.bin", 0)
 for line in program:
     memory.write(int(line[0]), (line[1]))
 
