@@ -14,5 +14,21 @@ def 11=HALT {
 def 22=JMP {
     :loop
     load_immediate(PC, 1) ; Assuming arg1 is the target address
+    move_reg(R1, PC)
     bra(loop) ; An endless loop for testing
+}
+
+
+def 23=test {
+    :loop
+    load_immediate(Ra, $1)
+    bra(loop)
+}
+
+def 24=test2 {
+    bra(loop)
+    load_immediate(Ra, $1)
+    move_reg(R1, Ra)
+    :loop
+    set_cpu_state(FETCH)
 }

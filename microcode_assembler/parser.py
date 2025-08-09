@@ -19,12 +19,12 @@ def is_cpu_state(arg): return arg.upper() in ["FETCH", "DECODE", "EXECUTE", "HAL
 # Arg types: REG, GPR, SR, RUNTIME, LABEL, NUM, BOOL, STATE
 # A list defines valid types for that position, e.g., [is_gpr, is_runtime_arg]
 ARG_VALIDATORS = {
-    "read_mem_reg": [[is_gpr], [is_gpr]],
-    "read_mem_adres": [[is_numeric], [is_gpr]],
-    "load_immediate": [[is_register], [is_numeric, is_runtime_arg]],
-    "move_reg": [[is_register], [is_register]],
-    "store_mem_reg": [[is_gpr], [is_gpr]],
-    "store_mem_adres": [[is_numeric], [is_gpr]],
+    "read_mem_reg": [[is_register, is_runtime_arg], [is_register, is_runtime_arg]],
+    "read_mem_adres": [[is_numeric,  is_runtime_arg], [is_register, is_runtime_arg]],
+    "load_immediate": [[is_register, is_runtime_arg], [is_numeric, is_runtime_arg]],
+    "move_reg": [[is_register, is_runtime_arg], [is_register, is_runtime_arg]],
+    "store_mem_reg": [[is_register, is_runtime_arg], [is_register, is_runtime_arg]],
+    "store_mem_adres": [[is_numeric, is_runtime_arg], [is_register, is_runtime_arg]],
     "bra": [[is_label]],
     "brz": [[is_label]],
     "brn": [[is_label]],

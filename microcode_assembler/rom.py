@@ -53,6 +53,9 @@ class ROM:
                         translated_args.append('arg1')
                     elif arg == '$2':
                         translated_args.append('arg2')
+                    elif arg.startswith('R') and len(arg) == 2 and arg[1].isdigit():
+                        # Translate GPRs (R0-R9) to their numeric equivalent (0-9)
+                        translated_args.append(arg[1])
                     else:
                         translated_args.append(arg)
                 

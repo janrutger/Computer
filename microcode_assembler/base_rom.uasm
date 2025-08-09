@@ -1,6 +1,6 @@
-.name "final_rom"
+.name "stern_rom"
 
-# Base ROM definitions
+# Base ROM definitions for the STERN instruction set
 
 def 10=NOP {
     set_cpu_state(FETCH)
@@ -10,7 +10,145 @@ def 11=HALT {
     set_cpu_state(HALT)
 }
 
-# A routine that will be replaced
-def 99=PLACEHOLDER {
-    nop()
+def 20=JMPF {
+    brs(false)      ; jump when the status bit is set to true
+    load_immediate(PC, $1)
+:false
+    set_cpu_state(FETCH)
+}
+
+def 21=JMPT {
+    brs(true)
+    bra(end)
+:true
+    load_immediate(PC, $1)
+:end
+    set_cpu_state(FETCH)
+}
+
+def 22=JMP {
+    load_immediate(PC, $1)
+    set_cpu_state(FETCH)
+}
+
+def 30=LD {
+    move_reg($1, $2)
+    set_cpu_state(FETCH)
+}
+
+def 31=LDI {
+    load_immediate($1, $2)
+    set_cpu_state(FETCH)
+}
+
+def 32=LDM {
+    read_mem_adres($2, $1)
+    set_cpu_state(FETCH)
+}
+
+def 40=STO {
+    store_mem_adres($2, $1)
+    set_cpu_state(FETCH)
+}
+
+def 50=ADD {
+    move_reg(Ra, $1)
+    move_reg(Rb, $2)
+    alu_add()
+    move_reg($1, Ra)
+    set_cpu_state(FETCH)
+}
+
+def 51=ADDI {
+    move_reg(Ra, $1)
+    load_immediate(Rb, $2)
+    alu_add()
+    move_reg($1, Ra)
+    set_cpu_state(FETCH)
+}
+
+def 52=SUB {
+    move_reg(Ra, $1)
+    move_reg(Rb, $2)
+    alu_sub()
+    move_reg($1, Ra)
+    set_cpu_state(FETCH)
+}
+
+def 70=TST {
+    move_reg(Ra, $1)
+    load_immediate(Rb, $2)
+    alu_cmp()
+    beq(true)                 ; jump to true
+    set_status_bit(FALSE)
+    bra(end)                  ; jump to end 
+:true
+    set_status_bit(TRUE)
+:end
+    set_cpu_state(FETCH)
+}
+
+def 71=TSTE {
+    move_reg(Ra, $1)
+    move_reg(Rb, $2)
+    alu_cmp()
+    beq(true)                 ; jump to true
+    set_status_bit(FALSE)
+    bra(end)                  ; jump to end 
+:true
+    set_status_bit(TRUE)
+:end
+    set_cpu_state(FETCH)
+}
+
+def 72=TSTG {
+    move_reg(Ra, $1)
+    move_reg(Rb, $2)
+    alu_sub()
+    brz(true)                 ; jump to true
+    brn(true)                 ; jump to true
+    set_status_bit(TRUE)
+    bra(end)                  ; jump to end 
+:true
+    set_status_bit(FALSE)
+:end
+    set_cpu_state(FETCH)
+}
+
+# INC r mem (opcode 80)
+# eg: INC R1 100 -> 801100
+# op1: register, op2: memory address
+def 80=INC {
+    read_mem_adres($2, Ra)   ; Read value from memory(op2) into internal register Ra
+    move_reg($1, Ra)         ; Move the original value from Ra to the destination register op1
+    alu_inc()                ; Increment the value in Ra
+    store_mem_adres($2, Ra)   ; Store the incremented value back to memory(op2)
+    set_cpu_state(FETCH)
+}
+
+# DEC r mem (opcode 81)
+# eg: DEC R1 100 -> 811100
+# op1: register, op2: memory address
+def 81=DEC {
+    read_mem_adres($2, Ra)   ; Read value from memory(op2) into internal register Ra
+    alu_dec()                ; Decrement the value in Ra
+    move_reg($1, Ra)         ; Move the decremented value back to the destination register op1
+    store_mem_adres($2, Ra)  ; Store the decremented value back to memory(op2)
+    set_cpu_state(FETCH)
+}
+
+def 90=PUSH {
+    move_reg(Ra, SP)
+    store_mem_reg(SP, $1)
+    alu_dec()
+    move_reg(SP, Ra)
+    set_cpu_state(FETCH)
+}
+
+def 91=POP {
+    read_mem_reg(Ra, SP)
+    alu_inc()
+    move_reg(SP, Ra)
+    read_mem_reg(SP, $1)
+    set_cpu_state(FETCH)
 }
