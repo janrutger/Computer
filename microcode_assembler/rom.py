@@ -16,7 +16,7 @@ class ROM:
         routine_name = routine_data['name']
         routine_format = routine_data['format']
         code = routine_data['code']
-        branch_instructions = {"bra", "brz", "brn", "beq", "brs"}
+        branch_instructions = {"branch"}
 
         # First pass: build a map of labels to their instruction index
         label_map = {}
@@ -38,15 +38,15 @@ class ROM:
                 args = list(item['args']) # Make a mutable copy
 
                 if instruction_name in branch_instructions:
-                    if not args:
-                        raise SyntaxError(f"Branch instruction '{instruction_name}' requires an argument.")
-                    target_label = args[0]
+                    if len(args) < 2:
+                        raise SyntaxError(f"Branch instruction '{instruction_name}' requires two arguments.")
+                    target_label = args[1]
                     if target_label not in label_map:
                         raise SyntaxError(f"Undefined label '{target_label}' in routine '{routine_id}'")
                     
                     target_index = label_map[target_label]
                     offset = target_index - (current_index + 1)
-                    args[0] = f"{offset:+}"
+                    args[1] = f"{offset:+}"
                 
                 # Translate runtime arguments ($1, $2) and register names (R0-R9)
                 translated_args = []

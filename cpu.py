@@ -1,4 +1,4 @@
-from memory import Memory
+from memory import Memory 
 import json
 
 class CPU:
@@ -118,36 +118,20 @@ class CPU:
                 self.flags["S"] = False
 
 
-        # bra(n-lines)   branch Always
-        # (plus or minus lines in the microcode)
-        elif microcode_step[0] == "bra":
-            self.microcode_step_index += int(microcode_step[1])
-
-        # beq(n-lines)   branch Equal
-        # (plus or minus lines in the microcode)
-        elif microcode_step[0] == "beq":
-            if self.flags["E"]:
-                self.microcode_step_index += int(microcode_step[1])
-
-
-        # brz(n-lines)   branch Zero
-        # (plus or minus lines in the microcode)
-        elif microcode_step[0] == "brz":
-            if self.flags["Z"]:
-                self.microcode_step_index += int(microcode_step[1])
-
-
-        # brn(n-lines)   branch Negative
-        # (plus or minus lines in the microcode)
-        elif microcode_step[0] == "brn":
-            if self.flags["N"]:
-                self.microcode_step_index += int(microcode_step[1])
-
-        # brs(n-lines)   branch when statusbit is set
-        # (plus or minus lines in the microcode)
-        elif microcode_step[0] == "brs":
-            if self.flags["S"]:
-                self.microcode_step_index += int(microcode_step[1])
+        # branch(FLAG, n-lines)
+        elif microcode_step[0] == "branch":
+            flag = microcode_step[1]
+            offset = int(microcode_step[2])
+            if flag == "A":
+                self.microcode_step_index += offset
+            elif flag == "E" and self.flags["E"]:
+                self.microcode_step_index += offset
+            elif flag == "Z" and self.flags["Z"]:
+                self.microcode_step_index += offset
+            elif flag == "N" and self.flags["N"]:
+                self.microcode_step_index += offset
+            elif flag == "S" and self.flags["S"]:
+                self.microcode_step_index += offset
 
 
 
@@ -173,39 +157,23 @@ class CPU:
                 self.registers[Rx] = self.registers[Ry]
 
 
-        # alu_add                  Ra + Rb -> Ra (set status flags)
-        elif microcode_step[0] == "alu_add":
-            self.registers["Ra"] += self.registers["Rb"]
-            self._set_flags()
-
-        # alu_sub                  Ra - Rb -> Ra (set status flags)
-        elif microcode_step[0] == "alu_sub":
-            self.registers["Ra"] -= self.registers["Rb"]
-            self._set_flags()
-
-        # alu_mul                         Ra * Rb -> Ra (set status flags)
-        elif microcode_step[0] == "alu_mul":
-            self.registers["Ra"] *= self.registers["Rb"]
-            self._set_flags()
-
-        # alu_div                         Ra / Rb -> Ra (set status flags)
-        elif microcode_step[0] == "alu_div":
-            self.registers["Ra"] /= self.registers["Rb"]
-            self._set_flags()
-
-
-        # alu_dec                  Ra - 1  -> Ra (set status flags)
-        elif microcode_step[0] == "alu_dec":
-            self.registers["Ra"] -= 1
-            self._set_flags()
-
-        # alu_inc                  Ra + 1  -> Ra (set status flags)
-        elif microcode_step[0] == "alu_inc":
-            self.registers["Ra"] += 1
-            self._set_flags()
-
-        # alu_cmp                  set status flags based on content of Ra Rb
-        elif microcode_step[0] == "alu_cmp":
+        # alu(OP)                  Ra + Rb -> Ra (set status flags)
+        elif microcode_step[0] == "alu":
+            op = microcode_step[1]
+            if op == "ADD":
+                self.registers["Ra"] += self.registers["Rb"]
+            elif op == "SUB":
+                self.registers["Ra"] -= self.registers["Rb"]
+            elif op == "MUL":
+                self.registers["Ra"] *= self.registers["Rb"]
+            elif op == "DIV":
+                self.registers["Ra"] /= self.registers["Rb"]
+            elif op == "DEC":
+                self.registers["Ra"] -= 1
+            elif op == "INC":
+                self.registers["Ra"] += 1
+            elif op == "CMP":
+                pass # CMP only sets flags
             self._set_flags()
 
 

@@ -44,7 +44,8 @@
             "code": [
                 {
                     "instruction": [
-                        "brs",
+                        "branch",
+                        "S",
                         "+1"
                     ],
                     "comment": "jump when the status bit is set to true"
@@ -72,14 +73,16 @@
             "code": [
                 {
                     "instruction": [
-                        "brs",
+                        "branch",
+                        "S",
                         "+1"
                     ],
                     "comment": null
                 },
                 {
                     "instruction": [
-                        "bra",
+                        "branch",
+                        "A",
                         "+1"
                     ],
                     "comment": null
@@ -228,7 +231,8 @@
                 },
                 {
                     "instruction": [
-                        "alu_add"
+                        "alu",
+                        "ADD"
                     ],
                     "comment": null
                 },
@@ -271,7 +275,8 @@
                 },
                 {
                     "instruction": [
-                        "alu_add"
+                        "alu",
+                        "ADD"
                     ],
                     "comment": null
                 },
@@ -314,7 +319,8 @@
                 },
                 {
                     "instruction": [
-                        "alu_sub"
+                        "alu",
+                        "SUB"
                     ],
                     "comment": null
                 },
@@ -357,13 +363,15 @@
                 },
                 {
                     "instruction": [
-                        "alu_cmp"
+                        "alu",
+                        "CMP"
                     ],
                     "comment": null
                 },
                 {
                     "instruction": [
-                        "beq",
+                        "branch",
+                        "E",
                         "+2"
                     ],
                     "comment": "jump to true"
@@ -377,7 +385,8 @@
                 },
                 {
                     "instruction": [
-                        "bra",
+                        "branch",
+                        "A",
                         "+1"
                     ],
                     "comment": "jump to end"
@@ -420,13 +429,15 @@
                 },
                 {
                     "instruction": [
-                        "alu_cmp"
+                        "alu",
+                        "CMP"
                     ],
                     "comment": null
                 },
                 {
                     "instruction": [
-                        "beq",
+                        "branch",
+                        "E",
                         "+2"
                     ],
                     "comment": "jump to true"
@@ -440,7 +451,8 @@
                 },
                 {
                     "instruction": [
-                        "bra",
+                        "branch",
+                        "A",
                         "+1"
                     ],
                     "comment": "jump to end"
@@ -483,20 +495,23 @@
                 },
                 {
                     "instruction": [
-                        "alu_sub"
+                        "alu",
+                        "SUB"
                     ],
                     "comment": null
                 },
                 {
                     "instruction": [
-                        "brz",
+                        "branch",
+                        "Z",
                         "+3"
                     ],
                     "comment": "jump to true"
                 },
                 {
                     "instruction": [
-                        "brn",
+                        "branch",
+                        "N",
                         "+2"
                     ],
                     "comment": "jump to true"
@@ -510,7 +525,8 @@
                 },
                 {
                     "instruction": [
-                        "bra",
+                        "branch",
+                        "A",
                         "+1"
                     ],
                     "comment": "jump to end"
@@ -553,9 +569,10 @@
                 },
                 {
                     "instruction": [
-                        "alu_inc"
+                        "alu",
+                        "INC"
                     ],
-                    "comment": "Increment the value in Ra"
+                    "comment": null
                 },
                 {
                     "instruction": [
@@ -588,9 +605,10 @@
                 },
                 {
                     "instruction": [
-                        "alu_dec"
+                        "alu",
+                        "DEC"
                     ],
-                    "comment": "Decrement the value in Ra"
+                    "comment": null
                 },
                 {
                     "instruction": [
@@ -639,7 +657,8 @@
                 },
                 {
                     "instruction": [
-                        "alu_dec"
+                        "alu",
+                        "DEC"
                     ],
                     "comment": null
                 },
@@ -674,7 +693,8 @@
                 },
                 {
                     "instruction": [
-                        "alu_inc"
+                        "alu",
+                        "INC"
                     ],
                     "comment": null
                 },

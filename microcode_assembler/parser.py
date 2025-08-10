@@ -15,31 +15,27 @@ def is_label(arg): return arg.isidentifier() # Simple check for label syntax
 def is_numeric(arg): return arg.isnumeric()
 def is_bool_str(arg): return arg.upper() in ["TRUE", "FALSE"]
 def is_cpu_state(arg): return arg.upper() in ["FETCH", "DECODE", "EXECUTE", "HALT"]
+def is_alu_op(arg): return arg.upper() in ["ADD", "SUB", "MUL", "DIV", "INC", "DEC", "CMP"]
+def is_branch_flag(arg): return arg.upper() in ["A", "E", "Z", "N", "S"]
 
 # Arg types: REG, GPR, SR, RUNTIME, LABEL, NUM, BOOL, STATE
 # A list defines valid types for that position, e.g., [is_gpr, is_runtime_arg]
 ARG_VALIDATORS = {
-    "read_mem_reg": [[is_register, is_runtime_arg], [is_register, is_runtime_arg]],
+    "read_mem_reg"  : [[is_register, is_runtime_arg], [is_register, is_runtime_arg]],
     "read_mem_adres": [[is_numeric,  is_runtime_arg], [is_register, is_runtime_arg]],
-    "load_immediate": [[is_register, is_runtime_arg], [is_numeric, is_runtime_arg]],
-    "move_reg": [[is_register, is_runtime_arg], [is_register, is_runtime_arg]],
-    "store_mem_reg": [[is_register, is_runtime_arg], [is_register, is_runtime_arg]],
+    "load_immediate": [[is_register, is_runtime_arg], [is_numeric,  is_runtime_arg]],
+    "move_reg"      : [[is_register, is_runtime_arg], [is_register, is_runtime_arg]],
+    "store_mem_reg" : [[is_register, is_runtime_arg], [is_register, is_runtime_arg]],
     "store_mem_adres": [[is_numeric, is_runtime_arg], [is_register, is_runtime_arg]],
-    "bra": [[is_label]],
-    "brz": [[is_label]],
-    "brn": [[is_label]],
-    "beq": [[is_label]],
-    "brs": [[is_label]],
-    "set_cpu_state": [[is_cpu_state]],
+    "branch": [[is_branch_flag], [is_label]],
+    "set_cpu_state" : [[is_cpu_state]],
     "set_status_bit": [[is_bool_str]],
+    "alu": [[is_alu_op]],
 }
 
-# Instructions with no arguments don't need validators
 VALID_INSTRUCTIONS = {name: len(validators) for name, validators in ARG_VALIDATORS.items()}
-VALID_INSTRUCTIONS.update({
-    "alu_add": 0, "alu_sub": 0, "alu_mul": 0, "alu_div": 0,
-    "alu_inc": 0, "alu_dec": 0, "alu_cmp": 0, "nop": 0,
-})
+VALID_INSTRUCTIONS.update({"nop": 0})
+
 
 
 class Parser:

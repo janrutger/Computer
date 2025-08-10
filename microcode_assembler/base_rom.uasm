@@ -15,7 +15,7 @@ def 11=HALT {
 
 def 20=JMPF {
     .format one_addr
-    brs(false)      ; jump when the status bit is set to true
+    branch(S, false)      ; jump when the status bit is set to true
     load_immediate(PC, $1)
 :false
     set_cpu_state(FETCH)
@@ -23,8 +23,8 @@ def 20=JMPF {
 
 def 21=JMPT {
     .format one_addr
-    brs(true)
-    bra(end)
+    branch(S, true)
+    branch(A, end)
 :true
     load_immediate(PC, $1)
 :end
@@ -65,7 +65,7 @@ def 50=ADD {
     .format two_reg_reg
     move_reg(Ra, $1)
     move_reg(Rb, $2)
-    alu_add()
+    alu(ADD)
     move_reg($1, Ra)
     set_cpu_state(FETCH)
 }
@@ -74,7 +74,7 @@ def 51=ADDI {
     .format two_reg_val
     move_reg(Ra, $1)
     load_immediate(Rb, $2)
-    alu_add()
+    alu(ADD)
     move_reg($1, Ra)
     set_cpu_state(FETCH)
 }
@@ -83,7 +83,7 @@ def 52=SUB {
     .format two_reg_reg
     move_reg(Ra, $1)
     move_reg(Rb, $2)
-    alu_sub()
+    alu(SUB)
     move_reg($1, Ra)
     set_cpu_state(FETCH)
 }
@@ -92,10 +92,10 @@ def 70=TST {
     .format two_reg_val
     move_reg(Ra, $1)
     load_immediate(Rb, $2)
-    alu_cmp()
-    beq(true)                 ; jump to true
+    alu(CMP)
+    branch(E, true)                 ; jump to true
     set_status_bit(FALSE)
-    bra(end)                  ; jump to end
+    branch(A, end)                  ; jump to end
 :true
     set_status_bit(TRUE)
 :end
@@ -106,10 +106,10 @@ def 71=TSTE {
     .format two_reg_reg
     move_reg(Ra, $1)
     move_reg(Rb, $2)
-    alu_cmp()
-    beq(true)                 ; jump to true
+    alu(CMP)
+    branch(E, true)                 ; jump to true
     set_status_bit(FALSE)
-    bra(end)                  ; jump to end
+    branch(A, end)                  ; jump to end
 :true
     set_status_bit(TRUE)
 :end
@@ -120,11 +120,11 @@ def 72=TSTG {
     .format two_reg_reg
     move_reg(Ra, $1)
     move_reg(Rb, $2)
-    alu_sub()
-    brz(true)                 ; jump to true
-    brn(true)                 ; jump to true
+    alu(SUB)
+    branch(Z, true)                 ; jump to true
+    branch(N, true)                 ; jump to true
     set_status_bit(TRUE)
-    bra(end)                  ; jump to end
+    branch(A, end)                  ; jump to end
 :true
     set_status_bit(FALSE)
 :end
@@ -138,7 +138,7 @@ def 80=INC {
     .format two_reg_addr
     read_mem_adres($2, Ra)   ; Read value from memory(op2) into internal register Ra
     move_reg($1, Ra)         ; Move the original value from Ra to the destination register op1
-    alu_inc()                ; Increment the value in Ra
+    alu(INC)
     store_mem_adres($2, Ra)   ; Store the incremented value back to memory(op2)
     set_cpu_state(FETCH)
 }
@@ -149,7 +149,7 @@ def 80=INC {
 def 81=DEC {
     .format two_reg_addr
     read_mem_adres($2, Ra)   ; Read value from memory(op2) into internal register Ra
-    alu_dec()                ; Decrement the value in Ra
+    alu(DEC)
     move_reg($1, Ra)         ; Move the decremented value back to the destination register op1
     store_mem_adres($2, Ra)  ; Store the decremented value back to memory(op2)
     set_cpu_state(FETCH)
@@ -159,7 +159,7 @@ def 90=PUSH {
     .format one_reg
     move_reg(Ra, SP)
     store_mem_reg(SP, $1)
-    alu_dec()
+    alu(DEC)
     move_reg(SP, Ra)
     set_cpu_state(FETCH)
 }
@@ -167,7 +167,7 @@ def 90=PUSH {
 def 91=POP {
     .format one_reg
     read_mem_reg(Ra, SP)
-    alu_inc()
+    alu(INC)
     move_reg(SP, Ra)
     read_mem_reg(SP, $1)
     set_cpu_state(FETCH)
