@@ -383,9 +383,9 @@ if __name__ == "__main__":
         if len(sys.argv) > 2:
             output_file = sys.argv[2]
         
-        assembler = Assembler(4032)
+        assembler = Assembler(12288)   # init $vat_start
         try:
-            program_start = 0
+            program_start = 0           # start adres for compiling (sort of .org)
             print(f"\nAssembling {input_file}...")
             assembler.assemble(input_file, program_start, output_file, False)
             print("\nAssembly process completed.")

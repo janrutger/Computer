@@ -38,6 +38,97 @@
                 }
             ]
         },
+        "13": {
+            "name": "EI",
+            "format": "zero",
+            "code": [
+                {
+                    "instruction": [
+                        "set_interrupt_flag",
+                        "TRUE"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "set_cpu_state",
+                        "FETCH"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "14": {
+            "name": "DI",
+            "format": "zero",
+            "code": [
+                {
+                    "instruction": [
+                        "set_interrupt_flag",
+                        "FALSE"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "set_cpu_state",
+                        "FETCH"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "15": {
+            "name": "RTI",
+            "format": "zero",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "SP"
+                    ],
+                    "comment": "Ra = SP"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "INC"
+                    ],
+                    "comment": "Ra = Ra + 1 (SP is now effectively incremented in Ra)"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "SP",
+                        "Ra"
+                    ],
+                    "comment": "SP = Ra (SP is updated)"
+                },
+                {
+                    "instruction": [
+                        "read_mem_reg",
+                        "SP",
+                        "PC"
+                    ],
+                    "comment": "PC = memory[SP] (read the saved PC)"
+                },
+                {
+                    "instruction": [
+                        "set_interrupt_flag",
+                        "TRUE"
+                    ],
+                    "comment": "Re-enable interrupts"
+                },
+                {
+                    "instruction": [
+                        "set_cpu_state",
+                        "FETCH"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
         "20": {
             "name": "JMPF",
             "format": "one_addr",
@@ -199,6 +290,50 @@
                         "arg1"
                     ],
                     "comment": null
+                },
+                {
+                    "instruction": [
+                        "set_cpu_state",
+                        "FETCH"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "41": {
+            "name": "STX",
+            "format": "two_reg_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "read_mem_adres",
+                        "arg2",
+                        "Ra"
+                    ],
+                    "comment": "Read value from memory(op2)"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Rb",
+                        "0"
+                    ],
+                    "comment": "Rb = R0 (index register)"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "ADD"
+                    ],
+                    "comment": "Ra = Ra + Rb (effective address)"
+                },
+                {
+                    "instruction": [
+                        "store_mem_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": "Store value of op1 at effective address (Ra)"
                 },
                 {
                     "instruction": [
@@ -685,18 +820,18 @@
             "code": [
                 {
                     "instruction": [
-                        "read_mem_reg",
+                        "move_reg",
                         "Ra",
                         "SP"
                     ],
-                    "comment": null
+                    "comment": "Ra = SP"
                 },
                 {
                     "instruction": [
                         "alu",
                         "INC"
                     ],
-                    "comment": null
+                    "comment": "Ra = Ra + 1 (SP is now effectively incremented in Ra)"
                 },
                 {
                     "instruction": [
@@ -704,7 +839,7 @@
                         "SP",
                         "Ra"
                     ],
-                    "comment": null
+                    "comment": "SP = Ra (SP is updated)"
                 },
                 {
                     "instruction": [
@@ -712,7 +847,7 @@
                         "SP",
                         "arg1"
                     ],
-                    "comment": null
+                    "comment": "$1 = memory[SP] (read the value at the new SP)"
                 },
                 {
                     "instruction": [

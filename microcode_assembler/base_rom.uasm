@@ -166,9 +166,41 @@ def 90=PUSH {
 
 def 91=POP {
     .format one_reg
-    read_mem_reg(Ra, SP)
-    alu(INC)
-    move_reg(SP, Ra)
-    read_mem_reg(SP, $1)
+    move_reg(Ra, SP)        ; Ra = SP
+    alu(INC)                ; Ra = Ra + 1 (SP is now effectively incremented in Ra)
+    move_reg(SP, Ra)        ; SP = Ra (SP is updated)
+    read_mem_reg(SP, $1)    ; $1 = memory[SP] (read the value at the new SP)
+    set_cpu_state(FETCH)
+}
+
+def 13=EI {
+    .format zero
+    set_interrupt_flag(TRUE)
+    set_cpu_state(FETCH)
+}
+
+def 14=DI {
+    .format zero
+    set_interrupt_flag(FALSE)
+    set_cpu_state(FETCH)
+}
+
+def 15=RTI {
+    .format zero
+    move_reg(Ra, SP)        ; Ra = SP
+    alu(INC)                ; Ra = Ra + 1 (SP is now effectively incremented in Ra)
+    move_reg(SP, Ra)        ; SP = Ra (SP is updated)
+    read_mem_reg(SP, PC)    ; PC = memory[SP] (read the saved PC)
+    set_interrupt_flag(TRUE); Re-enable interrupts
+    set_cpu_state(FETCH)
+}
+
+
+def 41=STX {
+    .format two_reg_addr
+    read_mem_adres($2, Ra)   ; Read value from memory(op2)
+    move_reg(Rb, R0)         ; Rb = R0 (index register)
+    alu(ADD)                 ; Ra = Ra + Rb (effective address)
+    store_mem_reg(Ra, $1)    ; Store value of op1 at effective address (Ra)
     set_cpu_state(FETCH)
 }

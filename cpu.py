@@ -1,9 +1,13 @@
 from memory import Memory 
 import json
 
+# --- Constants ---
+MEM_INT_VECTORS_START = 3072
+
 class CPU:
-    def __init__(self, memory: Memory, rom_path="bin/stern_rom.json"):
+    def __init__(self, memory: Memory, interrupt_controller=None, rom_path="bin/stern_rom.json"):
         self.memory = memory
+        self.interrupt_controller = interrupt_controller
         self.microcode_rom = {}
         self.instruction_formats = {}
         self._load_microcode_from_json(rom_path)
@@ -19,6 +23,7 @@ class CPU:
 
         # Flags
         self.flags = {"Z": False, "N": False, "E": False, "S": False}
+        self.interrupts_enabled = False # Master Interrupt Enable Flag
 
         # Internal CPU registers for ALU operations
         self.registers["Ra"] = 0
@@ -46,6 +51,11 @@ class CPU:
 
     def tick(self):
         if self.state != "HALT":
+            # --- INTERRUPT CHECK ---
+            if self.state == "FETCH" and self.interrupt_controller and self.interrupts_enabled and self.interrupt_controller.has_pending():
+                self._handle_interrupt()
+                return
+
             if self.state == "FETCH":
                 #print("Fetching instruction")
                 self.MIR = self.memory.read(self.registers["PC"])
@@ -89,8 +99,6 @@ class CPU:
                     print(f"Invalid opcode: {opcode}")
                     self.state = "HALT"
 
-
-
             elif self.state == "EXECUTE":
                 #print("Executing instruction")
                 if self.microcode_step_index < len(self.current_microcode_sequence):
@@ -104,8 +112,33 @@ class CPU:
         else:
             print("CPU is halted.")
 
+    def _handle_interrupt(self):
+        """The CPU's interrupt acknowledge sequence."""
+        # 1. Disable further interrupts temporarily
+        self.interrupts_enabled = False
 
+        # 2. Acknowledge the interrupt and get its type (vector)
+        vector = self.interrupt_controller.acknowledge()
+        if vector is None: # Should not happen if we check has_pending(), but for safety
+            self.interrupts_enabled = True
+            return
 
+        print(f"CPU responding to interrupt vector {vector}")
+
+        # 3. Save the current Program Counter on the stack
+        self.memory.write(self.registers["SP"], self.registers["PC"])
+        self.registers["SP"] -= 1
+
+        # 4. Look up the ISR address in the Interrupt Vector Table
+        vector_address = MEM_INT_VECTORS_START + vector
+        isr_address = int(self.memory.read(vector_address))
+        print(f"CPU: Found ISR address {isr_address} at vector table entry {vector_address}.")
+
+        # 5. Jump to the Interrupt Service Routine (ISR)
+        self.registers["PC"] = isr_address
+
+        # 6. The CPU is now ready to fetch the first instruction of the ISR
+        self.state = "FETCH"
 
     def execute_microcode_step(self, microcode_step, operand1, operand2):
         if microcode_step[0] == "set_cpu_state":
@@ -116,7 +149,12 @@ class CPU:
                 self.flags["S"] = True
             else:
                 self.flags["S"] = False
-
+        
+        elif microcode_step[0] == "set_interrupt_flag":
+            if microcode_step[1] == "TRUE":
+                self.interrupts_enabled = True
+            else:
+                self.interrupts_enabled = False
 
         # branch(FLAG, n-lines)
         elif microcode_step[0] == "branch":
@@ -132,8 +170,6 @@ class CPU:
                 self.microcode_step_index += offset
             elif flag == "S" and self.flags["S"]:
                 self.microcode_step_index += offset
-
-
 
         # load_immediate(reg, value)       eg load_immediate(9, 42)  loading 42 in register R9
         #                                 eg load_immediate(SP, 1024)
@@ -156,7 +192,6 @@ class CPU:
             if Rx in self.registers and Ry in self.registers:
                 self.registers[Rx] = self.registers[Ry]
 
-
         # alu(OP)                  Ra + Rb -> Ra (set status flags)
         elif microcode_step[0] == "alu":
             op = microcode_step[1]
@@ -175,8 +210,6 @@ class CPU:
             elif op == "CMP":
                 pass # CMP only sets flags
             self._set_flags()
-
-
 
         # store_mem_adres(adres, Rx)      Stores the value of Rx at the adres
         elif microcode_step[0] == "store_mem_adres":
@@ -204,12 +237,6 @@ class CPU:
             Ry = self._resolve_arg(microcode_step[2], operand1, operand2)
             self.registers[Ry] = int(self.memory.read(self.registers[Rx]))
 
-
-
-
-
-
-
     # end of core logic, microcode steps
 
     # Helpers from here
@@ -236,7 +263,6 @@ class CPU:
             self.flags["E"] = True
         else:
             self.flags["E"] = False
-
 
     def dump_state(self):
         print("CPU State:")

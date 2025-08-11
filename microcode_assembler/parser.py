@@ -30,6 +30,7 @@ ARG_VALIDATORS = {
     "branch": [[is_branch_flag], [is_label]],
     "set_cpu_state" : [[is_cpu_state]],
     "set_status_bit": [[is_bool_str]],
+    "set_interrupt_flag": [[is_bool_str]],
     "alu": [[is_alu_op]],
 }
 
@@ -184,4 +185,3 @@ class Parser:
                         raise SyntaxError(f"Invalid arg '{arg}' for '{instruction_name}' at pos {i}.")
             parsed_code.append({'type': 'instruction', 'name': instruction_name, 'args': args, 'comment': comment})
         return parsed_code, routine_format
-

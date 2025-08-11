@@ -190,3 +190,48 @@ def 72=TSTG {
 
 *   The assembler stops compiling at an invalid instruction or directive.
 *   The assembler stops compiling at a duplicate ID in the current or appended file.
+
+/FROMHERE STERN-XT
+## 11 aug: New hardware architecture for the Computer
+
+i like to make Stern-XT computer hardware
+the current hardware is stern.py and the new hardware must run be next to the current hardware, as stern-XT.py
+
+the new hardware is compatible with the current memory and CPU componenents and the CPU is still driven by the microcode assembler
+
+the new hardware is to support devices like and display, interrrupt controler ( <- keyboard) ans SIO (serial IO) (<- y-plotter)
+
+the hardware supports seperate windows for the display and the plotter 
+the devices must run seperate from the CPU cycle
+
+Pygame looks like an good option to use as the framework for this.
+Make sure all python code for the periferals is in an directory called devices
+
+
+The interrupt controlers must cache pending interrupts, because the CPU is not fast enough to handle the interrupts "realtime" 
+
+
+work done
+    updated the CPU and microcode parser
+    old hardware stern.py is still running with updated CPU
+    create the outline for the new hardware in stern-XT.py, ready for using a display with pygame
+    interrupt controller, keayboard and SIO file are in the devices directory and is under construction
+
+    Desingd a memorymap, see below
+
+
+Stern-XT Memory Map (16KB Total) (from stern-xt.png)
+This architecture uses a sophisticated, segmented memory model with "colliding pointer" regions for efficient memory usage.
+
+Address Range (Decimal)	Size (Bytes)	Region Name	Description
+0 - 1023	1024	Loader	($mem_start) Reserved for the bootloader program, which initializes the system and loads the Kernel.
+1024 - 3071	2048	Kernel	The core operating system code resides here.
+3072 - 4095	1024	Interrupt / SYSCALL Vectors	($INT_VECTORS) A lookup table where the CPU finds the starting addresses for interrupt handlers and system call routines.
+4096 - 12287	8192	Program & Free Memory	($prog_start) The primary area for user applications. This large, contiguous block holds the program's executable code and provides free space for dynamic data needs.
+12288 - 14335	2048	Data and I/O Region	This region is centered around the $VAR_START address (12288) and is split: • Upward (12288 ->): For static program variables and arrays. • Downward (<- 12287): For memory-mapped hardware device registers.
+14336 - 16383	2048	Video & Stack Region	This region is centered around the $VIDEO_MEM address (14336) and is also split: • Upward (14336 ->): The video display buffer. • Downward (<- 14335): The system stack, which grows towards the program data area.
+Key Architectural Summary:
+OS Space (0 - 4095): The lower 4KB of memory are dedicated to the foundational OS components (Loader, Kernel, Vectors), creating a protected system area.
+User Space (4096 - 16383): The upper 12KB are for user applications and their data.
+Efficient Memory Pools: The design cleverly creates two flexible data regions. The program's static data grows upwards from $VAR_START, while the stack grows downwards from below $VIDEO_MEM. This allows the two regions to expand towards each other, making maximum use of the available memory.
+Standardized I/O: Device registers are neatly organized in the memory space just below $VAR_START, providing a consistent interface for hardware communication.
