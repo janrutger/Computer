@@ -476,6 +476,94 @@
                 }
             ]
         },
+        "53": {
+            "name": "SUBI",
+            "format": "two_reg_val",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "SUB"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "set_cpu_state",
+                        "FETCH"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "63": {
+            "name": "DIVI",
+            "format": "two_reg_val",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "DIV"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "set_cpu_state",
+                        "FETCH"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
         "70": {
             "name": "TST",
             "format": "two_reg_val",

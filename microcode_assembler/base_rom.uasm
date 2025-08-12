@@ -88,6 +88,24 @@ def 52=SUB {
     set_cpu_state(FETCH)
 }
 
+def 53=SUBI {
+    .format two_reg_val
+    move_reg(Ra, $1)
+    load_immediate(Rb, $2)
+    alu(SUB)
+    move_reg($1, Ra)
+    set_cpu_state(FETCH)
+}
+
+def 63=DIVI {
+    .format two_reg_val
+    move_reg(Ra, $1)
+    load_immediate(Rb, $2)
+    alu(DIV)
+    move_reg($1, Ra)
+    set_cpu_state(FETCH)
+}
+
 def 70=TST {
     .format two_reg_val
     move_reg(Ra, $1)

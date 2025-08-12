@@ -18,6 +18,7 @@ class Assembler:
 
         # Custom map for special character names that have standard ASCII values
         self.special_char_map = {
+            "null": 0,    # ASCII for Null character
             "space": 32,  # ASCII for space
             "BackSpace": 8, # ASCII for Backspace (BS)
             "Return": 13,   # ASCII for Carriage Return (CR)
@@ -83,9 +84,9 @@ class Assembler:
         files_to_include = []
 
         for line_num, line in enumerate(self.source, 1):
-            stripped_line = line.strip()
+            stripped_line = line.split(';')[0].strip()
             raw_assembly_lines.append((stripped_line, line_num, self._current_filename))
-            if not stripped_line or stripped_line.startswith("#") or stripped_line.startswith(";"):
+            if not stripped_line or stripped_line.startswith("#"):
                 continue
             if stripped_line.upper().startswith("INCLUDE"):
                 parts = stripped_line.split()
@@ -110,8 +111,8 @@ class Assembler:
                          included_source = self.include_source(include_path, include_directive_line_num)
                          include_filename_simple = os.path.basename(include_path)
                          for include_line_num, include_line in enumerate(included_source, 1):
-                             stripped_include_line = include_line.strip()
-                             if not stripped_include_line or stripped_include_line.startswith("#") or stripped_include_line.startswith(";"):
+                             stripped_include_line = include_line.split(';')[0].strip()
+                             if not stripped_include_line or stripped_include_line.startswith("#"):
                                  continue
                              processed_assembly.append(stripped_include_line)
                              line_map[final_assembly_index] = (include_line_num, include_filename_simple)
@@ -135,7 +136,7 @@ class Assembler:
         for idx, line in enumerate(self.assembly):
             orig_line_num, orig_filename = self._line_map.get(idx, (idx + 1, self._current_filename))
 
-            if not line or line.startswith("#") or line.startswith(";"):
+            if not line or line.startswith("#"):
                 continue
 
             parts = line.split(maxsplit=2)
@@ -189,7 +190,7 @@ class Assembler:
                     except ValueError:
                          self._error(orig_line_num, line, f"Invalid size '{size_str}'.")
 
-                    if not symbol_name.startswith("$"): self._error(orig_line_num, line, f"Variable symbol '{symbol_name}' must start with '.")
+                    if not symbol_name.startswith("$"): self._error(orig_line_num, line, f"Variable symbol '{symbol_name}' must start with '. ")
                     if symbol_name in self.symbols: self._error(orig_line_num, line, f"Symbol '{symbol_name}' already defined.")
 
                     self.symbols[symbol_name] = self.NextVarPointer
@@ -247,7 +248,7 @@ class Assembler:
 
         temp_pc = prg_start
         for idx, line in enumerate(self.assembly):
-            if not line or line.startswith(("@", ".", ":", "%", "#", ";")) or line.upper() == "INCLUDE" or line.upper().startswith("EQU"):
+            if not line or line.startswith(("@", ".", ":", "%", "#")) or line.upper() == "INCLUDE" or line.upper().startswith("EQU"):
                 continue
             else:
                 pc_to_idx_map[temp_pc] = idx
@@ -261,7 +262,7 @@ class Assembler:
 
             op = instruction[0].lower()
 
-            if op.startswith(("@", ".", ":", "#", ";")) or op.upper() == "INCLUDE" or op.upper() == "EQU":
+            if op.startswith(("@", ".", ":", "#")) or op.upper() == "INCLUDE" or op.upper() == "EQU":
                 continue
 
             current_line_num_for_error = orig_line_num

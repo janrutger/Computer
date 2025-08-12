@@ -235,3 +235,19 @@ OS Space (0 - 4095): The lower 4KB of memory are dedicated to the foundational O
 User Space (4096 - 16383): The upper 12KB are for user applications and their data.
 Efficient Memory Pools: The design cleverly creates two flexible data regions. The program's static data grows upwards from $VAR_START, while the stack grows downwards from below $VIDEO_MEM. This allows the two regions to expand towards each other, making maximum use of the available memory.
 Standardized I/O: Device registers are neatly organized in the memory space just below $VAR_START, providing a consistent interface for hardware communication.
+
+
+
+This is the official STERN cpu instruction set:
+
+| | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | NOP | HALT | RET | EI | DI | RTI | | | | |
+| 2 | JMPF | JMPT | JMP | JMPX | CALL | CALLX | INT | CXTSW | | |
+| 3 | LD | LDI | LDM | LDX | | | | | | |
+| 4 | STO | STX | | | | | | | | |
+| 5 | ADD | ADDI | SUB | SUBI | SUBR | | | | | |
+| 6 | MUL | MULI | DIV | DIVI | DIVR | DMOD | | | | |
+| 7 | TST | TSTE | TSTG | | | | | | | |
+| 8 | INC | DEC | ANDI | XORX | | | | | | |
+| 9 | PUSH | POP | | | | | | | | |								
