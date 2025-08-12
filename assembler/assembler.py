@@ -1,5 +1,4 @@
 from FileIO import readFile, writeBin
-from stringtable import makechars
 import sys # Import sys for stderr
 import json
 import os
@@ -17,7 +16,16 @@ class Assembler:
         self.registers = {}
         self._load_rom(rom_path)
 
-        self.myASCII = makechars()
+        # Custom map for special character names that have standard ASCII values
+        self.special_char_map = {
+            "space": 32,  # ASCII for space
+            "BackSpace": 8, # ASCII for Backspace (BS)
+            "Return": 13,   # ASCII for Carriage Return (CR)
+            "Tab": 9,       # ASCII for Horizontal Tab (HT)
+            "Newline": 10,  # ASCII for Line Feed (LF)
+            # Add other common control characters if needed
+        }
+
         self.symbols = {} # Global symbols (@, $)
         self.labels = {}  # Local labels (:) - cleared per file
         self.constants = {} # Global constants (~) - NEW
@@ -152,10 +160,12 @@ class Assembler:
                         resolved_value = str(value_str_stripped)
                     elif value_str_stripped.startswith("\\"):
                         char_name = value_str_stripped[1:]
-                        if char_name in self.myASCII:
-                            resolved_value = str(self.myASCII[char_name])
+                        if char_name in self.special_char_map:
+                            resolved_value = str(self.special_char_map[char_name])
+                        elif len(char_name) == 1:
+                            resolved_value = str(ord(char_name))
                         else:
-                            self._error(orig_line_num, line, f"Unknown character literal '{value_str_stripped}'.")
+                            self._error(orig_line_num, line, f"Invalid character literal '{value_str_stripped}'. Use \\ followed by a single character or a recognized special character name (e.g., \\space).")
                     else:
                         self._error(orig_line_num, line, f"Invalid value '{value_str}' for EQU.")
 
@@ -179,7 +189,7 @@ class Assembler:
                     except ValueError:
                          self._error(orig_line_num, line, f"Invalid size '{size_str}'.")
 
-                    if not symbol_name.startswith("$"): self._error(orig_line_num, line, f"Variable symbol '{symbol_name}' must start with '$'.")
+                    if not symbol_name.startswith("$"): self._error(orig_line_num, line, f"Variable symbol '{symbol_name}' must start with '.")
                     if symbol_name in self.symbols: self._error(orig_line_num, line, f"Symbol '{symbol_name}' already defined.")
 
                     self.symbols[symbol_name] = self.NextVarPointer
@@ -215,8 +225,12 @@ class Assembler:
             return str(value_str)
         elif value_str.startswith("\\"):
             char_name = value_str[1:]
-            if char_name in self.myASCII: return str(self.myASCII[char_name])
-            else: self._error(line_num, line_content, f"Unknown character literal '\\{char_name}'.")
+            if char_name in self.special_char_map:
+                return str(self.special_char_map[char_name])
+            elif len(char_name) == 1:
+                return str(ord(char_name))
+            else:
+                self._error(line_num, line_content, f"Invalid character literal '\\{char_name}'. Use \\ followed by a single character or a recognized special character name (e.g., \\space).")
         elif value_str.startswith(("@", "$")):
              if value_str in self.symbols: return str(self.symbols[value_str])
              else:

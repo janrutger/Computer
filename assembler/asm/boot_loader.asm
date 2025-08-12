@@ -31,6 +31,7 @@
     
     ; Loop indefinitely
 :loop
+    ldi K \Return
     jmp :loop
 
 ; Keyboard Interrupt Service Routine (ISR)
