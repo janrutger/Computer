@@ -7,7 +7,7 @@ class InterruptController:
     This ensures that rapid-fire interrupts are not lost.
     """
     def __init__(self, memory):
-        # A thread-safe queue to hold incoming interrupt vectors.
+        # A thread-safe queue to hold incoming interrupt vectors and their associated data.
         self.pending_interrupts = queue.Queue()
         self.memory = memory
         # Dictionary to map interrupt vectors to their corresponding data memory addresses
@@ -21,11 +21,9 @@ class InterruptController:
         self.vector_data_addresses[vector] = address
 
     def trigger(self, vector, data=None):
-        """Called by a peripheral to queue an interrupt and write associated data to memory."""
+        """Called by a peripheral to queue an interrupt with optional data."""
         if self.master_enabled:
-            if vector in self.vector_data_addresses and data is not None:
-                self.memory.write(self.vector_data_addresses[vector], data)
-            self.pending_interrupts.put(vector)
+            self.pending_interrupts.put((vector, data))
 
     def has_pending(self):
         """Lets the CPU check if any interrupts are waiting."""
@@ -33,13 +31,21 @@ class InterruptController:
 
     def acknowledge(self):
         """
-        Called by the CPU to get the next interrupt from the queue.
-        Returns None if no interrupt is pending.
+        Called by the CPU to get the next interrupt (vector, data) from the queue.
+        Returns (None, None) if no interrupt is pending.
         """
         if not self.has_pending():
-            return None
+            return None, None
         try:
-            # Get the next interrupt from the queue.
+            # Get the next interrupt (vector, data) from the queue.
             return self.pending_interrupts.get_nowait()
         except queue.Empty:
-            return None
+            return None, None
+
+    def handle_acknowledged_interrupt(self, vector, data):
+        """
+        Called by the CPU after acknowledging an interrupt.
+        This method writes the associated data to the registered memory address.
+        """
+        if vector in self.vector_data_addresses and data is not None:
+            self.memory.write(self.vector_data_addresses[vector], data)

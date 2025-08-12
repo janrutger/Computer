@@ -130,12 +130,10 @@ def main():
     while running and cpu_thread.is_alive():
         # --- Event Handling ---
         for event in pygame.event.get():
-            #print(f"Pygame Event: {event.type}") # Debugging line
             if event.type == pygame.QUIT:
                 running = False
             # Pass keyboard events to the keyboard device
             if event.type == pygame.KEYDOWN:
-                #print(f"Key pressed: {event.key}")
                 keyboard.handle_key_event(event)
 
         # --- Drawing Logic --- 

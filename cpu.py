@@ -117,27 +117,30 @@ class CPU:
         # 1. Disable further interrupts temporarily
         self.interrupts_enabled = False
 
-        # 2. Acknowledge the interrupt and get its type (vector)
-        vector = self.interrupt_controller.acknowledge()
-        if vector is None: # Should not happen if we check has_pending(), but for safety
+        # 2. Acknowledge the interrupt and get its type (vector) and data
+        vector, data = self.interrupt_controller.acknowledge()
+        if vector is None and data is None: # Should not happen if we check has_pending(), but for safety
             self.interrupts_enabled = True
             return
 
+        # 3. Write the interrupt data to the designated memory address
+        self.interrupt_controller.handle_acknowledged_interrupt(vector, data)
+
         print(f"CPU responding to interrupt vector {vector}")
 
-        # 3. Save the current Program Counter on the stack
+        # 4. Save the current Program Counter on the stack
         self.memory.write(self.registers["SP"], self.registers["PC"])
         self.registers["SP"] -= 1
 
-        # 4. Look up the ISR address in the Interrupt Vector Table
+        # 5. Look up the ISR address in the Interrupt Vector Table
         vector_address = MEM_INT_VECTORS_START + vector
         isr_address = int(self.memory.read(vector_address))
         print(f"CPU: Found ISR address {isr_address} at vector table entry {vector_address}.")
 
-        # 5. Jump to the Interrupt Service Routine (ISR)
+        # 6. Jump to the Interrupt Service Routine (ISR)
         self.registers["PC"] = isr_address
 
-        # 6. The CPU is now ready to fetch the first instruction of the ISR
+        # 7. The CPU is now ready to fetch the first instruction of the ISR
         self.state = "FETCH"
 
     def execute_microcode_step(self, microcode_step, operand1, operand2):
