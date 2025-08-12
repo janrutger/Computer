@@ -75,7 +75,12 @@ def main():
 
     # 2. Initialize Shared Components
     ram = Memory(size=MEM_SIZE)
-    interrupt_controller = InterruptController()
+    interrupt_controller = InterruptController(ram)
+
+    # Register keyboard data address with the interrupt controller
+    # Assuming a default interrupt vector for the keyboard, e.g., 0
+    KEYBOARD_INTERRUPT_VECTOR = 0 # Define a vector for keyboard interrupts
+    interrupt_controller.register_data_address(KEYBOARD_INTERRUPT_VECTOR, MEM_KEYBOARD_DATA)
 
     # Function to load program.bin into memory
     def load_program_bin(memory, file_path):
@@ -100,7 +105,7 @@ def main():
             sys.exit(1)
         except Exception as e:
             print(f"Error loading program.bin: {e}", file=sys.stderr)
-            sys.exit(1)
+            sys.exit(1) 
 
     # Load the program
     program_bin_path = os.path.join(os.path.dirname(__file__), 'bin', 'program.bin')
@@ -109,7 +114,7 @@ def main():
     # 3. Initialize CPU and Peripherals
     cpu = CPU(ram, interrupt_controller)
     cpu.PC = MEM_LOADER_START # Set PC to the start of the loaded program
-    keyboard = Keyboard(ram, interrupt_controller, data_addr=MEM_KEYBOARD_DATA)
+    keyboard = Keyboard(interrupt_controller, vector=KEYBOARD_INTERRUPT_VECTOR)
     sio = SIO(ram, interrupt_controller)
 
     # 4. Create and Start Background Threads

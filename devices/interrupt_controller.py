@@ -6,16 +6,25 @@ class InterruptController:
     Manages and queues interrupt requests for the CPU.
     This ensures that rapid-fire interrupts are not lost.
     """
-    def __init__(self):
+    def __init__(self, memory):
         # A thread-safe queue to hold incoming interrupt vectors.
         self.pending_interrupts = queue.Queue()
+        self.memory = memory
+        # Dictionary to map interrupt vectors to their corresponding data memory addresses
+        self.vector_data_addresses = {}
         
         # The CPU can set this to False to ignore all interrupts.
         self.master_enabled = True 
 
-    def trigger(self, vector):
-        """Called by a peripheral to queue an interrupt."""
+    def register_data_address(self, vector, address):
+        """Registers a memory address where data for a specific interrupt vector should be written."""
+        self.vector_data_addresses[vector] = address
+
+    def trigger(self, vector, data=None):
+        """Called by a peripheral to queue an interrupt and write associated data to memory."""
         if self.master_enabled:
+            if vector in self.vector_data_addresses and data is not None:
+                self.memory.write(self.vector_data_addresses[vector], data)
             self.pending_interrupts.put(vector)
 
     def has_pending(self):
