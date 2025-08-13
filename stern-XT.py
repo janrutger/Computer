@@ -40,12 +40,85 @@ MEM_KBD_I0_BASE = MEM_VAR_START -8
 MEM_KEYBOARD_DATA = MEM_KBD_I0_BASE + 0 # Keyboard data register at the top of the I/O space
 
 
+# --- Debugger ---
+class Debugger:
+    def __init__(self, cpu, memory):
+        self.cpu = cpu
+        self.memory = memory
+        self.breakpoints = set()
+        self.in_debug_mode = False
+
+    def add_breakpoint(self, addr):
+        self.breakpoints.add(addr)
+        print(f"Breakpoint added at address {addr}")
+
+    def remove_breakpoint(self, addr):
+        if addr in self.breakpoints:
+            self.breakpoints.remove(addr)
+            print(f"Breakpoint removed from address {addr}")
+        else:
+            print(f"No breakpoint found at address {addr}")
+
+    def enter_debug_mode(self):
+        self.in_debug_mode = True
+        print("\n--- Breakpoint Hit ---")
+        self.cpu.dump_state()
+        self.interactive_loop()
+
+    def interactive_loop(self):
+        while self.in_debug_mode:
+            command = input("Debugger> ").strip().lower().split()
+            if not command:
+                continue
+
+            cmd = command[0]
+            if cmd in ('s', 'step'):
+                self.in_debug_mode = False # Exit debug mode to execute one instruction
+            elif cmd in ('c', 'continue'):
+                self.in_debug_mode = False
+                # We need to tell the CPU thread to continue, not just exit the loop
+                # This is handled by the `in_debug_mode` flag
+            elif cmd in ('q', 'quit'):
+                self.cpu.state = "HALT"
+                self.in_debug_mode = False
+            elif cmd in ('b', 'breakpoint'):
+                if len(command) > 1:
+                    try:
+                        addr = int(command[1])
+                        self.add_breakpoint(addr)
+                    except ValueError:
+                        print("Invalid address for breakpoint.")
+                else:
+                    print("Usage: b <address>")
+            elif cmd in ('rb', 'removebreakpoint'):
+                if len(command) > 1:
+                    try:
+                        addr = int(command[1])
+                        self.remove_breakpoint(addr)
+                    except ValueError:
+                        print("Invalid address for breakpoint.")
+                else:
+                    print("Usage: rb <address>")
+            elif cmd in ('i', 'inspect'):
+                if len(command) > 1:
+                    try:
+                        addr = int(command[1])
+                        print(self.memory.dump(addr, addr + 16))
+                    except ValueError:
+                        print("Invalid address for inspection.")
+                else:
+                    print("Usage: i <address>")
+            else:
+                print("Unknown command. Available commands: step (s), continue (c), quit (q), breakpoint (b), removebreakpoint (rb), inspect (i)")
+
+
 # --- CPU Thread ---
 class CpuThread(threading.Thread):
     """Runs the CPU in a background thread."""
-    def __init__(self, cpu):
+    def __init__(self, cpu, debugger):
         super().__init__()
         self.cpu = cpu
+        self.debugger = debugger
         self.daemon = True
         self._running = True
 
@@ -53,10 +126,19 @@ class CpuThread(threading.Thread):
         """Main loop for the CPU."""
         while self._running and self.cpu.state != "HALT":
             try:
-                self.cpu.tick()
-                # The time.sleep() can be adjusted to control the CPU speed
-                # A shorter sleep means a faster CPU.
-                time.sleep(0.0001)
+                # Check for breakpoint
+                if self.cpu.registers["PC"] in self.debugger.breakpoints:
+                    self.debugger.enter_debug_mode()
+
+                # If in debug mode, wait until the user decides to continue
+                while self.debugger.in_debug_mode:
+                    time.sleep(0.1) # Prevent busy-waiting
+
+                if self.cpu.state != "HALT":
+                    self.cpu.tick()
+                    # The time.sleep() can be adjusted to control the CPU speed
+                    # A shorter sleep means a faster CPU.
+                    time.sleep(0.0001)
             except Exception as e:
                 print(f"FATAL CPU Runtime Error: {e}", file=sys.stderr)
                 self.cpu.state = "HALT"
@@ -113,13 +195,14 @@ def main():
 
     # 3. Initialize CPU and Peripherals
     cpu = CPU(ram, interrupt_controller)
-    cpu.PC = MEM_LOADER_START # Set PC to the start of the loaded program
+    cpu.registers["PC"] = MEM_LOADER_START # Set PC to the start of the loaded program
     keyboard = Keyboard(interrupt_controller, vector=KEYBOARD_INTERRUPT_VECTOR)
     sio = SIO(ram, interrupt_controller)
+    debugger = Debugger(cpu, ram)
 
     # 4. Create and Start Background Threads
     print("Starting background threads (CPU, SIO)...")
-    cpu_thread = CpuThread(cpu)
+    cpu_thread = CpuThread(cpu, debugger)
     
     cpu_thread.start()
     sio.start() # SIO still runs in the background for future plotter use

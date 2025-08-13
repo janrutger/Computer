@@ -16,14 +16,14 @@ class CPU:
         self.registers = {str(i): 0 for i in range(10)}
 
         # Special Registers
-        self.registers["PC"] = 0                       # Program Counter
-        self.registers["SP"] = self.memory.size - 1    # Stack Pointer, starts at the top of memory
+        self.registers["PC"] = 0  # Program Counter
+        self.registers["SP"] = self.memory.size - 1  # Stack Pointer
 
         self.MIR = "0"  # Memory Instruction Register
 
         # Flags
         self.flags = {"Z": False, "N": False, "E": False, "S": False}
-        self.interrupts_enabled = False # Master Interrupt Enable Flag
+        self.interrupts_enabled = False  # Master Interrupt Enable Flag
 
         # Internal CPU registers for ALU operations
         self.registers["Ra"] = 0
@@ -37,6 +37,7 @@ class CPU:
         self.microcode_step_index = 0
         self.operand1 = str(0)
         self.operand2 = str(0)
+
 
     def _load_microcode_from_json(self, file_path):
         with open(file_path, 'r') as f:
@@ -279,6 +280,6 @@ class CPU:
         print(f"  PC: {self.registers['PC']:<5} SP: {self.registers['SP']:<5} MIR: {self.MIR}")
         print(f"  Flags: Z:{int(self.flags['Z'])} N:{int(self.flags['N'])} E:{int(self.flags['E'])} S:{int(self.flags['S'])}")
         print("  General Purpose Registers:")
-        for i in range(5):
-            print(f"    R{i}: {self.registers[str(i)]:<5} R{i+5}: {self.registers[str(i+5)]}")
+        for i in range(0, 10, 2):
+            print(f"    R{i}: {self.registers[str(i)]:<5} R{i+1}: {self.registers[str(i+1)]}")
         print(f"  Internal Registers: Ra={self.registers['Ra']} Rb={self.registers['Rb']}")
