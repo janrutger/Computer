@@ -250,4 +250,10 @@ This is the official STERN cpu instruction set:
 | 6 | MUL | MULI | DIV | DIVI | DIVR | DMOD | | | | |
 | 7 | TST | TSTE | TSTG | | | | | | | |
 | 8 | INC | DEC | ANDI | XORX | | | | | | |
-| 9 | PUSH | POP | | | | | | | | |								
+| 9 | PUSH | POP | | | | | | | | |			
+
+
+
+current idea to build
+
+i testing the bootloader.asm of the stern-XT ´hardware´ but its not working, now i realize i do not have any options, in my simulation, to debug the ASM code. I think its time for adding an debugger. eg. set one or more breakpoints, when a breakpoint is reached, i can inspect the CPU state, Memory content, can do a single step or proceed (to the next breakpoint or end of program. the CPU and the memory has already methods to sho the status. Those can be reused and modified
