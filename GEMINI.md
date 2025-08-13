@@ -1,12 +1,12 @@
 # Project Stern: CPU/Computer Simulation
 
-**Mission Accomplished: Microcoded CPU Simulation Core Implemented**
+**Mission Accomplished: A Complete, Debuggable Microcoded CPU Simulation**
 
-The core mission of developing a CPU/computer simulation where ISA instructions are designed as small microcode programs running on the CPU's core in Python, with the CPU handling decimal numbers, has been successfully achieved. This foundational element is now in place, providing a robust platform for further development and exploration of computer architecture.
+The core mission of developing a CPU/computer simulation has been successfully achieved and expanded. The system now features a complete hardware simulation, the **Stern-XT**, built with Pygame, which includes a feature-rich, interactive debugger. This provides a robust platform for developing and testing assembly language programs for the Stern architecture.
 
 ## System Overview
 
-The "Stern" computer system simulates a basic computer architecture with a CPU and RAM. The CPU executes instructions defined by microcode programs, allowing for a flexible and extensible Instruction Set Architecture (ISA).
+The "Stern" computer system simulates a complete computer architecture, including a CPU, RAM, and peripheral devices. The CPU executes instructions defined by microcode programs, allowing for a flexible and extensible Instruction Set Architecture (ISA). The system is designed to be debugged and tested from the command line.
 
 ### Internal Architecture Overview
 
@@ -21,12 +21,75 @@ The "Stern" computer system simulates a basic computer architecture with a CPU a
                                                                 Special Registers         (SR)
                                                                 Flags                     (FLAGS)
                                                                 microcode executer (loads from stern_rom.json)
+
+    Peripherals (Keyboard, SIO, Display) <--> Interrupt Controller <--> CPU
+
+    Debugger <--> CPU & Memory
 ```
 
-(future)
-    keyboard(memory)
-    display(memory)
-    SIO(memory)
+## Stern-XT Hardware
+
+The Stern-XT is the primary hardware simulation, implemented in `stern-XT.py`. It uses the Pygame library to provide a graphical display and handle keyboard input. The hardware simulation is responsible for initializing the CPU, memory, and all peripheral devices.
+
+### Memory Map (16KB Total)
+
+This architecture uses a sophisticated, segmented memory model:
+
+| Address Range (Decimal) | Description                               |
+| ----------------------- | ----------------------------------------- |
+| 0 - 1023                | Loader                                    |
+| 1024 - 3071               | Kernel                                    |
+| 3072 - 4095               | Interrupt / SYSCALL Vectors               |
+| 4096 - 12287              | Program & Free Memory                     |
+| 12288 - 14335             | Data and I/O Region  This region is centered around the $VAR_START address (12288) and is split: • Upward (12288 ->): For static program variables and arrays. • Downward (<- 12287): For memory-mapped hardware device registers                     |
+| 14336 - 16383             | Video & Stack Region This region is centered around the $VIDEO_MEM address (14336) and is also split: • Upward (14336 ->): The video display buffer. • Downward (<- 14335): The system stack, which grows towards the program data area.       
+
+### Key Architectural Summary:
+* OS Space (0 - 4095): The lower 4KB of memory are dedicated to the foundational OS components (Loader, Kernel, Vectors), creating a protected system area.
+* User Space (4096 - 16383): The upper 12KB are for user applications and their data.
+* Efficient Memory Pools: The design cleverly creates two flexible data regions. The program's static data grows upwards from $VAR_START, while the stack grows downwards from below $VIDEO_MEM. This allows the two regions to expand towards each other, making maximum use of the available memory.
+* Standardized I/O: Device registers are neatly organized in the memory space just below $VAR_START, providing a consistent interface for hardware communication.              |
+
+### Devices
+
+The Stern-XT hardware supports a variety of peripheral devices, each running in its own thread:
+
+*   **Display:** A Pygame window that renders the video memory.
+*   **Keyboard:** Captures key presses from the Pygame window and sends interrupts to the CPU.
+*   **SIO (Serial I/O):** A placeholder for future serial communication.
+*   **Interrupt Controller:** Manages interrupts from devices and communicates them to the CPU.
+
+## The Stern-XT Debugger
+
+A powerful, interactive command-line debugger is integrated into the Stern-XT simulation. It allows for in-depth analysis and control of the CPU and memory.
+
+### Activating the Debugger
+
+To start the simulation with the debugger active, use the `-debug` flag:
+
+```bash
+python3 stern-XT.py -debug
+```
+
+This will start the simulation and automatically set a breakpoint at the first instruction (address 0).
+
+### Debugger Commands
+
+The debugger provides a rich set of commands for controlling the simulation and inspecting its state:
+
+| Command                      | Alias | Description                                                     |
+| ---------------------------- | ----- | --------------------------------------------------------------- |
+| `step`                       | `s`   | Execute one full instruction                                    |
+| `continue`                   | `c`   | Continue execution to the next breakpoint                       |
+| `quit`                       | `q`   | Quit the simulation                                             |
+| `breakpoint <addr>`          | `b`   | Set a breakpoint at `<addr>`                                    |
+| `removebreakpoint <addr>`    | `rb`  | Remove a breakpoint from `<addr>`                               |
+| `listbreakpoints`            | `lb`  | List all active breakpoints                                     |
+| `inspect [addr]`             | `i`   | Inspect 16 bytes of memory at `[addr]` or the last address      |
+| `next`                       | `n`   | Inspect the next 16 bytes of memory                             |
+| `prev`                       | `p`   | Inspect the previous 16 bytes of memory                         |
+| `memmap`                     |       | Show the memory map and pointers                                |
+| `help`                       | `?`   | Show the help message                                           |
 
 ## CPU Details
 
@@ -75,11 +138,6 @@ The CPU executes microcode instructions stored in a Python dictionary, acting as
 *   `set_cpu_state(STATE)`: Sets the CPU state (FETCH, DECODE, EXECUTE, HALT).
 *   `set_status_bit(BOOLEAN)`: Sets the Status flag (TRUE or FALSE).
 
-## Memory Details
-
-*   **Capacity:** 4K of RAM memory.
-*   **Data Storage:** Stores data as variable-length numeric strings (e.g., "15879"). Invalid strings (e.g., "dg4895") are not allowed.
-
 ## Instruction Set Architecture (ISA)
 
 The ISA supports a maximum of 90 instructions, indicated by two-digit numbers from 10 to 99.
@@ -94,10 +152,24 @@ The ISA supports a maximum of 90 instructions, indicated by two-digit numbers fr
     *   `opcode + register + address` (e.g., `inc R0 100` = "800100")
     *   `opcode + register + register` (e.g., `add R2 R1` = "5021")
     *   `opcode + register + value` (e.g., `addi R4 42` = "51442")
+### Reference ISA as designed for the generation first Stern system
 
-The ISA handles different addressing methods by having a specific instruction per method (e.g., `LD`, `LDI`, `LDM`, `LDX`).
+| | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | NOP | HALT | RET | EI | DI | RTI | | | | |
+| 2 | JMPF | JMPT | JMP | JMPX | CALL | CALLX | INT | CXTSW | | |
+| 3 | LD | LDI | LDM | LDX | | | | | | |
+| 4 | STO | STX | | | | | | | | |
+| 5 | ADD | ADDI | SUB | SUBI | SUBR | | | | | |
+| 6 | MUL | MULI | DIV | DIVI | DIVR | DMOD | | | | |
+| 7 | TST | TSTE | TSTG | | | | | | | |
+| 8 | INC | DEC | ANDI | XORX | | | | | | |
+| 9 | PUSH | POP | | | | | | | | |			
+
 
 ## Assembler Suite
+
+The project includes a suite of assemblers for both microcode and ISA-level programming.
 
 ### ISA Assembler
 
@@ -105,9 +177,7 @@ This assembler translates high-level assembly language (`.asm` files) into machi
 
 ### Microcode Assembler
 
-**Achieved: New Microcode Assembler Implemented and Integrated**
-
-A new assembler to compile microcode assembly has been successfully implemented. This assembler is now a core component of the project, enabling dynamic definition of the CPU's instruction set. The ISA assembler also depends on the output of this microcode assembler for its "smartness" regarding opcode definitions.
+The microcode assembler compiles microcode assembly (`.uasm` files) into a JSON ROM file (`stern_rom.json`), which defines the CPU's instruction set.
 
 #### Microcode Assembly (.uasm) Format
 
@@ -140,120 +210,7 @@ The `.uasm` files define the microcode routines that constitute the CPU's instru
 *   **Branching with Labels:**
     *   Labels are local to each routine and are defined with a colon (e.g., `:start`).
     *   Branch instructions (`bra`, `brz`, `brn`, `beq`, `brs`) use labels to specify jump targets. The assembler calculates the relative offset.
-    *   Example:
-        ```uasm
-        :loop_start
-            ; some instructions
-            bra(loop_start) ; Jumps back to loop_start
-        ```
 
 *   **Comments:**
     *   **Line Comments:** Start with `#` and are ignored by the assembler.
     *   **Inline Comments:** Start with `;` after an instruction. These comments are preserved in the JSON output and can be used for logging/debugging.
-    *   Example: `set_cpu_state(FETCH) ; Reset CPU state`
-
-**Example .uasm Routine:**
-
-```uasm
-.name stern_rom
-.registers I A B C K L M X Y Z
-
-def 71=TSTE {
-    .format two_reg_reg
-    move_reg(Ra, $1)        ; Move first operand to Ra
-    move_reg(Rb, $2)        ; Move second operand to Rb
-    alu_cmp()               ; Compare Ra and Rb, setting flags
-    beq(true)               ; If Ra == Rb (E flag is true), branch to 'true'
-    set_status_bit(FALSE)   ; Set S to FALSE if not equal
-    bra(end)                ; Skip to 'end'
-:true
-    set_status_bit(TRUE)    ; Set S to TRUE if equal
-:end
-    set_cpu_state(FETCH)    ; Return to FETCH state
-}
-
-def 72=TSTG {
-    .format two_reg_reg
-    move_reg(Ra, $1)        ; Move first operand to Ra
-    move_reg(Rb, $2)        ; Move second operand to Rb
-    alu_sub()               ; Perform Ra - Rb, setting flags
-    brz(+3)                 ; If Ra == Rb (Z flag is true), branch to set S to FALSE
-    brn(+2)                 ; If Ra < Rb (N flag is true), branch to set S to FALSE
-    set_status_bit(TRUE)    ; Set S to TRUE if Ra > Rb
-    bra(+1)                 ; Skip the next instruction
-    set_status_bit(FALSE)   ; Set S to FALSE if Ra <= Rb
-    set_cpu_state(FETCH)    ; Return to FETCH state
-}
-```
-
-## Error Handling
-
-*   The assembler stops compiling at an invalid instruction or directive.
-*   The assembler stops compiling at a duplicate ID in the current or appended file.
-
-/FROMHERE STERN-XT
-## 11 aug: New hardware architecture for the Computer
-
-i like to make Stern-XT computer hardware
-the current hardware is stern.py and the new hardware must run be next to the current hardware, as stern-XT.py
-
-the new hardware is compatible with the current memory and CPU componenents and the CPU is still driven by the microcode assembler
-
-the new hardware is to support devices like and display, interrrupt controler ( <- keyboard) ans SIO (serial IO) (<- y-plotter)
-
-the hardware supports seperate windows for the display and the plotter 
-the devices must run seperate from the CPU cycle
-
-Pygame looks like an good option to use as the framework for this.
-Make sure all python code for the periferals is in an directory called devices
-
-
-The interrupt controlers must cache pending interrupts, because the CPU is not fast enough to handle the interrupts "realtime" 
-
-
-work done
-    updated the CPU and microcode parser
-    old hardware stern.py is still running with updated CPU
-    create the outline for the new hardware in stern-XT.py, ready for using a display with pygame
-    interrupt controller, keayboard and SIO file are in the devices directory and is under construction
-
-    Desingd a memorymap, see below
-
-
-Stern-XT Memory Map (16KB Total) (from stern-xt.png)
-This architecture uses a sophisticated, segmented memory model with "colliding pointer" regions for efficient memory usage.
-
-Address Range (Decimal)	Size (Bytes)	Region Name	Description
-0 - 1023	1024	Loader	($mem_start) Reserved for the bootloader program, which initializes the system and loads the Kernel.
-1024 - 3071	2048	Kernel	The core operating system code resides here.
-3072 - 4095	1024	Interrupt / SYSCALL Vectors	($INT_VECTORS) A lookup table where the CPU finds the starting addresses for interrupt handlers and system call routines.
-4096 - 12287	8192	Program & Free Memory	($prog_start) The primary area for user applications. This large, contiguous block holds the program's executable code and provides free space for dynamic data needs.
-12288 - 14335	2048	Data and I/O Region	This region is centered around the $VAR_START address (12288) and is split: • Upward (12288 ->): For static program variables and arrays. • Downward (<- 12287): For memory-mapped hardware device registers.
-14336 - 16383	2048	Video & Stack Region	This region is centered around the $VIDEO_MEM address (14336) and is also split: • Upward (14336 ->): The video display buffer. • Downward (<- 14335): The system stack, which grows towards the program data area.
-Key Architectural Summary:
-OS Space (0 - 4095): The lower 4KB of memory are dedicated to the foundational OS components (Loader, Kernel, Vectors), creating a protected system area.
-User Space (4096 - 16383): The upper 12KB are for user applications and their data.
-Efficient Memory Pools: The design cleverly creates two flexible data regions. The program's static data grows upwards from $VAR_START, while the stack grows downwards from below $VIDEO_MEM. This allows the two regions to expand towards each other, making maximum use of the available memory.
-Standardized I/O: Device registers are neatly organized in the memory space just below $VAR_START, providing a consistent interface for hardware communication.
-
-
-
-This is the official STERN cpu instruction set:
-
-| | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | NOP | HALT | RET | EI | DI | RTI | | | | |
-| 2 | JMPF | JMPT | JMP | JMPX | CALL | CALLX | INT | CXTSW | | |
-| 3 | LD | LDI | LDM | LDX | | | | | | |
-| 4 | STO | STX | | | | | | | | |
-| 5 | ADD | ADDI | SUB | SUBI | SUBR | | | | | |
-| 6 | MUL | MULI | DIV | DIVI | DIVR | DMOD | | | | |
-| 7 | TST | TSTE | TSTG | | | | | | | |
-| 8 | INC | DEC | ANDI | XORX | | | | | | |
-| 9 | PUSH | POP | | | | | | | | |			
-
-
-
-current idea to build
-
-i testing the bootloader.asm of the stern-XT ´hardware´ but its not working, now i realize i do not have any options, in my simulation, to debug the ASM code. I think its time for adding an debugger. eg. set one or more breakpoints, when a breakpoint is reached, i can inspect the CPU state, Memory content, can do a single step or proceed (to the next breakpoint or end of program. the CPU and the memory has already methods to sho the status. Those can be reused and modified

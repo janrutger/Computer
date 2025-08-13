@@ -29,7 +29,7 @@ EQU ~ASCII_LF \Newline ; Line Feed
 . $BOOT_MSG 20
 EQU ~BOOT_MSG_LEN 20
 
-
+ldi Z $INT_VECTORS
 ; Define the boot message characters
 % $BOOT_MSG \S \T \E \R \N \- \X \T \space \B \O \O \T \I \N \G \. \. \. \null
 
