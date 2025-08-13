@@ -4,6 +4,10 @@
 . $VIDEO_MEM 1
 % $VIDEO_MEM 14336
 
+# $VIDEO_MEM + ~SCREEN_WIDTH * ~SCREEN_HEIGHT ; Check if R0 > end of video memory
+EQU ~VIDEO_MEM_END 16256
+
+
 . $INT_VECTORS 1
 % $INT_VECTORS 3072
 
@@ -44,94 +48,118 @@ EQU ~BOOT_MSG_LEN 20
     
     ; --- Display Boot Message ---
     ; Calculate center position for message
-    ldi A ~SCREEN_WIDTH (coloms)
+    ldi A ~SCREEN_WIDTH  ; (coloms)
     subi A ~BOOT_MSG_LEN ; A = SCREEN_WIDTH - BOOT_MSG_LEN
     divi A 2             ; A = (SCREEN_WIDTH - BOOT_MSG_LEN) / 2 (start column)
 
-    ldi B ~SCREEN_HEIGHT (rows)
+    ldi B ~SCREEN_HEIGHT ; (rows)
     divi B 2             ; B = SCREEN_HEIGHT / 2 (start row)
 
-    ; Calculate starting video memory address for message
-    mul R2 ~SCREEN_WIDTH  ; R2 = row * SCREEN_WIDTH
-    add R2 R1             ; R2 = (row * SCREEN_WIDTH) + col
-    add R2 $VIDEO_MEM     ; R2 = $VIDEO_MEM + offset
+    # A = (80 - 20) / 2 = 35 (start position X)
+    # B = 24 / 2 = 12 (start position Y)
+    # calculate memory adres of A B (x,y)
+    # Calculate starting video memory address for message
+    muli B ~SCREEN_WIDTH  ; B = row * SCREEN_WIDTH
+    add B A             ; B = (row * SCREEN_WIDTH) + col
+    ldi C $VIDEO_MEM     ; Load $VIDEO_MEM into C
+    add B C             ; B = B + C (B now holds $VIDEO_MEM + offset)
 
     ; Call print_string subroutine
-    ldi R1 $BOOT_MSG      ; R1 = address of boot message
-    ldi R3 R2             ; R3 = video memory start address for message
+    ldi A $BOOT_MSG      ; R1 = address of boot message
+    ld C B               ; C = start position in dispaly memory
+    # Start of the String is in A, C is video start adres
     call :print_string
 
     ; --- Delay ---
-    ldi R1 10000          ; Delay count
-    call :delay
+    ;ldi A 10000          ; Delay count
+    ;call :delay
 
     ; --- Clear Screen ---
-    call :clear_screen
+    ;call :clear_screen
 
     ; --- Delay again (optional) ---
-    ldi R1 5000           ; Shorter delay
-    call :delay
+    ;ldi A 5000           ; Shorter delay
+    ;call :delay
 
     ; Loop indefinitely
 :loop
-    jmp :loop
+    ; jmp :loop ;stop here to make sure the code ends
 
 ; --- Subroutines ---
 
-; print_string(R1=string_address, R3=video_mem_address)
-; Prints a null-terminated string from R1 to video memory starting at R3
+; print_string(A=string_address, C=video_mem_address)
+; Prints a null-terminated string from R1 to video memory starting at C
 :print_string
-    push R0 ; Save R0
-    push R1 ; Save R1
-    push R3 ; Save R3
+    push I ; Save R0
+    push A ; Save R1
+    push C ; Save R3
 
-    move R0 R1 ; R0 = string_address (index register)
-    move R1 R3 ; R1 = video_mem_address (destination)
+    . $string_pointer 1
+    . $video_pointer 1
+
+    sto A $string_pointer
+    sto C $video_pointer
+
+    . $cursor 1
+    % $cursor 0
 
 :print_loop
-    ldx R2 R0 ; Load character from string (R2 = char)
-    brz :print_end ; If char is null, end of string
 
-    stx R2 R1 ; Store character to video memory
-    inc R0    ; Next character in string
-    inc R1    ; Next position in video memory
+    inc I $cursor           ; load I, inc $cursor
+
+    ldx B $string_pointer   ; load char in B
+    tst B \null             ; test for last char
+    jmpt :print_end
+
+    stx B $video_pointer   ; store char in video memory
+
     jmp :print_loop
 
+
 :print_end
-    pop R3 ; Restore R3
-    pop R1 ; Restore R1
-    pop R0 ; Restore R0
+    pop C ; Restore R3
+    pop A ; Restore R1
+    pop I ; Restore R0
     ret
 
 ; delay(R1=count)
+. $delay_count 1
 :delay
-    push R1 ; Save R1
+    sto A $delay_count ; Save R1
 :delay_loop
-    deci R1 ; Decrement R1
-    brz :delay_end ; If R1 is zero, end delay
+    dec A $delay_count
+    tst A 0
+    jmpt :delay_end
     jmp :delay_loop
+
 :delay_end
-    pop R1 ; Restore R1
     ret
 
 ; clear_screen()
 :clear_screen
-    push R0 ; Save R0
-    push R1 ; Save R1
+    push I ; Save R0
+    push A ; Save R1
+    push B ; save R2
 
-    ldi R0 $VIDEO_MEM ; R0 = start of video memory (index register)
-    ldi R1 ~ASCII_SPACE ; R1 = ASCII value for space
+    ldi Z 0              ; Load Z with zero
+    sto Z $cursor        ; Set startpoint of cursor
+    ldi A \space         ; R1 = ASCII value for space
+    ldi B ~VIDEO_MEM_END ; R2 = end of video memory
+
 
 :clear_loop
-    stx R1 R0 ; Store space to video memory
-    inc R0    ; Next video memory address
-    tstg R0 $VIDEO_MEM + ~SCREEN_WIDTH * ~SCREEN_HEIGHT ; Check if R0 > end of video memory
-    jmpt :clear_end ; If R0 is past end, end clear
+    inc I $cursor       ; Increment cursor
+
+    tstg I B            ; Check if R0 > end of video memory
+    jmpt :clear_end     ; If R0 is past end, end clear
+
+    stx A $VIDEO_MEM    ; Store space to clear video memory
     jmp :clear_loop
 
 :clear_end
-    pop R1 ; Restore R1
-    pop R0 ; Restore R0
+    pop B ; Restore R2
+    pop A ; Restore R1
+    pop I ; Restore R0
     ret
 
 ; Keyboard Interrupt Service Routine (ISR)

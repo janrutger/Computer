@@ -38,6 +38,50 @@
                 }
             ]
         },
+        "12": {
+            "name": "RET",
+            "format": "zero",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "SP"
+                    ],
+                    "comment": "Ra = SP"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "INC"
+                    ],
+                    "comment": "Ra = Ra + 1 (SP is now effectively incremented in Ra)"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "SP",
+                        "Ra"
+                    ],
+                    "comment": "SP = Ra (SP is updated)"
+                },
+                {
+                    "instruction": [
+                        "read_mem_reg",
+                        "SP",
+                        "PC"
+                    ],
+                    "comment": "PC = memory[SP] (read the saved PC)"
+                },
+                {
+                    "instruction": [
+                        "set_cpu_state",
+                        "FETCH"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
         "13": {
             "name": "EI",
             "format": "zero",
@@ -216,6 +260,58 @@
                 }
             ]
         },
+        "24": {
+            "name": "CALL",
+            "format": "one_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "SP"
+                    ],
+                    "comment": "Ra = SP"
+                },
+                {
+                    "instruction": [
+                        "store_mem_reg",
+                        "SP",
+                        "PC"
+                    ],
+                    "comment": "Store PC (return address) at SP"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "DEC"
+                    ],
+                    "comment": "Decrement SP"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "SP",
+                        "Ra"
+                    ],
+                    "comment": "Update SP"
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "PC",
+                        "arg1"
+                    ],
+                    "comment": "Load target address into PC"
+                },
+                {
+                    "instruction": [
+                        "set_cpu_state",
+                        "FETCH"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
         "30": {
             "name": "LD",
             "format": "two_reg_reg",
@@ -269,6 +365,50 @@
                         "arg1"
                     ],
                     "comment": null
+                },
+                {
+                    "instruction": [
+                        "set_cpu_state",
+                        "FETCH"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "33": {
+            "name": "LDX",
+            "format": "two_reg_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "read_mem_adres",
+                        "arg2",
+                        "Ra"
+                    ],
+                    "comment": "Read value from memory(op2) into Ra"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Rb",
+                        "0"
+                    ],
+                    "comment": "Rb = R0 (index register)"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "ADD"
+                    ],
+                    "comment": "Ra = Ra + Rb (effective address)"
+                },
+                {
+                    "instruction": [
+                        "read_mem_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": "Read value from effective address (Ra) into $1"
                 },
                 {
                     "instruction": [
@@ -500,6 +640,50 @@
                     "instruction": [
                         "alu",
                         "SUB"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "set_cpu_state",
+                        "FETCH"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "61": {
+            "name": "MULI",
+            "format": "two_reg_val",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "MUL"
                     ],
                     "comment": null
                 },

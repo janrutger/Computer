@@ -60,7 +60,7 @@ class CPU:
                 #print("Fetching instruction")
                 self.MIR = self.memory.read(self.registers["PC"])
                 self.registers["PC"] += 1
-                print(f"Fetched instruction: {self.MIR}")
+                print(f"Fetched instruction: {self.MIR}, from address {self.registers['PC'] - 1}")
                 self.state = "DECODE"
 
             elif self.state == "DECODE":
@@ -205,7 +205,13 @@ class CPU:
             elif op == "MUL":
                 self.registers["Ra"] *= self.registers["Rb"]
             elif op == "DIV":
-                self.registers["Ra"] /= self.registers["Rb"]
+                # Perform integer division
+                if self.registers["Rb"] != 0:
+                    self.registers["Ra"] //= self.registers["Rb"]
+                else:
+                    # Handle division by zero, e.g., set an error flag or halt
+                    print("CPU Runtime Error: Division by zero!")
+                    self.state = "HALT"
             elif op == "DEC":
                 self.registers["Ra"] -= 1
             elif op == "INC":

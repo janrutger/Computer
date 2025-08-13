@@ -13,6 +13,15 @@ def 11=HALT {
     set_cpu_state(HALT)
 }
 
+def 12=RET {
+    .format zero
+    move_reg(Ra, SP)        ; Ra = SP
+    alu(INC)                ; Ra = Ra + 1 (SP is now effectively incremented in Ra)
+    move_reg(SP, Ra)        ; SP = Ra (SP is updated)
+    read_mem_reg(SP, PC)    ; PC = memory[SP] (read the saved PC)
+    set_cpu_state(FETCH)
+}
+
 def 20=JMPF {
     .format one_addr
     branch(S, false)      ; jump when the status bit is set to true
@@ -37,6 +46,16 @@ def 22=JMP {
     set_cpu_state(FETCH)
 }
 
+def 24=CALL {
+    .format one_addr
+    move_reg(Ra, SP)        ; Ra = SP
+    store_mem_reg(SP, PC)   ; Store PC (return address) at SP
+    alu(DEC)                ; Decrement SP
+    move_reg(SP, Ra)        ; Update SP
+    load_immediate(PC, $1)  ; Load target address into PC
+    set_cpu_state(FETCH)
+}
+
 def 30=LD {
     .format two_reg_reg
     move_reg($1, $2)
@@ -55,9 +74,27 @@ def 32=LDM {
     set_cpu_state(FETCH)
 }
 
+def 33=LDX {
+    .format two_reg_addr
+    read_mem_adres($2, Ra)   ; Read value from memory(op2) into Ra
+    move_reg(Rb, R0)         ; Rb = R0 (index register)
+    alu(ADD)                 ; Ra = Ra + Rb (effective address)
+    read_mem_reg(Ra, $1)     ; Read value from effective address (Ra) into $1
+    set_cpu_state(FETCH)
+}
+
 def 40=STO {
     .format two_reg_addr
     store_mem_adres($2, $1)
+    set_cpu_state(FETCH)
+}
+
+def 41=STX {
+    .format two_reg_addr
+    read_mem_adres($2, Ra)   ; Read value from memory(op2)
+    move_reg(Rb, R0)         ; Rb = R0 (index register)
+    alu(ADD)                 ; Ra = Ra + Rb (effective address)
+    store_mem_reg(Ra, $1)    ; Store value of op1 at effective address (Ra)
     set_cpu_state(FETCH)
 }
 
@@ -97,6 +134,15 @@ def 53=SUBI {
     set_cpu_state(FETCH)
 }
 
+def 61=MULI {
+    .format two_reg_val
+    move_reg(Ra, $1)
+    load_immediate(Rb, $2)
+    alu(MUL)
+    move_reg($1, Ra)
+    set_cpu_state(FETCH)
+}
+
 def 63=DIVI {
     .format two_reg_val
     move_reg(Ra, $1)
@@ -105,6 +151,7 @@ def 63=DIVI {
     move_reg($1, Ra)
     set_cpu_state(FETCH)
 }
+
 
 def 70=TST {
     .format two_reg_val
@@ -214,11 +261,3 @@ def 15=RTI {
 }
 
 
-def 41=STX {
-    .format two_reg_addr
-    read_mem_adres($2, Ra)   ; Read value from memory(op2)
-    move_reg(Rb, R0)         ; Rb = R0 (index register)
-    alu(ADD)                 ; Ra = Ra + Rb (effective address)
-    store_mem_reg(Ra, $1)    ; Store value of op1 at effective address (Ra)
-    set_cpu_state(FETCH)
-}

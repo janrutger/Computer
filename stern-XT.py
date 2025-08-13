@@ -56,7 +56,7 @@ class CpuThread(threading.Thread):
                 self.cpu.tick()
                 # The time.sleep() can be adjusted to control the CPU speed
                 # A shorter sleep means a faster CPU.
-                time.sleep(1)
+                time.sleep(0.0001)
             except Exception as e:
                 print(f"FATAL CPU Runtime Error: {e}", file=sys.stderr)
                 self.cpu.state = "HALT"
