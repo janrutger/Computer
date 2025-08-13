@@ -29,7 +29,6 @@ EQU ~ASCII_LF \Newline ; Line Feed
 . $BOOT_MSG 20
 EQU ~BOOT_MSG_LEN 20
 
-ldi Z $INT_VECTORS
 ; Define the boot message characters
 % $BOOT_MSG \S \T \E \R \N \- \X \T \space \B \O \O \T \I \N \G \. \. \. \null
 
@@ -68,18 +67,18 @@ ldi Z $INT_VECTORS
     ldi A $BOOT_MSG      ; R1 = address of boot message
     ld C B               ; C = start position in dispaly memory
     # Start of the String is in A, C is video start adres
-    call :print_string
+    call @print_string
 
     ; --- Delay ---
     ;ldi A 10000          ; Delay count
-    ;call :delay
+    ;call @delay
 
     ; --- Clear Screen ---
     ;call :clear_screen
 
     ; --- Delay again (optional) ---
     ;ldi A 5000           ; Shorter delay
-    ;call :delay
+    ;call @delay
 
     ; Loop indefinitely
 :loop
@@ -89,7 +88,7 @@ ldi Z $INT_VECTORS
 
 ; print_string(A=string_address, C=video_mem_address)
 ; Prints a null-terminated string from R1 to video memory starting at C
-:print_string
+@print_string
     push I ; Save R0
     push A ; Save R1
     push C ; Save R3
@@ -122,9 +121,11 @@ ldi Z $INT_VECTORS
     pop I ; Restore R0
     ret
 
+
+
 ; delay(R1=count)
 . $delay_count 1
-:delay
+@delay
     sto A $delay_count ; Save R1
 :delay_loop
     dec A $delay_count

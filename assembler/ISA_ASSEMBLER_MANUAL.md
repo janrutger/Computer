@@ -72,7 +72,7 @@ Instructions are the mnemonics for the CPU's operations, as defined in the `ster
 
 Operands are the data or addresses that instructions operate on. They can be:
 
-*   **Registers:** `R0` through `R9`, or their friendly names defined in the `.uasm` file (e.g., `I`, `A`, `B`).
+*   **Registers:** `R0` through `R9`, or their friendly names defined in the `.uasm` file (e.g., `I`, `A`, `B`, '...').
 *   **Numeric Literals:** Decimal values (e.g., `42`, `1024`). Character literals using the `\char` notation are also supported, where `\c` represents the ASCII value of character `c` (e.g., `\a` for ASCII 97, `\0` for ASCII 48).
 *   **Labels:** The address of a label (e.g., `jmp :my_loop`). 
 *   **Constants:** Defined with the `EQU` directive.
