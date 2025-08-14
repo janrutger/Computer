@@ -60,13 +60,14 @@ Available commands:
                 # Execute one full instruction (all its micro-steps)
                 # and then show the state again.
                 if self.cpu.state != "HALT":
+                    print(f"\n--- current Step: {self.cpu.state}---")
                     # A full instruction cycle goes from FETCH back to FETCH.
                     # We start by ticking once.
                     self.cpu.tick()
                     # Then we keep ticking as long as we are in the EXECUTE state.
                     while self.cpu.state == "EXECUTE":
                         self.cpu.tick()
-                    print("\n--- After Step ---")
+                    print(f"\n--- running....: {self.cpu.state}---")
                     self.cpu.dump_state()
                 else:
                     print("CPU is halted.")

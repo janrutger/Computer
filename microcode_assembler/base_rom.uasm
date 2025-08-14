@@ -134,6 +134,15 @@ def 53=SUBI {
     set_cpu_state(FETCH)
 }
 
+def 60=MUL {
+    .format two_reg_reg
+    move_reg(Ra, $1)
+    move_reg(Rb, $2)
+    alu(MUL)
+    move_reg($1, Ra)
+    set_cpu_state(FETCH)
+}
+
 def 61=MULI {
     .format two_reg_val
     move_reg(Ra, $1)

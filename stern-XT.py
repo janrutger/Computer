@@ -55,8 +55,8 @@ class CpuThread(threading.Thread):
         """Main loop for the CPU."""
         while self._running and self.cpu.state != "HALT":
             try:
-                # Check for breakpoint
-                if self.cpu.registers["PC"] in self.debugger.breakpoints:
+                # Check for breakpoint only when we are about to fetch a new instruction.
+                if self.cpu.state == "FETCH" and self.cpu.registers["PC"] in self.debugger.breakpoints:
                     self.debugger.enter_debug_mode()
 
                 # If in debug mode, wait until the user decides to continue

@@ -283,3 +283,5 @@ class CPU:
         for i in range(0, 10, 2):
             print(f"    R{i}: {self.registers[str(i)]:<5} R{i+1}: {self.registers[str(i+1)]}")
         print(f"  Internal Registers: Ra={self.registers['Ra']} Rb={self.registers['Rb']}")
+        print(f"  Interrupts Enabled: {self.interrupts_enabled}")
+        
