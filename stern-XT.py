@@ -138,7 +138,7 @@ def main():
     cpu_thread = CpuThread(cpu, debugger)
     
     cpu_thread.start()
-    sio.start() # SIO still runs in the background for future plotter use
+    #sio.start() # SIO still runs in the background for future plotter use
 
     # 5. Main GUI Loop
     print("Starting GUI... Press keys in the window to generate interrupts.")
@@ -171,7 +171,7 @@ def main():
     # 6. Shutdown
     print("GUI loop exited. Halting system...")
     cpu_thread.stop()
-    sio.stop()
+    #sio.stop()
     pygame.quit()
     print("System shutdown complete.")
     # A small delay to allow background threads to print final messages

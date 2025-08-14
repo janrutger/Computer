@@ -1,28 +1,127 @@
-i like to work on the ISA Assembler to make sure its beable to assemble multiple sourcefiles
+Okay, I can help you with a planned design for your loader and kernel files. This will serve as a high-level blueprint for their development.
+
+Loader Design
+Purpose: The primary role of the loader is to prepare and initiate the execution of a user application.
+
+Key Responsibilities:
+
+Initialization: Upon system boot, the loader will be the first piece of code executed.
+Program Loading: It will read the user program (which is assumed to be pre-loaded into a specific memory region, e.g., where program.bin is placed) and copy it into the designated "Program & Free Memory" area (address range 4096 - 12287, as per GEMINI.md).
+Entry Point Setup: After copying, the loader will set the CPU's Program Counter (PC) to the starting address of the loaded user program, effectively transferring control.
+Basic Validation (Optional but Recommended): Could include checks for program size to ensure it fits within the allocated memory.
+Kernel Design
+Purpose: The kernel will provide fundamental operating system services that user applications can leverage.
+
+Key Responsibilities (Initial Phase):
+
+System Call (SYSCALL) Handler:
+This will be the primary interface for user programs to request kernel services.
+It will involve a dedicated routine that is invoked by a specific ISA instruction (e.g., INT or a custom SYSCALL instruction).
+The handler will read a system call number (e.g., from a register or stack) and dispatch control to the appropriate kernel function.
+Basic I/O Service (e.g., print_char):
+An essential kernel function to output a single character to the display.
+This will involve writing the character to the memory-mapped video memory region (14336 - 16383) and potentially triggering a display update.
+Interrupt Handler (Placeholder):
+A basic structure to receive and acknowledge interrupts from peripheral devices (e.g., keyboard, SIO).
+Initially, it might just clear the interrupt flag and return, but it lays the groundwork for more complex interrupt handling.
+Interaction Flow
+Boot: System starts, loader executes.
+Load Program: Loader copies the user application into memory.
+Transfer Control: Loader sets PC to user program's entry point.
+User Program Execution: User program runs.
+Kernel Services: When the user program needs a service (e.g., printing text), it executes a SYSCALL instruction.
+Kernel Handles Request: The kernel's SYSCALL handler takes over, performs the requested service, and returns control to the user program.
+This design provides a clear separation of concerns and a foundation for building more complex functionality.
 
 
-the compiling of the multiple files must be done by one assembler instance
-because the assebler keeps track of the symboltable
 
-at init fase of the compiler the var_start pointer is given, so the assembler know where to place memory allocations
-each sourcefile has an starting adres, this adres is an argumnet for the current assemble method. this must be configurble to.
+Okay, considering steps 1 and 2 (multi-file assembly verification and basic memory copy) as confirmed, here's a revised 10-step implementation plan:
+
+Loader: Looping Memory Copy:
+
+Goal: Implement a loop in the loader to copy a block of memory (the user program).
+Action: Enhance loader.asm with a loop that copies bytes from a source range to the program memory region (4096-12287) until a specific size is copied. Use registers for source/destination pointers and a counter.
+Test: Assemble loader.asm with a larger user_program.asm. Run the simulator and verify the entire user program is copied and then executed.
+Loader: Transfer Control to User Program:
+
+Goal: Make the loader jump to the user program's start address.
+Action: At the end of loader.asm, add a JMP instruction to the user program's base address (e.g., 4096).
+Test: Assemble loader.asm and a simple user_program.asm (e.g., HALT) at 4096. Run the simulator. Verify the PC jumps to 4096 and the HALT instruction is executed.
+Kernel: Define SYSCALL Instruction (Microcode):
+
+Goal: Add a new instruction to the CPU's ISA for system calls.
+Action: In microcode_assembler/base_rom.uasm, define a new SYSCALL instruction (e.g., opcode 28, zero operand). Its microcode should jump to a predefined kernel entry point (e.g., address 1024).
+Test: Assemble the microcode. Write a minimal test_syscall.asm with just SYSCALL. Run the simulator and verify the PC jumps to the kernel entry point after SYSCALL is executed.
+Kernel: Basic SYSCALL Dispatcher:
+
+Goal: Create a kernel routine that reads a system call number and dispatches to the correct handler.
+Action: In kernel.asm, at the kernel entry point, read a system call number (e.g., from R0). Implement a simple if-else if (using TST, BEQ, JMP) structure to jump to different "service" labels based on the number. For now, each service just HALTs.
+Test: Write a user_program.asm that sets R0 to a specific SYSCALL number and then calls SYSCALL. Debug the execution to confirm the dispatcher jumps to the correct service label.
+Kernel: Implement print_char (Fixed Position):
+
+Goal: Write a character to the Pygame display at a fixed location.
+Action: In kernel.asm, create a print_char subroutine. This routine will take a character (e.g., from R1) and write it directly to a fixed address within the video memory region (14336-16383).
+Test: Modify the SYSCALL dispatcher to call print_char for a specific SYSCALL number. Write a user program that puts a character in R1 and calls this SYSCALL. Run stern-XT.py and observe the character on the display.
+Kernel: print_char with Cursor Management:
+
+Goal: Make print_char automatically advance the cursor and handle line wrapping.
+Action: Add a global variable (e.g., $CURSOR_POS) in kernel.asm to store the current video memory address. Update print_char to use and increment this cursor. Implement logic for line wrapping (e.g., if CURSOR_POS exceeds screen width, move to next line).
+Test: Write a user program that prints multiple characters and lines. Verify characters appear sequentially and wrap correctly on the Pygame display.
+Integrate All Components with build.json:
+
+Goal: Assemble the loader, kernel, and a full user program into a single binary.
+Action: Update bin/build.json to include loader.asm (at 0), kernel.asm (at 1024), and user_program.asm (at 4096). Ensure restore_symbols is handled correctly if needed.
+Test: Run the assembler with the updated build.json. Verify program.bin contains all three components correctly placed.
+End-to-End System Test:
+
+Goal: Confirm the entire system (loader, kernel, user program) functions as intended.
+Action: Write a user_program.asm that uses the print_char SYSCALL to display a simple message.
+Test: Run python3 stern-XT.py. Observe the Pygame display to confirm the message is printed correctly. Use the debugger to step through the loader and kernel if issues arise.
+Keyboard Input (Microcode & Kernel):
+
+Goal: Implement a basic keyboard input mechanism.
+Action: Define a new ISA instruction (e.g., GETC) in microcode that reads from the keyboard input buffer (memory-mapped I/O). Implement a corresponding kernel routine that handles the GETC SYSCALL, waits for input, and returns the character.
+Test: Write a user program that calls GETC and then prints the received character. Verify that typing a key on the Pygame window results in the character being displayed.
+Basic Interrupt Handling (Kernel):
+
+Goal: Set up a basic interrupt service routine (ISR) for keyboard interrupts.
+Action: Configure the interrupt controller (if exposed via memory-mapped registers) to enable keyboard interrupts. In the kernel, define an ISR that is jumped to when a keyboard interrupt occurs. This ISR could simply store the character in a buffer and clear the interrupt.
+Test: Run a user program. Type a key. Verify that the ISR is triggered and the character is buffered, without the user program explicitly calling GETC (i.e., it's interrupt-driven).
 
 
-the __main__ of the ISA assemblr.py is subject to change
 
-it must compile the multiple sourcefiles to one single program.bin file
-like it does now for an single sourcefiles
+Here's a description of the responsibilities for each component:
 
-when a sourcefile is compiled, the restore flag (true/false),
-is to remain the current symboltable, or to restore the previous one
+Loader:
 
+Responsibility: The initial bootstrapper of the system. Its sole purpose is to copy the user's application code (the program.bin) from a designated storage area into the CPU's main executable memory space. Once the copying is complete, it transfers control (sets the Program Counter) to the beginning of the loaded user program.
+Kernel:
 
-it must be an easy and simple solution to make the ISA compiler doeing multiple sourcefiles based on a build config file
+Responsibility: Acts as a minimal operating system, providing essential low-level services to user programs. These services include basic input/output operations (e.g., displaying characters on the screen, reading keyboard input) and managing fundamental system resources. User programs interact with the Kernel by making explicit system calls (SYSCALLs).
+User Program (pro_gram):
 
-The build config file contains: the output filename, var_start adres, sourcefiles and per sourcefile the base/start adres of that file and if the assembler must remain, or restore the symboltable
-
- build.json file is present in the bin folder
+Responsibility: Contains the application-specific logic and instructions written by the user. It performs the desired tasks and interacts with the underlying hardware and system resources indirectly by requesting services from the Kernel through system calls. This is the "application" that runs on the Stern-XT system.
 
 
- now i want to change the main, so the main writes the binary, bin file not the generate_binary method
- 
+
+
+
+A small shell should live as a User Program.
+
+It would be loaded by the Loader into the "Program & Free Memory" region, just like any other application. The shell would then interact with the Kernel to perform its functions, such as printing prompts, reading user input, and potentially loading and executing other user programs.
+
+
+That's a very insightful point, especially for a dedicated language and when program space is a critical concern.
+
+You are absolutely correct that integrating the runtime calls directly into the kernel can significantly save program space. If your higher-level language is specifically designed for this project, then:
+
+Shared Code: The runtime routines become part of the kernel's fixed memory footprint, meaning they are loaded only once and shared by all user programs. This avoids duplicating the runtime library code within each individual user program's binary.
+Reduced User Program Size: User programs written in your dedicated language would then only need to contain their application-specific logic, making them much smaller.
+This approach is common in embedded systems and specialized environments where resources are constrained.
+
+The trade-offs to consider are:
+
+Increased Kernel Complexity and Size: The kernel will grow larger and more complex, as it now includes language-specific runtime functions.
+Reduced Flexibility: It makes it harder to introduce other programming languages later, as their runtimes would not be integrated.
+Impact of Bugs: Any bugs in the integrated runtime routines could potentially destabilize the entire system, as they are part of the core kernel.
+However, for your stated goal of saving program space with a dedicated language, this is a very sensible design decision.

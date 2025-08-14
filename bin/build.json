@@ -3,12 +3,12 @@
   "var_start": 12288,
   "sources": [
     {
-      "file": "asm/test.asm",
+      "file": "asm/os_loader.asm",
       "base_address": 0,
-      "restore_symbols": true
+      "restore_symbols": false
     },
     {
-      "file": "asm/test.asm",
+      "file": "asm/os_kernel.asm",
       "base_address": 1024,
       "restore_symbols": false
     }
