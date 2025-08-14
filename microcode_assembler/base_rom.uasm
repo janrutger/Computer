@@ -56,6 +56,22 @@ def 24=CALL {
     set_cpu_state(FETCH)
 }
 
+
+def 25=CALLX {
+    .format one_addr
+    move_reg(Ra, SP)        ; Ra = SP
+    store_mem_reg(SP, PC)   ; Store PC (return address) at SP
+    alu(DEC)                ; Decrement SP
+    move_reg(SP, Ra)        ; Update SP
+
+    ; Calculate effective address: arg1 + R0 (index register I)
+    read_mem_adres($1, Ra)  ; Ra = value at address arg1
+    move_reg(Rb, R0)        ; Rb = R0 (index register I)
+    alu(ADD)                ; Ra = Ra + Rb (effective address)
+    move_reg(PC, Ra)        ; Load effective address into PC
+    set_cpu_state(FETCH)
+}
+
 def 30=LD {
     .format two_reg_reg
     move_reg($1, $2)

@@ -312,6 +312,81 @@
                 }
             ]
         },
+        "25": {
+            "name": "CALLX",
+            "format": "one_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "SP"
+                    ],
+                    "comment": "Ra = SP"
+                },
+                {
+                    "instruction": [
+                        "store_mem_reg",
+                        "SP",
+                        "PC"
+                    ],
+                    "comment": "Store PC (return address) at SP"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "DEC"
+                    ],
+                    "comment": "Decrement SP"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "SP",
+                        "Ra"
+                    ],
+                    "comment": "Update SP"
+                },
+                {
+                    "instruction": [
+                        "read_mem_adres",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": "Ra = value at address arg1"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Rb",
+                        "0"
+                    ],
+                    "comment": "Rb = R0 (index register I)"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "ADD"
+                    ],
+                    "comment": "Ra = Ra + Rb (effective address)"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "PC",
+                        "Ra"
+                    ],
+                    "comment": "Load effective address into PC"
+                },
+                {
+                    "instruction": [
+                        "set_cpu_state",
+                        "FETCH"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
         "30": {
             "name": "LD",
             "format": "two_reg_reg",
