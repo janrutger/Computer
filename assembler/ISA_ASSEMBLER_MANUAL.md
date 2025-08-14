@@ -26,13 +26,37 @@ The Stern-XT ISA assembler translates assembly language programs (`.asm` files) 
 
 ## Usage
 
-To assemble a program, run the assembler from the command line and provide the path to the source file:
+The Stern-XT ISA assembler now primarily operates using a `build.json` configuration file, which allows for orchestrating complex multi-file assembly processes. While it is designed for multi-file projects, you can still assemble a single `.asm` file by defining it within a `build.json`.
+
+To use the assembler, run it from the command line. By default, it will look for `bin/build.json`. You can also specify a different build configuration file as an argument:
 
 ```bash
-python3 assembler/assembler.py assembler/asm/my_program.asm
+python3 assembler/assembler.py bin/my_project_build.json
 ```
 
-This will generate a `program.bin` file in the `bin` directory.
+#### Assembling a Single File with `build.json`
+
+To assemble a single `.asm` file, create a `build.json` that specifies only that file:
+
+```json
+{
+  "output": "my_single_program.bin",
+  "var_start": 12288,
+  "sources": [
+    {
+      "file": "asm/my_program.asm",
+      "base_address": 0,
+      "restore_symbols": false
+    }
+  ]
+}
+```
+
+Then, run the assembler with this specific `build.json`:
+
+```bash
+python3 assembler/assembler.py bin/my_single_program_build.json
+```
 
 ## Syntax
 

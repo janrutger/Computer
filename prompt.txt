@@ -1,0 +1,28 @@
+i like to work on the ISA Assembler to make sure its beable to assemble multiple sourcefiles
+
+
+the compiling of the multiple files must be done by one assembler instance
+because the assebler keeps track of the symboltable
+
+at init fase of the compiler the var_start pointer is given, so the assembler know where to place memory allocations
+each sourcefile has an starting adres, this adres is an argumnet for the current assemble method. this must be configurble to.
+
+
+the __main__ of the ISA assemblr.py is subject to change
+
+it must compile the multiple sourcefiles to one single program.bin file
+like it does now for an single sourcefiles
+
+when a sourcefile is compiled, the restore flag (true/false),
+is to remain the current symboltable, or to restore the previous one
+
+
+it must be an easy and simple solution to make the ISA compiler doeing multiple sourcefiles based on a build config file
+
+The build config file contains: the output filename, var_start adres, sourcefiles and per sourcefile the base/start adres of that file and if the assembler must remain, or restore the symboltable
+
+ build.json file is present in the bin folder
+
+
+ now i want to change the main, so the main writes the binary, bin file not the generate_binary method
+ 

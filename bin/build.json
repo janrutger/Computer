@@ -1,0 +1,16 @@
+{
+  "output": "program.bin",
+  "var_start": 12288,
+  "sources": [
+    {
+      "file": "asm/test.asm",
+      "base_address": 0,
+      "restore_symbols": true
+    },
+    {
+      "file": "asm/test.asm",
+      "base_address": 1024,
+      "restore_symbols": false
+    }
+  ]
+}

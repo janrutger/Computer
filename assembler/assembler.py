@@ -241,7 +241,7 @@ class Assembler:
                  else: self._error(line_num, line_content, f"Unknown symbol '{value_str}' used as value.")
         else: self._error(line_num, line_content, f"Invalid value format '{value_str}'.")
 
-    def generate_binary(self, prg_start, output_file):
+    def generate_binary(self, prg_start):
         self.binary = []
         pc = prg_start
         pc_to_idx_map = {}
@@ -344,10 +344,11 @@ class Assembler:
             except Exception as e:
                  self._error(current_line_num_for_error, current_line_content_for_error, f"Unexpected error during binary generation: {e}")
 
-        try:
-            writeBin(self.binary, output_file)
-        except Exception as e:
-             raise AssemblyError(f"Failed to write binary output to '{output_file}': {e}")
+        # try:
+        #     writeBin(self.binary, output_file)
+        # except Exception as e:
+        #      raise AssemblyError(f"Failed to write binary output to '{output_file}': {e}")
+    
 
     def save_state(self):
         self._saved_symbols = self.symbols.copy()
@@ -362,7 +363,7 @@ class Assembler:
             self.constants = self._saved_constants.copy()
             self.NextVarPointer = self._saved_next_var_pointer
 
-    def assemble(self, filename, prog_start, output="out.bin", restore=False):
+    def assemble(self, filename, prog_start, restore=False):
         
         try:
             self.save_state()
@@ -374,8 +375,8 @@ class Assembler:
             self.read_source(filename)
             self.parse_source()
             self.parse_symbols(prog_start)
-            self.generate_binary(prog_start, os.path.join("bin", output))
-            print(f"--- Successfully assembled {filename} -> {output} ---")
+            self.generate_binary(prog_start)
+            print(f"--- Successfully assembled {filename}  ---")
 
         except FileNotFoundError as e:
              print(f"ERROR: Assembly source file not found: {filename}", file=sys.stderr)
@@ -390,26 +391,64 @@ class Assembler:
         finally:
             if restore:
                 self.restore_state()
+        return self.binary
+
 
 if __name__ == "__main__":
+    build_file = "bin/build.json"
     if len(sys.argv) > 1:
-        input_file = sys.argv[1]
-        output_file = "program.bin"
-        if len(sys.argv) > 2:
-            output_file = sys.argv[2]
-        
-        assembler = Assembler(12288)   # init $vat_start
-        try:
-            program_start = 0           # start adres for compiling (sort of .org)
-            print(f"\nAssembling {input_file}...")
-            assembler.assemble(input_file, program_start, output_file, False)
-            print("\nAssembly process completed.")
+        build_file = sys.argv[1]
 
+    try:
+        with open(build_file, 'r') as f:
+            build_config = json.load(f)
+    except FileNotFoundError:
+        print(f"ERROR: Build configuration file not found at: {build_file}", file=sys.stderr)
+        sys.exit(1)
+    except json.JSONDecodeError:
+        print(f"ERROR: Invalid JSON in build configuration file: {build_file}", file=sys.stderr)
+        sys.exit(1)
+
+    output_file = os.path.join(os.path.dirname(build_file), build_config.get("output", "program.bin"))
+    var_start = build_config.get("var_start", 12288) # Default if not specified
+
+    assembler = Assembler(var_start)
+    combined_binary = []
+
+    print(f"\n--- Starting multi-file assembly from {build_file} ---")
+
+    for source_entry in build_config.get("sources", []):
+        file_path = source_entry.get("file")
+        base_address = source_entry.get("base_address", 0)
+        restore_symbols = source_entry.get("restore_symbols", False)
+
+        if not file_path:
+            print("WARNING: Skipping source entry with missing 'file' path.", file=sys.stderr)
+            continue
+
+        # Construct absolute path for the assembly file
+        # Assuming assembly files are relative to the assembler.py script or project root
+        # For now, let's assume they are relative to the project root as per the build.json example
+        abs_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), file_path)
+        
+        print(f"Assembling {file_path} (base address: {base_address})...")
+        try:
+            # The assemble method already handles its own error printing
+            current_binary = assembler.assemble(abs_file_path, base_address, restore_symbols)
+            combined_binary.extend(current_binary)
         except (AssemblyError, FileNotFoundError):
-            print("\nAssembly process halted due to errors (caught in main).")
+            print(f"--- Assembly failed for {file_path}. Halting build. ---", file=sys.stderr)
             sys.exit(1)
         except Exception as e:
-            print(f"\nAn unexpected error occurred during the assembly process: {e}")
+            print(f"FATAL ERROR during assembly of {file_path}: {e}", file=sys.stderr)
             sys.exit(1)
-    else:
-        print("Usage: python assembler.py <input_file> [output_file]")
+
+    print("\n--- Multi-file assembly process completed. ---")
+
+    print(f"Writing combined binary output to '{output_file}'...")
+    try:
+        writeBin(combined_binary, output_file)
+        print("Binary output written successfully.")
+    except Exception as e:
+        print(f"ERROR: Failed to write combined binary output to '{output_file}': {e}", file=sys.stderr)
+        sys.exit(1)
