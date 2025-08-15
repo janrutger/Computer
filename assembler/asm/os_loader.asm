@@ -31,8 +31,8 @@ call @KBD_INIT
 ei
 
 
-; ldi I ~KERNEL_START
-; callx $start_memory
+ldi I ~KERNEL_START
+callx $start_memory
 
 :loader_loop
     nop

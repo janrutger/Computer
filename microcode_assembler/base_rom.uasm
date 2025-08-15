@@ -40,7 +40,6 @@ def 15=RTI {
     set_interrupt_flag(TRUE)
 }
 
-
 def 20=JMPF {
     .format one_addr
     branch(S, false)      ; jump when the status bit is set to true

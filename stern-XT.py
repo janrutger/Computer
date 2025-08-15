@@ -6,8 +6,8 @@ import time
 import sys
 import os
 
-from cpu import CPU
-from memory import Memory
+from devices.cpu import CPU
+from devices.memory import Memory
 from devices.interrupt_controller import InterruptController
 from devices.keyboard import Keyboard
 from devices.sio import SIO

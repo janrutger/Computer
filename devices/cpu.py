@@ -1,4 +1,4 @@
-from memory import Memory
+from devices.memory import Memory
 import json
 
 # --- Constants ---
