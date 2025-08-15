@@ -65,9 +65,6 @@ class CpuThread(threading.Thread):
 
                 if self.cpu.state != "HALT":
                     self.cpu.tick()
-                    # The time.sleep() can be adjusted to control the CPU speed
-                    # A shorter sleep means a faster CPU.
-                    # time.sleep(0.0001)
             except Exception as e:
                 print(f"FATAL CPU Runtime Error: {e}", file=sys.stderr)
                 self.cpu.state = "HALT"
@@ -123,14 +120,15 @@ def main():
     load_program_bin(ram, program_bin_path)
 
     # 3. Initialize CPU and Peripherals
-    cpu = CPU(ram, interrupt_controller)
+    debug_mode = "-debug" in sys.argv
+    cpu = CPU(ram, interrupt_controller, debug_mode=debug_mode)
     cpu.registers["PC"] = MEM_LOADER_START # Set PC to the start of the loaded program
     keyboard = Keyboard(interrupt_controller, vector=KEYBOARD_INTERRUPT_VECTOR)
     sio = SIO(ram, interrupt_controller)
     debugger = Debugger(cpu, ram)
 
     # Check for debug flag
-    if "-debug" in sys.argv:
+    if debug_mode:
         debugger.add_breakpoint(0)
 
     # 4. Create and Start Background Threads

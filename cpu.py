@@ -1,16 +1,17 @@
-from memory import Memory 
+from memory import Memory
 import json
 
 # --- Constants ---
 MEM_INT_VECTORS_START = 3072
 
 class CPU:
-    def __init__(self, memory: Memory, interrupt_controller=None, rom_path="bin/stern_rom.json"):
+    def __init__(self, memory: Memory, interrupt_controller=None, rom_path="bin/stern_rom.json", debug_mode=False):
         self.memory = memory
         self.interrupt_controller = interrupt_controller
         self.microcode_rom = {}
         self.instruction_formats = {}
         self._load_microcode_from_json(rom_path)
+        self.debug_mode = debug_mode
 
         # General Purpose Registers (R0-R9)
         self.registers = {str(i): 0 for i in range(10)}
@@ -61,7 +62,8 @@ class CPU:
                 #print("Fetching instruction")
                 self.MIR = self.memory.read(self.registers["PC"])
                 self.registers["PC"] += 1
-                print(f"Fetched instruction: {self.MIR}, from address {self.registers['PC'] - 1}")
+                if self.debug_mode:
+                    print(f"Fetched instruction: {self.MIR}, from address {self.registers['PC'] - 1}")
                 self.state = "DECODE"
 
             elif self.state == "DECODE":
@@ -86,8 +88,9 @@ class CPU:
                     else:
                         print(f"Unknown instruction format: {format}")
                         self.state = "HALT"
-
-                    print(f"Decoded instruction: {opcode}, format: {format}, arg1: {self.operand1}, arg2: {self.operand2}")
+                    
+                    if self.debug_mode:
+                        print(f"Decoded instruction: {opcode}, format: {format}, arg1: {self.operand1}, arg2: {self.operand2}")
 
                     if opcode in self.microcode_rom:
                         self.current_microcode_sequence = self.microcode_rom[opcode]
@@ -105,7 +108,8 @@ class CPU:
                 if self.microcode_step_index < len(self.current_microcode_sequence):
                     microcode_step = self.current_microcode_sequence[self.microcode_step_index]
                     self.microcode_step_index += 1
-                    print(f"    Executing cycle: {microcode_step[0]} {microcode_step[1:]}")
+                    if self.debug_mode:
+                        print(f"    Executing cycle: {microcode_step[0]} {microcode_step[1:]}")
                     self.execute_microcode_step(microcode_step, self.operand1, self.operand2)
                 else:
                     self.state = "FETCH"
@@ -126,8 +130,9 @@ class CPU:
 
         # 3. Write the interrupt data to the designated memory address
         self.interrupt_controller.handle_acknowledged_interrupt(vector, data)
-
-        print(f"CPU responding to interrupt vector {vector}")
+        
+        if self.debug_mode:
+            print(f"CPU responding to interrupt vector {vector}")
 
         # 4. Save the current Program Counter on the stack
         self.memory.write(self.registers["SP"], self.registers["PC"])
@@ -136,7 +141,8 @@ class CPU:
         # 5. Look up the ISR address in the Interrupt Vector Table
         vector_address = MEM_INT_VECTORS_START + vector
         isr_address = int(self.memory.read(vector_address))
-        print(f"CPU: Found ISR address {isr_address} at vector table entry {vector_address}.")
+        if self.debug_mode:
+            print(f"CPU: Found ISR address {isr_address} at vector table entry {vector_address}.")
 
         # 6. Jump to the Interrupt Service Routine (ISR)
         self.registers["PC"] = isr_address
