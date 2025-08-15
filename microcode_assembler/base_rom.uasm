@@ -22,6 +22,25 @@ def 12=RET {
     set_cpu_state(FETCH)
 }
 
+def 13=EI {
+    .format zero
+    set_interrupt_flag(TRUE)
+    set_cpu_state(FETCH)
+}
+
+def 14=DI {
+    .format zero
+    set_interrupt_flag(FALSE)
+    set_cpu_state(FETCH)
+}
+
+def 15=RTI {
+    .format zero
+    shadow(RESTORE)
+    set_interrupt_flag(TRUE)
+}
+
+
 def 20=JMPF {
     .format one_addr
     branch(S, false)      ; jump when the status bit is set to true
@@ -263,26 +282,5 @@ def 91=POP {
     set_cpu_state(FETCH)
 }
 
-def 13=EI {
-    .format zero
-    set_interrupt_flag(TRUE)
-    set_cpu_state(FETCH)
-}
-
-def 14=DI {
-    .format zero
-    set_interrupt_flag(FALSE)
-    set_cpu_state(FETCH)
-}
-
-def 15=RTI {
-    .format zero
-    move_reg(Ra, SP)        ; Ra = SP
-    alu(INC)                ; Ra = Ra + 1 (SP is now effectively incremented in Ra)
-    move_reg(SP, Ra)        ; SP = Ra (SP is updated)
-    read_mem_reg(SP, PC)    ; PC = memory[SP] (read the saved PC)
-    set_interrupt_flag(TRUE); Re-enable interrupts
-    set_cpu_state(FETCH)
-}
 
 

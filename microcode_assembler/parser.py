@@ -17,6 +17,8 @@ def is_bool_str(arg): return arg.upper() in ["TRUE", "FALSE"]
 def is_cpu_state(arg): return arg.upper() in ["FETCH", "DECODE", "EXECUTE", "HALT"]
 def is_alu_op(arg): return arg.upper() in ["ADD", "SUB", "MUL", "DIV", "INC", "DEC", "CMP"]
 def is_branch_flag(arg): return arg.upper() in ["A", "E", "Z", "N", "S"]
+def is_shadow_str(arg): return arg.upper() in ["SAVE", "RESTORE"]
+
 
 # Arg types: REG, GPR, SR, RUNTIME, LABEL, NUM, BOOL, STATE
 # A list defines valid types for that position, e.g., [is_gpr, is_runtime_arg]
@@ -32,6 +34,8 @@ ARG_VALIDATORS = {
     "set_status_bit": [[is_bool_str]],
     "set_interrupt_flag": [[is_bool_str]],
     "alu": [[is_alu_op]],
+    "save_to_shadow": [],
+    "shadow": [[is_shadow_str]],
 }
 
 VALID_INSTRUCTIONS = {name: len(validators) for name, validators in ARG_VALIDATORS.items()}

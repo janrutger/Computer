@@ -128,46 +128,15 @@
             "code": [
                 {
                     "instruction": [
-                        "move_reg",
-                        "Ra",
-                        "SP"
+                        "shadow",
+                        "RESTORE"
                     ],
-                    "comment": "Ra = SP"
-                },
-                {
-                    "instruction": [
-                        "alu",
-                        "INC"
-                    ],
-                    "comment": "Ra = Ra + 1 (SP is now effectively incremented in Ra)"
-                },
-                {
-                    "instruction": [
-                        "move_reg",
-                        "SP",
-                        "Ra"
-                    ],
-                    "comment": "SP = Ra (SP is updated)"
-                },
-                {
-                    "instruction": [
-                        "read_mem_reg",
-                        "SP",
-                        "PC"
-                    ],
-                    "comment": "PC = memory[SP] (read the saved PC)"
+                    "comment": null
                 },
                 {
                     "instruction": [
                         "set_interrupt_flag",
                         "TRUE"
-                    ],
-                    "comment": "Re-enable interrupts"
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
                     ],
                     "comment": null
                 }

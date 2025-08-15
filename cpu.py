@@ -16,14 +16,19 @@ class CPU:
         # General Purpose Registers (R0-R9)
         self.registers = {str(i): 0 for i in range(10)}
 
+
         # Special Registers
         self.registers["PC"] = 0  # Program Counter
         self.registers["SP"] = self.memory.size - 1  # Stack Pointer
-
+        # Shadow registers for interrupts
+        self.shadow_registers = self.registers.copy()
+        
         self.MIR = "0"  # Memory Instruction Register
 
         # Flags
         self.flags = {"Z": False, "N": False, "E": False, "S": False}
+        # Shadow flags for interrupts
+        self.shadow_flags = self.flags.copy()
         self.interrupts_enabled = False  # Master Interrupt Enable Flag
 
         # Internal CPU registers for ALU operations
@@ -117,6 +122,14 @@ class CPU:
         else:
             print("CPU is halted.")
 
+    def _save_to_shadow(self):
+        self.shadow_registers = self.registers.copy()
+        self.shadow_flags = self.flags.copy()
+
+    def _restore_from_shadow(self):
+        self.registers = self.shadow_registers.copy()
+        self.flags = self.shadow_flags.copy()
+
     def _handle_interrupt(self):
         """The CPU's interrupt acknowledge sequence."""
         # 1. Disable further interrupts temporarily
@@ -134,9 +147,8 @@ class CPU:
         if self.debug_mode:
             print(f"CPU responding to interrupt vector {vector}")
 
-        # 4. Save the current Program Counter on the stack
-        self.memory.write(self.registers["SP"], self.registers["PC"])
-        self.registers["SP"] -= 1
+        # 4. Save the current context to shadow registers
+        self._save_to_shadow()
 
         # 5. Look up the ISR address in the Interrupt Vector Table
         vector_address = MEM_INT_VECTORS_START + vector
@@ -165,6 +177,13 @@ class CPU:
                 self.interrupts_enabled = True
             else:
                 self.interrupts_enabled = False
+        
+        elif microcode_step[0] == "shadow":
+            op = microcode_step[1]
+            if op == "SAVE":
+                self._save_to_shadow()
+            elif op == "RESTORE":
+                self._restore_from_shadow()
 
         # branch(FLAG, n-lines)
         elif microcode_step[0] == "branch":

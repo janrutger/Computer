@@ -19,12 +19,29 @@ EQU ~STACK_TOP 14335
 . $VIDEO_MEM 1
 % $VIDEO_MEM ~VIDEO_MEM
 
+. $INT_VECTORS 1
+% $INT_VECTORS ~INT_VECTORS
+
+
 
 ##########
-ldi I ~KERNEL_START
-callx $start_memory
+call @init_interrupt_vector_table
+call @KBD_INIT
+
+ei
+
+
+; ldi I ~KERNEL_START
+; callx $start_memory
+
+:loader_loop
+    nop
+    jmp :loader_loop
+
 
 halt
 ##########
-
+INCLUDE interrupt_vector_table
 INCLUDE loader_screen_routines 
+INCLUDE loader_keyboard_routines 
+
