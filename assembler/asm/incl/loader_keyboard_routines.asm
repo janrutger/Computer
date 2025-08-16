@@ -16,10 +16,10 @@ EQU ~KEY_BACKSPACE 8
 % $KBD_BUFFER_ADRES $KBD_BUFFER     ; adres -> buffer
 
 
-
-
 ; base adrs for the IO registers
 . $KBD_IO_BASE_POINTER 1        ; IO memory base adres
+
+
 
 @KBD_INIT
     ; Initialize IO memory register
@@ -72,12 +72,12 @@ EQU ~KEY_BACKSPACE 8
 
 
 ;-------------------------------------------------------------------------------
-; GET_KBD_CHAR (@KBD_GETC)
+; GET_KBD_CHAR (@KBD_GET_CHAR)
 ;
 ; Reads a character from the keyboard circular buffer.
 ; Returns: C = character, (S-flag)tatus = 0 if no char, (S-flag)tatus = 1 if char read
 ;-------------------------------------------------------------------------------
-@GET_KBD_CHAR
+@KBD_GET_CHAR
     di                      ; interrrupts must be disabled
     ; Check if buffer is empty
     ldm M $KBD_READ_PNTR    ; M = KBD_READ_PNTR

@@ -4,7 +4,7 @@
     ; The main loop of the kernel.
     ; Later, this will read from the buffer and process commands.
     
-    call @GET_KBD_CHAR   ; Call the routine to get a character
+    call @KBD_GET_CHAR   ; Call the routine to get a character
     jmpt :char_available ; Branch if Status flag is set (character available)
     jmp @main_loop       ; If no character, loop again
 
