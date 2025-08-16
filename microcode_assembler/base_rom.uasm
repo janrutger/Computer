@@ -263,6 +263,15 @@ def 81=DEC {
     set_cpu_state(FETCH)
 }
 
+def 82=ANDI {
+    .format two_reg_val
+    move_reg(Ra, $1)
+    load_immediate(Rb, $2)
+    alu(AND)
+    move_reg($1, Ra)
+    set_cpu_state(FETCH)
+}
+
 def 90=PUSH {
     .format one_reg
     move_reg(Ra, SP)

@@ -242,6 +242,8 @@ class CPU:
                 self.registers["Ra"] -= 1
             elif op == "INC":
                 self.registers["Ra"] += 1
+            elif op == "AND":
+                self.registers["Ra"] &= self.registers["Rb"]
             elif op == "CMP":
                 pass # CMP only sets flags
             self._set_flags()

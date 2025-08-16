@@ -1130,6 +1130,50 @@
                 }
             ]
         },
+        "82": {
+            "name": "ANDI",
+            "format": "two_reg_val",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "AND"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "set_cpu_state",
+                        "FETCH"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
         "90": {
             "name": "PUSH",
             "format": "one_reg",

@@ -23,25 +23,28 @@ EQU ~STACK_TOP 14335
 % $INT_VECTORS ~INT_VECTORS
 
 
+## this is the first line of code of the loader at mem_start
+ldi Z 0     ; Start of loader at mem_start
+            ; Z is zero and must retain zero all the time
+
+
 
 ##########
-call @init_interrupt_vector_table
-call @KBD_INIT
-
+call @init_interrupt_vector_table   
 ei
 
-
+# start the kernel by calling the kernel entry point
+# at KERNEL_START in memory
 ldi I ~KERNEL_START
 callx $start_memory
 
-:loader_loop
-    nop
-    jmp :loader_loop
 
 
 halt
-##########
+########## 
+
+
 INCLUDE interrupt_vector_table
-INCLUDE loader_screen_routines 
-INCLUDE loader_keyboard_routines 
+INCLUDE loader_screen_routines
+INCLUDE loader_keyboard_routines
 
