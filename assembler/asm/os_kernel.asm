@@ -3,7 +3,7 @@
     ; by printing 1930 'X' characters, which is more
     ; than the 1920 characters the screen can hold.
 
-    ldi B 2500     ; Y = loop counter
+    ldi B 1930     ; Y = loop counter
     ldi C \X       ; C = character to print
 
 :print_loop

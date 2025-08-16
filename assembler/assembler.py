@@ -2,7 +2,7 @@ from FileIO import readFile, writeBin
 import sys # Import sys for stderr
 import json
 import os
-
+ 
 # --- Optional: Define a custom exception for cleaner handling ---
 class AssemblyError(Exception):
     """Custom exception for assembly errors."""
