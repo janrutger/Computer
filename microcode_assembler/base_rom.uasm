@@ -236,9 +236,9 @@ def 72=TSTG {
 :true
     set_status_bit(FALSE)
 :end
-    set_cpu_state(FETCH)
+    set_cpu_state(FETCH) 
 }
-
+  
 # INC r mem (opcode 80)
 # eg: INC R1 100 -> 801100
 # op1: register, op2: memory address

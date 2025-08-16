@@ -30,6 +30,7 @@ ldi Z 0     ; Start of loader at mem_start
 
 
 ##########
+call @KBD_INIT
 call @init_interrupt_vector_table   
 ei
 
@@ -37,8 +38,6 @@ ei
 # at KERNEL_START in memory
 ldi I ~KERNEL_START
 callx $start_memory
-
-
 
 halt
 ########## 

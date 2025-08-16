@@ -9,7 +9,7 @@ MICROCODE_SOURCES = microcode_assembler/base_rom.uasm
 # This is a bit tricky for make, as it can't easily parse JSON directly.
 # For simplicity, we'll list the main ones here.
 # In a more complex scenario, you might use a script to generate this list.
-ISA_SOURCES = assembler/asm/os_loader.asm assembler/asm/os_kernel.asm
+ISA_SOURCES = $(shell find assembler/asm -name "*.asm")
 
 # Assembler scripts
 MICROCODE_ASSEMBLER_SCRIPT = microcode_assembler/assembler.py
@@ -17,7 +17,7 @@ ISA_ASSEMBLER_SCRIPT = assembler/assembler.py
 
 all: $(PROGRAM_BIN)
 
-$(MICROCODE_ROM): $(MICROCODE_SOURCES) $(MICROCODE_ASSEMBLER_SCRIPT)
+$(MICROCODE_ROM): $(MICROCODE_SOURCES) $(MICROCODE_ASSEMBLER_SCRIPT) microcode_assembler/parser.py
 	@echo "Assembling microcode..."
 	python3 $(MICROCODE_ASSEMBLER_SCRIPT) $(MICROCODE_SOURCES)
 

@@ -4,7 +4,7 @@
 ; Routines for handling buffered keyboard input for the OS Kernel.
 ;-------------------------------------------------------------------------------
 
-EQU ~KBD_BUFFER_SIZE 64
+EQU ~KBD_BUFFER_SIZE 16
 EQU ~KEY_RETURN 13
 EQU ~KEY_BACKSPACE 8
 
@@ -68,14 +68,38 @@ EQU ~KEY_BACKSPACE 8
     sto Z $KBD_WRITE_PNTR
 
 :end_kbd_isr
-
-
-
-    ################
-
-    ; --- Echo character to screen ---
-    ; C must hold the char to print
-    call @print_char
-
-:isr_done
     rti                         ; Return from interrupt
+
+
+;-------------------------------------------------------------------------------
+; GET_KBD_CHAR (@KBD_GETC)
+;
+; Reads a character from the keyboard circular buffer.
+; Returns: C = character, (S-flag)tatus = 0 if no char, (S-flag)tatus = 1 if char read
+;-------------------------------------------------------------------------------
+@GET_KBD_CHAR
+    di                      ; interrrupts must be disabled
+    ; Check if buffer is empty
+    ldm M $KBD_READ_PNTR    ; M = KBD_READ_PNTR
+    ldm L $KBD_WRITE_PNTR   ; L = KBD_WRITE_PNTR
+    tste M L                ; Compare read_ptr with write_ptr
+    jmpt :no_char           ; If equal, buffer is empty
+
+    ; Read character from buffer
+    ldm I $KBD_READ_PNTR    ; I = KBD_READ_PNTR (current read position for LDX)
+    ldx C $KBD_BUFFER_ADRES ; Read char from KBD_BUFFER_ADRES + I into C
+
+    ; Update read pointer
+    ldm M $KBD_READ_PNTR    ; M = KBD_READ_PNTR
+    addi M 1                ; M = M + 1
+    andi M 15               ; M = M % 16 (new read pointer)
+    sto M $KBD_READ_PNTR    ; Store new read pointer
+
+    tste A A                ; Set status-bit to 1 (char read)
+    ei                      ; enable interrupts
+    ret
+
+:no_char
+    tstg A A                ; Set status-bit to 0 (no char)
+    ei                      ; enable interrupts
+    ret
