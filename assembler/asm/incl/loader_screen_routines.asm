@@ -16,17 +16,50 @@
 
 
 @print_char
-    # calculate mem wrire pointer
+    # Read system cursorX cursorY
     ldm X $cursor_x
     ldm Y $cursor_y
 
+    # char to write, hold in C 
+    # check for \Return
+
+    tst C \Return
+    jmpt :do_print_Return
+    tst C \BackSpace
+    jmpt :do_print_BackSpace
+    jmp :do_print_char
+
+
+:do_print_Return
+    ld X Z          ; reset X to zero
+    addi Y 1        ; advance Y
+    jmp :check_bounderies
+
+:do_print_BackSpace
+    tste X Z        ; check if X on first colom
+    jmpt :print_char_done ; if so, do nothing
+
+    subi X 1        ; Decrement X to move cursor back
+
+    ; Now, erase the character at the new cursor position
+    ldi C \space    ; Fill C with blank for erasing
+    
+    # calculate mem write pointer
     ldi I ~SCREEN_WIDTH
     mul I Y        ; Number of lines * width
     add I X        ; add the X possition
 
-    # write char, hold in C 
-    stx C $VIDEO_MEM
+    stx C $VIDEO_MEM            ; write char in memory
+    
+    jmp :print_char_done
 
+:do_print_char
+    # calculate mem write pointer
+    ldi I ~SCREEN_WIDTH
+    mul I Y        ; Number of lines * width
+    add I X        ; add the X possition
+
+    stx C $VIDEO_MEM            ; write char in memory
 
     # advance X position and check bounderies
     addi X 1
@@ -34,6 +67,7 @@
     jmpf :print_char_done   
     ldi X 0                     ; reset X, newline
     addi Y 1                    ; advance Y
+:check_bounderies
     tst Y ~SCREEN_HEIGHT        ; Check Y, 24 is scrollline
     jmpf :print_char_done
     call @scroll_screen

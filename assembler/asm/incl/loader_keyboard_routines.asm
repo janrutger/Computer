@@ -78,14 +78,16 @@ EQU ~KEY_BACKSPACE 8
 ; Returns: C = character, (S-flag)tatus = 0 if no char, (S-flag)tatus = 1 if char read
 ;-------------------------------------------------------------------------------
 @KBD_GET_CHAR
-    di                      ; interrrupts must be disabled
+    
     ; Check if buffer is empty
     ldm M $KBD_READ_PNTR    ; M = KBD_READ_PNTR
     ldm L $KBD_WRITE_PNTR   ; L = KBD_WRITE_PNTR
     tste M L                ; Compare read_ptr with write_ptr
     jmpt :no_char           ; If equal, buffer is empty
 
+
     ; Read character from buffer
+    di                      ; interrrupts must be disabled
     ldm I $KBD_READ_PNTR    ; I = KBD_READ_PNTR (current read position for LDX)
     ldx C $KBD_BUFFER_ADRES ; Read char from KBD_BUFFER_ADRES + I into C
 
@@ -101,5 +103,4 @@ EQU ~KEY_BACKSPACE 8
 
 :no_char
     tstg A A                ; Set status-bit to 0 (no char)
-    ei                      ; enable interrupts
     ret
