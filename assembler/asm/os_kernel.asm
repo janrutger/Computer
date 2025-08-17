@@ -1,6 +1,6 @@
 @main_loop
     call @cli_main_loop
-    jmp @main_loop
+    ret
 
 INCLUDE kernel_cli
 
