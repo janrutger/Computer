@@ -80,6 +80,22 @@
 ret
 
 
+@clear_screen
+    ldi C \space
+    ldi I 0
+:clear_loop
+    stx C $VIDEO_MEM
+    addi I 1 
+    tst I ~SCREEN_POINTER_END
+    jmpf :clear_loop
+
+    ldi X 0
+    ldi Y 0
+    sto X $cursor_x
+    sto Y $cursor_y
+    ret
+
+
 @scroll_screen                  ; Scroll the screen one line
                                 ; make the last line fill with blanks
     ldi K ~VIDEO_MEM            ; K = write pointer
