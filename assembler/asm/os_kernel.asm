@@ -2,7 +2,7 @@
     call @cli_main_loop
     ret
 
-INCLUDE kernel_cli
+INCLUDE kernel_cliV2
 
 
 #@main_loop              ; Kernel main loop
