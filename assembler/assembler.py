@@ -42,6 +42,7 @@ class Assembler:
         self._saved_constants = None
         self._saved_next_var_pointer = None
 
+
     def _load_rom(self, rom_path):
         if not os.path.exists(rom_path):
             raise FileNotFoundError(f"Assembler ROM file not found at: {rom_path}")
@@ -363,7 +364,27 @@ class Assembler:
             self.constants = self._saved_constants.copy()
             self.NextVarPointer = self._saved_next_var_pointer
 
-    def assemble(self, filename, prog_start, restore=False):
+    def export_symbols(self):
+        # collect current symbols
+        
+        # Combine all symbol types into one dictionary for export
+        all_symbols = {
+            "symbols": self.symbols.copy(),
+            "constants": self.constants.copy()
+        }
+        return all_symbols
+    
+    def write_symbols_to_file(self, output_file):
+        try:
+            with open(output_file, 'w') as f:
+                json.dump(self.current_symbols, f, indent=4)
+                print(f"Symbols written successfully to '{output_file}'.")
+        except Exception as e:
+            print(f"ERROR: Failed to write symbols to '{output_file}': {e}", file=sys.stderr)
+            sys.exit(1)
+
+
+    def assemble(self, filename, prog_start, symbols=False, restore=False):
         
         try:
             self.save_state()
@@ -378,6 +399,15 @@ class Assembler:
             self.generate_binary(prog_start)
             print(f"--- Successfully assembled {filename}  ---")
 
+            if symbols:
+                self.current_symbols = self.export_symbols()
+            else:
+                self.current_symbols = None
+        
+            if restore:
+                print(f"Restore symbols to previous state...")
+                self.restore_state()
+
         except FileNotFoundError as e:
              print(f"ERROR: Assembly source file not found: {filename}", file=sys.stderr)
              raise
@@ -388,10 +418,10 @@ class Assembler:
         except Exception as e:
              print(f"FATAL ERROR during assembly of {filename}: {e}", file=sys.stderr)
              raise AssemblyError(f"Unexpected FATAL ERROR during assembly of {filename}: {e}") from e
-        finally:
-            if restore:
-                self.restore_state()
-        return self.binary
+        
+        return (self.binary, self.current_symbols)
+
+
 
 
 if __name__ == "__main__":
@@ -421,6 +451,8 @@ if __name__ == "__main__":
         file_path = source_entry.get("file")
         base_address = source_entry.get("base_address", 0)
         restore_symbols = source_entry.get("restore_symbols", False)
+        save_symbols = True        # must be part of the command line
+
 
         if not file_path:
             print("WARNING: Skipping source entry with missing 'file' path.", file=sys.stderr)
@@ -434,7 +466,7 @@ if __name__ == "__main__":
         print(f"Assembling {file_path} (base address: {base_address})...")
         try:
             # The assemble method already handles its own error printing
-            current_binary = assembler.assemble(abs_file_path, base_address, restore_symbols)
+            current_binary, last_symbols = assembler.assemble(abs_file_path, base_address, save_symbols, restore_symbols)
             combined_binary.extend(current_binary)
         except (AssemblyError, FileNotFoundError):
             print(f"--- Assembly failed for {file_path}. Halting build. ---", file=sys.stderr)
@@ -445,6 +477,8 @@ if __name__ == "__main__":
 
     print("\n--- Multi-file assembly process completed. ---")
 
+    # write the binary
+
     print(f"Writing combined binary output to '{output_file}'...")
     try:
         writeBin(combined_binary, output_file)
@@ -452,3 +486,13 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"ERROR: Failed to write combined binary output to '{output_file}': {e}", file=sys.stderr)
         sys.exit(1)
+
+    # write the symbols
+    if save_symbols:
+        symbol_filename = os.path.join(os.path.dirname(output_file), "symbols.json")
+        assembler.write_symbols_to_file(symbol_filename)
+    
+
+    
+
+
