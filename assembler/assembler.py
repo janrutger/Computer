@@ -29,6 +29,7 @@ class Assembler:
 
         self.symbols = {} # Global symbols (@, $)
         self.labels = {}  # Local labels (:) - cleared per file
+        self.all_labels = [] # Used for exporting the labels s symbols
         self.constants = {} # Global constants (~) - NEW
         self.assembly = []
         self.binary = []
@@ -366,11 +367,11 @@ class Assembler:
 
     def export_symbols(self):
         # collect current symbols
-        
+        self.all_labels.append(self.labels)
         # Combine all symbol types into one dictionary for export
         all_symbols = {
             "symbols": self.symbols.copy(),
-            "constants": self.constants.copy()
+            "labels": self.all_labels
         }
         return all_symbols
     

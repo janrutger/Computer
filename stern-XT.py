@@ -121,6 +121,7 @@ def main():
 
     # 3. Initialize CPU and Peripherals
     debug_mode = "-debug" in sys.argv
+    #debug_mode = True      # use this when running in VScode debug mode
     cpu = CPU(ram, interrupt_controller, debug_mode=debug_mode)
     cpu.registers["PC"] = MEM_LOADER_START # Set PC to the start of the loaded program
     keyboard = Keyboard(interrupt_controller, vector=KEYBOARD_INTERRUPT_VECTOR)

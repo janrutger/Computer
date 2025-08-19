@@ -31,20 +31,30 @@
         "@cli_cmd_cls": 1081,
         "@cli_cmd_quit": 1083
     },
-    "constants": {
-        "~SCREEN_WIDTH": "80",
-        "~SCREEN_HEIGHT": "24",
-        "~SCREEN_POINTER_END": "1920",
-        "~SCREEN_LAST_ADRES": "16256",
-        "~KERNEL_START": "1024",
-        "~INT_VECTORS": "3072",
-        "~PROG_START": "4096",
-        "~VAR_START": "12288",
-        "~VIDEO_MEM": "14336",
-        "~STACK_TOP": "14335",
-        "~KBD_BUFFER_SIZE": "16",
-        "~KEY_RETURN": "13",
-        "~KEY_BACKSPACE": "8",
-        "~CMD_BUFFER_SIZE": "80"
-    }
+    "labels": [
+        {
+            ":do_print_Return": 18,
+            ":do_print_BackSpace": 21,
+            ":do_print_char": 30,
+            ":check_bounderies": 39,
+            ":print_char_done": 43,
+            ":clear_loop": 48,
+            ":scroll_screen_loop": 60,
+            ":scroll_screen_blank_loop": 70,
+            ":end_kbd_isr": 96,
+            ":no_char": 111
+        },
+        {
+            ":cli_char_available": 1029,
+            ":cli_handle_backspace": 1040,
+            ":cli_process_command": 1046,
+            ":cmd_table_loop": 1052,
+            ":cmd_found": 1062,
+            ":str_cmp_loop": 1066,
+            ":str_cmp_not_equal": 1077,
+            ":str_cmp_equal": 1079,
+            ":cli_unknown_command": 1084,
+            ":cli_clear_cmd_buffer": 1084
+        }
+    ]
 }

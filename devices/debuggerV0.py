@@ -1,5 +1,3 @@
-import json
-
 class Debugger:
     def __init__(self, cpu, memory):
         self.cpu = cpu
@@ -7,30 +5,6 @@ class Debugger:
         self.breakpoints = set()
         self.in_debug_mode = False
         self.last_inspected_address = None
-        self.symbols_to_address = {}
-        self.address_to_symbols = {}
-        self.load_symbols()
-        # Pass the address_to_symbols to the CPU
-        self.cpu.set_address_to_symbols(self.address_to_symbols)
-
-    def load_symbols(self):
-        try:
-            with open('bin/symbols.json', 'r') as f:
-                symbols_data = json.load(f)
-                # Load symbols
-                if 'symbols' in symbols_data:
-                    self.symbols_to_address.update(symbols_data['symbols'])
-                # Load labels
-                if 'labels' in symbols_data:
-                    for label_dict in symbols_data['labels']:
-                        self.symbols_to_address.update(label_dict)
-
-                self.address_to_symbols = {v: k for k, v in self.symbols_to_address.items()}
-                print("Symbols and labels loaded successfully.")
-        except FileNotFoundError:
-            print("Warning: 'bin/symbols.json' not found. No symbols will be available.")
-        except json.JSONDecodeError:
-            print("Warning: Could not decode 'bin/symbols.json'. No symbols will be available.")
 
     def add_breakpoint(self, addr):
         self.breakpoints.add(addr)
@@ -55,20 +29,6 @@ class Debugger:
         print(f"  Program Counter (PC): {self.cpu.registers['PC']}")
         print(f"  Stack Pointer   (SP): {self.cpu.registers['SP']}")
 
-    def _display_memory_with_symbols(self, start_addr, end_addr):
-        output = []
-        for addr in range(start_addr, end_addr):
-            try:
-                value = self.memory.read(addr)
-                symbol = self.address_to_symbols.get(addr, '')
-                if symbol:
-                    output.append(f"[{addr:05d}]: {value:>8} ({symbol})")
-                else:
-                    output.append(f"[{addr:05d}]: {value:>8}")
-            except IndexError:
-                output.append(f"[{addr:05d}]: <out of bounds>")
-        print("\n".join(output))
-
     def enter_debug_mode(self):
         self.in_debug_mode = True
         print("\n--- Breakpoint Hit ---")
@@ -76,7 +36,7 @@ class Debugger:
         self.interactive_loop()
 
     def interactive_loop(self):
-        help_text = ('''
+        help_text = ("""
 Available commands:
   step (s)                     - Execute one full instruction
   continue (c)                 - Continue execution to the next breakpoint
@@ -89,7 +49,7 @@ Available commands:
   prev (p)                     - Inspect the previous 16 bytes of memory
   memmap                       - Show the memory map and pointers
   help (?)                     - Show this help message
-''')
+""")
         while self.in_debug_mode:
             command = input("Debugger> ").strip().lower().split()
             if not command:
@@ -123,47 +83,37 @@ Available commands:
                 if len(command) > 1:
                     try:
                         addr = int(command[1])
+                        self.add_breakpoint(addr)
                     except ValueError:
-                        symbol_name = command[1]
-                        if symbol_name in self.symbols_to_address:
-                            addr = self.symbols_to_address[symbol_name]
-                        else:
-                            print(f"Unknown symbol or invalid address: {symbol_name}")
-                            continue
-                    self.add_breakpoint(addr)
+                        print("Invalid address for breakpoint.")
                 else:
-                    print("Usage: b <address_or_symbol>")
+                    print("Usage: b <address>")
             elif cmd in ('rb', 'removebreakpoint'):
                 if len(command) > 1:
                     try:
                         addr = int(command[1])
+                        self.remove_breakpoint(addr)
                     except ValueError:
-                        symbol_name = command[1]
-                        if symbol_name in self.symbols_to_address:
-                            addr = self.symbols_to_address[symbol_name]
-                        else:
-                            print(f"Unknown symbol or invalid address: {symbol_name}")
-                            continue
-                    self.remove_breakpoint(addr)
+                        print("Invalid address for breakpoint.")
                 else:
-                    print("Usage: rb <address_or_symbol>")
+                    print("Usage: rb <address>")
             elif cmd in ('i', 'inspect'):
                 if len(command) > 1:
                     try:
                         addr = int(command[1])
-                        self._display_memory_with_symbols(addr, addr + 16)
+                        print(self.memory.dump(addr, addr + 16))
                         self.last_inspected_address = addr
                     except ValueError:
                         print("Invalid address for inspection.")
                 else:
                     if self.last_inspected_address is not None:
-                        self._display_memory_with_symbols(self.last_inspected_address, self.last_inspected_address + 16)
+                        print(self.memory.dump(self.last_inspected_address, self.last_inspected_address + 16))
                     else:
                         print("You must first inspect an address with 'i <address>'.")
             elif cmd in ('n', 'next'):
                 if self.last_inspected_address is not None:
                     new_addr = self.last_inspected_address + 16
-                    self._display_memory_with_symbols(new_addr, new_addr + 16)
+                    print(self.memory.dump(new_addr, new_addr + 16))
                     self.last_inspected_address = new_addr
                 else:
                     print("You must first inspect an address with 'i <address>'.")
@@ -172,19 +122,13 @@ Available commands:
                     new_addr = self.last_inspected_address - 16
                     if new_addr < 0:
                         new_addr = 0
-                    self._display_memory_with_symbols(new_addr, new_addr + 16)
+                    print(self.memory.dump(new_addr, new_addr + 16))
                     self.last_inspected_address = new_addr
                 else:
                     print("You must first inspect an address with 'i <address>'.")
             elif cmd in ('lb', 'listbreakpoints'):
                 if self.breakpoints:
-                    print("Active breakpoints:")
-                    for bp in sorted(list(self.breakpoints)):
-                        symbol = self.address_to_symbols.get(bp, '')
-                        if symbol:
-                            print(f"  {bp} ({symbol})")
-                        else:
-                            print(f"  {bp}")
+                    print("Active breakpoints at addresses:", sorted(list(self.breakpoints)))
                 else:
                     print("No breakpoints are set.")
             elif cmd == 'memmap':

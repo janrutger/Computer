@@ -1,6 +1,8 @@
 # Define output files
 MICROCODE_ROM = bin/stern_rom.json
 PROGRAM_BIN = bin/program.bin
+SYMBOLS = bin/symbols.json
+
 
 # Microcode source files
 MICROCODE_SOURCES = microcode_assembler/base_rom.uasm
@@ -35,5 +37,5 @@ debug: $(PROGRAM_BIN)
 
 clean:
 	@echo "Cleaning up build artifacts..."
-	rm -f $(PROGRAM_BIN) $(MICROCODE_ROM)
+	rm -f $(PROGRAM_BIN) $(MICROCODE_ROM) $(SYMBOLS)
 	

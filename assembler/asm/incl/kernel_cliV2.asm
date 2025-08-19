@@ -130,7 +130,7 @@ EQU ~CMD_BUFFER_SIZE 80
 
 :cli_unknown_command
     ; just print a newline for now, maybe errors later
-    : call @print_char ; or do nothing for a more clear output
+    ; call @print_char ; or do nothing for a more clear output
 
 :cli_clear_cmd_buffer
     ; clear buffer
