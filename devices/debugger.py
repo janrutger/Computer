@@ -91,11 +91,12 @@ Available commands:
   help (?)                     - Show this help message
 ''')
         while self.in_debug_mode:
-            command = input("Debugger> ").strip().lower().split()
+            command = input("Debugger> ").strip().split()
             if not command:
                 continue
 
-            cmd = command[0]
+            cmd = command[0].lower()
+            #args = command_parts[1:]
             if cmd in ('s', 'step'):
                 # Execute one full instruction (all its micro-steps)
                 # and then show the state again.
@@ -151,15 +152,20 @@ Available commands:
                 if len(command) > 1:
                     try:
                         addr = int(command[1])
-                        self._display_memory_with_symbols(addr, addr + 16)
-                        self.last_inspected_address = addr
                     except ValueError:
-                        print("Invalid address for inspection.")
+                        symbol_name = command[1]
+                        if symbol_name in self.symbols_to_address:
+                            addr = self.symbols_to_address[symbol_name]
+                        else:
+                            print(f"Unknown symbol or invalid address: {symbol_name}")
+                            continue
+                    self._display_memory_with_symbols(addr, addr + 16)
+                    self.last_inspected_address = addr
                 else:
                     if self.last_inspected_address is not None:
                         self._display_memory_with_symbols(self.last_inspected_address, self.last_inspected_address + 16)
                     else:
-                        print("You must first inspect an address with 'i <address>'.")
+                        print("You must first inspect an address with 'i <address_or_symbol>'.")
             elif cmd in ('n', 'next'):
                 if self.last_inspected_address is not None:
                     new_addr = self.last_inspected_address + 16

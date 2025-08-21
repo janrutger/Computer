@@ -9,7 +9,7 @@ EQU ~CMD_BUFFER_SIZE 80
 % $CMD_BUFFER_PTR 0
 
 ; Command routine look up table
-. $CMD_TABLE 20         ; room for 10 commands,  2 bytes per command
+. $CMD_TABLE 10         ; room for 10 commands,  2 bytes per command
 . $CMD_TABLE_BASE 1
 % $CMD_TABLE_BASE $CMD_TABLE    
 
@@ -101,7 +101,7 @@ EQU ~LUT_LEN 2
 
     sto Z $CMD_BUFFER_PTR       ; reset the buffer pointer
 
-    jmp :find_next_part_or_start_over
+    # jmp :find_next_part_or_start_over
 
 # from here:
 # CMD_BUFFER holds the input string
@@ -135,6 +135,8 @@ EQU ~LUT_LEN 2
 % $current_part_base $current_part
 . $current_part_ptr 1
 % $current_part_ptr 0
+
+sto Z $current_part_ptr
 
 :find_next_part_or_start_over
     inc I $CMD_BUFFER_PTR       ; is previous set back to zero
@@ -192,16 +194,25 @@ EQU ~LUT_LEN 2
 
 :cmd_execute
     ld I L                         ; I = L holds the handler absolute address
+    push C                         ; Save C
     callx $start_memory            ; Call the handler
+    pop C                          ; Restore C
 
-    # check if the part was the last part, by checking delimiter
+
+    # check C if the part was the last part, by checking delimiter
     tst C \null  
     jmpf :find_next_part_or_start_over
     jmp :no_next_part 
 
 :unknown_cmd
     # for now do nothing, and proceed to the next part
-    jmp :find_next_part_or_start_over
+    # jmp :find_next_part_or_start_over
+
+    # check if the part was the last part, by checking delimiter
+    tst C \null  
+    jmpf :find_next_part_or_start_over
+    jmp :no_next_part 
+
 
 
 :no_next_part
