@@ -59,8 +59,8 @@
             ":str_table_loop": 1067,
             ":current_part_loop": 1073,
             ":cmd_execute": 1084,
-            ":unknown_cmd": 1091,
-            ":no_next_part": 1094
+            ":unknown_cmd": 1092,
+            ":no_next_part": 1096
         }
     ]
 }

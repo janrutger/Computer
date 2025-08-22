@@ -138,7 +138,7 @@ sto Z $current_part_ptr
     inc I $current_part_ptr
     stx C $current_part_base
 
-    tst C \null                 ; don't mess with C
+    tst C \null                 ; don\'t mess with C
     jmpf :find_next_part_or_start_over
 
 :compare_and_execute
@@ -168,7 +168,7 @@ sto Z $current_part_ptr
         jmpt :cmd_execute           ; eq and end of cmd string, execute
 
 
-        tst A \null                 ; Check for null terminator
+        tst A \null             ; Check for null terminator
         jmpt :str_table_loop        ; If not, continue string table loop
 
 
@@ -189,6 +189,12 @@ sto Z $current_part_ptr
     jmp :no_next_part 
 
 :unknown_cmd
+    ; It\'s not a known command string, let\'s see if it\'s a number
+    sto Z $current_part_ptr ; Reset pointer to start of the part
+    call @is_numeric
+    brs :handle_integer ; If S is set, it\'s a number
+
+    ; Not a number either, so it\'s a true unknown command
     # for now do nothing, and proceed to the next part
     # jmp :find_next_part_or_start_over
 
@@ -198,6 +204,12 @@ sto Z $current_part_ptr
     jmpf :find_next_part_or_start_over
     jmp :no_next_part 
 
+:handle_integer
+    sto Z $current_part_ptr ; Reset pointer for conversion
+    call @ascii_to_int
+    ; Now the integer is in $CONVERTED_INT.
+    ; For now, we just proceed to the next part.
+    jmp :find_next_part_or_start_over
 
 
 :no_next_part
@@ -205,6 +217,69 @@ sto Z $current_part_ptr
     jmp @cli_main_loop          ; Start over
 
 
+# Routines for numeric input
+. $CONVERTED_INT 1
+% $CONVERTED_INT 0
 
+@is_numeric
+    ; Checks if the string in $current_part is a number.
+    ; Output: Sets S flag to TRUE if numeric, FALSE otherwise.
+    ; Uses: A, B, I
+:is_numeric_loop
+    inc I $current_part_ptr
+    ldx A $current_part_base
+    tst A \null
+    jmpt :is_numeric_yes ; End of string, so it\'s a valid number
 
+    ; Check if character is a digit \'0\'-\'9\'
+    ldi B \'0\'
+    tstg B A ; S=1 if \'0\' > A (A is less than \'0\')
+    brs :is_numeric_no
 
+    ldi B \'9\'
+    tstg A B ; S=1 if A > \'9\'
+    brs :is_numeric_no
+
+    jmp :is_numeric_loop
+
+:is_numeric_yes
+    tste Z Z ; Set S flag to true
+    ret
+
+:is_numeric_no
+    tstg Z Z ; Set S flag to false
+    ret
+
+@ascii_to_int
+    ; Converts the numeric string in $current_part to an integer.
+    ; Output: Stores the result in $CONVERTED_INT.
+    ; Uses: R1, R2, R3, A, I
+    sto Z R1 ; R1 = 0 (accumulator)
+    ldi R3 10 ; R3 = 10
+    sto Z I ; I = 0, our string index
+
+:atoi_loop
+    inc I $current_part_ptr
+    ldx A $current_part_base
+    tst A \null
+    jmpt :atoi_done
+
+    ; convert char to digit
+    subi A A \'0\' ; A = char - \'0\'
+    
+    ; copy A to R2
+    sto Z R2
+    add R2 A
+
+    ; multiply accumulator by 10
+    mul R1 R3 ; R1 = R1 * 10
+    
+    ; add new digit
+    add R1 R2 ; R1 = R1 + R2
+
+    jmp :atoi_loop
+
+:atoi_done
+    ; result is in R1, let\'s store it
+    sto R1 $CONVERTED_INT
+    ret
