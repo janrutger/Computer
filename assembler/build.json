@@ -1,5 +1,5 @@
 {
-  "output": "program.bin",
+  "output": "../bin/program.bin",
   "var_start": 12288,
   "sources": [
     {

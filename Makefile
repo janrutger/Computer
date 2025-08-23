@@ -23,9 +23,9 @@ $(MICROCODE_ROM): $(MICROCODE_SOURCES) $(MICROCODE_ASSEMBLER_SCRIPT) microcode_a
 	@echo "Assembling microcode..."
 	python3 $(MICROCODE_ASSEMBLER_SCRIPT) $(MICROCODE_SOURCES)
 
-$(PROGRAM_BIN): $(ISA_SOURCES) $(MICROCODE_ROM) $(ISA_ASSEMBLER_SCRIPT) bin/build.json
+$(PROGRAM_BIN): $(ISA_SOURCES) $(MICROCODE_ROM) $(ISA_ASSEMBLER_SCRIPT) assembler/build.json
 	@echo "Assembling ISA code..."
-	python3 $(ISA_ASSEMBLER_SCRIPT) bin/build.json
+	python3 $(ISA_ASSEMBLER_SCRIPT) assembler/build.json
 
 run: $(PROGRAM_BIN)
 	@echo "Running simulation..."

@@ -426,7 +426,7 @@ class Assembler:
 
 
 if __name__ == "__main__":
-    build_file = "bin/build.json"
+    build_file = "assembler/build.json"
     if len(sys.argv) > 1:
         build_file = sys.argv[1]
 
@@ -490,7 +490,7 @@ if __name__ == "__main__":
 
     # write the symbols
     if save_symbols:
-        symbol_filename = os.path.join(os.path.dirname(output_file), "symbols.json")
+        symbol_filename = os.path.join(os.path.dirname(output_file), "../bin/symbols.json")
         assembler.write_symbols_to_file(symbol_filename)
     
 

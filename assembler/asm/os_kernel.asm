@@ -1,18 +1,30 @@
+. $kernel_prompt 4
+% $kernel_prompt \> \> \space \null
+
+# This is/must be the first line of code of the kernel
+@init_kernel
+    call @init_kernel_syscalls
+    ; Print welcome message
+    ldi A $WELCOME_MESSAGE  ; Load address of welcome message into A
+    ldi I ~SYS_PRINT_STRING ; Syscall for print_string
+    int $INT_VECTORS
+
+    call @main_loop
+
+ret
+
+
 @main_loop
+    ldi A $kernel_prompt        ; print the prompt
+    ldi I ~SYS_PRINT_STRING
+    int $INT_VECTORS
+
+    ; Print initial cursor
+    ldi I ~SYS_PRINT_CURSOR
+    int $INT_VECTORS
+
     call @cli_main_loop
     ret
 
+INCLUDE kernel_syscalls
 INCLUDE kernel_cliV3
-
-
-#@main_loop              ; Kernel main loop
-#    ; The main loop of the kernel.
-#    ; Later, this will read from the buffer and process commands.
-#    
-#    call @KBD_GET_CHAR   ; Call the routine to get a character
-#    jmpt :char_available ; Branch if Status flag is set (character available)
-#    jmp @main_loop       ; If no character, loop again
-#
-#:char_available
-#    call @print_char     ; Print the character (it's in C from GET_KBD_CHAR)
-#    jmp @main_loop       ; Continue looping 

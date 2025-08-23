@@ -356,6 +356,64 @@
                 }
             ]
         },
+        "26": {
+            "name": "INT",
+            "format": "one_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "set_interrupt_flag",
+                        "FALSE"
+                    ],
+                    "comment": "Disable interrupts"
+                },
+                {
+                    "instruction": [
+                        "shadow",
+                        "SAVE"
+                    ],
+                    "comment": "Save registers, including PC"
+                },
+                {
+                    "instruction": [
+                        "read_mem_adres",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": "Ra = value at address from argument (syscall table base address)"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Rb",
+                        "0"
+                    ],
+                    "comment": "Rb = syscall ID (from register I/R0)"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "ADD"
+                    ],
+                    "comment": "Ra = Ra + Rb (address of the handler pointer)"
+                },
+                {
+                    "instruction": [
+                        "read_mem_reg",
+                        "Ra",
+                        "PC"
+                    ],
+                    "comment": "Read the handler pointer from memory (jump to the handler)"
+                },
+                {
+                    "instruction": [
+                        "set_cpu_state",
+                        "FETCH"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
         "30": {
             "name": "LD",
             "format": "two_reg_reg",

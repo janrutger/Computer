@@ -90,6 +90,17 @@ def 25=CALLX {
     set_cpu_state(FETCH)
 }
 
+def 26=INT {
+    .format one_addr
+    set_interrupt_flag(FALSE)   ; Disable interrupts
+    shadow(SAVE)                ; Save registers, including PC
+    read_mem_adres($1, Ra)      ; Ra = value at address from argument (syscall table base address)
+    move_reg(Rb, R0)            ; Rb = syscall ID (from register I/R0)
+    alu(ADD)                    ; Ra = Ra + Rb (address of the handler pointer)
+    read_mem_reg(Ra, PC)        ; Read the handler pointer from memory (jump to the handler)  
+    set_cpu_state(FETCH)
+}
+
 def 30=LD {
     .format two_reg_reg
     move_reg($1, $2)

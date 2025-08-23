@@ -38,20 +38,30 @@ EQU ~LUT_LEN 2
 
 # define the Command sub-routines
 @cli_cmd_cls
-    call @clear_screen
+    #call @clear_screen
+    ldi I ~SYS_CLEAR_SCREEN
+    int $INT_VECTORS
     ret
 
 @cli_cmd_quit
-    halt        ; just halt for now
+    ldi I ~SYS_EXIT
+    int $INT_VECTORS
+    #halt        ; just halt for now
 
 
 
 ###################
 
 @cli_main_loop                  ; CLI main loop
-    call @KBD_GET_CHAR          ; Call the routine to get a character
-    jmpt :store_char_in_buffer  ; Branch if Status flag is set (character available)
-    jmp @cli_main_loop          ; If no character, loop again
+    ldi I ~SYS_GET_CHAR
+    int $INT_VECTORS
+    ldm C $SYSCALL_RETURN_STATUS
+    tst C 1
+    jmpt :char_available
+    jmp @cli_main_loop
+:char_available
+    ldm C $SYSCALL_RETURN_VALUE
+    jmp :store_char_in_buffer
 
 :store_char_in_buffer
     ; C holds the character
@@ -71,7 +81,13 @@ EQU ~LUT_LEN 2
     stx C $CMD_BUFFER_BASE
 
     ; print the char and get an new one
-    call @print_char         ; Print the character
+    #call @print_char         ; Print the character
+    ldi I ~SYS_PRINT_CHAR
+    int $INT_VECTORS
+
+    ; Print cursor
+    ldi I ~SYS_PRINT_CURSOR
+    int $INT_VECTORS
     jmp @cli_main_loop       ; Continue looping
 
 :cli_handle_backspace
@@ -79,20 +95,28 @@ EQU ~LUT_LEN 2
     tste I Z                 ; Z containts zero (0) by default
     jmpt @cli_main_loop      ; buffer empty, do nothing
 
-    dec I $CMD_BUFFER_PTR
-    call @print_char        ; @print_char is handeling the BS on screen
+    dec I $CMD_BUFFER_PTR    ; when not empty, go back one step
+
+    #call @print_char         ; Print the character
+    ldi I ~SYS_PRINT_CHAR
+    int $INT_VECTORS
+
     jmp @cli_main_loop
 
-
-
-
-
+ 
 :cli_process_command_buffer
     ; received \Return, so cmd_buffer contains instructions, 
     ; CMD_BUFFER_PTR holds the length
 
+    ; Delete the cursor
+    ldi I ~SYS_DEL_CURSOR
+    int $INT_VECTORS
+
+
     ; print the newline
-    call @print_char            ; update the display
+    #call @print_char         ; Print the character
+    ldi I ~SYS_PRINT_CHAR
+    int $INT_VECTORS
 
     ; Terminate the command string, by write \null to the end
     ldi M \null
@@ -202,6 +226,14 @@ sto Z $current_part_ptr
 
 :no_next_part
     sto Z $CMD_BUFFER_PTR       ; reset the buffer pointer
+
+    ldi A $kernel_prompt        ; print the prompt
+    ldi I ~SYS_PRINT_STRING
+    int $INT_VECTORS
+
+    ldi I ~SYS_PRINT_CURSOR     ; Print cursor
+    int $INT_VECTORS
+
     jmp @cli_main_loop          ; Start over
 
 

@@ -22,6 +22,18 @@ EQU ~STACK_TOP 14335
 . $INT_VECTORS 1
 % $INT_VECTORS ~INT_VECTORS
 
+. $SYSCALL_RETURN_VALUE 1
+. $SYSCALL_RETURN_STATUS 1
+
+; Data Stack for Calculator
+. $DATA_STACK 16
+. $DATA_STACK_PTR 1
+% $DATA_STACK_PTR $DATA_STACK
+
+# Welcomes message
+. $WELCOME_MESSAGE  20
+% $WELCOME_MESSAGE \W \e \l \c \o \m \e \space \t \o \space \S \t \e \r \n \! \Return \Return \null
+
 
 ## this is the first line of code of the loader at mem_start
 ldi Z 0     ; Start of loader at mem_start
@@ -35,7 +47,7 @@ call @init_interrupt_vector_table
 ei
 
 # start the kernel by calling the kernel entry point
-# at KERNEL_START in memory
+# at KERNEL_START in memory, where @init_kernel is located
 ldi I ~KERNEL_START
 callx $start_memory
 
@@ -46,4 +58,5 @@ halt
 INCLUDE interrupt_vector_table
 INCLUDE loader_screen_routines
 INCLUDE loader_keyboard_routines
+
 

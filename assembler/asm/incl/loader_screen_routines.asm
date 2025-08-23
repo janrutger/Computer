@@ -129,3 +129,36 @@ ret
 
 
 ret
+
+@print_cursor
+    # Read system cursorX cursorY
+    ldm X $cursor_x
+    ldm Y $cursor_y
+    ldi C \_
+    
+    # Calculate mem write pointer
+    ldi I ~SCREEN_WIDTH
+    mul I Y        ; Number of lines * width
+    add I X        ; add the X possition
+
+    # Write char in memory
+    stx C $VIDEO_MEM            ; write char in memory
+
+    ret
+
+
+@del_cursor
+    # Read system cursorX cursorY
+    ldm X $cursor_x
+    ldm Y $cursor_y
+    ldi C \space
+    
+    # Calculate mem write pointer
+    ldi I ~SCREEN_WIDTH
+    mul I Y        ; Number of lines * width
+    add I X        ; add the X possition
+
+    # Write char in memory
+    stx C $VIDEO_MEM            ; write char in memory
+
+    ret
