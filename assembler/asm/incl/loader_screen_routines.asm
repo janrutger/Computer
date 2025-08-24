@@ -146,7 +146,6 @@ ret
 
     ret
 
-
 @del_cursor
     # Read system cursorX cursorY
     ldm X $cursor_x
@@ -161,4 +160,77 @@ ret
     # Write char in memory
     stx C $VIDEO_MEM            ; write char in memory
 
+    ret
+
+@print_number
+    ; Input: C = integer to print
+    ; Clobbers: A, B, I, K, L, M, X, Y, (and stack for temporary storage)
+
+    push A          ; Save A
+    push B          ; Save B
+    push I          ; Save I
+    push K          ; Save K
+    push L          ; Save L
+    push M          ; Save M
+    push X          ; Save X
+    push Y          ; Save Y
+
+    ldi K 0         ; K = sign flag (0 for positive, 1 for negative)
+
+    tst C 0         ; Check if number is 0
+    jmpt :print_zero ; If 0, print '0' directly
+
+    tstg Z C          ; Check if number is negative
+    jmpf :is_positive ; If positive, skip sign handling
+
+    ; Handle negative number
+    ldi K 1         ; Set sign flag to negative
+    muli C -1       ; C = -C (make number positive)
+    push C          ; save C
+    ldi C \-        ; Load minus sign into C
+    call @print_char ; Directly call print_char routine
+    pop C            ; Restore C after printing minus sign
+
+:is_positive
+    ; Convert integer to ASCII digits and push onto temporary stack
+    ; Use the main data stack for temporary storage
+    ldi L 0         ; L = digit count
+
+    :divide_loop
+        ldi A 10        ; Load 10 into A
+        dmod C A         ; C = C / 10, A = C % 10 (remainder)
+
+        push A          ; Push remainder (digit) onto stack
+        addi L 1        ; Increment digit count
+
+        tst C 0         ; Check if C is 0
+        jmpf :divide_loop ; If not 0, continue dividing
+
+    ; Pop digits from stack and print them
+    :print_loop
+        ;call @pop_A     ; Pop digit into A
+        pop A           ; Pop digit into A
+        addi A 48       ; Convert digit to ASCII
+        ld C A          ; Load ASCII digit into C
+        call @print_char ; Directly call print_char routine
+
+        subi L 1        ; Decrement digit count
+        tst L 0         ; Check if digit count is 0
+        jmpf :print_loop ; If not 0, continue printing
+
+    jmp :print_number_done
+
+:print_zero
+    ldi C \0        ; Load '0' into C
+    call @print_char ; Directly call print_char routine
+
+:print_number_done
+    pop Y           ; Restore Y
+    pop X           ; Restore X
+    pop M           ; Restore M
+    pop L           ; Restore L
+    pop K           ; Restore K
+    pop I           ; Restore I
+    pop B           ; Restore B
+    pop A           ; Restore A
     ret

@@ -15,7 +15,7 @@ def is_label(arg): return arg.isidentifier() # Simple check for label syntax
 def is_numeric(arg): return arg.isnumeric()
 def is_bool_str(arg): return arg.upper() in ["TRUE", "FALSE"]
 def is_cpu_state(arg): return arg.upper() in ["FETCH", "DECODE", "EXECUTE", "HALT"]
-def is_alu_op(arg): return arg.upper() in ["ADD", "SUB", "MUL", "DIV", "INC", "DEC", "AND", "CMP"]
+def is_alu_op(arg): return arg.upper() in ["ADD", "SUB", "MUL", "DIV", "INC", "DEC", "AND", "CMP", "MOD"]
 def is_branch_flag(arg): return arg.upper() in ["A", "E", "Z", "N", "S"]
 def is_shadow_str(arg): return arg.upper() in ["SAVE", "RESTORE"]
 

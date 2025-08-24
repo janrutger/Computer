@@ -36,6 +36,11 @@
     ldi M @sys_del_cursor   ; Start of the ISR
     stx M $INT_VECTORS      ; Store ISR
 
+    EQU ~SYS_PRINT_NUMBER 27
+    ldi I ~SYS_PRINT_NUMBER ; syscall 27 @sys_print_number
+    ldi M @sys_print_number ; Start of the ISR
+    stx M $INT_VECTORS      ; Store ISR
+
 
 ret
 
@@ -86,5 +91,9 @@ ret
 
 @sys_del_cursor         ; Syscall 26
     call @del_cursor
+    rti
+
+@sys_print_number       ; Syscall 27
+    call @print_number
     rti
 

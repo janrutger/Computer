@@ -206,6 +206,16 @@ def 63=DIVI {
     set_cpu_state(FETCH)
 }
 
+def 65=DMOD {
+    .format two_reg_reg
+    move_reg(Ra, $1)
+    move_reg(Rb, $2)
+    alu(MOD)
+    move_reg($1, Ra)
+    move_reg($2, Rb)
+    set_cpu_state(FETCH)
+}
+
 
 def 70=TST {
     .format two_reg_val

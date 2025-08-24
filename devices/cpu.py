@@ -241,6 +241,15 @@ class CPU:
                     # Handle division by zero, e.g., set an error flag or halt
                     print("CPU Runtime Error: Division by zero!")
                     self.state = "HALT"
+            elif op == "MOD":
+                # Perform modulo
+                if self.registers["Rb"] != 0:
+                    #self.registers["Ra"] %= self.registers["Rb"]
+                    self.registers["Ra"], self.registers["Rb"] = divmod(self.registers["Ra"], self.registers["Rb"])
+                    # Ra = quotient, Rb = remainder
+                else:
+                    print("CPU Runtime Error: Division by zero!")
+                    self.state = "HALT"
             elif op == "DEC":
                 self.registers["Ra"] -= 1
             elif op == "INC":

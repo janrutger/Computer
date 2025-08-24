@@ -22,11 +22,9 @@ EQU ~CMD_BUFFER_SIZE 80
 % $LUT_INDEX 0
 
 . $LUT_LEN 1
-EQU ~LUT_LEN 2
-
-% $CMD_TABLE @cli_cmd_cls @cli_cmd_quit
-% $STR_TABLE $CMD_CLS_STR $CMD_QUIT_STR 
-
+% $CMD_TABLE @cli_cmd_cls @cli_cmd_quit @rt_add @rt_print_tos
+% $STR_TABLE $CMD_CLS_STR $CMD_QUIT_STR $RT_ADD_STR $RT_PRINT_STR
+EQU ~LUT_LEN 4
 
 
 # Define the command strings
@@ -35,6 +33,12 @@ EQU ~LUT_LEN 2
 
 . $CMD_QUIT_STR 5
 % $CMD_QUIT_STR \q \u \i \t \null 
+
+. $RT_ADD_STR 2
+% $RT_ADD_STR \+ \null
+
+. $RT_PRINT_STR 2
+% $RT_PRINT_STR \. \null
 
 # define the Command sub-routines
 @cli_cmd_cls
@@ -46,7 +50,9 @@ EQU ~LUT_LEN 2
 @cli_cmd_quit
     ldi I ~SYS_EXIT
     int $INT_VECTORS
-    #halt        ; just halt for now
+
+
+
 
 
 
@@ -55,12 +61,14 @@ EQU ~LUT_LEN 2
 @cli_main_loop                  ; CLI main loop
     ldi I ~SYS_GET_CHAR
     int $INT_VECTORS
-    ldm C $SYSCALL_RETURN_STATUS
+    ldm C $SYSCALL_RETURN_STATUS    ; read the syscall return status
+
     tst C 1
     jmpt :char_available
     jmp @cli_main_loop
 :char_available
-    ldm C $SYSCALL_RETURN_VALUE
+    ldm C $SYSCALL_RETURN_VALUE     ; read the syscall return value
+
     jmp :store_char_in_buffer
 
 :store_char_in_buffer
