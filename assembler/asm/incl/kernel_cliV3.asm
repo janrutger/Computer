@@ -212,11 +212,15 @@ sto Z $current_part_ptr
     jmpf :find_next_part_or_start_over
     jmp :no_next_part 
 
-:unknown_cmd
-    # for now do nothing, and proceed to the next part
-    # jmp :find_next_part_or_start_over
+:unknown_cmd                    ; maybe its an number
+    sto Z $current_part_ptr     ; reset the buffer pointer
+    call @is_numeric            ; call ATOI routine
+                                ; return status bit, when true value in A 
+                                ; When false no valid value in A 
+    jmpf :check_last_part       ; is not numeric
+    call @push_A                ; is numeric, push to DATASTACK
 
-    # check if the part was the last part, by checking delimiter
+:check_last_part                ; by checking delimiter
     sto Z $current_part_ptr
     tst C \null  
     jmpf :find_next_part_or_start_over
@@ -238,5 +242,73 @@ sto Z $current_part_ptr
 
 
 
+# HELPER Routines for numeric input
 
+@is_numeric
+    ; Checks if the string in $current_part is a number.
+    ; Output: Sets S flag to TRUE if numeric, FALSE otherwise.
+    ; Output: Returns value in A
+    ; Uses: A, B, I, K, L
+    ldi K 1                 ; K = signflag 1=pos -1=neg
+    ldi L 0                 ; L is temp result
+
+    inc I $current_part_ptr ; get first char
+    ldx A $current_part_base
+
+:check_neg_sign             ; first char is -
+    tst A \-                ; test for sign
+    jmpf :check_pos_sign    ; check also for pos sign
+    ldi K -1                ; set flag
+
+    inc I $current_part_ptr ; get next char
+    ldx A $current_part_base
+
+    jmp :is_numeric_loop    ; goto loop
+
+:check_pos_sign             ; first char is +
+    tst A \+
+    jmpf :check_digit       ; also not + sign, it can be an number
+    ldi K 1                 ; set flag
+
+    inc I $current_part_ptr ; get next char
+    ldx A $current_part_base
+
+    jmp :is_numeric_loop    ; goto loop
+
+:is_numeric_loop
+    # keep the current_part_ptr
+    tst A \null             ; test for last char
+    jmpt :is_numeric_yes    ; it must be numeric
+
+:check_digit                ; check for valid digit
+    ldi B \0                ; \0 .. \9
+    subi B 1
+    tstg A B
+    jmpf :is_numeric_no     ; its not a number
+
+    ldi B \9                ; \0 .. \9  
+    tstg A B    
+    jmpt :is_numeric_no     ; its not a number
+
+:handle_valid_digit
+    subi A 48               ; ASCII to int
+    muli L 10               ; shift the result
+    add L A                 ; add A to result
+
+    inc I $current_part_ptr ; get next char
+    ldx A $current_part_base
+
+    jmp :is_numeric_loop
+
+
+
+:is_numeric_yes
+    ld A L          ; load result to return in A 
+    mul A K         ; multiply by sign flag
+    tste Z Z        ; Set S flag to true
+    ret
+
+:is_numeric_no
+    tstg Z Z        ; Set S flag to false
+    ret
 

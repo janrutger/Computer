@@ -28,3 +28,4 @@ ret
 
 INCLUDE kernel_syscalls
 INCLUDE kernel_cliV3
+INCLUDE kernel_runtime
