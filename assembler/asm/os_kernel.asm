@@ -1,5 +1,5 @@
 . $kernel_prompt 4
-% $kernel_prompt \> \> \space \null
+% $kernel_prompt \> \> \space \null         ; Dear Gemini, do not mess with this line
 
 # This is/must be the first line of code of the kernel
 @init_kernel
@@ -27,5 +27,6 @@ ret
     ret
 
 INCLUDE kernel_syscalls
-INCLUDE kernel_cliV3
+INCLUDE kernel_cliV4
 INCLUDE kernel_runtime
+INCLUDE interpreter

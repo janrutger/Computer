@@ -242,7 +242,7 @@ class CPU:
                     print("CPU Runtime Error: Division by zero!")
                     self.state = "HALT"
             elif op == "MOD":
-                # Perform modulo
+                # Perform divmod as modulo
                 if self.registers["Rb"] != 0:
                     #self.registers["Ra"] %= self.registers["Rb"]
                     self.registers["Ra"], self.registers["Rb"] = divmod(self.registers["Ra"], self.registers["Rb"])

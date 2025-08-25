@@ -1,32 +1,35 @@
-A great and logical next step would be to implement a buffered keyboard input system and a corresponding "read line" system call.
+This current project is the basis for the next step in this project
 
-Here’s why this is a nice next step and what it would involve:
+the next step is to create a simple interpreter language for the Stern-XT
 
-Why this is the right next step:
-Improves User Experience: The current keyboard interrupt routine (@KBD_ISR) just prints a character directly to the screen. A buffered system would allow you to type ahead, and more importantly, to implement features like backspace to correct mistakes before hitting 'Enter'. This makes the command line infinitely more usable.
-Enables Real Programs: Your kernel's command interpreter and any future programs you write will need a way to get structured input from the user (e.g., "run my_program"). A "read line" system call is the most fundamental way to do this.
-Builds on Existing Infrastructure: You already have an interrupt handler for the keyboard. This task involves making that handler more intelligent, which is a natural evolution of the existing code.
-It's a Core OS Feature: All operating systems have a mechanism for buffered I/O. Implementing this is a classic and essential step in kernel development.
-How to implement it:
-Create a Keyboard Buffer: In os_kernel.asm or a new include file, define a circular buffer in memory. This is just a fixed-size area of memory to store keystrokes. You'll also need pointers or indices to keep track of the "head" (where to write the next key) and "tail" (where to read the next key).
+On the commandline you can start the interpreter.
+with is basicly an line edit function to write and edit an program and the program can be started from Here’s
 
-Enhance the Keyboard ISR (@KBD_ISR):
+when exit the interpretor, you come back on the commandline
 
-Modify the interrupt service routine in loader_keyboard_routines.asm (or move it to a new kernel-specific include).
-Instead of just printing the character, the ISR should:
-Read the key from the keyboard device.
-If it's a normal character, add it to the circular buffer and echo it to the screen.
-If it's the backspace key, remove the last character from the buffer and update the screen to erase it.
-If it's the return key, add a newline character to the buffer to signal the end of the line.
-Create a SYS_READLINE System Call:
 
-Define a new system call number for SYS_READLINE.
-Write the handler for this system call inside the kernel's system call dispatcher.
-This handler will loop, reading characters out of the circular buffer until it finds a newline character.
-It should copy the line of text into a memory address provided by the calling program.
-Update the Kernel's Command Interpreter:
+the current project is the base of this step
+its includes the commandline as basis
 
-Modify the main loop in os_kernel.asm.
-Instead of whatever method it uses now, it should call the new SYS_READLINE system call to get a line of input from the user.
-Once it receives a line, it can then parse the command and execute it as before.
-This feature is a satisfying and manageable project that will make your Stern-XT operating system feel much more like a real, interactive system.
+the language is an RPN based language
+it uses integers, operations like /*-+, logical operations == != > <, an IF and an Jump statement
+
+
+the sourcecode for the interpreter must be in a include file, called by the os_kernel.asm and used kernel_cliV4.asm
+
+Interpreter Development Plan
+
+The goal is to build an RPN interpreter on top of the existing OS. 
+The foundation for this is already in place and should be reused. 
+kernel_cliV4.asm provides the line editor, parser, and command dispatcher. 
+It also contains the crucial @is_numeric routine for string-to-integer conversion. 
+The DATASTACK itself is defined in os_loader.asm. 
+kernel_runtime.asm provides the essential @push_A and @pop_A routines. 
+The @rt_add function serves as a perfect template for all other arithmetic handlers. 
+The main task is to create a new interpreter.asm file for the core logic. 
+This file will contain the handlers for all the new RPN operators. 
+Finally, extend the command table in kernel_cliV4 to integrate these new functions.
+
+the baisc are working, some questions. 
+i think the interpreter mainloop should not reuse the cmd buffer, but a lager program buffer, for now 512. 
+and we need line numbers instead of an prompt i believe. 
