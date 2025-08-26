@@ -22,9 +22,9 @@ EQU ~CMD_BUFFER_SIZE 80
 % $LUT_INDEX 0
 
 . $LUT_LEN 1
-% $CMD_TABLE @cli_cmd_cls @cli_cmd_quit @rt_add @rt_print_tos @interpreter_start
-% $STR_TABLE $CMD_CLS_STR $CMD_QUIT_STR $RT_ADD_STR $RT_PRINT_STR $CMD_STACKS_STR
-EQU ~LUT_LEN 5
+% $CMD_TABLE @cli_cmd_cls @cli_cmd_quit @rt_add @rt_print_tos @interpreter_start @rt_stacks_cmd_list 
+% $STR_TABLE $CMD_CLS_STR $CMD_QUIT_STR $RT_ADD_STR $RT_PRINT_STR $CMD_STACKS_STR $CMD_LIST_STR
+EQU ~LUT_LEN 6
 
 
 # Define the command strings
@@ -36,6 +36,9 @@ EQU ~LUT_LEN 5
 
 . $CMD_STACKS_STR 7
 % $CMD_STACKS_STR \s \t \a \c \k \s \null
+
+. $CMD_LIST_STR 5
+% $CMD_LIST_STR \l \i \s \t \null
 
 . $RT_ADD_STR 2
 % $RT_ADD_STR \+ \null
