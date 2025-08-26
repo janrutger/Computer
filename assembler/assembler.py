@@ -24,6 +24,7 @@ class Assembler:
             "Return": 13,   # ASCII for Carriage Return (CR)
             "Tab": 9,       # ASCII for Horizontal Tab (HT)
             "Newline": 10,  # ASCII for Line Feed (LF)
+            "ESC": 27,      # ASCII for Escape (ESC)
             # Add other common control characters if needed
         }
 

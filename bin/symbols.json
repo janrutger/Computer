@@ -73,8 +73,8 @@
         "$LINE_NUMBER": 13072,
         "$STACKS_WELCOME_MSG": 13073,
         "@interpreter_start": 1249,
-        "@stacks_main_loop": 1260,
-        "@print_line_number": 1310
+        "@stacks_main_loop": 1263,
+        "@print_line_number": 1338
     },
     "labels": [
         {
@@ -119,11 +119,16 @@
             ":is_numeric_yes": 1218,
             ":is_numeric_no": 1222,
             ":debug": 1243,
-            ":stacks_input_loop": 1267,
-            ":stacks_char_available": 1273,
-            ":stacks_store_char_in_buffer": 1275,
-            ":stacks_handle_backspace": 1289,
-            ":stacks_process_line_buffer": 1298
+            ":stacks_input_loop": 1270,
+            ":stacks_char_available": 1276,
+            ":stacks_store_char_in_buffer": 1278,
+            ":do_store_char": 1291,
+            ":stacks_handle_backspace": 1301,
+            ":stacks_process_line_buffer": 1310,
+            ":stacks_handle_esc": 1322,
+            ":stacks_cmd_input_loop": 1327,
+            ":stacks_cmd_available": 1333,
+            ":handle_stacks_cmd_exit": 1337
         }
     ]
 }

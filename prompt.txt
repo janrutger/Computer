@@ -30,6 +30,25 @@ The main task is to create a new interpreter.asm file for the core logic.
 This file will contain the handlers for all the new RPN operators. 
 Finally, extend the command table in kernel_cliV4 to integrate these new functions.
 
-the baisc are working, some questions. 
-i think the interpreter mainloop should not reuse the cmd buffer, but a lager program buffer, for now 512. 
-and we need line numbers instead of an prompt i believe. 
+The STACKS interpreter initializes a program buffer and line index array. 
+It displays a welcome message and then enters a main loop. 
+This loop continuously prompts with line numbers, handles character input, 
+and stores typed lines into the program buffer. Each line is null-terminated upon entry. 
+The interpreter tracks line start addresses in the LINE_INDEX_ARRAY and increments the 
+line number for subsequent input. 
+Currently, it does not process or execute any commands; 
+it solely functions as a line-numbered text input and storage mechanism. 
+A helper routine is included for printing numbers.
+
+
+the interpreter need support for commands, like (l)ist, e(x)it, (r)un. 
+the idea is when you on an empty line, press <ESC> +l for list
+
+Given kernel_cliV4.asm's existing RPN evaluation, the best place for STACKS-specific commands (list, run, exit) is still within interpreter.asm (extending stacks_handle_esc).
+
+This maintains encapsulation, keeping STACKS self-contained with direct access to its data. 
+The RUN command (and others needing RPN evaluation) can call a dedicated @execute_stacks_line routine within interpreter.asm, 
+which then leverages kernel_cliV4.asm's RPN services. 
+This cleanly separates concerns: kernel_cliV4.asm provides low-level RPN evaluation, 
+while interpreter.asm manages the STACKS environment and its high-level commands. 
+Integrating these into kernel_cliV4.asm would break modularity, create ambiguity, and complicate context management.
