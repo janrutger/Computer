@@ -47,7 +47,11 @@ ret
     ldi I ~SYS_PRINT_CHAR
     int $INT_VECTORS
 
-    ldi C 1         ; start line to print
+    ldm C $PROG_BUFFER_PTR  ; test for empty PROG_BUFFER
+    tste C Z    
+    jmpt :list_loop_end     ; goto end when nothing to print
+
+    ldi C 1                 ; start line to print
     sto C $line_to_print
 
 :list_loop
