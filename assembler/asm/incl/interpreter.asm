@@ -167,6 +167,9 @@ EQU ~MAX_LINES 64
     tst C \l                          ; test for (l)ist
     jmpt :handle_stacks_cmd_list
 
+    tst C \r                          ; test for (r)un
+    jmpt :handle_stacks_cmd_run
+
     jmp @stacks_main_loop            ; No valid stacks instruction, jump back to input loop
 
 
@@ -177,6 +180,11 @@ EQU ~MAX_LINES 64
 
 :handle_stacks_cmd_list
     call @rt_stacks_cmd_list
+
+    jmp @stacks_main_loop
+
+:handle_stacks_cmd_run
+    call @rt_stacks_cmd_run
 
     jmp @stacks_main_loop
 

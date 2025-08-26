@@ -52,3 +52,9 @@ which then leverages kernel_cliV4.asm's RPN services.
 This cleanly separates concerns: kernel_cliV4.asm provides low-level RPN evaluation, 
 while interpreter.asm manages the STACKS environment and its high-level commands. 
 Integrating these into kernel_cliV4.asm would break modularity, create ambiguity, and complicate context management.
+
+inc I $CMD_BUFFER_PTR
+    stx M $CMD_BUFFER_BASE      ; Terminate the command string
+
+    ldi A $CMD_BUFFER_BASE
+    call @tokenize_and_execute

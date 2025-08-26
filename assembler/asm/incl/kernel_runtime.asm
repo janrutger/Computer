@@ -31,7 +31,7 @@ ret
 @rt_print_tos
     call @pop_A
     ld C A
-    :debug
+
     ldi I ~SYS_PRINT_NUMBER
     int $INT_VECTORS
 
@@ -93,6 +93,42 @@ ret
 
 :list_loop_end
     ldi C \Return
+    ldi I ~SYS_PRINT_CHAR
+    int $INT_VECTORS
+    ret
+
+
+@rt_stacks_cmd_run
+    ldi C \Return
+    ldi I ~SYS_PRINT_CHAR
+    int $INT_VECTORS
+
+    ldm C $PROG_BUFFER_PTR  ; test for empty PROG_BUFFER
+    tste C Z    
+    jmpt :run_loop_end     ; goto end when nothing to print
+
+    ldi C 1
+    sto C $line_to_print
+
+:run_loop
+    inc L $line_to_print
+    ldm M $LINE_NUMBER
+    tstg L M
+    jmpt :run_loop_end
+
+    ld I L
+    subi I 1
+    ldx A $LINE_INDEX_ARRAY_BASE    ; A cointains the line index 
+    addi A $PROG_BUFFER             ; Add start adres of buffer to get linestart adres
+
+    call @tokenize_and_execute
+
+    #inc L L
+    #sto L $line_to_print
+    jmp :run_loop
+
+:run_loop_end
+ldi C \Return
     ldi I ~SYS_PRINT_CHAR
     int $INT_VECTORS
     ret
