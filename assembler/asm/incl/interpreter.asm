@@ -143,7 +143,7 @@ EQU ~MAX_LINES 64
 
 :stacks_handle_esc
     # handle escape key here 
-    # for now, just return to cli 
+    # use x for exit, use l for list, use r for run
     ldi I ~SYS_DEL_CURSOR          ; remove cursor
     int $INT_VECTORS
 
@@ -164,13 +164,21 @@ EQU ~MAX_LINES 64
     tst C \x                          ; test for e(x)it 
     jmpt :handle_stacks_cmd_exit
 
-    jmp @xstacks_main_loop            ; No valid stacks instruction, jump back to input loop
+    tst C \l                          ; test for (l)ist
+    jmpt :handle_stacks_cmd_list
+
+    jmp @stacks_main_loop            ; No valid stacks instruction, jump back to input loop
 
 
 ### stacks command routines here
 :handle_stacks_cmd_exit
     ret                     ; Return to kernels CLI, as in exit but
                             ; Mostly returns back to :stacks_main_loop
+
+:handle_stacks_cmd_list
+    call @rt_stacks_cmd_list
+
+    jmp @stacks_main_loop
 
 
 @print_line_number          ; print_number is already in use as symbol

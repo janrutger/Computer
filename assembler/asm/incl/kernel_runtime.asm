@@ -41,3 +41,57 @@ ret
 ret
 
 
+. $line_to_print 1 
+@rt_stacks_cmd_list
+    ldi C \Return
+    ldi I ~SYS_PRINT_CHAR
+    int $INT_VECTORS
+
+    ldi C 1         ; start line to print
+    sto C $line_to_print
+
+:list_loop
+    inc L $line_to_print            ; L= current line to print, inc line_to_print
+    ld I L
+    subi I 1                        ; I = current index
+    ldx K $LINE_INDEX_ARRAY_BASE    ; hold lineindex in PROG_BUFFER
+
+    ld C L                          ; first print the line number + \space
+    ldi I ~SYS_PRINT_NUMBER
+    int $INT_VECTORS
+
+    ldi C \space
+    ldi I ~SYS_PRINT_CHAR
+    int $INT_VECTORS
+
+    :print_line_loop
+        ld I K                      ; I hold the index to PROG_BUFFER line startx
+        ldx C $PROG_BUFFER_BASE     ; C hols char from buffer
+        tst C \null                 ; check for line termination 
+        jmpt :print_line_end  
+
+        ldi I ~SYS_PRINT_CHAR       ; print the char
+        int $INT_VECTORS     
+        addi K 1                    ; increment index to next char
+        jmp :print_line_loop   
+
+    :print_line_end                 ; print a newline
+        ldi C \Return
+        ldi I ~SYS_PRINT_CHAR
+        int $INT_VECTORS
+
+
+    ldm M $LINE_NUMBER              ; get the next linenumber off the buffer
+    subi M 1                        ; get the right pointer by substracting 1
+ 
+    tste M L                        ; compare if M still grater then the last line printed
+    jmpf :list_loop                 ; loop to the last line
+
+:list_loop_end
+    ldi C \Return
+    ldi I ~SYS_PRINT_CHAR
+    int $INT_VECTORS
+    ret
+
+
+
