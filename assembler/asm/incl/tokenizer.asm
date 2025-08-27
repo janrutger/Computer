@@ -68,8 +68,6 @@
 
         tst A \null                 ; Check for null terminator
         jmpt :str_table_loop        ; If not, continue string table loop
-
-
         jmp :current_part_loop
     
 
@@ -103,7 +101,7 @@
     ldx B $current_part_base    ; read value from stack
     tst B \null                 ; Compare with \null, to make sure its a single char var
     jmpf :check_last_part       ; Since first is an char, no need for numeric check
-    
+
     call @push_A                ; place var (in A) on DATASTACK    
     jmp :check_last_part  
 
@@ -116,7 +114,8 @@
     call @push_A                ; is numeric, push to DATASTACK
 
 
-:check_last_part                ; by checking delimiter
+:check_last_part                ; by checking delimiter 
+
     sto Z $current_part_ptr
     tst C \null  
     jmpf :find_next_part_or_start_over

@@ -90,7 +90,9 @@
         "$current_part": 13148,
         "$current_part_base": 13156,
         "$current_part_ptr": 13157,
-        "@is_numeric": 1417
+        "@is_numeric": 1420,
+        "@error_invalid_cmd": 1457,
+        "$string_invalid_cmd": 13158
     },
     "labels": [
         {
@@ -119,7 +121,6 @@
             ":cli_handle_backspace": 1117,
             ":cli_process_command_buffer": 1126,
             ":store_var_no_var": 1181,
-            ":debug": 1183,
             ":restore_var_no_var": 1193,
             ":list_loop": 1202,
             ":print_line_loop": 1212,
@@ -149,14 +150,16 @@
             ":check_for_var": 1395,
             ":check_for_numeric": 1409,
             ":check_last_part": 1412,
-            ":no_next_part": 1416,
-            ":check_neg_sign": 1421,
-            ":check_pos_sign": 1427,
-            ":is_numeric_loop": 1433,
-            ":check_digit": 1435,
-            ":handle_valid_digit": 1442,
-            ":is_numeric_yes": 1448,
-            ":is_numeric_no": 1452
+            ":no_next_part": 1419,
+            ":check_neg_sign": 1424,
+            ":check_pos_sign": 1430,
+            ":is_numeric_loop": 1436,
+            ":check_digit": 1438,
+            ":handle_valid_digit": 1445,
+            ":is_numeric_yes": 1451,
+            ":is_numeric_no": 1455,
+            ":end_warning": 1461,
+            ":end_fatal": 1465
         }
     ]
 }
