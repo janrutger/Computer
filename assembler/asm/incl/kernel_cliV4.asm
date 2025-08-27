@@ -22,10 +22,10 @@ EQU ~CMD_BUFFER_SIZE 80
 % $LUT_INDEX 0
 
 . $LUT_LEN 1
-% $CMD_TABLE @cli_cmd_cls @cli_cmd_quit @rt_add @rt_print_tos @interpreter_start @rt_stacks_cmd_list @rt_stacks_cmd_run
-% $STR_TABLE $CMD_CLS_STR $CMD_QUIT_STR $RT_ADD_STR $RT_PRINT_STR $CMD_STACKS_STR $CMD_LIST_STR $CMD_RUN_STR
+% $CMD_TABLE @cli_cmd_cls @cli_cmd_quit @rt_add @rt_print_tos @interpreter_start @rt_stacks_cmd_list @rt_stacks_cmd_run @rt_next 
+% $STR_TABLE $CMD_CLS_STR $CMD_QUIT_STR $RT_ADD_STR $RT_PRINT_STR $CMD_STACKS_STR $CMD_LIST_STR $CMD_RUN_STR $RT_NEXT_STR
 
-EQU ~LUT_LEN 7
+EQU ~LUT_LEN 8
 
 
 # Define the command strings
@@ -49,6 +49,10 @@ EQU ~LUT_LEN 7
 
 . $RT_PRINT_STR 2
 % $RT_PRINT_STR \. \null
+
+. $RT_NEXT_STR 5
+% $RT_NEXT_STR \n \e \x \t \null
+
 
 # define the Command sub-routines
 @cli_cmd_cls

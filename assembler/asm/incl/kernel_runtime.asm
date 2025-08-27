@@ -40,7 +40,12 @@ ret
     int $INT_VECTORS
 ret
 
+@rt_next                    ; read TOS and update the current linepointer (jump/goto)
+    call @pop_A
+    sto A $line_to_print    ; update the curent line pointer (line_to_print)
+ret 
 
+#### LIST command
 . $line_to_print 1 
 @rt_stacks_cmd_list
     ldi C \Return
@@ -98,6 +103,9 @@ ret
     ret
 
 
+
+
+#### RUN command
 @rt_stacks_cmd_run
     ldi C \Return
     ldi I ~SYS_PRINT_CHAR
