@@ -148,7 +148,6 @@ EQU ~LUT_LEN 10
 
 
     ; print the newline
-    #call @print_char         ; Print the character
     ldi I ~SYS_PRINT_CHAR
     int $INT_VECTORS
 

@@ -1,60 +1,47 @@
-This current project is the basis for the next step in this project
+**Tokenizer Refactoring Plan**
 
-the next step is to create a simple interpreter language for the Stern-XT
+**Objective:** Refactor the existing `tokenizer.asm` to separate the tokenization/parsing logic from the execution logic.
 
-On the commandline you can start the interpreter.
-with is basicly an line edit function to write and edit an program and the program can be started from Here’s
+**Phase 1: Create the New Tokenizer (`tokenizer1.asm`)**
 
-when exit the interpretor, you come back on the commandline
+1.  **Define Token Representation:**
+    *   Create two new memory locations to store the output of the tokenizer:
+        *   `$TOKEN_TYPE`: A byte to hold the type of the current token.
+        *   `$TOKEN_VALUE`: A word to hold the value associated with the token.
+    *   Define constants for the token types:
+        *   `~TOKEN_NONE 0` (No token found / end of input)
+        *   `~TOKEN_UNKNOWN 1` (Token is not a command, number, or variable)
+        *   `~TOKEN_CMD 2` (Token is a command)
+        *   `~TOKEN_NUM 3` (Token is a number)
+        *   `~TOKEN_VAR 4` (Token is a variable)
 
+2.  **Implement the Tokenizer Routine (`@get_next_token`):**
+    *   Create a new primary function in `tokenizer.asm` named `@get_next_token`.
+    *   This function will scan the input buffer (e.g., `$CMD_BUFFER`) one token at a time. It will need its own pointer to keep track of the scan position.
+    *   For each token it finds, it will perform classification:
+        *   **Command:** If the token matches a string in the command lookup table (`$STR_TABLE`), set `$TOKEN_TYPE` to `~TOKEN_CMD` and `$TOKEN_VALUE` to the address of the corresponding command handler.
+        *   **Variable:** If the token is a single uppercase letter, set `$TOKEN_TYPE` to `~TOKEN_VAR` and `$TOKEN_VALUE` to its ASCII value.
+        *   **Number:** If the token is identified as a number by the `@is_numeric` logic, set `$TOKEN_TYPE` to `~TOKEN_NUM` and `$TOKEN_VALUE` to the converted integer.
+        *   **Unknown:** If none of the above, set `$TOKEN_TYPE` to `~TOKEN_UNKNOWN`.
+    *   The function will return after processing one token, leaving the results in the new memory locations.
 
-the current project is the base of this step
-its includes the commandline as basis
+**Phase 2: Create the New Executor (`kernel_cliV4.asm`)**
 
-the language is an RPN based language
-it uses integers, operations like /*-+, logical operations == != > <, an IF and an Jump statement
+1.  **Create the Executor Loop (`@execute_command_buffer`):**
+    *   In `kernel_cliV4.asm`, create a new routine named `@execute_command_buffer`.
+    *   This routine will replace the single call to the old `@tokenize_and_execute`.
+    *   It will loop, calling `@get_next_token` on each iteration.
 
+2.  **Implement the Execution Logic:**
+    *   Inside the loop, after calling `@get_next_token`, it will inspect `$TOKEN_TYPE`.
+    *   It will use a series of comparisons to decide what action to take (a "switch-case" structure):
+        *   If `~TOKEN_CMD`, it will `call` the handler address stored in `$TOKEN_VALUE`.
+        *   If `~TOKEN_NUM` or `~TOKEN_VAR`, it will push the value from `$TOKEN_VALUE` onto the data stack.
+        *   If `~TOKEN_UNKNOWN`, it will call an error-reporting routine.
+        *   If `~TOKEN_NONE`, it will exit the loop, as the command has been fully processed.
 
-the sourcecode for the interpreter must be in a include file, called by the os_kernel.asm and used kernel_cliV4.asm
+**Phase 3: Integration and Cleanup**
 
-Interpreter Development Plan
-
-The goal is to build an RPN interpreter on top of the existing OS. 
-The foundation for this is already in place and should be reused. 
-kernel_cliV4.asm provides the line editor, parser, and command dispatcher. 
-It also contains the crucial @is_numeric routine for string-to-integer conversion. 
-The DATASTACK itself is defined in os_loader.asm. 
-kernel_runtime.asm provides the essential @push_A and @pop_A routines. 
-The @rt_add function serves as a perfect template for all other arithmetic handlers. 
-The main task is to create a new interpreter.asm file for the core logic. 
-This file will contain the handlers for all the new RPN operators. 
-Finally, extend the command table in kernel_cliV4 to integrate these new functions.
-
-The STACKS interpreter initializes a program buffer and line index array. 
-It displays a welcome message and then enters a main loop. 
-This loop continuously prompts with line numbers, handles character input, 
-and stores typed lines into the program buffer. Each line is null-terminated upon entry. 
-The interpreter tracks line start addresses in the LINE_INDEX_ARRAY and increments the 
-line number for subsequent input. 
-Currently, it does not process or execute any commands; 
-it solely functions as a line-numbered text input and storage mechanism. 
-A helper routine is included for printing numbers.
-
-
-the interpreter need support for commands, like (l)ist, e(x)it, (r)un. 
-the idea is when you on an empty line, press <ESC> +l for list
-
-Given kernel_cliV4.asm's existing RPN evaluation, the best place for STACKS-specific commands (list, run, exit) is still within interpreter.asm (extending stacks_handle_esc).
-
-This maintains encapsulation, keeping STACKS self-contained with direct access to its data. 
-The RUN command (and others needing RPN evaluation) can call a dedicated @execute_stacks_line routine within interpreter.asm, 
-which then leverages kernel_cliV4.asm's RPN services. 
-This cleanly separates concerns: kernel_cliV4.asm provides low-level RPN evaluation, 
-while interpreter.asm manages the STACKS environment and its high-level commands. 
-Integrating these into kernel_cliV4.asm would break modularity, create ambiguity, and complicate context management.
-
-inc I $CMD_BUFFER_PTR
-    stx M $CMD_BUFFER_BASE      ; Terminate the command string
-
-    ldi A $CMD_BUFFER_BASE
-    call @tokenize_and_execute
+1.  **Update the CLI:** The main CLI processing routine (`:cli_process_command_buffer`) will be updated to call the new `@execute_command_buffer` instead of the old tokenizer.
+2.  **Update the STACKS Interpreter:** The `run` command within `interpreter.asm`, which also currently uses `@tokenize_and_execute`, must be updated to use the new two-phase process. This ensures both the interactive CLI and the STACKS interpreter benefit from the new, cleaner architecture.
+3.  **Deprecate Old Code:** The original, monolithic `@tokenize_and_execute` routine in `tokenizer.asm` will be removed.

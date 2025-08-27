@@ -30,5 +30,9 @@ INCLUDE kernel_syscalls
 INCLUDE kernel_cliV4
 INCLUDE kernel_runtime
 INCLUDE interpreter
-INCLUDE tokenizer
+INCLUDE tokenizer1
 INCLUDE errors
+
+
+
+@tokenize_and_execute
