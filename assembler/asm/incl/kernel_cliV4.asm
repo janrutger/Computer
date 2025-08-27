@@ -9,12 +9,12 @@ EQU ~CMD_BUFFER_SIZE 80
 % $CMD_BUFFER_PTR 0
 
 ; Command routine look up table
-. $CMD_TABLE 10         ; room for 10 commands,  2 bytes per command
+. $CMD_TABLE 16         ; room for 16 commands,  1 bytes per command
 . $CMD_TABLE_BASE 1
 % $CMD_TABLE_BASE $CMD_TABLE    
 
 ; Command string loop up table 
-. $STR_TABLE 10         ; room for 10 commands,  2 bytes per command
+. $STR_TABLE 16         ; room for 16 commands,  1 bytes per command
 . $STR_TABLE_BASE 1
 % $STR_TABLE_BASE $STR_TABLE
 
@@ -22,10 +22,15 @@ EQU ~CMD_BUFFER_SIZE 80
 % $LUT_INDEX 0
 
 . $LUT_LEN 1
-% $CMD_TABLE @cli_cmd_cls @cli_cmd_quit @rt_add @rt_print_tos @interpreter_start @rt_stacks_cmd_list @rt_stacks_cmd_run @rt_next 
-% $STR_TABLE $CMD_CLS_STR $CMD_QUIT_STR $RT_ADD_STR $RT_PRINT_STR $CMD_STACKS_STR $CMD_LIST_STR $CMD_RUN_STR $RT_NEXT_STR
+% $CMD_TABLE @cli_cmd_cls @cli_cmd_quit @rt_add @rt_print_tos @interpreter_start @rt_stacks_cmd_list @rt_stacks_cmd_run @rt_next @rt_store_var @rt_restore_var
+% $STR_TABLE $CMD_CLS_STR $CMD_QUIT_STR $RT_ADD_STR $RT_PRINT_STR $CMD_STACKS_STR $CMD_LIST_STR $CMD_RUN_STR $RT_NEXT_STR $RT_STORE_VAR $RT_RESTORE_VAR
 
-EQU ~LUT_LEN 8
+EQU ~LUT_LEN 10
+
+# Define 26 vars (A .. Z)
+. $STACKS_VARS 26                 ; A .. Z
+. $STACKS_VARS_BASE 1
+% $STACKS_VARS_BASE $STACKS_VARS
 
 
 # Define the command strings
@@ -49,6 +54,12 @@ EQU ~LUT_LEN 8
 
 . $RT_PRINT_STR 2
 % $RT_PRINT_STR \. \null
+
+. $RT_STORE_VAR 2
+% $RT_STORE_VAR \! \null
+
+. $RT_RESTORE_VAR 2
+% $RT_RESTORE_VAR \@ \null
 
 . $RT_NEXT_STR 5
 % $RT_NEXT_STR \n \e \x \t \null
@@ -146,7 +157,7 @@ EQU ~LUT_LEN 8
     inc I $CMD_BUFFER_PTR
     stx M $CMD_BUFFER_BASE      ; Terminate the command string
 
-    ldm A $CMD_BUFFER_BASE
+    ldm A $CMD_BUFFER_BASE      ; EXECUTE Command string
     call @tokenize_and_execute
 
     sto Z $CMD_BUFFER_PTR       ; reset the buffer pointer

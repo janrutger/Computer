@@ -38,7 +38,7 @@
 
     tst C \null                 ; don't mess with C
     jmpf :find_next_part_or_start_over
-:debug
+
 :compare_and_execute
     # compare $current_part to the string look up table
     sto Z $LUT_INDEX
@@ -86,8 +86,29 @@
     jmpf :find_next_part_or_start_over
     jmp :no_next_part 
 
-:unknown_cmd                    ; maybe its an number
+:unknown_cmd                    ; maybe its an VAR or a number
     sto Z $current_part_ptr     ; reset the buffer pointer
+
+:check_for_var
+    ldm I $current_part_ptr
+    ldx A $current_part_base    ; read value from stack
+                                ; check if this an single VAR
+    ldi B \@                
+    tstg A B                    ; From A
+    jmpf :check_for_numeric     ; not a var A .. Z
+    ldi B \Z                    ; including Z 
+    tstg A B
+    jmpt :check_for_numeric     ; not a VAR A .. Z
+    addi I 1                    ; increment index to next char
+    ldx B $current_part_base    ; read value from stack
+    tst B \null                 ; Compare with \null, to make sure its a single char var
+    jmpf :check_last_part       ; Since first is an char, no need for numeric check
+    
+    call @push_A                ; place var (in A) on DATASTACK    
+    jmp :check_last_part  
+
+
+:check_for_numeric
     call @is_numeric            ; call ATOI routine
                                 ; return status bit, when true value in A 
                                 ; When false no valid value in A 
@@ -169,7 +190,7 @@
 :is_numeric_yes
     ld A L          ; load result to return in A 
     mul A K         ; multiply by sign flag
-    :debug2
+
     tste Z Z        ; Set S flag to true
     ret
 

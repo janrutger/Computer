@@ -45,6 +45,40 @@ ret
     sto A $line_to_print    ; update the curent line pointer (line_to_print)
 ret 
 
+@rt_store_var               ; ! instruction 
+    call @pop_A             ; Read the var-number from the stack
+    
+    ldi B \@                
+    tstg A B                ; From A
+    jmpf :store_var_no_var
+    ldi B \Z                ; including Z 
+    tstg A B
+    jmpt :store_var_no_var
+
+    call @pop_B             ; read the value to store
+    subi A 65               ; calc the VAR pointer
+    ld I A                  ; Pointr to Index register
+    stx B $STACKS_VARS_BASE ; Store B at I in VARS
+:store_var_no_var    
+ret
+
+@rt_restore_var             ; @ instruction 
+    call @pop_A             ; Read the var-number from the stack
+
+    ldi B \@                
+    tstg A B                ; From A
+    jmpf :restore_var_no_var
+    ldi B \Z                ; including Z 
+    tstg A B
+    jmpt :restore_var_no_var
+
+    subi A 65               ; calc the VAR pointer
+    ld I A                  ; Pointr to Index register
+    ldx B $STACKS_VARS_BASE ; read B from I in VARS
+    call @push_B            ; read the value to store
+:restore_var_no_var    
+ret
+
 #### LIST command
 . $line_to_print 1 
 @rt_stacks_cmd_list
