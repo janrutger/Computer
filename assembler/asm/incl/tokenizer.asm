@@ -6,18 +6,9 @@
 % $TOKEN_BUFFER_PTR 0
 
 @tokenize_and_execute
-    ; Expects the starting address of the string to be parsed in register A
+; Expects the starting address of the string to be parsed in register A
     sto A $TOKEN_BUFFER_BASE      ; Store the address of the string to be parsed
-
     sto Z $TOKEN_BUFFER_PTR       ; reset the buffer pointer
-
-    # jmp :find_next_part_or_start_over
-
-# compare input buffer string to string look up table
-# Keep index
-# run subroutine at from cmd loopup table
-# when end of input buffer, loop back to beginning
-# else loop back to compare input buffer again
 
 # Find the (next) part of the input string
 . $current_part 8       ; max lentgh of a part is 8
@@ -25,7 +16,7 @@
 % $current_part_base $current_part
 . $current_part_ptr 1
 
-sto Z $current_part_ptr
+    sto Z $current_part_ptr
 
 :find_next_part_or_start_over
     inc I $TOKEN_BUFFER_PTR       ; is previous set back to zero
