@@ -87,6 +87,12 @@
 :unknown_cmd                    ; maybe its an VAR or a number
     sto Z $current_part_ptr     ; reset the buffer pointer
 
+:check_for_empty_line           ; check if the line is empty
+    ldm I $current_part_ptr
+    ldx A $current_part_base    ; read value from stack
+    tst A \null
+    jmpt :no_next_part
+
 :check_for_var
     ldm I $current_part_ptr
     ldx A $current_part_base    ; read value from stack
@@ -100,7 +106,7 @@
     addi I 1                    ; increment index to next char
     ldx B $current_part_base    ; read value from stack
     tst B \null                 ; Compare with \null, to make sure its a single char var
-    jmpf :check_last_part       ; Since first is an char, no need for numeric check
+    jmpf :print_token_error     ; Since first is an char, no need for numeric check
 
     call @push_A                ; place var (in A) on DATASTACK    
     jmp :check_last_part  
@@ -110,9 +116,15 @@
     call @is_numeric            ; call ATOI routine
                                 ; return status bit, when true value in A 
                                 ; When false no valid value in A 
-    jmpf :check_last_part       ; is not numeric
+    jmpf :print_token_error     ; is not numeric
     call @push_A                ; is numeric, push to DATASTACK
+    jmp :check_last_part
 
+
+:print_token_error
+    push C
+    call @error_invalid_cmd
+    pop C
 
 :check_last_part                ; by checking delimiter 
 
