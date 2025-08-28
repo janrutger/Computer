@@ -4,6 +4,7 @@
 . $TOKEN_TYPE 1
 . $TOKEN_VALUE 1
 . $TOKEN_BUFFER_BASE 1
+% $TOKEN_BUFFER_BASE \null
 . $CMD_BUFFER_SCAN_PTR 1
 % $CMD_BUFFER_SCAN_PTR 0
 
@@ -24,7 +25,13 @@ EQU ~TOKEN_VAR 4
     ; It uses $CMD_BUFFER_SCAN_PTR to keep track of the current position.
     ; It returns the token type in $TOKEN_TYPE and value in $TOKEN_VALUE.
 
-    sto A $TOKEN_BUFFER_BASE      ; Store the address of the string to be parsed
+    ldm M $TOKEN_BUFFER_BASE
+    tst M \null
+    jmpt :no_init_true
+        sto A $TOKEN_BUFFER_BASE      ; Store the address of the string to be parsed
+        sto Z $CMD_BUFFER_SCAN_PTR    ; Reset the scan pointer
+
+    :no_init_true
     ldm I $CMD_BUFFER_SCAN_PTR    ; Load the current scan pointer
 
 :skip_whitespace
@@ -139,6 +146,7 @@ EQU ~TOKEN_VAR 4
 :return_no_token
     ldi A ~TOKEN_NONE
     sto A $TOKEN_TYPE
+    sto Z $TOKEN_BUFFER_BASE    ; reset the buffer pointer after last token
     ret
 
 
