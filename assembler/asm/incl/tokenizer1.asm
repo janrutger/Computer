@@ -21,63 +21,69 @@ EQU ~TOKEN_VAR 4
 
 # --- Main Tokenizer Routine ---
 @get_next_token
-    ; Expects the starting address of the string to be parsed in register A.
-    ; It uses $CMD_BUFFER_SCAN_PTR to keep track of the current position.
-    ; It returns the token type in $TOKEN_TYPE and value in $TOKEN_VALUE.
-
+    ; --- Initialization ---
     ldm M $TOKEN_BUFFER_BASE
     tst M \null
-    jmpt :no_init_true
-        sto A $TOKEN_BUFFER_BASE      ; Store the address of the string to be parsed
-        sto Z $CMD_BUFFER_SCAN_PTR    ; Reset the scan pointer
+    jmpf :no_init
+        sto A $TOKEN_BUFFER_BASE
+        sto Z $CMD_BUFFER_SCAN_PTR
 
-    :no_init_true
-    ldm I $CMD_BUFFER_SCAN_PTR    ; Load the current scan pointer
-
-:skip_whitespace
-    ldx C $TOKEN_BUFFER_BASE      ; Read character from the buffer
-    tst C \space                  ; Check for space
-    jmpf :start_token_parsing
-    tst C \null                  ; Check for null terminator
-    jmpt :return_no_token
-    inc I $CMD_BUFFER_SCAN_PTR    ; Move to the next character
-    jmp :skip_whitespace
-
-:start_token_parsing
-    sto Z $current_part_ptr       ; Reset the current part pointer
-
-:find_next_part
-    ldx C $TOKEN_BUFFER_BASE      ; Read the char in C
-
+:no_init
+    ; --- Skip Whitespace ---
+:skip_loop
+    ldm I $CMD_BUFFER_SCAN_PTR
+    ldx C $TOKEN_BUFFER_BASE
     tst C \space
-    jmpt :part_found
+    jmpf :found_token_start
     tst C \null
-    jmpt :part_found_and_last
+    jmpt :return_no_token
+    
+    ldm K $CMD_BUFFER_SCAN_PTR
+    addi K 1
+    sto K $CMD_BUFFER_SCAN_PTR
+    jmp :skip_loop
 
-    inc I $current_part_ptr       ; Use I as the pointer for the current part
-    stx C $current_part_base      ; Write char to the current part buffer
-    inc I $CMD_BUFFER_SCAN_PTR    ; Increment scan pointer for the next run
-    jmp :find_next_part
+:found_token_start
+    ; --- Parse Token ---
+    sto Z $current_part_ptr
+:parse_loop
+    ldm I $CMD_BUFFER_SCAN_PTR
+    ldx C $TOKEN_BUFFER_BASE
+    tst C \space
+    jmpt :end_token
+    tst C \null
+    jmpt :end_token
 
-:part_found_and_last
+    ; Add char to current_part
+    ldm I $current_part_ptr
+    stx C $current_part_base
+    
+    ; Increment current_part_ptr
+    ldm K $current_part_ptr
+    addi K 1
+    sto K $current_part_ptr
+
+    ; Increment scan pointer
+    ldm K $CMD_BUFFER_SCAN_PTR
+    addi K 1
+    sto K $CMD_BUFFER_SCAN_PTR
+    jmp :parse_loop
+
+:end_token
+    ldm I $current_part_ptr
     ldi M \null
-    inc I $current_part_ptr
-    stx M $current_part_base      ; Null-terminate the part
+    stx M $current_part_base
+
+    ; --- Classify Token ---
     jmp :classify_token
 
-:part_found
-    ldi M \null
-    inc I $current_part_ptr
-    stx M $current_part_base      ; Null-terminate the part
-
 :classify_token
-    ; Compare $current_part to the string look up table
     sto Z $LUT_INDEX
 
 :str_table_loop
     inc I $LUT_INDEX
     tst I ~LUT_LEN
-    jmpt :check_for_var_or_numeric ; Not a command, check for var/num
+    jmpt :check_for_var_or_numeric
     ldx K $STR_TABLE_BASE
     ldx L $CMD_TABLE_BASE
 
@@ -149,9 +155,7 @@ EQU ~TOKEN_VAR 4
     sto Z $TOKEN_BUFFER_BASE    ; reset the buffer pointer after last token
     ret
 
-
 # --- Helper Routines ---
-
 @is_numeric
     ; Checks if the string in $current_part is a number.
     ; Output: Sets S flag to TRUE if numeric, FALSE otherwise.
@@ -167,7 +171,6 @@ EQU ~TOKEN_VAR 4
     tst A \-
     jmpf :check_pos_sign
     ldi K -1
-
     inc I $current_part_ptr
     ldx A $current_part_base
     jmp :is_numeric_loop
@@ -176,7 +179,6 @@ EQU ~TOKEN_VAR 4
     tst A \+
     jmpf :check_digit
     ldi K 1
-
     inc I $current_part_ptr
     ldx A $current_part_base
     jmp :is_numeric_loop
@@ -190,7 +192,6 @@ EQU ~TOKEN_VAR 4
     subi B 1
     tstg A B
     jmpf :is_numeric_no
-
     ldi B \9
     tstg A B
     jmpt :is_numeric_no
@@ -199,7 +200,6 @@ EQU ~TOKEN_VAR 4
     subi A 48
     muli L 10
     add L A
-
     inc I $current_part_ptr
     ldx A $current_part_base
     jmp :is_numeric_loop
