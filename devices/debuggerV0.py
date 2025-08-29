@@ -79,7 +79,6 @@ class Debugger:
         help_text = ('''
 Available commands:
   step (s)                     - Execute one full instruction
-  microstep (ms)               - Execute a single micro-code instruction (one clock tick)
   continue (c)                 - Continue execution to the next breakpoint
   quit (q)                     - Quit the simulation
   breakpoint (b) <addr>        - Set a breakpoint at <addr>
@@ -110,14 +109,6 @@ Available commands:
                     while self.cpu.state == "EXECUTE":
                         self.cpu.tick()
                     print(f"\n--- running....: {self.cpu.state}---")
-                    self.cpu.dump_state()
-                else:
-                    print("CPU is halted.")
-
-            elif cmd in ('ms', 'microstep'):
-                if self.cpu.state != "HALT":
-                    # print(f"\n--- Executing micro-step from state: {self.cpu.state} ---")
-                    self.cpu.tick()
                     self.cpu.dump_state()
                 else:
                     print("CPU is halted.")

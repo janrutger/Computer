@@ -1,0 +1,107 @@
+{
+    "scopeName": "source.stern-asm",
+    "patterns": [
+        { "include": "#comment" },
+        { "include": "#directive" },
+        { "include": "#label-def" },
+        { "include": "#instruction" },
+        { "include": "#string" },
+        { "include": "#operand" }
+    ],
+    "repository": {
+        "instruction": {
+            "patterns": [
+                {
+                    "name": "keyword.control.instruction.assembly",
+                    "match": "(?i)^\\s*\\b(ADD|ADDI|ANDI|CALL|CALLX|DEC|DI|DIVI|DMOD|EI|HALT|INC|INT|JMP|JMPF|JMPT|LD|LDI|LDM|LDX|MUL|MULI|NOP|POP|PUSH|RET|RTI|STO|STX|SUB|SUBI|TST|TSTE|TSTG)\\b"
+                }
+            ]
+        },
+        "operand": {
+            "patterns": [
+                {
+                    "name": "constant.numeric.decimal.assembly",
+                    "match": "\\b[+-]?[0-9]+\\b"
+                },
+                {
+                    "name": "constant.character.escape.assembly",
+                    "match": "\\\\[a-zA-Z0-9_]+"
+                },
+                {
+                    "name": "variable.language.register.assembly",
+                    "comment": "Registers like R0-R9, A, B, etc.",
+                    "match": "(?i)\\b(A|B|C|I|K|L|M|PC|R0|R1|R2|R3|R4|R5|R6|R7|R8|R9|SP|X|Y|Z)\\b"
+                },
+                {
+                    "name": "variable.other.symbol.assembly",
+                    "comment": "Memory variables like $my_var",
+                    "match": "\\$[a-zA-Z0-9_]+"
+                },
+                {
+                    "name": "constant.other.symbol.assembly",
+                    "comment": "Constants like ~MY_CONST",
+                    "match": "~[a-zA-Z0-9_]+"
+                },
+                {
+                    "name": "entity.name.function.assembly",
+                    "comment": "Subroutine calls like @my_sub",
+                    "match": "@[a-zA-Z0-9_]+"
+                },
+                {
+                    "name": "entity.name.label.assembly",
+                    "comment": "Local label references like :my_label",
+                    "match": ":[a-zA-Z0-9_]+"
+                }
+            ]
+        },
+        "comment": {
+            "patterns": [
+                {
+                    "name": "comment.line.number-sign.assembly",
+                    "match": "#.*$"
+                },
+                {
+                    "name": "comment.line.semicolon.assembly",
+                    "match": ";.*$"
+                }
+            ]
+        },
+        "directive": {
+            "patterns": [
+                {
+                    "name": "keyword.other.directive.assembly",
+                    "match": "(?i)^\\s*(\\\\.%|\\b(EQU|INCLUDE)\\b)"
+                }
+            ]
+        },
+        "label-def": {
+            "patterns": [
+                {
+                    "comment": "Subroutine definition like @my_sub",
+                    "match": "^\\s*(@[a-zA-Z0-9_]+)\\b",
+                    "captures": {
+                        "1": { "name": "entity.name.function.assembly" }
+                    }
+                },
+                {
+                    "comment": "Local label definition like :my_label",
+                    "match": "^\\s*(:[a-zA-Z0-9_]+)\\b",
+                    "captures": {
+                        "1": { "name": "entity.name.label.assembly" }
+                    }
+                }
+            ]
+        },
+        "string": {
+            "name": "string.quoted.double.assembly",
+            "begin": "\"",
+            "end": "\"",
+            "patterns": [
+                {
+                    "name": "constant.character.escape.assembly",
+                    "match": "\\\\."
+                }
+            ]
+        }
+    }
+}

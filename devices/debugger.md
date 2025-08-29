@@ -47,6 +47,7 @@ The following commands are available within the interactive debugger loop:
 
 | Command                      | Alias | Description                                                     |
 | :--------------------------- | :---- | :-------------------------------------------------------------- |
+| `microstep`                  | `ms`  | Execute a single micro-code instruction (one clock tick) and show the CPU state. |
 | `step`                       | `s`   | Execute one full instruction (all its micro-steps) and then show the CPU state. |
 | `continue`                   | `c`   | Continue execution until the next breakpoint is encountered or the simulation halts. |
 | `quit`                       | `q`   | Immediately halt the CPU and exit the simulation.               |

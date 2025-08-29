@@ -1,0 +1,26 @@
+{
+  "name": "stern-asm-vscode",
+  "displayName": "Stern ASM Language Support",
+  "description": "Syntax highlighting and language support for the Stern-XT custom assembly language.",
+  "version": "0.1.0",
+  "publisher": "JanRutger",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "stern-asm",
+      "aliases": ["Stern Assembly", "stern-asm"],
+      "extensions": [".asm"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "stern-asm",
+      "scopeName": "source.stern-asm",
+      "path": "./syntaxes/stern-asm.tmLanguage.json"
+    }]
+  }
+}

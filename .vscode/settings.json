@@ -1,0 +1,6 @@
+{
+    // This setting tells VS Code to use your custom theme by default for this workspace.
+    // Make sure "Stern ASM Theme" is the exact "label" of your theme as defined
+    // in your stern-asm-vscode/package.json file under contributes.themes.
+    "workbench.colorTheme": "Stern ASM Theme"
+}

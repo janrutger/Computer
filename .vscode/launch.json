@@ -1,0 +1,33 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run Stern-ASM Extension",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}/stern-asm-vscode",
+                "${workspaceFolder}"
+            ],            
+            "preLaunchTask": "Generate Grammar",
+            "outFiles": [
+                "${workspaceFolder}/stern-asm-vscode/out/**/*.js"
+            ]
+        },
+        {
+            "name": "Run Stern-XT Simulation",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/stern-XT.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Run Stern-XT (Debug)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/stern-XT.py",
+            "args": ["-debug"],
+            "console": "integratedTerminal"
+        }
+    ]
+}
