@@ -157,7 +157,7 @@ EQU ~LUT_LEN 10
     stx M $CMD_BUFFER_BASE      ; Terminate the command string
 
     ldm A $CMD_BUFFER_BASE      ; Set A to the command buffer for the executor
-    :debug
+    call @init_tokenizer_buffer  
     call @execute_command_buffer ; New executor
 
     sto Z $CMD_BUFFER_PTR       ; reset the buffer pointer

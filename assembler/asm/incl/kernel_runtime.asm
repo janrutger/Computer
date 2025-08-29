@@ -161,14 +161,14 @@ ret
     ldx A $LINE_INDEX_ARRAY_BASE    ; A cointains the line index 
     addi A $PROG_BUFFER             ; Add start adres of buffer to get linestart adres
 
+    call @init_tokenizer_buffer 
     call @execute_command_buffer
 
-    #inc L L
-    #sto L $line_to_print
     jmp :run_loop
 
 :run_loop_end
     ldi C \Return
     ldi I ~SYS_PRINT_CHAR
     int $INT_VECTORS
+
     ret

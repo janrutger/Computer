@@ -20,15 +20,12 @@ EQU ~TOKEN_VAR 4
 . $current_part_ptr 1
 
 # --- Main Tokenizer Routine ---
-@get_next_token
-    ; --- Initialization ---
-    ldm M $TOKEN_BUFFER_BASE
-    tst M \null
-    jmpf :no_init
-        sto A $TOKEN_BUFFER_BASE
-        sto Z $CMD_BUFFER_SCAN_PTR
+@init_tokenizer_buffer
+    sto A $TOKEN_BUFFER_BASE
+    sto Z $CMD_BUFFER_SCAN_PTR
+    ret
 
-:no_init
+@get_next_token
     ; --- Skip Whitespace ---
 :skip_loop
     ldm I $CMD_BUFFER_SCAN_PTR
@@ -152,7 +149,6 @@ EQU ~TOKEN_VAR 4
 :return_no_token
     ldi A ~TOKEN_NONE
     sto A $TOKEN_TYPE
-    sto Z $TOKEN_BUFFER_BASE    ; reset the buffer pointer after last token
     ret
 
 # --- Helper Routines ---
