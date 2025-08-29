@@ -25,7 +25,7 @@ EQU ~STACK_TOP 14335
 . $SYSCALL_RETURN_VALUE 1
 . $SYSCALL_RETURN_STATUS 1
 
-; Data Stack for Calculator
+; Data Stack for Stacks
 . $DATASTACK 16
 . $DATASTACK_PTR 1
 . $DATASTACK_INDEX 1
@@ -57,7 +57,7 @@ halt
 ########## 
 
 
-INCLUDE interrupt_vector_table
+INCLUDE loader_interrupt_vector_table
 INCLUDE loader_screen_routines
 INCLUDE loader_keyboard_routines
 

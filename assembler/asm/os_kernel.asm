@@ -29,8 +29,8 @@ ret
 INCLUDE kernel_syscalls
 INCLUDE kernel_cliV4
 INCLUDE kernel_runtime
-INCLUDE interpreter
-INCLUDE tokenizer1
-INCLUDE errors
+INCLUDE kernel_interpreter
+INCLUDE kernel_tokenizer1
+INCLUDE kernel_errors
 
 

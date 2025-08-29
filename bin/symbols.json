@@ -138,7 +138,6 @@
             ":list_loop_end": 1253,
             ":run_loop": 1265,
             ":run_loop_end": 1276,
-            ":debug": 1279,
             ":stacks_input_loop": 1301,
             ":stacks_char_available": 1307,
             ":stacks_store_char_in_buffer": 1309,
