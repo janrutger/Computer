@@ -70,7 +70,7 @@
             "patterns": [
                 {
                     "name": "keyword.other.directive.assembly",
-                    "match": "(?i)^\\s*(\\\\.%|\\b(EQU|INCLUDE)\\b)"
+                    "match": "(?i)^\\s*(\\\\.%|\\b(EQU|INCLUDE|MALLOC)\\b)"
                 }
             ]
         },

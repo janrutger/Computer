@@ -82,6 +82,7 @@ ret
 #### LIST command
 . $line_to_print 1 
 @rt_stacks_cmd_list
+:debug
     ldi C \Return
     ldi I ~SYS_PRINT_CHAR
     int $INT_VECTORS

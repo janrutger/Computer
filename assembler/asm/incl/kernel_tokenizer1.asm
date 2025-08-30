@@ -4,11 +4,12 @@
 
 # --- Token Definitions ---
 . $TOKEN_TYPE 1             ; Variable to store the type of the last token found
-. $TOKEN_VALUE 1            ; Variable to store the value of the last token (e.g., numeric value or command ID)
+. $TOKEN_VALUE 1            ; Variable to store the value of the last token (e.g., numeric value or command jump adres)
+. $TOKEN_ID 1               ; variable to store the ID of the token
 . $TOKEN_BUFFER_BASE 1      ; Base address of the input string buffer
-% $TOKEN_BUFFER_BASE \null   ; Initialize the buffer with a null terminator
+% $TOKEN_BUFFER_BASE \null  ; Initialize the buffer with a null terminator
 . $CMD_BUFFER_SCAN_PTR 1    ; Pointer to the current position in the input string buffer
-% $CMD_BUFFER_SCAN_PTR 0      ; Initialize the scan pointer to the beginning of the buffer
+% $CMD_BUFFER_SCAN_PTR 0    ; Initialize the scan pointer to the beginning of the buffer
 
 # --- Token Type Constants ---
 EQU ~TOKEN_NONE 0           ; No token found
@@ -18,7 +19,7 @@ EQU ~TOKEN_NUM 3            ; Numeric token
 EQU ~TOKEN_VAR 4            ; Variable token (A-Z)
 
 # --- Current Token Buffer ---
-. $current_part 8           ; Buffer to store the current token being parsed (max length 8)
+. $current_part 25          ; Buffer to store the current token being parsed (max length 24 chars + \null)
 . $current_part_base 1      ; Base address of the current token buffer
 % $current_part_base $current_part ; Set the base address to the start of the buffer
 . $current_part_ptr 1       ; Pointer to the current position in the token buffer
@@ -38,9 +39,9 @@ EQU ~TOKEN_VAR 4            ; Variable token (A-Z)
 :skip_loop
     ldm I $CMD_BUFFER_SCAN_PTR  ; Load the scan pointer
     ldx C $TOKEN_BUFFER_BASE    ; Load the character at the scan pointer
-    tst C \space               ; Test if the character is a space
+    tst C \space                ; Test if the character is a space
     jmpf :found_token_start     ; If not a space, start parsing the token
-    tst C \null                ; Test if the character is a null terminator
+    tst C \null                 ; Test if the character is a null terminator
     jmpt :return_no_token       ; If null, there are no more tokens
     
     ; --- Move to the next character ---
@@ -55,9 +56,9 @@ EQU ~TOKEN_VAR 4            ; Variable token (A-Z)
 :parse_loop
     ldm I $CMD_BUFFER_SCAN_PTR  ; Load the scan pointer
     ldx C $TOKEN_BUFFER_BASE    ; Load the character at the scan pointer
-    tst C \space               ; Test if the character is a space
+    tst C \space                ; Test if the character is a space
     jmpt :end_token             ; If it is a space, the token has ended
-    tst C \null                ; Test if the character is a null terminator
+    tst C \null                 ; Test if the character is a null terminator
     jmpt :end_token             ; If it is a null terminator, the token has ended
 
     ; --- Add character to the current token buffer ---
@@ -78,7 +79,7 @@ EQU ~TOKEN_VAR 4            ; Variable token (A-Z)
 :end_token
     ; --- Null-terminate the current token ---
     ldm I $current_part_ptr     ; Load the current token buffer pointer
-    ldi M \null                ; Load a null terminator
+    ldi M \null                 ; Load a null terminator
     stx M $current_part_base    ; Store the null terminator at the end of the token
 
     ; --- Classify Token ---
@@ -95,6 +96,8 @@ EQU ~TOKEN_VAR 4            ; Variable token (A-Z)
     jmpt :check_for_var_or_numeric ; If so, check if the token is a variable or a number
     ldx K $STR_TABLE_BASE       ; Load the base address of the string table
     ldx L $CMD_TABLE_BASE       ; Load the base address of the command table
+    ldx M $ID_TABLE_BASE        ; load the cmd ID from the ID table
+
 
     sto Z $current_part_ptr     ; Reset the current token buffer pointer
 
@@ -106,9 +109,9 @@ EQU ~TOKEN_VAR 4            ; Variable token (A-Z)
         ldx B $start_memory     ; Load the character from the string table
         tste A B                ; Test if the characters are equal
         jmpf :str_table_loop    ; If not, check the next entry in the string table
-        tst B \null              ; Check if we have reached the end of the string in the table
+        tst B \null             ; Check if we have reached the end of the string in the table
         jmpt :return_cmd_token  ; If so, we have found a command token
-        tst A \null              ; Check if we have reached the end of the token
+        tst A \null             ; Check if we have reached the end of the token
         jmpt :str_table_loop    ; If so, the token is shorter than the command, so it's not a match
         jmp :current_part_loop  ; Continue comparing the next character
 
@@ -116,7 +119,8 @@ EQU ~TOKEN_VAR 4            ; Variable token (A-Z)
     ; --- Return a command token ---
     ldi A ~TOKEN_CMD            ; Set the token type to command
     sto A $TOKEN_TYPE           ; Store the token type
-    sto L $TOKEN_VALUE          ; Store the command ID
+    sto M $TOKEN_ID             ; Store the command ID
+    sto L $TOKEN_VALUE          ; Store the command value
     ret
 
 :check_for_var_or_numeric
@@ -125,24 +129,26 @@ EQU ~TOKEN_VAR 4            ; Variable token (A-Z)
     ldm I $current_part_ptr     ; Load the pointer
     ldx A $current_part_base    ; Load the first character of the token
 
-    tst A \null                ; Check if the token is empty
+    tst A \null                 ; Check if the token is empty
     jmpt :return_no_token       ; If so, return no token
 
     ; --- Check for a variable (A-Z) ---
-    ldi B \@                   ; Load the character before 'A'
+    ldi B \@                    ; Load the character before 'A'
     tstg A B                    ; Test if the first character is greater than '@'
     jmpf :check_for_numeric     ; If not, it can't be a variable
-    ldi B \Z                   ; Load the character 'Z'
+    ldi B \Z                    ; Load the character 'Z'
     tstg A B                    ; Test if the first character is greater than 'Z'
     jmpt :check_for_numeric     ; If so, it can't be a variable
     addi I 1                    ; Move to the next character
     ldx B $current_part_base    ; Load the next character
-    tst B \null                ; Check if it is the end of the string
+    tst B \null                 ; Check if it is the end of the string
     jmpf :return_unknown_token  ; If not, it's not a single character, so not a variable
 
     ; --- It is a variable ---
     ldi B ~TOKEN_VAR            ; Set the token type to variable
     sto B $TOKEN_TYPE           ; Store the token type
+    ldi B ~var_id
+    sto B $TOKEN_ID             ; Store the variable ID
     sto A $TOKEN_VALUE          ; Store the character code of the variable
     ret
 
@@ -154,6 +160,8 @@ EQU ~TOKEN_VAR 4            ; Variable token (A-Z)
     ; --- It is a number ---
     ldi B ~TOKEN_NUM            ; Set the token type to number
     sto B $TOKEN_TYPE           ; Store the token type
+    ldi B ~num_id
+    sto B $TOKEN_ID             ; Store the number ID
     sto A $TOKEN_VALUE          ; Store the numeric value
     ret
 
@@ -184,7 +192,7 @@ EQU ~TOKEN_VAR 4            ; Variable token (A-Z)
 
 :check_neg_sign
     ; --- Check for a negative sign ---
-    tst A \-                   ; Test if the character is '-'
+    tst A \-                    ; Test if the character is '-'
     jmpf :check_pos_sign        ; If not, check for a positive sign
     ldi K -1                    ; Set the sign flag to negative
     inc I $current_part_ptr     ; Move to the next character
@@ -193,7 +201,7 @@ EQU ~TOKEN_VAR 4            ; Variable token (A-Z)
 
 :check_pos_sign
     ; --- Check for a positive sign ---
-    tst A \+                   ; Test if the character is '+'
+    tst A \+                    ; Test if the character is '+'
     jmpf :check_digit           ; If not, check if it's a digit
     ldi K 1                     ; Set the sign flag to positive
     inc I $current_part_ptr     ; Move to the next character
@@ -202,16 +210,16 @@ EQU ~TOKEN_VAR 4            ; Variable token (A-Z)
 
 :is_numeric_loop
     ; --- Loop through the remaining characters ---
-    tst A \null                ; Check if we have reached the end of the string
+    tst A \null                 ; Check if we have reached the end of the string
     jmpt :is_numeric_yes        ; If so, the string is a valid number
 
 :check_digit
     ; --- Check if the character is a digit (0-9) ---
-    ldi B \0                   ; Load '0'
+    ldi B \0                    ; Load '0'
     subi B 1                    ; Subtract 1 to check for less than '0'
     tstg A B                    ; Test if the character is less than '0'
     jmpf :is_numeric_no         ; If so, it's not a digit
-    ldi B \9                   ; Load '9'
+    ldi B \9                    ; Load '9'
     tstg A B                    ; Test if the character is greater than '9'
     jmpt :is_numeric_no         ; If so, it's not a digit
 

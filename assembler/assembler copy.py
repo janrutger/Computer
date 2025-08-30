@@ -193,25 +193,11 @@ class Assembler:
                     except ValueError:
                          self._error(orig_line_num, line, f"Invalid size '{size_str}'.")
 
-                    if not symbol_name.startswith("$"): self._error(orig_line_num, line, f"Variable symbol '{symbol_name}' must start with '$'")
+                    if not symbol_name.startswith("$"): self._error(orig_line_num, line, f"Variable symbol '{symbol_name}' must start with '. ")
                     if symbol_name in self.symbols: self._error(orig_line_num, line, f"Symbol '{symbol_name}' already defined.")
 
                     self.symbols[symbol_name] = self.NextVarPointer
                     self.NextVarPointer += size
-                elif directive.upper() == "MALLOC":
-                    if len(parts) < 3: self._error(orig_line_num, line, "Directive 'MALLOC' requires a symbol name and adres")
-                    symbol_name, adres_str = parts[1], parts[2]
-                    try:
-                        adres = int(adres_str)
-                        if adres <= 0: raise ValueError("Adres must be positive")
-                    except ValueError:
-                         self._error(orig_line_num, line, f"Invalid adres '{adres_str}'.")
-
-                    if not symbol_name.startswith("$"): self._error(orig_line_num, line, f"Variable symbol '{symbol_name}' must start with '$'")
-                    if symbol_name in self.symbols: self._error(orig_line_num, line, f"Symbol '{symbol_name}' already defined.")
-
-                    self.symbols[symbol_name] = adres
-
                 elif directive.startswith("%"):
                     continue
                 elif directive.upper() == "INCLUDE":
@@ -265,7 +251,7 @@ class Assembler:
 
         temp_pc = prg_start
         for idx, line in enumerate(self.assembly):
-            if not line or line.startswith(("@", ".", ":", "%", "#")) or line.upper() == "INCLUDE" or line.upper().startswith("EQU") or line.upper().startswith("MALLOC"):
+            if not line or line.startswith(("@", ".", ":", "%", "#")) or line.upper() == "INCLUDE" or line.upper().startswith("EQU"):
                 continue
             else:
                 pc_to_idx_map[temp_pc] = idx
@@ -279,7 +265,7 @@ class Assembler:
 
             op = instruction[0].lower()
 
-            if op.startswith(("@", ".", ":", "#")) or op.upper() == "INCLUDE" or op.upper() == "EQU" or op.upper().startswith("MALLOC"):
+            if op.startswith(("@", ".", ":", "#")) or op.upper() == "INCLUDE" or op.upper() == "EQU":
                 continue
 
             current_line_num_for_error = orig_line_num
