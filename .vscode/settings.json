@@ -1,18 +1,18 @@
 {
     "workbench.colorTheme": "Default Dark Modern",
 
-    // "editor.cursorStyle": "block",
+    "[stern-asm]": {"editor.cursorStyle": "block",}
+
     // "editor.fontFamily": "'Courier New', Courier, monospace",
     // "editor.tokenColorCustomizations": {
     //     "comments": "#00FF00",
-    //     "keywords": "#FFFF00",
+    //     "keywords": "#ff002b",
     //     "strings": "#00FFFF",
     //     "numbers": "#FF00FF",
-    //     "variables": "#FFA500",
+    //     "variables": "#ff7300",
     //     "functions": "#FFD700",
     //     "types": "#9400D3"
     // },
-
-
+    
     
 }

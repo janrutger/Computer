@@ -1,47 +1,50 @@
-**Tokenizer Refactoring Plan**
+Implementation Plan: Virtual Disk for Stern-XT
 
-**Objective:** Refactor the existing `tokenizer.asm` to separate the tokenization/parsing logic from the execution logic.
+Goal: Implement a Virtual Disk device that maps to a real host directory, allowing direct manipulation of files from the host.
 
-**Phase 1: Create the New Tokenizer (`tokenizer1.asm`)**
+Phase 1: Virtual Disk Device (`devices/virtual_disk.py`)
+- Define `VirtualDisk` class with `host_root_path`, Stern-XT `Memory` object, and `base_address`.
+- Implement comprehensive memory-mapped registers for file operations:
+    - `REG_COMMAND` (for `OPEN_READ`, `OPEN_WRITE`, `READ_BLOCK`, `WRITE_BLOCK`, `CLOSE`).
+    - `REG_STATUS` (for `IDLE`, `BUSY`, `SUCCESS`, `ERROR`, `FILE_NOT_FOUND`, `INVALID_HANDLE`, `INVALID_MODE`, `END_OF_FILE`).
+    - `REG_FILE_HASH_OR_BASENAME_ADDR` (Stern-XT mem addr for file hash or basename string).
+    - `REG_FILE_HANDLE` (for returning/using file handles).
+    - `REG_BLOCK_NUMBER` (for block-wise access).
+    - `REG_BLOCK_DATA_ADDR` (Stern-XT mem addr for 24-byte block data).
+    - `REG_RETURN_SIZE` (for actual bytes read).
+- Use custom hash function (`_myhash`) for basenames to build an in-memory file index.
+- Implement `tick()` method to process commands from CPU, managing internal state for open files:
+    - `OPEN_READ`: Opens a file for reading, returns a file handle. Reads entire file content into internal buffer.
+    - `OPEN_WRITE`: Opens a file for writing, returns a file handle. Reads existing content (if any) into mutable internal buffer.
+    - `READ_BLOCK`: Reads a 24-byte block from an open file into Stern-XT memory.
+    - `WRITE_BLOCK`: Writes a 24-byte block from Stern-XT memory to an open file's internal buffer.
+    - `CLOSE`: Closes an open file. If in write mode, commits (overwrites) the modified content to the host file.
 
-1.  **Define Token Representation:**
-    *   Create two new memory locations to store the output of the tokenizer:
-        *   `$TOKEN_TYPE`: A byte to hold the type of the current token.
-        *   `$TOKEN_VALUE`: A word to hold the value associated with the token.
-    *   Define constants for the token types:
-        *   `~TOKEN_NONE 0` (No token found / end of input)
-        *   `~TOKEN_UNKNOWN 1` (Token is not a command, number, or variable)
-        *   `~TOKEN_CMD 2` (Token is a command)
-        *   `~TOKEN_NUM 3` (Token is a number)
-        *   `~TOKEN_VAR 4` (Token is a variable)
+Phase 2: Host Directory Setup
+- Create `bin/virtual_disk_root/` on the host system.
 
-2.  **Implement the Tokenizer Routine (`@get_next_token`):**
-    *   Create a new primary function in `tokenizer.asm` named `@get_next_token`.
-    *   This function will scan the input buffer (e.g., `$CMD_BUFFER`) one token at a time. It will need its own pointer to keep track of the scan position.
-    *   For each token it finds, it will perform classification:
-        *   **Command:** If the token matches a string in the command lookup table (`$STR_TABLE`), set `$TOKEN_TYPE` to `~TOKEN_CMD` and `$TOKEN_VALUE` to the address of the corresponding command handler.
-        *   **Variable:** If the token is a single uppercase letter, set `$TOKEN_TYPE` to `~TOKEN_VAR` and `$TOKEN_VALUE` to its ASCII value.
-        *   **Number:** If the token is identified as a number by the `@is_numeric` logic, set `$TOKEN_TYPE` to `~TOKEN_NUM` and `$TOKEN_VALUE` to the converted integer.
-        *   **Unknown:** If none of the above, set `$TOKEN_TYPE` to `~TOKEN_UNKNOWN`.
-    *   The function will return after processing one token, leaving the results in the new memory locations.
+Phase 3: Integration into `stern-XT.py`
+- Instantiate `VirtualDisk` in `stern-XT.py` (e.g., at base_address 15000).
+- Call `virtual_disk.tick()` in the main simulation loop.
 
-**Phase 2: Create the New Executor (`kernel_cliV4.asm`)**
+Phase 4: Stern-XT Kernel/Assembly Interaction (Future)
+- Develop assembly code to interact with the Virtual Disk via its new memory-mapped interface:
+    - Use `OPEN_READ`/`OPEN_WRITE` to get file handles.
+    - Use `READ_BLOCK`/`WRITE_BLOCK` with file handles and block numbers for data transfer.
+    - Use `CLOSE` to finalize file operations.
+    - Poll `REG_STATUS` for command completion and error handling.
+- Implement kernel-level routines for line-oriented text file I/O, building on the `READ_BLOCK`/`WRITE_BLOCK` primitives (handling 24-byte blocks and 80-char max lines).
 
-1.  **Create the Executor Loop (`@execute_command_buffer`):**
-    *   In `kernel_cliV4.asm`, create a new routine named `@execute_command_buffer`.
-    *   This routine will replace the single call to the old `@tokenize_and_execute`.
-    *   It will loop, calling `@get_next_token` on each iteration.
+**Text File Handling (Block-wise Access):**
+- The `VirtualDisk` device provides raw file content as a byte stream.
+- The Stern-XT kernel will be responsible for handling line-oriented text files (where each line is a program line).
+- This involves reading/writing in 24-byte blocks (the disk buffer size).
+- The kernel will buffer these blocks internally and implement logic to parse/assemble lines (up to 80 characters max line size) from these blocks, and vice-versa for writing.
 
-2.  **Implement the Execution Logic:**
-    *   Inside the loop, after calling `@get_next_token`, it will inspect `$TOKEN_TYPE`.
-    *   It will use a series of comparisons to decide what action to take (a "switch-case" structure):
-        *   If `~TOKEN_CMD`, it will `call` the handler address stored in `$TOKEN_VALUE`.
-        *   If `~TOKEN_NUM` or `~TOKEN_VAR`, it will push the value from `$TOKEN_VALUE` onto the data stack.
-        *   If `~TOKEN_UNKNOWN`, it will call an error-reporting routine.
-        *   If `~TOKEN_NONE`, it will exit the loop, as the command has been fully processed.
-
-**Phase 3: Integration and Cleanup**
-
-1.  **Update the CLI:** The main CLI processing routine (`:cli_process_command_buffer`) will be updated to call the new `@execute_command_buffer` instead of the old tokenizer.
-2.  **Update the STACKS Interpreter:** The `run` command within `interpreter.asm`, which also currently uses `@tokenize_and_execute`, must be updated to use the new two-phase process. This ensures both the interactive CLI and the STACKS interpreter benefit from the new, cleaner architecture.
-3.  **Deprecate Old Code:** The original, monolithic `@tokenize_and_execute` routine in `tokenizer.asm` will be removed.
+**Host File Editability:**
+- Files on the host are standard text files, directly editable with tools like `vi`.
+- The `VirtualDisk` device operates by transferring raw bytes, ensuring it remains compatible with host text editors.
+- To maintain this editability, the Stern-XT kernel is solely responsible for:
+    - Appending appropriate line endings (e.g., `
+` for Unix-like systems) when writing text.
+    - Using a compatible character encoding (e.g., ASCII) for all text data.

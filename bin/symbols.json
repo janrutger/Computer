@@ -135,7 +135,6 @@
             ":executor_loop_end": 1167,
             ":store_var_no_var": 1207,
             ":restore_var_no_var": 1219,
-            ":debug": 1220,
             ":list_loop": 1228,
             ":print_line_loop": 1238,
             ":print_line_end": 1246,
