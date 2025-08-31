@@ -5,9 +5,9 @@ Goal: Implement a Virtual Disk device that maps to a real host directory, allowi
 Phase 1: Virtual Disk Device (`devices/virtual_disk.py`)
 - Define `VirtualDisk` class with `host_root_path`, Stern-XT `Memory` object, and `base_address`.
 - Implement comprehensive memory-mapped registers for file operations:
-    - `REG_COMMAND` (for `OPEN_READ`, `OPEN_WRITE`, `READ_BLOCK`, `WRITE_BLOCK`, `CLOSE`).
+    - `REG_COMMAND` (for `OPEN_READ`, `OPEN_WRITE`, `CREATE_FILE`READ_BLOCK`, `WRITE_BLOCK`, `CLOSE`).
     - `REG_STATUS` (for `IDLE`, `BUSY`, `SUCCESS`, `ERROR`, `FILE_NOT_FOUND`, `INVALID_HANDLE`, `INVALID_MODE`, `END_OF_FILE`).
-    - `REG_FILE_HASH_OR_BASENAME_ADDR` (Stern-XT mem addr for file hash or basename string).
+    - `REG_FILE_HASH` (Stern-XT mem addr for file hash).
     - `REG_FILE_HANDLE` (for returning/using file handles).
     - `REG_BLOCK_NUMBER` (for block-wise access).
     - `REG_BLOCK_DATA_ADDR` (Stern-XT mem addr for 24-byte block data).
