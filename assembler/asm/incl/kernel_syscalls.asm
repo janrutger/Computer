@@ -70,8 +70,7 @@ ret
     rti
 
 
-@sys_print_string       ; Syscall 24
-    ; A holds the address of the string
+@sys_print_string           ; Syscall 24, A holds the address of the string
     :loop
         ld I A              ; Load address from A into I (R0)
         ldx C $start_memory ; Load character from memory[start_memory + I] into C

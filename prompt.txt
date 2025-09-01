@@ -1,50 +1,31 @@
-Implementation Plan: Virtual Disk for Stern-XT
+Project: Stern CPU/Computer Simulation
 
-Goal: Implement a Virtual Disk device that maps to a real host directory, allowing direct manipulation of files from the host.
+Current Task: Integrate the VirtualDisk device into the Stern-XT Operating System.
 
-Phase 1: Virtual Disk Device (`devices/virtual_disk.py`)
-- Define `VirtualDisk` class with `host_root_path`, Stern-XT `Memory` object, and `base_address`.
-- Implement comprehensive memory-mapped registers for file operations:
-    - `REG_COMMAND` (for `OPEN_READ`, `OPEN_WRITE`, `CREATE_FILE`READ_BLOCK`, `WRITE_BLOCK`, `CLOSE`).
-    - `REG_STATUS` (for `IDLE`, `BUSY`, `SUCCESS`, `ERROR`, `FILE_NOT_FOUND`, `INVALID_HANDLE`, `INVALID_MODE`, `END_OF_FILE`).
-    - `REG_FILE_HASH` (Stern-XT mem addr for file hash).
-    - `REG_FILE_HANDLE` (for returning/using file handles).
-    - `REG_BLOCK_NUMBER` (for block-wise access).
-    - `REG_BLOCK_DATA_ADDR` (Stern-XT mem addr for 24-byte block data).
-    - `REG_RETURN_SIZE` (for actual bytes read).
-- Use custom hash function (`_myhash`) for basenames to build an in-memory file index.
-- Implement `tick()` method to process commands from CPU, managing internal state for open files:
-    - `OPEN_READ`: Opens a file for reading, returns a file handle. Reads entire file content into internal buffer.
-    - `OPEN_WRITE`: Opens a file for writing, returns a file handle. Reads existing content (if any) into mutable internal buffer.
-    - `READ_BLOCK`: Reads a 24-byte block from an open file into Stern-XT memory.
-    - `WRITE_BLOCK`: Writes a 24-byte block from Stern-XT memory to an open file's internal buffer.
-    - `CLOSE`: Closes an open file. If in write mode, commits (overwrites) the modified content to the host file.
+Architectural Plan:
 
-Phase 2: Host Directory Setup
-- Create `bin/virtual_disk_root/` on the host system.
+The integration will follow a three-layer design to ensure clear separation of concerns and to avoid nested syscalls.
 
-Phase 3: Integration into `stern-XT.py`
-- Instantiate `VirtualDisk` in `stern-XT.py` (e.g., at base_address 15000).
-- Call `virtual_disk.tick()` in the main simulation loop.
+1.  **Layer 1: Driver Subroutine Library (in `os_loader.asm` or a new `loader_disk_routines.asm`)**
+    *   **Purpose**: A callable library of low-level functions that directly interface with the virtual disk hardware. This is the core driver, usable by any kernel-mode code.
+    *   **Subroutines**:
+        *   `VDISK_init`: Initializes the disk.
+        *   `VDISK_open`: Opens a file and returns a handle.
+        *   `VDISK_close`: Closes a file handle.
+        *   `VDISK_read_block`: Reads a single block from an open file.
+        *   `VDISK_write_block`: Writes a single block to an open file.
+        *   `VDISK_create`: Creates a new file.
+    *   **Note**: The filename hashing algorithm must be simplified to produce a 16-bit hash to be feasible for the Stern-XT's 16-bit architecture. The `VirtualDisk.py` simulation must be updated to match this.
 
-Phase 4: Stern-XT Kernel/Assembly Interaction (Future)
-- Develop assembly code to interact with the Virtual Disk via its new memory-mapped interface:
-    - Use `OPEN_READ`/`OPEN_WRITE` to get file handles.
-    - Use `READ_BLOCK`/`WRITE_BLOCK` with file handles and block numbers for data transfer.
-    - Use `CLOSE` to finalize file operations.
-    - Poll `REG_STATUS` for command completion and error handling.
-- Implement kernel-level routines for line-oriented text file I/O, building on the `READ_BLOCK`/`WRITE_BLOCK` primitives (handling 24-byte blocks and 80-char max lines).
-
-**Text File Handling (Block-wise Access):**
-- The `VirtualDisk` device provides raw file content as a byte stream.
-- The Stern-XT kernel will be responsible for handling line-oriented text files (where each line is a program line).
-- This involves reading/writing in 24-byte blocks (the disk buffer size).
-- The kernel will buffer these blocks internally and implement logic to parse/assemble lines (up to 80 characters max line size) from these blocks, and vice-versa for writing.
-
-**Host File Editability:**
-- Files on the host are standard text files, directly editable with tools like `vi`.
-- The `VirtualDisk` device operates by transferring raw bytes, ensuring it remains compatible with host text editors.
-- To maintain this editability, the Stern-XT kernel is solely responsible for:
-    - Appending appropriate line endings (e.g., `
-` for Unix-like systems) when writing text.
-    - Using a compatible character encoding (e.g., ASCII) for all text data.
+2.  **Layer 2: Kernel Syscall Handlers (in `os_kernel.asm`)**
+    *   **Purpose**: Provides the protected interface between user-mode programs and the kernel. These handlers call the Layer 1 subroutines.
+    *   **Core I/O Syscalls (Thin Wrappers)**: These provide flexible, low-level file access.
+        *   `SYSCALL_F_OPEN`: Wraps the `VDISK_open` subroutine.
+        *   `SYSCALL_F_CLOSE`: Wraps the `VDISK_close` subroutine.
+        *   `SYSCALL_F_READ`: Wraps the `VDISK_read_block` subroutine.
+        *   `SYSCALL_F_WRITE`: Wraps the `VDISK_write_block` subroutine.
+        *   `SYSCALL_F_CREATE`: Wraps the `VDISK_create` subroutine.
+        
+    *   **High-Level Convenience Syscalls (Composite Functions)**: These provide simple, whole-file access.
+        *   `SYSCALL_LOAD_FILE`: Implements a complete file load by calling the `VDISK_open`, `VDISK_read_block` (in a loop), and `VDISK_close` subroutines.
+        *   `SYSCALL_STORE_FILE`: Implements a complete file save by calling `VDISK_create`, `VDISK_write_block` (in a loop), and `VDISK_close` subroutines.
