@@ -12,6 +12,7 @@ from devices.interrupt_controller import InterruptController
 from devices.keyboard import Keyboard
 from devices.sio import SIO
 from devices.debugger import Debugger
+from devices.VirtualDisk import VirtualDisk
 
 # --- Constants ---
 # Memory Map
@@ -39,6 +40,7 @@ FG_COLOR = (200, 200, 200) # Light Grey
 # Device Memory Locations
 MEM_KBD_I0_BASE = MEM_VAR_START -8
 MEM_KEYBOARD_DATA = MEM_KBD_I0_BASE + 0 # Keyboard data register at the top of the I/O space
+MEM_VDSK_I0_BASE = MEM_KBD_I0_BASE - 8 # Virtual Disk registers start here
 
 
 # --- CPU Thread ---
@@ -126,6 +128,7 @@ def main():
     cpu.registers["PC"] = MEM_LOADER_START # Set PC to the start of the loaded program
     keyboard = Keyboard(interrupt_controller, vector=KEYBOARD_INTERRUPT_VECTOR)
     sio = SIO(ram, interrupt_controller)
+    vdisk = VirtualDisk(ram, MEM_VDSK_I0_BASE, "Vdisk0")
     debugger = Debugger(cpu, ram)
 
     # Check for debug flag
@@ -150,6 +153,9 @@ def main():
             # Pass keyboard events to the keyboard device
             if event.type == pygame.KEYDOWN:
                 keyboard.handle_key_event(event)
+
+        # Poll virtual disk
+        vdisk.access()
 
         # --- Drawing Logic --- 
         screen.fill(BG_COLOR)
