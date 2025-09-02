@@ -41,6 +41,21 @@
     ldi M @sys_print_number ; Start of the ISR
     stx M $INT_VECTORS      ; Store ISR
 
+    EQU ~SYS_F_OPEN_READ 28
+    ldi I ~SYS_F_OPEN_READ  ; syscall 28 @sys_f_open_read
+    ldi M @sys_f_open_read  ; Start of the ISR
+    stx M $INT_VECTORS      ; Store ISR
+
+    EQU ~SYS_F_READ_BLOCK 29
+    ldi I ~SYS_F_READ_BLOCK  ; syscall 29 @sys_f_read_block
+    ldi M @sys_f_read_block  ; Start of the ISR
+    stx M $INT_VECTORS       ; Store ISR
+
+    EQU ~SYS_F_CLOSE 30
+    ldi I ~SYS_F_CLOSE  ; syscall 30 @sys_f_close
+    ldi M @sys_f_close  ; Start of the ISR
+    stx M $INT_VECTORS  ; Store ISR
+
 
 ret
 
@@ -96,3 +111,37 @@ ret
     call @print_number
     rti
 
+@sys_f_open_read        ; Syscall 28, A holds the address of the filename string
+    call @open_file_read
+    jmpf :f_open_read_file_error
+
+    sto A $SYSCALL_RETURN_VALUE
+    ldi A 1             ; signal True to the caller
+    sto A $SYSCALL_RETURN_STATUS
+    rti
+
+:f_open_read_file_error
+    sto A $SYSCALL_RETURN_VALUE
+    ldi A 0             ; signal False to the caller
+    sto A $SYSCALL_RETURN_STATUS
+    rti
+
+@sys_f_read_block       ; Syscall 29
+    call @read_file_block
+    jmpf :f_read_block_error
+
+    ldm A $last_block_register
+    sto A $SYSCALL_RETURN_VALUE
+    ldi A 1             ; signal True to the caller
+    sto A $SYSCALL_RETURN_STATUS
+    rti
+
+:f_read_block_error
+    sto Z $SYSCALL_RETURN_VALUE
+    ldi A 0             ; signal False to the caller
+    sto A $SYSCALL_RETURN_STATUS
+    rti
+
+@sys_f_close            ; Syscall 30
+    call @close_file
+    rti

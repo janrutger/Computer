@@ -216,6 +216,7 @@ class VirtualDisk:
             # Write block to host memory
             for i, char in enumerate(block):
                 self.memory.write(host_buffer_address + i, ord(char))
+            self.memory.write(host_buffer_address + len(block), 0) # Null-terminate the block
             
             # Update buffer index
             self.open_files[file_hash]['buffer_index'] = end
@@ -285,5 +286,3 @@ class VirtualDisk:
             self.memory.write(self.status_register, DISK_SUCCESS)
         else:
             self.memory.write(self.status_register, FILE_ERROR)
-
-

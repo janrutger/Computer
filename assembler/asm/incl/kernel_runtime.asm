@@ -172,3 +172,85 @@ ret
     int $INT_VECTORS
 
     ret
+
+
+
+
+#### LOAD command
+@rt_stacks_cmd_load
+    . $test_filename 8
+    % $test_filename \p \r \o \g \r \a \m \null
+
+    ldi A $test_filename
+    
+    ##
+    ldi I ~SYS_F_OPEN_READ
+    int $INT_VECTORS
+
+    ldm A $SYSCALL_RETURN_STATUS
+    tste A Z               ; Status is 1 at success
+    jmpt :cmd_load_end     ; do nothing when file error, mesage is already printed
+
+    ; File opened successfully, now read the content
+    sto Z $PROG_BUFFER_PTR
+    sto Z $PROG_BUFFER_WRITE_PTR
+
+:read_loop
+    ldi I ~SYS_F_READ_BLOCK
+    int $INT_VECTORS
+
+    ldm A $SYSCALL_RETURN_STATUS
+    tste A Z
+    jmpt :close_and_end ; if error, close file and end
+
+    call @load_block_to_prog_buffer
+
+    ldm A $SYSCALL_RETURN_VALUE ; check if it was the last block
+    tste A Z
+    :debug
+    jmpt :read_loop ; if not last block, continue reading
+
+:close_and_end
+    ldi I ~SYS_F_CLOSE
+    int $INT_VECTORS
+
+:cmd_load_end
+
+    ret
+
+
+
+
+
+#### Helpers from here
+. $PROG_BUFFER_WRITE_PTR 1
+
+@load_block_to_prog_buffer
+    push A
+    push B
+    push K
+
+    ldm K $PROG_BUFFER_WRITE_PTR ; K is the write pointer for PROG_BUFFER
+    ldi B $disk_io_buffer        ; I is the read pointer for disk_io_buffer
+
+:copy_loop
+    ld I B
+    ldx A $start_memory         ; read from disk_io_buffer (I is index)
+    tste A Z                     ; check for null terminator
+    jmpt :copy_loop_end
+
+    ld I K
+    stx A $PROG_BUFFER_BASE     ; write to PROG_BUFFER (K is index)
+
+    addi B 1
+    addi K 1
+    jmp :copy_loop
+
+:copy_loop_end
+    sto K $PROG_BUFFER_WRITE_PTR ; save the updated write pointer
+    sto A $PROG_BUFFER_PTR       ; update the total size of prog buffer
+
+    pop K
+    pop B
+    pop A
+    ret

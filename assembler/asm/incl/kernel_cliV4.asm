@@ -31,6 +31,9 @@ EQU ~CMD_BUFFER_SIZE 80
 . $CMD_RUN_STR 4
 % $CMD_RUN_STR \r \u \n \null
 
+. $CMD_LOAD_STR 5
+% $CMD_LOAD_STR \l \o \a \d \null
+
 . $RT_ADD_STR 2
 % $RT_ADD_STR \+ \null
 
