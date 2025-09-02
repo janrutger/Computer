@@ -25,8 +25,20 @@ EQU ~MAX_LINES 64
 @interpreter_start
     ldm K $PROG_BUFFER_PTR
     tste K Z                    ; test is program already in buffer
-    jmpf @stacks_main_loop
+    jmpf :init_interpreter_state
 
+    ; If PROG_BUFFER_PTR is NOT 0 (program loaded), synchronize state
+    ldm A $PROG_BUFFER_PTR      ; Get current PROG_BUFFER_PTR (end of loaded program)
+    sto A $PROG_BUFFER_PTR      ; Set interpreter's PROG_BUFFER_PTR
+    sto A $PROG_BUFFER_WRITE_PTR ; Set write pointer to end of loaded program
+    sto A $PROG_BUFFER_TEMP_PTR  ; Set temp pointer to end of loaded program
+
+    ldm A $LINE_NUMBER          ; Get current LINE_NUMBER (total lines + 1)
+    sto A $LINE_NUMBER          ; Synchronize LINE_NUMBER
+
+    jmp @stacks_main_loop       ; Jump to main loop
+
+:init_interpreter_state
     # Print welcome message when buffer is empty and init 
         ldi A $STACKS_WELCOME_MSG
         ldi I ~SYS_PRINT_STRING
@@ -196,4 +208,3 @@ EQU ~MAX_LINES 64
     ldi I ~SYS_PRINT_NUMBER
     int $INT_VECTORS
     ret
-

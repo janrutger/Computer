@@ -139,6 +139,7 @@ ret
 
 #### RUN command
 @rt_stacks_cmd_run
+:debug1
     ldi C \Return
     ldi I ~SYS_PRINT_CHAR
     int $INT_VECTORS
@@ -174,8 +175,6 @@ ret
     ret
 
 
-
-
 #### LOAD command
 @rt_stacks_cmd_load
     . $test_filename 8
@@ -192,8 +191,11 @@ ret
     jmpt :cmd_load_end     ; do nothing when file error, mesage is already printed
 
     ; File opened successfully, now read the content
-    sto Z $PROG_BUFFER_PTR
+    sto Z $PROG_BUFFER_PTR          ; reset progbuffer pointer to 0
     sto Z $PROG_BUFFER_WRITE_PTR
+    sto Z $LINE_NUMBER              ; reset line number to 0 (line 1 == index 0)
+    sto Z $PROG_BUFFER_TEMP_PTR
+
 
 :read_loop
     ldi I ~SYS_F_READ_BLOCK
@@ -210,6 +212,9 @@ ret
     :debug
     jmpt :read_loop ; if not last block, continue reading
 
+    inc I $LINE_NUMBER
+
+
 :close_and_end
     ldi I ~SYS_F_CLOSE
     int $INT_VECTORS
@@ -219,18 +224,16 @@ ret
     ret
 
 
-
-
-
 #### Helpers from here
 . $PROG_BUFFER_WRITE_PTR 1
+. $PROG_BUFFER_TEMP_PTR 1
 
 @load_block_to_prog_buffer
     push A
     push B
-    push K
+    ; push I        ; is not nessesery, you never can trust I
 
-    ldm K $PROG_BUFFER_WRITE_PTR ; K is the write pointer for PROG_BUFFER
+   ; ldm K $PROG_BUFFER_WRITE_PTR ; K is the write pointer for PROG_BUFFER
     ldi B $disk_io_buffer        ; I is the read pointer for disk_io_buffer
 
 :copy_loop
@@ -239,18 +242,39 @@ ret
     tste A Z                     ; check for null terminator
     jmpt :copy_loop_end
 
-    ld I K
-    stx A $PROG_BUFFER_BASE     ; write to PROG_BUFFER (K is index)
+    tst A \Return
+    jmpt :write_line_number
 
+    inc I $PROG_BUFFER_WRITE_PTR ; load I and increments $PROG_BUFFER_WRITE_PTR for PROG_BUFFER
+    stx A $PROG_BUFFER_BASE      ; write to PROG_BUFFER
+
+:read_next
     addi B 1
-    addi K 1
     jmp :copy_loop
 
 :copy_loop_end
-    sto K $PROG_BUFFER_WRITE_PTR ; save the updated write pointer
-    sto A $PROG_BUFFER_PTR       ; update the total size of prog buffer
+    ldm A $PROG_BUFFER_WRITE_PTR ; load the last buffer adres
+    sto A $PROG_BUFFER_PTR       ; update the size of prog buffer
 
-    pop K
+    ldm A $PROG_BUFFER_WRITE_PTR
+    sto A $PROG_BUFFER_TEMP_PTR
+
+    ldm I $LINE_NUMBER          
+    stx Z $LINE_INDEX_ARRAY_BASE ; terminate line index
+
     pop B
     pop A
     ret
+
+:write_line_number
+    ldi A \null                  ; Line termination
+    inc I $PROG_BUFFER_WRITE_PTR ; load I and increments $PROG_BUFFER_WRITE_PTR for PROG_BUFFER
+    stx A $PROG_BUFFER_BASE      ; write to PROG_BUFFER
+
+    inc I $LINE_NUMBER           ; Load I and increments $LINE_NUMBER
+    ldm A $PROG_BUFFER_TEMP_PTR  ; load the last used start pointer
+    stx A $LINE_INDEX_ARRAY_BASE ; Store pointer inn line index
+
+    ldm A $PROG_BUFFER_WRITE_PTR
+    sto A $PROG_BUFFER_TEMP_PTR  ; update the new start point for the next line
+    jmp :read_next
