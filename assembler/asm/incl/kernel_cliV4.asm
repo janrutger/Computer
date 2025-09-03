@@ -15,40 +15,6 @@ EQU ~CMD_BUFFER_SIZE 80
 % $STACKS_VARS_BASE $STACKS_VARS
 
 
-# Define the command strings
-. $CMD_CLS_STR 4
-% $CMD_CLS_STR \c \l \s \null
-
-. $CMD_QUIT_STR 5
-% $CMD_QUIT_STR \q \u \i \t \null 
-
-. $CMD_STACKS_STR 7
-% $CMD_STACKS_STR \s \t \a \c \k \s \null
-
-. $CMD_LIST_STR 5
-% $CMD_LIST_STR \l \i \s \t \null
-
-. $CMD_RUN_STR 4
-% $CMD_RUN_STR \r \u \n \null
-
-. $CMD_LOAD_STR 5
-% $CMD_LOAD_STR \l \o \a \d \null
-
-. $RT_ADD_STR 2
-% $RT_ADD_STR \+ \null
-
-. $RT_PRINT_STR 2
-% $RT_PRINT_STR \. \null
-
-. $RT_STORE_VAR 2
-% $RT_STORE_VAR \! \null
-
-. $RT_RESTORE_VAR 2
-% $RT_RESTORE_VAR \@ \null
-
-. $RT_NEXT_STR 5
-% $RT_NEXT_STR \n \e \x \t \null
-
 
 # define the Command sub-routines
 @cli_cmd_cls

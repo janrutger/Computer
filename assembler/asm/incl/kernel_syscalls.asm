@@ -56,6 +56,11 @@
     ldi M @sys_f_close  ; Start of the ISR
     stx M $INT_VECTORS  ; Store ISR
 
+    EQU ~SYS_F_OPEN_WRITE 31
+    ldi I ~SYS_F_OPEN_WRITE  ; syscall 31 @sys_f_open_write
+    ldi M @sys_f_open_write  ; Start of the ISR
+    stx M $INT_VECTORS       ; Store ISR
+
 
 ret
 
@@ -142,6 +147,25 @@ ret
     sto A $SYSCALL_RETURN_STATUS
     rti
 
+
+
 @sys_f_close            ; Syscall 30
     call @close_file
+    rti
+
+
+
+@sys_f_open_write        ; Syscall 31, A holds the address of the filename string
+    call @open_file_write
+    jmpf :f_open_write_file_error
+
+    sto A $SYSCALL_RETURN_VALUE
+    ldi A 1             ; signal True to the caller
+    sto A $SYSCALL_RETURN_STATUS
+    rti
+
+:f_open_write_file_error
+    sto A $SYSCALL_RETURN_VALUE
+    ldi A 0             ; signal False to the caller
+    sto A $SYSCALL_RETURN_STATUS
     rti

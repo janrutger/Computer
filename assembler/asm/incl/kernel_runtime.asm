@@ -221,10 +221,58 @@ ret
 
 :cmd_load_end
 
-    ret
+    ret  ; end of load command
+
+
+#### SAVE command
+@rt_stacks_cmd_save
+    ; . $test_filename 8  ; already done in the read command
+    ; % $test_filename \p \r \o \g \r \a \m \null
+
+    ldi A $test_filename
+    
+    ##
+    # first, check if the PROG_BUFFER is maybe empty
+    ldm A $PROG_BUFFER_PTR
+    tste A Z
+    jmpt :cmd_save_end
+
+    ldi I ~SYS_F_OPEN_WRITE
+    int $INT_VECTORS
+
+    ldm A $SYSCALL_RETURN_STATUS
+    tste A Z               ; Status is 1 at success
+    jmpt :cmd_save_end     ; do nothing when file error, mesage is already printed
+
+    ; File opened successfully, now write the content
+    ; of the PROG_BUFFER to the disk in blocks of 12 bytes
+    ; For this we need only the temp pointer to walk tru the buffer
+    sto Z $PROG_BUFFER_TEMP_PTR
+
+:write_loop
+    # i need code for the write loop.
+    # must read the prog_buffer in blocks of 12
+    # and  must be \null terminated
+
+    # must be coppied to $disk_io_buffer
+    # and calling sys_f_write__block
+    # check for succes and send the next block
+    # if error close the file and end (message is already printed)
+    jmpt :write_loop
+
+:close_and_save_end
+    ldi I ~SYS_F_CLOSE
+    int $INT_VECTORS
+
+:cmd_save_end
+ret
+
 
 
 #### Helpers from here
+
+
+### copy diskblock to programbuffer, disk read operation
 . $PROG_BUFFER_WRITE_PTR 1
 . $PROG_BUFFER_TEMP_PTR 1
 
@@ -278,3 +326,4 @@ ret
     ldm A $PROG_BUFFER_WRITE_PTR
     sto A $PROG_BUFFER_TEMP_PTR  ; update the new start point for the next line
     jmp :read_next
+

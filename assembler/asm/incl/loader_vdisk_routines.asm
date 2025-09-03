@@ -101,6 +101,48 @@ ret
 ret
 
 ; -----------------------------------------------------------------------------
+; OPEN_FILE_WRITE - Opens a file on the virtual disk for writing.
+; IN:    A = address of the null-terminated filename string.
+; OUT: - status is true, when found, status is false when error
+;      - file HASH returns in A
+; -----------------------------------------------------------------------------
+@open_file_write
+    # A points to filename buffer
+    call @hash_filename
+    sto A $filehash_register
+
+    # execute file open command on disk
+    ldi A ~CMD_OPEN_WRITE
+    sto A $command_register
+    ldi A ~HOST_WAITING
+    sto A $status_register
+
+    call @_check_return_status  ; returns status = true when succesfull
+                                ; returns false at file error
+                                ; Halts on disk error
+    ldi A ~HOST_BUSY
+    sto A $status_register
+
+    jmpt :open_write_success
+    jmp  :open_write_error
+
+
+:open_write_success
+    ldm A $filehash_register
+    tste A A
+    jmp :open_file_write_end
+
+:open_write_error               ; error messeage is already printed
+    ldm A $filehash_register
+    tstg A A 
+    jmp :open_file_write_end
+
+:open_file_write_end
+ret
+
+
+
+; -----------------------------------------------------------------------------
 ; READ_FILEBLOCK - read the current block
 ; IN:  - filename_hash_register contains the file hash
 ; OUT: - status is true when succeed, orherwise statu is false
