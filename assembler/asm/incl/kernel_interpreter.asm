@@ -28,10 +28,10 @@ EQU ~MAX_LINES 64
     jmpf :init_interpreter_state
 
     ; If PROG_BUFFER_PTR is NOT 0 (program loaded), synchronize state
-    ldm A $PROG_BUFFER_PTR      ; Get current PROG_BUFFER_PTR (end of loaded program)
-    sto A $PROG_BUFFER_PTR      ; Set interpreter's PROG_BUFFER_PTR
-    sto A $PROG_BUFFER_WRITE_PTR ; Set write pointer to end of loaded program
-    sto A $PROG_BUFFER_TEMP_PTR  ; Set temp pointer to end of loaded program
+    ; ldm A $PROG_BUFFER_PTR      ; Get current PROG_BUFFER_PTR (end of loaded program)
+    ; sto A $PROG_BUFFER_PTR      ; Set interpreter's PROG_BUFFER_PTR
+    ; sto A $PROG_BUFFER_WRITE_PTR ; Set write pointer to end of loaded program
+    ; sto A $PROG_BUFFER_TEMP_PTR  ; Set temp pointer to end of loaded program
 
     ldm A $LINE_NUMBER          ; Get current LINE_NUMBER (total lines + 1)
     sto A $LINE_NUMBER          ; Synchronize LINE_NUMBER

@@ -256,8 +256,8 @@ ret
     ldm A $PROG_BUFFER_WRITE_PTR ; load the last buffer adres
     sto A $PROG_BUFFER_PTR       ; update the size of prog buffer
 
-    ldm A $PROG_BUFFER_WRITE_PTR
-    sto A $PROG_BUFFER_TEMP_PTR
+    ;ldm A $PROG_BUFFER_WRITE_PTR
+    ;sto A $PROG_BUFFER_TEMP_PTR
 
     ldm I $LINE_NUMBER          
     stx Z $LINE_INDEX_ARRAY_BASE ; terminate line index

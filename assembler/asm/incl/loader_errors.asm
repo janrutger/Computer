@@ -28,7 +28,9 @@
 
 
 :end_fatal 
-    halt
+    :end_less
+        nop
+    jmp :end_less
 
 
 @print_error_string       ; Syscall 24
