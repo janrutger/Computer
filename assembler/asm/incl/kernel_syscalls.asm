@@ -61,6 +61,13 @@
     ldi M @sys_f_open_write  ; Start of the ISR
     stx M $INT_VECTORS       ; Store ISR
 
+    EQU ~SYS_F_WRITE_BLOCK 32
+    ldi I ~SYS_F_WRITE_BLOCK  ; syscall 32 @sys_f_write_block
+    ldi M @sys_f_write_block  ; Start of the ISR
+    stx M $INT_VECTORS       ; Store ISR
+
+
+
 
 ret
 
@@ -166,6 +173,23 @@ ret
 
 :f_open_write_file_error
     sto A $SYSCALL_RETURN_VALUE
+    ldi A 0             ; signal False to the caller
+    sto A $SYSCALL_RETURN_STATUS
+    rti
+
+@sys_f_write_block       ; Syscall 32
+
+    call @write_file_block
+    jmpf :f_write_block_error
+
+    ; ldm A $last_block_register
+    sto Z $SYSCALL_RETURN_VALUE
+    ldi A 1             ; signal True to the caller
+    sto A $SYSCALL_RETURN_STATUS
+    rti
+
+:f_write_block_error
+    sto Z $SYSCALL_RETURN_VALUE
     ldi A 0             ; signal False to the caller
     sto A $SYSCALL_RETURN_STATUS
     rti

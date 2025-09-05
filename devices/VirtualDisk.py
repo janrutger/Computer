@@ -139,7 +139,8 @@ class VirtualDisk:
             try:
                 with open(file_path, 'r') as f:
                     file_content = f.read()
-                file_content += '\n'
+                if not file_content.endswith('\n'):  # close the file \n is it is not, last var must be \n
+                    file_content += '\n'
                 self.open_files[file_hash] = {'mode': 'r', 'dirty': False, 'path': file_path, 'buffer': file_content.replace('\n', '\r'), 'buffer_index': 0}
                 self.memory.write(self.status_register, DISK_SUCCESS)
             except IOError:

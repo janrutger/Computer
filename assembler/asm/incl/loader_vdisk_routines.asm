@@ -29,6 +29,10 @@ EQU ~LAST_BLOCK 1
 # Create an disk buffer of 13,12 chars + \null for termination
 # since position 13 stays 0, its an auto terminiation when full buffer is used
 . $disk_io_buffer 13
+. $disk_io_buffer_base 1
+% $disk_io_buffer_base $disk_io_buffer
+. $disk_io_buffer_ptr 1
+
 
 # Hash function vars
 . $modulo 1
@@ -172,6 +176,38 @@ ret
     jmp :read_block_end
 
 :read_block_end
+ret
+
+; -----------------------------------------------------------------------------
+; WRITE_FILEBLOCK - write the current block
+; IN:  - filename_hash_register contains the file hash
+; OUT: - status is true when succeed, orherwise statu is false
+;      - Blok is copied from the diskbuffer (by the disk)
+; -----------------------------------------------------------------------------
+@write_file_block
+ 
+    ldi A ~CMD_WRITE_BLOCK   ; Set command buffer
+    sto A $command_register
+    ldi A ~HOST_WAITING     ; Set status buffer
+    sto A $status_register
+
+    call @_check_return_status  ; returns status = true when succesfull
+                                ; returns false at file error
+                                ; Halts on disk error
+    ldi A ~HOST_BUSY
+    sto A $status_register
+    jmpt :write_block_success
+    jmp :write_block_error
+
+:write_block_success
+    tste A A 
+    jmp :write_block_end
+
+:write_block_error
+    tstg A A 
+    jmp :write_block_end
+
+:write_block_end
 ret
 
 ; -----------------------------------------------------------------------------

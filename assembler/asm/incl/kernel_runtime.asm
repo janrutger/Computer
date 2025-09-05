@@ -139,7 +139,6 @@ ret
 
 #### RUN command
 @rt_stacks_cmd_run
-:debug1
     ldi C \Return
     ldi I ~SYS_PRINT_CHAR
     int $INT_VECTORS
@@ -154,7 +153,7 @@ ret
 :run_loop
     inc L $line_to_print
     ldm M $LINE_NUMBER
-    tstg L M
+    tste L M                ; by using tste, tstg, iam fixing a bug i hope
     jmpt :run_loop_end
 
     ld I L
@@ -209,7 +208,7 @@ ret
 
     ldm A $SYSCALL_RETURN_VALUE ; check if it was the last block
     tste A Z
-    :debug
+
     jmpt :read_loop ; if not last block, continue reading
 
     inc I $LINE_NUMBER
@@ -226,40 +225,29 @@ ret
 
 #### SAVE command
 @rt_stacks_cmd_save
+
     ; . $test_filename 8  ; already done in the read command
     ; % $test_filename \p \r \o \g \r \a \m \null
 
     ldi A $test_filename
-    
+
     ##
     # first, check if the PROG_BUFFER is maybe empty
-    ldm A $PROG_BUFFER_PTR
-    tste A Z
+    ldm B $PROG_BUFFER_PTR
+    tste B Z
     jmpt :cmd_save_end
 
-    ldi I ~SYS_F_OPEN_WRITE
+    ldi I ~SYS_F_OPEN_WRITE ; expect  file pointer in A
     int $INT_VECTORS
 
     ldm A $SYSCALL_RETURN_STATUS
     tste A Z               ; Status is 1 at success
     jmpt :cmd_save_end     ; do nothing when file error, mesage is already printed
 
-    ; File opened successfully, now write the content
-    ; of the PROG_BUFFER to the disk in blocks of 12 bytes
-    ; For this we need only the temp pointer to walk tru the buffer
     sto Z $PROG_BUFFER_TEMP_PTR
-
-:write_loop
-    # i need code for the write loop.
-    # must read the prog_buffer in blocks of 12
-    # and  must be \null terminated
-
-    # must be coppied to $disk_io_buffer
-    # and calling sys_f_write__block
-    # check for succes and send the next block
-    # if error close the file and end (message is already printed)
-    jmpt :write_loop
-
+    call @save_all_blocks_from_prog_buffer
+    
+;
 :close_and_save_end
     ldi I ~SYS_F_CLOSE
     int $INT_VECTORS
@@ -268,9 +256,67 @@ ret
 ret
 
 
+EQU ~DISK_BLOCK_SIZE 12
+. $byte_to_copy 1
 
 #### Helpers from here
+@save_all_blocks_from_prog_buffer   ; save PROG_BUFFER to disk in blocks of 12 bytes
 
+:next_block_loop
+    sto Z $disk_io_buffer_ptr   ; reset buffer pointer for each block
+
+    ldm A $PROG_BUFFER_PTR      ; Points to the next free posssition
+    ldm B $PROG_BUFFER_TEMP_PTR ; Hold the current possition while copying
+
+
+    sub A B                     ; A hold the remaining bytes to copy
+    tste A Z                    ; exit it all byte are done
+
+    jmpt :end_of_save_blocks
+
+    ldi B ~DISK_BLOCK_SIZE
+    tstg A B                    ; check for partial, or last full block
+    sto A $byte_to_copy         ; save the numbers to copy
+    jmpf :do_save_this_block
+    sto B $byte_to_copy         ; copy a full block
+
+    :do_save_this_block
+        ; needs - $PROG_BUFFER_TEMP_PTR (0 at the first block)
+        ;       - $disk_io_buffer_base $disk_io_buffer_ptr
+        ;       - $byte_to_copy
+
+
+        :save_inner_loop        ; copy 1 by 1
+            inc I $PROG_BUFFER_TEMP_PTR
+            ldx M $PROG_BUFFER_BASE     ; M hold the byte from PROG_BUFFER
+            
+            tst M \null
+            jmpf :save_proceed
+            ldi M \Return
+        :save_proceed
+            inc I $disk_io_buffer_ptr
+            stx M $disk_io_buffer_base
+        
+            dec C $byte_to_copy
+            tste C Z
+            jmpf :save_inner_loop
+
+    # this block is in the disk_io_buffer now
+    ldm i $disk_io_buffer_ptr       ; write \null termination, at the end
+    stx Z $disk_io_buffer_base      ; at index 13 or ealier, when block incompleet
+
+    ldi I ~SYS_F_WRITE_BLOCK
+    int $INT_VECTORS
+
+    ldm A $SYSCALL_RETURN_STATUS
+    tste A Z                 ; Status is 1 at success
+    jmpt :end_of_save_blocks ; do nothing when file error, mesage is already printed
+
+    jmp :next_block_loop
+
+:end_of_save_blocks
+
+ret
 
 ### copy diskblock to programbuffer, disk read operation
 . $PROG_BUFFER_WRITE_PTR 1
