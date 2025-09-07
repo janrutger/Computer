@@ -17,12 +17,19 @@ EQU ~TOKEN_UNKNOWN 1        ; Unknown token
 EQU ~TOKEN_CMD 2            ; Command token
 EQU ~TOKEN_NUM 3            ; Numeric token
 EQU ~TOKEN_VAR 4            ; Variable token (A-Z)
+EQU ~TOKEN_LABEL 5          ; Label token
 
 # --- Current Token Buffer ---
 . $current_part 25          ; Buffer to store the current token being parsed (max length 24 chars + \null)
 . $current_part_base 1      ; Base address of the current token buffer
 % $current_part_base $current_part ; Set the base address to the start of the buffer
 . $current_part_ptr 1       ; Pointer to the current position in the token buffer
+
+# --- Current Label Buffer ---
+. $current_label 9           ; Buffer to store the current label being parsed (max length 8 chars + \null)
+. $current_label_base 1      ; Base address of the current label buffer
+% $current_label_base $current_label ; Set the base address to the start of the buffer
+. $current_label_ptr 1       ; Pointer to the current position in the label buffer
 
 # --- Main Tokenizer Routine ---
 
@@ -132,7 +139,50 @@ EQU ~TOKEN_VAR 4            ; Variable token (A-Z)
     tst A \null                 ; Check if the token is empty
     jmpt :return_no_token       ; If so, return no token
 
-    ; --- Check for a variable (A-Z) ---
+:check_for_label                ; --- Check for a label  ---
+    ldi B \:                    ; Load :
+    tste A B                    ; check if it is :
+    jmpf :check_for_var         ; If not, it can't be a label
+
+    ## This step is needed because the first check did not inc the pointer
+    ## i keep it this way for compability reasons, so i advance here
+    inc I $current_part_ptr     ; Move to the next character
+
+    inc I $current_part_ptr     ; Move to the next character
+    ldx A $current_part_base    ; Load the next character
+    tst A \null                 ; Check if it is the end of the string
+    jmpt :return_unknown_token  ; If so, it's not a single character, so not a label
+
+    sto Z $current_label_ptr    ; Reset the current label buffer pointer
+
+    :label_loop                 ; when entering A holds the first char of the label
+        inc I $current_label_ptr    ; 
+        stx A $current_label_base   ; Store the character in the label buffer
+
+        inc I $current_part_ptr     ; Move to the next character
+        ldx A $current_part_base    ; Load the next character
+        tst A \null                 ; Check if it is the end
+
+        jmpf :label_loop
+    
+    ; ldi A \null                   ; A is already \null here
+    inc I $current_label_ptr    ; Move to the next character
+    stx A $current_label_base   ; Store the null terminator in the label buffer
+
+    ; --- It is a label ---
+
+    ldi B ~TOKEN_LABEL          ; Set the token type to label
+    sto B $TOKEN_TYPE           ; Store the token type
+    ldi B ~label                ; Set the token ID to label
+    sto B $TOKEN_ID             ; Store the label ID
+    ldi B $current_label        ; Adres to the label array
+    sto B $TOKEN_VALUE          ; Store the label value
+
+    sto Z $current_label_ptr    ; Reset the current label buffer pointer
+   :debug
+    ret
+    
+:check_for_var                  ; --- Check for a variable (A-Z) ---
     ldi B \@                    ; Load the character before 'A'
     tstg A B                    ; Test if the first character is greater than '@'
     jmpf :check_for_numeric     ; If not, it can't be a variable
@@ -147,7 +197,7 @@ EQU ~TOKEN_VAR 4            ; Variable token (A-Z)
     ; --- It is a variable ---
     ldi B ~TOKEN_VAR            ; Set the token type to variable
     sto B $TOKEN_TYPE           ; Store the token type
-    ldi B ~var_id
+    ldi B ~var 
     sto B $TOKEN_ID             ; Store the variable ID
     sto A $TOKEN_VALUE          ; Store the character code of the variable
     ret
@@ -160,7 +210,7 @@ EQU ~TOKEN_VAR 4            ; Variable token (A-Z)
     ; --- It is a number ---
     ldi B ~TOKEN_NUM            ; Set the token type to number
     sto B $TOKEN_TYPE           ; Store the token type
-    ldi B ~num_id
+    ldi B ~num
     sto B $TOKEN_ID             ; Store the number ID
     sto A $TOKEN_VALUE          ; Store the numeric value
     ret

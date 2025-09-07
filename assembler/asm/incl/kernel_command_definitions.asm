@@ -17,20 +17,29 @@
 % $LUT_INDEX 0
 
 # Configure the command ID numbers
-EQU ~var_id 98
-EQU ~num_id 99
-EQU ~cls 100
-EQU ~quit 101
-EQU ~add 102
-EQU ~print 103
-EQU ~stacks 104
-EQU ~list 105
-EQU ~run 106
-EQU ~next 107
-EQU ~store 108
-EQU ~restore 109
-EQU ~load 110
-EQU ~save 111
+EQU ~label 97       ; token is label, toeken value points to label-array +\ null
+EQU ~var 98         ; Token is var, token value is var-index [0 ..26]
+EQU ~num 99         ; Token is number, token value is number
+
+# Keyword Commands [100 ... 199]
+EQU ~cls 100        ; Clear screen
+EQU ~quit 101       ; Quit/Exit the computer (turn off)
+EQU ~print 102      ; Print TOS to screen
+EQU ~stacks 103     ; Start the Stacks editor (called interpreter.py)
+EQU ~list 104       ; List/shows current programbuffer
+EQU ~run 105        ; Run/execute current programbuffer
+EQU ~next 106       ; forger this, we implelemt GOTO
+EQU ~store 107      ; Store TOS to var [A .. Z]
+EQU ~restore 108    ; Restore var [A .. Z] to TOS
+EQU ~load 109       ; Load a file from disk to PROG_BUFFER
+EQU ~save 110       ; Save the PROG_BUFFER to disk
+
+
+# Keyword operations [200 ... 299]
+EQU ~add 200        ; tos + tos[-1] = tos
+
+# keyword Stacks keyword commands [300 ... 399]
+
 
 # Configure the lookup tables
 # don forget to update the LUT_LEN after adding or deleting commands

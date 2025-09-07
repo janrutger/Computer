@@ -7,7 +7,7 @@ PROGRAM:
     condition IF expression ELSE expression END
 
 - for conditional GOTO
-     condition GOTO label
+     condition GOTO :label
 
 - For the while loop construction
     { condition } DO expression END
@@ -16,7 +16,7 @@ PROGRAM:
     expression [PRINT | PLOT]
 
 - unconditional GOTO
-    GOTO label
+    GOTO :label
 
 - FUNCTION:
     DEF name { PROGRAM }
