@@ -92,9 +92,28 @@ ret
 
 @_executed_immediate 
     :immediate_loop
+        call @get_next_token
+        ldm A $TOKEN_TYPE
+
+        tst A ~TOKEN_NONE
+        jmpt :end_of_immediate_loop
+
         ldm A $TOKEN_ID
+        ldi B ~label
+        tstg A B            ; excluding ~label
+        jmpf :invalid_immediate_command
+
+        nop         ; more checks and execute
+
+        jmp :immediate_loop
+
+
+    :invalid_immediate_command
+        call @error_invalid_cmd
+        jmp :immediate_loop
         
 
+:end_of_immediate_loop
 ret
 
 @_1_scan_phase

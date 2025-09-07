@@ -28,7 +28,7 @@ EQU ~print 102      ; Print TOS to screen
 EQU ~stacks 103     ; Start the Stacks editor (called interpreter.py)
 EQU ~list 104       ; List/shows current programbuffer
 EQU ~run 105        ; Run/execute current programbuffer
-EQU ~next 106       ; forger this, we implelemt GOTO
+EQU ~next 106       ; forget this, we implement GOTO
 EQU ~store 107      ; Store TOS to var [A .. Z]
 EQU ~restore 108    ; Restore var [A .. Z] to TOS
 EQU ~load 109       ; Load a file from disk to PROG_BUFFER
