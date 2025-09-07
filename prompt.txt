@@ -1,31 +1,138 @@
-Project: Stern CPU/Computer Simulation
+syntax of the RPN Stacks language
 
-Current Task: Integrate the VirtualDisk device into the Stern-XT Operating System.
+PROGRAM:
+    :label
 
-Architectural Plan:
+- For an single condition (if):
+    condition IF expression ELSE expression END
 
-The integration will follow a three-layer design to ensure clear separation of concerns and to avoid nested syscalls.
+- for conditional GOTO
+     condition GOTO label
 
-1.  **Layer 1: Driver Subroutine Library (in `os_loader.asm` or a new `loader_disk_routines.asm`)**
-    *   **Purpose**: A callable library of low-level functions that directly interface with the virtual disk hardware. This is the core driver, usable by any kernel-mode code.
-    *   **Subroutines**:
-        *   `VDISK_init`: Initializes the disk.
-        *   `VDISK_open`: Opens a file and returns a handle.
-        *   `VDISK_close`: Closes a file handle.
-        *   `VDISK_read_block`: Reads a single block from an open file.
-        *   `VDISK_write_block`: Writes a single block to an open file.
-        *   `VDISK_create`: Creates a new file.
-    *   **Note**: The filename hashing algorithm must be simplified to produce a 16-bit hash to be feasible for the Stern-XT's 16-bit architecture. The `VirtualDisk.py` simulation must be updated to match this.
+- For the while loop construction
+    { condition } DO expression END
 
-2.  **Layer 2: Kernel Syscall Handlers (in `os_kernel.asm`)**
-    *   **Purpose**: Provides the protected interface between user-mode programs and the kernel. These handlers call the Layer 1 subroutines.
-    *   **Core I/O Syscalls (Thin Wrappers)**: These provide flexible, low-level file access.
-        *   `SYSCALL_F_OPEN`: Wraps the `VDISK_open` subroutine.
-        *   `SYSCALL_F_CLOSE`: Wraps the `VDISK_close` subroutine.
-        *   `SYSCALL_F_READ`: Wraps the `VDISK_read_block` subroutine.
-        *   `SYSCALL_F_WRITE`: Wraps the `VDISK_write_block` subroutine.
-        *   `SYSCALL_F_CREATE`: Wraps the `VDISK_create` subroutine.
-        
-    *   **High-Level Convenience Syscalls (Composite Functions)**: These provide simple, whole-file access.
-        *   `SYSCALL_LOAD_FILE`: Implements a complete file load by calling the `VDISK_open`, `VDISK_read_block` (in a loop), and `VDISK_close` subroutines.
-        *   `SYSCALL_STORE_FILE`: Implements a complete file save by calling `VDISK_create`, `VDISK_write_block` (in a loop), and `VDISK_close` subroutines.
+- expression    
+    expression [PRINT | PLOT]
+
+- unconditional GOTO
+    GOTO label
+
+- FUNCTION:
+    DEF name { PROGRAM }
+
+
+
+
+Conditions
+     == != < >
+
+ Expressions
+     + - * / mod DUP SWAP DROP OVER
+
+keywords
+    :
+    { }
+    DO END
+    IF ELSE END 
+    GOTO
+    DEF
+    TIMES
+    PRINT
+    PLOT
+
+
+Interpreter meta-command  (availible already)
+    run 
+    list
+    load
+    save
+    quit
+    stacks
+
+
+IMMEDIATE MODE:
+- Execute buffer:   Execute command buffer directly. but cannot handle GOTO and conditional instructions
+
+
+PROGRAM MODE:
+Let's summarize your three-phase plan:
+
+1 Scan Phase:   A quick first pass over the text in PROG_BUFFER with the sole purpose of 
+                finding all :label definitions and building your label tables.
+
+2 Compile/Tokenize Phase:   A second pass that reads the text but writes a compact, numeric, and optimized version      
+                            of the program into the TOKEN_BUFFER. All string lookups and parsing logic happens here.
+
+                            when it sees an DEF, it will add the function name to and index searchlist, where the 
+                            index points to the start adres of the the funcrion, who are in an other 
+                            reserved memory block e.g. FUNCTION_BUFFER
+
+3 Execution Phase:  The final and fastest phase. The interpreter's main loop runs, reading only from 
+                    the TOKEN_BUFFER and executing the commands at full speed.
+
+
+
+{ A @ 10 < } DO A @ DUP PRINT 1 + A ! END
+
+WHILE Loop: { condition } DO expression END
+Phase 2: The Tokenizer's Job
+The Tokenizer reads the text and writes numeric tokens to the TOKEN_BUFFER.
+
+1 When it sees {:
+    It records the current address in the TOKEN_BUFFER. This is the start of the loop.
+    It pushes this "start address" onto the loop_address_stack.
+
+2 When it tokenizes the condition:
+    It writes the tokens for the condition (e.g., PUSH_VAR, PUSH_LITERAL, LESS_THAN).
+
+3 When it sees DO:
+    it writes tst TOS 0 
+    It writes a JMPF <placeholder> token (Jump if False). This will be the jump that exits the loop.
+    It pushes the address of the <placeholder> onto the jump_stack.
+
+4 When it tokenizes the expression:
+    It writes all the tokens for the body of the loop.
+
+5 When it sees END: This is the crucial step with two actions.
+    Action 1 (The Loop Jump): 
+    It pops the "start address" from the loop_address_stack and writes an unconditional JMP token targeting that address. 
+    This creates the backward jump to the top of the loop.
+
+    Action 2 (The Exit Jump): 
+    It pops the placeholder's address from the jump_stack. It then patches that placeholder with the 
+    current address (the address right after the END). This completes the forward exit jump.
+
+
+
+NOTES:
+So, in your complete system, you will have three different types of stacks, all living in different parts 
+of RAM and used for different purposes:
+
+The Data Stack: Used by your Stacks language at runtime for RPN math (PUSH, POP, ADD, DUP, etc.). 
+                This is the stack the user of your language interacts with.
+
+The System Stack: Used by the CPU at runtime for CALL and RET instructions. 
+                  This is managed automatically by the SP register.
+
+The Tokenizer's Internal Stacks: Private stacks (like jump_stack and loop_address_stack) used 
+                                 only by your tokenizer program (during Phase 2) to manage its own state. 
+                                 You will write your own PushJumpStack and PopLoopStack subroutines to manage these.
+
+
+######
+
+    Exapamples:
+
+        {10 TIMES } DO ....... 
+        {A @ 10 < } DO ......
+
+        10 C @ < IF ...... ELSE ...... END
+
+        12 30 + PRINT
+
+        :start expression GOTO :start
+
+        DEF gcd { program }
+
+        34 7 gcd PRINT

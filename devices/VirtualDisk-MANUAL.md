@@ -158,3 +158,37 @@ All operations require the standard handshake protocol described above, with the
     2.  Write `CMD_CLOSE` to `command_register`.
     3.  Perform handshake.
 *   **Result**: The file is no longer open. Any pending writes are committed.
+
+## 7. Data Buffer Format
+
+When reading data from a file using `CMD_READ_BLOCK`, the Virtual Disk writes a block of raw data from the file into the host's memory buffer. It's important for the driver developer to understand the format of this data to process it correctly.
+
+The disk driver reads text files from the host system. The virtual disk hardware translates line endings from the file into a carriage return character (CR, ASCII code 13) in the buffer it provides to the CPU. The program running on the Stern-XT is responsible for interpreting this buffer.
+
+For example, if a program expects separate null-terminated strings for each line of a file, it must process the buffer to replace the carriage return characters with null characters (ASCII 0).
+
+### Example of Buffer Processing
+
+Consider a file containing two lines of text: "1 3" and "+ .". When the disk reads this file, it places the content into the I/O buffer.
+
+**1. Raw Disk I/O Buffer**
+
+The debugger shows the raw data in the `$disk_io_buffer`. Note the presence of `13` (Carriage Return) as a separator.
+
+```
+Debugger> i $disk_io_buffer
+[12400]: 49 32 51 13 43 32 46 13 13 00 00 00 ...
+         '1' ' ' '3' CR '+' ' ' '.' CR CR NUL ...
+```
+
+**2. Processed Program Buffer**
+
+The OS kernel or application code must then process this raw buffer into a more usable format. In this example, it copies the data to `$PROG_BUFFER` and replaces the `CR` characters with `NUL` (0) to create standard null-terminated strings.
+
+```
+Debugger> i $PROG_BUFFER
+[04096]: 49 32 51 00 43 32 46 00 00 00 00 00 ...
+         '1' ' ' '3' NUL '+' ' ' '.' NUL NUL ...
+```
+
+This processing step is crucial for any software that needs to handle file content as a series of distinct lines or strings.

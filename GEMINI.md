@@ -152,7 +152,7 @@ The ISA supports a maximum of 90 instructions, indicated by two-digit numbers fr
     *   `opcode + register + address` (e.g., `inc R0 100` = "800100")
     *   `opcode + register + register` (e.g., `add R2 R1` = "5021")
     *   `opcode + register + value` (e.g., `addi R4 42` = "51442")
-### Reference ISA as designed for the generation first Stern system
+### Reference ISA as designed for the first generation Stern systems
 
 | | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
 |---|---|---|---|---|---|---|---|---|---|---|

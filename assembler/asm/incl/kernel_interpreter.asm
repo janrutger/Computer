@@ -25,7 +25,7 @@ EQU ~MAX_LINES 64
 @interpreter_start
     ldm K $PROG_BUFFER_PTR
     tste K Z                    ; test is program already in buffer
-    jmpf :init_interpreter_state
+    jmpt :init_interpreter_state
 
     ; If PROG_BUFFER_PTR is NOT 0 (program loaded), synchronize state
     ; ldm A $PROG_BUFFER_PTR      ; Get current PROG_BUFFER_PTR (end of loaded program)
@@ -33,8 +33,8 @@ EQU ~MAX_LINES 64
     ; sto A $PROG_BUFFER_WRITE_PTR ; Set write pointer to end of loaded program
     ; sto A $PROG_BUFFER_TEMP_PTR  ; Set temp pointer to end of loaded program
 
-    ldm A $LINE_NUMBER          ; Get current LINE_NUMBER (total lines + 1)
-    sto A $LINE_NUMBER          ; Synchronize LINE_NUMBER
+    ;ldm A $LINE_NUMBER          ; Get current LINE_NUMBER (total lines + 1)
+    ;sto A $LINE_NUMBER          ; Synchronize LINE_NUMBER
 
     jmp @stacks_main_loop       ; Jump to main loop
 
@@ -49,15 +49,17 @@ EQU ~MAX_LINES 64
         ldi I ~SYS_PRINT_CHAR
         int $INT_VECTORS
 
+@stacks_main_loop  
         ; Initialize line number and first line index
         ldm I $LINE_NUMBER              ; current line number starts at 1
         subi I 1                        ; Substract one for correct indexing
         ldm K $PROG_BUFFER_PTR          ; 
         stx K $LINE_INDEX_ARRAY_BASE    ; Save K at index I 
 
-        jmp @stacks_main_loop
+        ;jmp @stacks_main_loop
 
-@stacks_main_loop                       ; start a newline
+
+;@stacks_main_loop                       ; start a newline
     ; Print line number
     ldm C $LINE_NUMBER                  ; Print line number 
     call @print_line_number
