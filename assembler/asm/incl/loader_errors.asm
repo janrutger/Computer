@@ -5,6 +5,12 @@
     call @print_error_string
     jmp :end_warning
 
+@errors_unkown_token
+    . $string_unkown_token 15
+    % $string_unkown_token \U \n \k \n \o \w \n \space \t \o \k \e \n \Return \null
+    ldi A $string_unkown_token
+    call @print_error_string
+    jmp :end_warning
 
 
 @error_wrong_filename

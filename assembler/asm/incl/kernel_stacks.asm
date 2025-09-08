@@ -93,25 +93,50 @@ ret
 @_executed_immediate 
     :immediate_loop
         call @get_next_token
-        ldm A $TOKEN_TYPE
+        ldm A $TOKEN_TYPE   ; A is Token type
+
+        tst A ~TOKEN_UNKNOWN
+        jmpt :unkown_token_found
 
         tst A ~TOKEN_NONE
         jmpt :end_of_immediate_loop
 
-        ldm A $TOKEN_ID
+        ldm C $TOKEN_ID     ; C is Token ID
         ldi B ~label
-        tstg A B            ; excluding ~label
+        tstg C B            ; excluding ~label
         jmpf :invalid_immediate_command
 
-        nop         ; more checks and execute
+        ldi B 299           ; last Keyword operator
+        tstg C B
+        jmpt :invalid_immediate_command
 
+    :immediate_cmd_check
+        tst A ~TOKEN_CMD    ; A is Token type
+        jmpf :immediate_num_check
+        call @_execute_cmd_token
+        jmp :immediate_loop
+
+
+    :immediate_num_check
+        tst A ~TOKEN_NUM
+        jmpf :immediate_var_check
+        call @_execute_num_token
+        jmp :immediate_loop
+
+
+    :immediate_var_check
+        tst A ~TOKEN_VAR
+        jmpf :unkown_token_found
+        call @_execute_var_token
         jmp :immediate_loop
 
 
     :invalid_immediate_command
         call @error_invalid_cmd
         jmp :immediate_loop
-        
+
+:unkown_token_found
+    call @_execute_unknown_token      
 
 :end_of_immediate_loop
 ret
@@ -130,6 +155,28 @@ ret
 
 
 ##### HELPERS
+
+@_execute_cmd_token
+    ldm I $TOKEN_VALUE
+    callx $start_memory ; Call the command handler
+    ret
+
+@_execute_num_token
+    ldm A $TOKEN_VALUE
+    call @push_A ; Push the number to the stack
+    ret
+
+@_execute_var_token
+    ldm A $TOKEN_VALUE
+    call @push_A ; Push the variable to the stack
+    ret
+
+@_execute_unknown_token
+    call @errors_unkown_token
+    ret
+
+
+
 
 @_store_registers
 # register Z remains 0 all the time

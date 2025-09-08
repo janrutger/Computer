@@ -108,7 +108,9 @@ EQU ~CMD_BUFFER_SIZE 80
 
     ldm A $CMD_BUFFER_BASE      ; Set A to the command buffer for the executor
     call @init_tokenizer_buffer  
-    call @execute_command_buffer ; New executor
+    ;call @execute_command_buffer ; Using the 'old' executer
+    ldi A 0         ; set execution mode to 0 (immediate) in A
+    call @run_stacks
 
     sto Z $CMD_BUFFER_PTR       ; reset the buffer pointer
 

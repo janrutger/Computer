@@ -179,7 +179,6 @@ EQU ~TOKEN_LABEL 5          ; Label token
     sto B $TOKEN_VALUE          ; Store the label value
 
     sto Z $current_label_ptr    ; Reset the current label buffer pointer
-   :debug
     ret
     
 :check_for_var                  ; --- Check for a variable (A-Z) ---
