@@ -25,11 +25,11 @@ EQU ~TOKEN_LABEL 5          ; Label token
 % $current_part_base $current_part ; Set the base address to the start of the buffer
 . $current_part_ptr 1       ; Pointer to the current position in the token buffer
 
-# --- Current Label Buffer ---
-. $current_label 9           ; Buffer to store the current label being parsed (max length 8 chars + \null)
-. $current_label_base 1      ; Base address of the current label buffer
-% $current_label_base $current_label ; Set the base address to the start of the buffer
-. $current_label_ptr 1       ; Pointer to the current position in the label buffer
+; # --- Current Label Buffer ---
+; . $current_label 9           ; Buffer to store the current label being parsed (max length 8 chars + \null)
+; . $current_label_base 1      ; Base address of the current label buffer
+; % $current_label_base $current_label ; Set the base address to the start of the buffer
+; . $current_label_ptr 1       ; Pointer to the current position in the label buffer
 
 # --- Main Tokenizer Routine ---
 
@@ -153,21 +153,26 @@ EQU ~TOKEN_LABEL 5          ; Label token
     tst A \null                 ; Check if it is the end of the string
     jmpt :return_unknown_token  ; If so, it's not a single character, so not a label
 
-    sto Z $current_label_ptr    ; Reset the current label buffer pointer
+    ldm A $current_part_base    ; Load the first character of the label
+    addi A 1                    ; Skip : move to the next character
+    call @hash_filename         ; borrowd from loader_vdisk_routines
+                                ; returns the hask in A
 
-    :label_loop                 ; when entering A holds the first char of the label
-        inc I $current_label_ptr    ; 
-        stx A $current_label_base   ; Store the character in the label buffer
+    ; sto Z $current_label_ptr    ; Reset the current label buffer pointer
 
-        inc I $current_part_ptr     ; Move to the next character
-        ldx A $current_part_base    ; Load the next character
-        tst A \null                 ; Check if it is the end
+    ; :label_loop                 ; when entering A holds the first char of the label
+    ;     inc I $current_label_ptr    ; 
+    ;     stx A $current_label_base   ; Store the character in the label buffer
 
-        jmpf :label_loop
+    ;     inc I $current_part_ptr     ; Move to the next character
+    ;     ldx A $current_part_base    ; Load the next character
+    ;     tst A \null                 ; Check if it is the end
+
+    ;     jmpf :label_loop
     
-    ; ldi A \null                   ; A is already \null here
-    inc I $current_label_ptr    ; Move to the next character
-    stx A $current_label_base   ; Store the null terminator in the label buffer
+    ; ; ldi A \null                   ; A is already \null here
+    ; inc I $current_label_ptr    ; Move to the next character
+    ; stx A $current_label_base   ; Store the null terminator in the label buffer
 
     ; --- It is a label ---
 
@@ -175,10 +180,10 @@ EQU ~TOKEN_LABEL 5          ; Label token
     sto B $TOKEN_TYPE           ; Store the token type
     ldi B ~label                ; Set the token ID to label
     sto B $TOKEN_ID             ; Store the label ID
-    ldi B $current_label        ; Adres to the label array
-    sto B $TOKEN_VALUE          ; Store the label value
+    sto A $TOKEN_VALUE          ; Store the label value (A hold hash value)
 
-    sto Z $current_label_ptr    ; Reset the current label buffer pointer
+:debug
+    ; sto Z $current_label_ptr    ; Reset the current label buffer pointer
     ret
     
 :check_for_var                  ; --- Check for a variable (A-Z) ---
@@ -214,10 +219,16 @@ EQU ~TOKEN_LABEL 5          ; Label token
     sto A $TOKEN_VALUE          ; Store the numeric value
     ret
 
-:return_unknown_token
+:return_unknown_token           ; Any unkown string is an unkown identifier
     ; --- Return an unknown token ---
     ldi A ~TOKEN_UNKNOWN        ; Set the token type to unknown
     sto A $TOKEN_TYPE           ; Store the token type
+    ldi A ~ident                ; Set the token ID to ident
+    sto A $TOKEN_ID             ; Store the ident ID
+    ldm A $current_part_base    ; load start adrs of the part string in A
+    call @hash_filename         ; borrowd from loader_vdisk_routines
+                                ; returns the hask in A
+    sto A $TOKEN_VALUE          ; Store the hash value
     ret
 
 :return_no_token

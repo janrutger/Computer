@@ -17,6 +17,8 @@
 % $LUT_INDEX 0
 
 # Configure the command ID numbers
+EQU ~ident 96       ; General indentifier ID, tokentype = unknown, 
+                    ; token value can be an Label or an function or really unkown
 EQU ~label 97       ; token is label, toeken value points to label-array +\ null
 EQU ~var 98         ; Token is var, token value is var-index [0 ..26]
 EQU ~num 99         ; Token is number, token value is number
@@ -24,7 +26,7 @@ EQU ~num 99         ; Token is number, token value is number
 # Keyword Commands [100 ... 199]
 EQU ~cls 100        ; Clear screen
 EQU ~quit 101       ; Quit/Exit the computer (turn off)
-EQU ~print 102      ; Print TOS to screen
+EQU ~dot 102        ; a . prints TOS to screen
 EQU ~stacks 103     ; Start the Stacks editor (called interpreter.py)
 EQU ~list 104       ; List/shows current programbuffer
 EQU ~run 105        ; Run/execute current programbuffer
@@ -46,8 +48,8 @@ EQU ~add 200        ; tos + tos[-1] = tos
 EQU ~LUT_LEN 12
 ;. $LUT_LEN 1
 % $CMD_TABLE @cli_cmd_cls @cli_cmd_quit @rt_add @rt_print_tos @interpreter_start @rt_stacks_cmd_list @rt_stacks_cmd_run @rt_next @rt_store_var @rt_restore_var @rt_stacks_cmd_load @rt_stacks_cmd_save
-% $STR_TABLE $CMD_CLS_STR $CMD_QUIT_STR $RT_ADD_STR $RT_PRINT_STR $CMD_STACKS_STR $CMD_LIST_STR $CMD_RUN_STR $RT_NEXT_STR $RT_STORE_VAR $RT_RESTORE_VAR $CMD_LOAD_STR $CMD_SAVE_STR
-% $ID_TABLE  ~cls ~quit ~add ~print ~stacks ~list ~run ~next ~store ~restore ~load ~save
+% $STR_TABLE $CMD_CLS_STR $CMD_QUIT_STR $RT_ADD_STR $RT_DOT_STR $CMD_STACKS_STR $CMD_LIST_STR $CMD_RUN_STR $RT_NEXT_STR $RT_STORE_VAR $RT_RESTORE_VAR $CMD_LOAD_STR $CMD_SAVE_STR
+% $ID_TABLE  ~cls ~quit ~add ~dot ~stacks ~list ~run ~next ~store ~restore ~load ~save
 
 
 
@@ -77,8 +79,8 @@ EQU ~LUT_LEN 12
 . $RT_ADD_STR 2
 % $RT_ADD_STR \+ \null
 
-. $RT_PRINT_STR 2
-% $RT_PRINT_STR \. \null
+. $RT_DOT_STR 2
+% $RT_DOT_STR \. \null
 
 . $RT_STORE_VAR 2
 % $RT_STORE_VAR \! \null
