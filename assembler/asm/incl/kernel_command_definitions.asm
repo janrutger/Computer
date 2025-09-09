@@ -31,14 +31,14 @@ EQU ~stacks 103     ; Start the Stacks editor (called interpreter.py)
 EQU ~list 104       ; List/shows current programbuffer
 EQU ~run 105        ; Run/execute current programbuffer
 EQU ~next 106       ; forget this, we implement GOTO
-EQU ~store 107      ; Store TOS to var [A .. Z]
-EQU ~restore 108    ; Restore var [A .. Z] to TOS
-EQU ~load 109       ; Load a file from disk to PROG_BUFFER
-EQU ~save 110       ; Save the PROG_BUFFER to disk
+EQU ~load 107       ; Load a file from disk to PROG_BUFFER
+EQU ~save 108       ; Save the PROG_BUFFER to disk
 
 
 # Keyword operations [200 ... 299]
-EQU ~add 200        ; tos + tos[-1] = tos
+EQU ~store 200      ; Store TOS to var [A .. Z]
+EQU ~restore 201    ; Restore var [A .. Z] to TOS
+EQU ~add 202        ; tos + tos[-1] = tos
 
 # keyword Stacks keyword commands [300 ... 399]
 EQU ~print 300
@@ -47,13 +47,16 @@ EQU ~goto 301
 
 # Configure the lookup tables
 # don forget to update the LUT_LEN after adding or deleting commands
-EQU ~LUT_LEN 13
+EQU ~LUT_LEN 14
 ;. $LUT_LEN 1
-% $CMD_TABLE @cli_cmd_cls @cli_cmd_quit @rt_add @rt_print_tos @interpreter_start @rt_stacks_cmd_list @rt_stacks_cmd_run2 @rt_next @rt_store_var @rt_restore_var @rt_stacks_cmd_load @rt_stacks_cmd_save @rt_print_tos
-% $STR_TABLE $CMD_CLS_STR $CMD_QUIT_STR $RT_ADD_STR $RT_DOT_STR $CMD_STACKS_STR $CMD_LIST_STR $CMD_RUN_STR $RT_NEXT_STR $RT_STORE_VAR $RT_RESTORE_VAR $CMD_LOAD_STR $CMD_SAVE_STR $PROG_PRINT_STR
-% $ID_TABLE  ~cls ~quit ~add ~dot ~stacks ~list ~run ~next ~store ~restore ~load ~save ~print
+% $CMD_TABLE @cli_cmd_cls @cli_cmd_quit @rt_add @rt_print_tos @interpreter_start @rt_stacks_cmd_list @rt_stacks_cmd_run2 @rt_next @rt_store_var @rt_restore_var @rt_stacks_cmd_load @rt_stacks_cmd_save @rt_print_tos @_stub_handler
+% $STR_TABLE $CMD_CLS_STR $CMD_QUIT_STR $RT_ADD_STR $RT_DOT_STR $CMD_STACKS_STR $CMD_LIST_STR $CMD_RUN_STR $RT_NEXT_STR $RT_STORE_VAR $RT_RESTORE_VAR $CMD_LOAD_STR $CMD_SAVE_STR $PROG_PRINT_STR $PROG_GOTO_STR
+% $ID_TABLE  ~cls ~quit ~add ~dot ~stacks ~list ~run ~next ~store ~restore ~load ~save ~print ~goto
 
 
+@_stub_handler
+    nop         ; will never be executed
+    ret
 
 
 # Define the command strings
@@ -95,5 +98,8 @@ EQU ~LUT_LEN 13
 
 . $PROG_PRINT_STR 6
 % $PROG_PRINT_STR \p \r \i \n \t \null
+
+. $PROG_GOTO_STR 5
+% $PROG_GOTO_STR \g \o \t \o \null
 
 

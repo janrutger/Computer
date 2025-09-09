@@ -1,5 +1,4 @@
-12 30 + -42 + print
-56 89 + print
-34 56 + print
-789 2345 + print
-67 76 + print
+12 30 + print
+128 128 + print
+
+5896 5986 + print

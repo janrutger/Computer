@@ -187,11 +187,11 @@ ret
     ; Set mode to 1 (program mode) and call the compiler.
     ; It will handle scanning and compiling the entire buffer at once.
     
-    ldm A $PROG_BUFFER_BASE
-    ldm B $PROG_BUFFER_PTR
-    call @init_tokenizer_buffer
+    ldm A $PROG_BUFFER_BASE     ; Set PROG_BUFFER
+    ldm B $PROG_BUFFER_PTR      ; Set PROG_BUFFER lentg
+    call @init_tokenizer_buffer ; init
 
-    ldi A 1
+    ldi A 1                     ; set the execution mode to 1 (program mode) in A
     call @run_stacks
 
 :rt_run_empty

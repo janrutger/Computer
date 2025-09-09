@@ -39,6 +39,8 @@ EQU ~max_count_labels 32
 
 . $LABEL_HASH_ADRES_INDEX 1
 % $LABEL_HASH_ADRES_INDEX 0
+. $LABEL_HASH_ADRES_PTR 1
+% $LABEL_HASH_ADRES_PTR 0
 
 
 # Lookup function addresses
@@ -199,7 +201,7 @@ ret
 ret
 
 @_2_compile_phase
-    ; sto Z $CMD_BUFFER_SCAN_PTR      ; Make sure the tokenizer1 start at the beginning
+    ; sto Z $CMD_BUFFER_SCAN_PTR    ; Make sure the tokenizer1 start at the beginning
     ldm A $PROG_BUFFER_BASE         ; load PROG_BUFFER
     ldm B $TOKEN_BUFFER_TOTAL_LEN   ; Restore the lenght of the buffer
     call @init_tokenizer_buffer     ; reinit tokenizer
@@ -208,6 +210,9 @@ ret
     :2_compile_loop
         call @get_next_token
         ldm A $TOKEN_TYPE               ; A is Token type
+
+        tst A ~TOKEN_LABEL
+        jmpt :2_compile_loop
 
         tst A ~TOKEN_NONE               ; no tokens anymore left
         jmpt :end_2_compile_phase       ; Jump to the end 
@@ -228,16 +233,23 @@ ret
     :handle_var_token
         tst A ~TOKEN_VAR
         jmpf :handle_cmd_token
-        nop
+        ldm A $TOKEN_ID
+        inc I $CODE_BUFFER_PTR
+        stx A $CODE_BUFFER_BASE
+        ldm A $TOKEN_VALUE
+        inc I $CODE_BUFFER_PTR
+        stx A $CODE_BUFFER_BASE
+
         jmp :2_compile_loop
 
     :handle_cmd_token
         tst A ~TOKEN_CMD
-        jmpf :handle_label_token
+        jmpf :handle_unknown_token
         #check for complex token like gote, if .. else, while
         ldm B $TOKEN_ID
         tst B ~goto
-        jmpt :handle_goto_cmd
+        jmpt :handle_goto_cmd       ; must retrun to the :2_compile_loop
+
 
         #fall thru to the 'simple' tokens, like add and print
         # the all can be handled the same way
@@ -249,12 +261,6 @@ ret
         inc I $CODE_BUFFER_PTR
         stx A $CODE_BUFFER_BASE
 
-        jmp :2_compile_loop
-
-    :handle_label_token
-        tst A ~TOKEN_LABEL
-        jmpf :handle_unknown_token
-        nop
         jmp :2_compile_loop
 
     :handle_unknown_token
@@ -284,21 +290,30 @@ ret
         tst A ~num
         jmpt :3_execute_num_token   ; must jumpback to :3_execution_loop
 
-
         tst A ~var
         jmpt :3_execute_var_token   ; must jumpback to :3_execution_loop
 
         tst A ~add
         jmpt :3_execution_add_token  ; must jumpback to :3_execution_loop
 
+        tst A ~store                       ; ! instruction to store a var 
+        jmpt :3_execute_store_var_token    ; must jumpback to :3_execution_loop
+
+        tst A ~restore                     ; @ instruction to restore a var 
+        jmpt :3_execute_restore_var_token  ; must jumpback to :3_execution_loop
+
         tst A ~print
-        jmpt :3_execution_print_token  ; must jumpback to :3_execution_loop
+        jmpt :3_execution_print_token   ; must jumpback to :3_execution_loop
 
         tst A ~label
-        jmpt :3_execution_label_token ; must jumpback to :3_execution_loop
+        jmpt :3_execution_label_token   ; must jumpback to :3_execution_loop
 
         tst A ~ident
-        jmpt :3_execution_unkwon_token ; must jumpback to :3_execution_loop
+        jmpt :3_execution_unknown_token ; must jumpback to :3_execution_loop
+
+        tst A ~goto
+        jmpt :3_execution_goto_token    ; must jumpback to :3_execution_loop
+
 
         ; If we get here, it means none of the above matched.
         ; This is an invalid token type in the bytecode.
@@ -313,8 +328,42 @@ ret
 
 #### Phase 2 compile helpers
 :handle_goto_cmd
-    nop             ; for now a dummy
+    call @get_next_token
+    ldm A $TOKEN_ID
+    tst A ~ident
+    jmpf :error_goto_label
+
+    ldm A $TOKEN_VALUE              ; A holds the hash of the label
+    sto Z $LABEL_HASH_ADRES_PTR     ; start at 0
+    ldm B $LABEL_HASH_ADRES_INDEX   ; the total
+
+    :goto_loop
+        inc I $LABEL_HASH_ADRES_PTR     ; get the current Index
+        tstg B I                        ; test for last hash
+        jmpf :error_goto_label          ; throw error when not found
+
+        ldx C $LABEL_HASH_TABLE_BASE    ; read hash to Compare
+        tste A C                        ; Compare hash labels
+        jmpf :goto_loop                 ; check next if not equal
+                                        ; if equal ...
+        ldx B $LABEL_ADRES_TABLE_BASE   ; reads the adres from index I
+
+        ldi A ~goto
+        inc I $CODE_BUFFER_PTR
+        stx A $CODE_BUFFER_BASE         ; write token ID to codebuffer
+
+        inc I $CODE_BUFFER_PTR
+        stx B $CODE_BUFFER_BASE         ; write label adres to codebuffer
+
+        jmp :2_compile_loop
+
+:end_handle_goto_cmd
     jmp :2_compile_loop
+
+    :error_goto_label
+        call @error_invalid_goto_label
+        jmp :2_compile_loop
+
 
 
 #### Phase 3 execution helpers
@@ -326,14 +375,17 @@ ret
     jmp :3_execution_loop
 
 :3_execute_var_token
+    inc I $CODE_BUFFER_PTR      ; Points to the value now
+    ldx A $CODE_BUFFER_BASE     ; Reads the value in A
+    call @push_A                ; Push the number to the stack
+
+    jmp :3_execution_loop
+
+:3_execution_label_token        ; Phase 3 will never see an label token
     nop             ; for now a dummy
     jmp :3_execution_loop
 
-:3_execution_label_token
-    nop             ; for now a dummy
-    jmp :3_execution_loop
-
-:3_execution_unkwon_token
+:3_execution_unknown_token
     nop             ; for now a dummy
     jmp :3_execution_loop
 
@@ -350,6 +402,28 @@ ret
     ld I A 
     callx $start_memory ; Call the command handler
     jmp :3_execution_loop
+
+:3_execute_store_var_token
+    inc I $CODE_BUFFER_PTR
+    ldx A $CODE_BUFFER_BASE
+    ld I A              ; I is pointer to command handler
+    callx $start_memory ; Call start_memory(0) + I
+    jmp :3_execution_loop
+
+:3_execute_restore_var_token
+    inc I $CODE_BUFFER_PTR
+    ldx A $CODE_BUFFER_BASE
+    ld I A              ; I is pointer to command handler
+    callx $start_memory ; Call start_memory(0) + I
+    jmp :3_execution_loop
+
+:3_execution_goto_token
+    inc I $CODE_BUFFER_PTR
+    ldx A $CODE_BUFFER_BASE     ; A contains new buffer_ptr
+    sto A $CODE_BUFFER_PTR
+    jmp :3_execution_loop
+
+
 
 
 ### Executers for the Immediate execution mode

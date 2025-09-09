@@ -5,6 +5,13 @@
     call @print_error_string
     jmp :end_warning
 
+@error_invalid_goto_label
+    . $string_invalid_goto_label 20
+    % $string_invalid_goto_label \I \n \v \a \l \i \d \space \g \o \t \o \space \l \a \b \e \l \Return \null
+    ldi A $string_invalid_goto_label
+    call @print_error_string
+    jmp :end_warning
+
 @errors_unkown_token
     . $string_unkown_token 15
     % $string_unkown_token \U \n \k \n \o \w \n \space \t \o \k \e \n \Return \null
