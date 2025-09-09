@@ -200,7 +200,7 @@ EQU ~MAX_LINES 64
     jmp @stacks_main_loop
 
 :handle_stacks_cmd_run
-    call @rt_stacks_cmd_run
+    call @rt_stacks_cmd_run2
 
     jmp @stacks_main_loop
 

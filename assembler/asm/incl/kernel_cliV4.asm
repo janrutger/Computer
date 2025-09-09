@@ -125,46 +125,48 @@ EQU ~CMD_BUFFER_SIZE 80
     jmp @cli_main_loop          ; Start over
 
 
-@execute_command_buffer
-:executor_loop
-    call @get_next_token
-    ldm A $TOKEN_TYPE
+; @execute_command_buffer
+;     nop ; stub-code
+; ret
+; :executor_loop
+;     call @get_next_token
+;     ldm A $TOKEN_TYPE
 
-    tst A ~TOKEN_CMD
-    jmpt :execute_cmd_token
+;     tst A ~TOKEN_CMD
+;     jmpt :execute_cmd_token
 
-    tst A ~TOKEN_NUM
-    jmpt :execute_num_token
+;     tst A ~TOKEN_NUM
+;     jmpt :execute_num_token
 
-    tst A ~TOKEN_VAR
-    jmpt :execute_var_token
+;     tst A ~TOKEN_VAR
+;     jmpt :execute_var_token
 
-    tst A ~TOKEN_UNKNOWN
-    jmpt :execute_unknown_token
+;     tst A ~TOKEN_UNKNOWN
+;     jmpt :execute_unknown_token
 
-    tst A ~TOKEN_NONE
-    jmpt :executor_loop_end ; No more tokens
+;     tst A ~TOKEN_NONE
+;     jmpt :executor_loop_end ; No more tokens
 
-    jmp :executor_loop ; Loop for next token
+;     jmp :executor_loop ; Loop for next token
 
-:execute_cmd_token
-    ldm I $TOKEN_VALUE
-    callx $start_memory ; Call the command handler
-    jmp :executor_loop
+; :execute_cmd_token
+;     ldm I $TOKEN_VALUE
+;     callx $start_memory ; Call the command handler
+;     jmp :executor_loop
 
-:execute_num_token
-    ldm A $TOKEN_VALUE
-    call @push_A ; Push the number to the stack
-    jmp :executor_loop
+; :execute_num_token
+;     ldm A $TOKEN_VALUE
+;     call @push_A ; Push the number to the stack
+;     jmp :executor_loop
 
-:execute_var_token
-    ldm A $TOKEN_VALUE
-    call @push_A ; Push the variable to the stack
-    jmp :executor_loop
+; :execute_var_token
+;     ldm A $TOKEN_VALUE
+;     call @push_A ; Push the variable to the stack
+;     jmp :executor_loop
 
-:execute_unknown_token
-    call @error_invalid_cmd
-    jmp :executor_loop
+; :execute_unknown_token
+;     call @error_invalid_cmd
+;     jmp :executor_loop
 
-:executor_loop_end
-    ret
+; :executor_loop_end
+;     ret

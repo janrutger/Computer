@@ -9,6 +9,8 @@
 . $TOKEN_BUFFER_BASE 1      ; Base address of the input string buffer
 % $TOKEN_BUFFER_BASE \null  ; Initialize the buffer with a null terminator
 . $TOKEN_BUFFER_LEN 1       ; Length of the input string buffer
+. $TOKEN_BUFFER_TOTAL_LEN 1 ; Total length of the input string buffer
+
 
 . $CMD_BUFFER_SCAN_PTR 1    ; Pointer to the current position in the input string buffer
 % $CMD_BUFFER_SCAN_PTR 0    ; Initialize the scan pointer to the beginning of the buffer
@@ -40,6 +42,7 @@ EQU ~TOKEN_LABEL 5          ; Label token
 @init_tokenizer_buffer
     sto A $TOKEN_BUFFER_BASE    ; Store the input string address
     sto B $TOKEN_BUFFER_LEN     ; Store the input string length
+    sto B $TOKEN_BUFFER_TOTAL_LEN ; save the input string length
     sto Z $CMD_BUFFER_SCAN_PTR  ; Reset the scan pointer
     ret
 

@@ -55,6 +55,13 @@ EQU ~max_count_labels 32
 
 # And some buffer
 MALLOC $CODE_BUFFER 5120         ; prog_start + PROG_BUFFER_SIZE
+. $CODE_BUFFER_BASE 1
+% $CODE_BUFFER_BASE $CODE_BUFFER
+. $CODE_BUFFER_PTR 1
+% $CODE_BUFFER_PTR 0
+
+
+
 MALLOC $FUNCTION_BUFFER 5632     ; + 512
 
 . $CODE_LOCATION_COUNTER 1
@@ -152,7 +159,7 @@ ret
     :1_scan_loop
         call @get_next_token
         ldm A $TOKEN_TYPE       ; A is Token type
-:step
+
         ldm B $TOKEN_ID
         ldi C ~cls
         tstg C B                ; includes [0 .. 99]
@@ -164,7 +171,7 @@ ret
         call @fatal_Invalid_instruction_error
         # after a fatal, the computer is stopped
 
-:valid_program_token
+    :valid_program_token
         tst A ~TOKEN_NONE       ; no tokens anymore left
         jmpt :end_1_scan_phase  ; Jump to the end 
 
@@ -189,20 +196,163 @@ ret
         jmp :1_scan_loop               ; if not a label; go for the next token
 
 :end_1_scan_phase
-:debug 
 ret
 
 @_2_compile_phase
-    nop
+    ; sto Z $CMD_BUFFER_SCAN_PTR      ; Make sure the tokenizer1 start at the beginning
+    ldm A $PROG_BUFFER_BASE         ; load PROG_BUFFER
+    ldm B $TOKEN_BUFFER_TOTAL_LEN   ; Restore the lenght of the buffer
+    call @init_tokenizer_buffer     ; reinit tokenizer
+    sto Z $CODE_BUFFER_PTR          ; make sure the code buffer start at the beginning
+
+    :2_compile_loop
+        call @get_next_token
+        ldm A $TOKEN_TYPE               ; A is Token type
+
+        tst A ~TOKEN_NONE               ; no tokens anymore left
+        jmpt :end_2_compile_phase       ; Jump to the end 
+
+    :handle_num_token                   ; All num tokens are handle the same way
+        tst A ~TOKEN_NUM
+        jmpf :handle_var_token
+        ;ldm A $TOKEN_TYPE
+        ldm A $TOKEN_ID
+        inc I $CODE_BUFFER_PTR
+        stx A $CODE_BUFFER_BASE
+        ldm A $TOKEN_VALUE
+        inc I $CODE_BUFFER_PTR
+        stx A $CODE_BUFFER_BASE
+
+        jmp :2_compile_loop
+
+    :handle_var_token
+        tst A ~TOKEN_VAR
+        jmpf :handle_cmd_token
+        nop
+        jmp :2_compile_loop
+
+    :handle_cmd_token
+        tst A ~TOKEN_CMD
+        jmpf :handle_label_token
+        #check for complex token like gote, if .. else, while
+        ldm B $TOKEN_ID
+        tst B ~goto
+        jmpt :handle_goto_cmd
+
+        #fall thru to the 'simple' tokens, like add and print
+        # the all can be handled the same way
+        ;ldm A $TOKEN_TYPE
+        ldm A $TOKEN_ID
+        inc I $CODE_BUFFER_PTR
+        stx A $CODE_BUFFER_BASE
+        ldm A $TOKEN_VALUE
+        inc I $CODE_BUFFER_PTR
+        stx A $CODE_BUFFER_BASE
+
+        jmp :2_compile_loop
+
+    :handle_label_token
+        tst A ~TOKEN_LABEL
+        jmpf :handle_unknown_token
+        nop
+        jmp :2_compile_loop
+
+    :handle_unknown_token
+        tst A ~TOKEN_UNKNOWN
+        jmpf :handle_fatal_token_error
+        nop
+        jmp :2_compile_loop
+
+    :handle_fatal_token_error
+        call @fatal_Invalid_instruction_error
+        # Halts after fatal
+
+:end_2_compile_phase
+    inc I $CODE_BUFFER_PTR
+    stx Z $CODE_BUFFER_BASE
 ret
 
 @_3_execution_phase
-    nop
+    sto Z $CODE_BUFFER_PTR          ; make sure the code buffer start at the beginning
+
+    :3_execution_loop
+        inc I $CODE_BUFFER_PTR
+        ldx A $CODE_BUFFER_BASE     ; A contains TOKEN_TYPE
+        tst A \null                 ; check for end of the tokens/prgram
+        jmpt :end_3_execution_phase
+
+        tst A ~num
+        jmpt :3_execute_num_token   ; must jumpback to :3_execution_loop
+
+
+        tst A ~var
+        jmpt :3_execute_var_token   ; must jumpback to :3_execution_loop
+
+        tst A ~add
+        jmpt :3_execution_add_token  ; must jumpback to :3_execution_loop
+
+        tst A ~print
+        jmpt :3_execution_print_token  ; must jumpback to :3_execution_loop
+
+        tst A ~label
+        jmpt :3_execution_label_token ; must jumpback to :3_execution_loop
+
+        tst A ~ident
+        jmpt :3_execution_unkwon_token ; must jumpback to :3_execution_loop
+
+        ; If we get here, it means none of the above matched.
+        ; This is an invalid token type in the bytecode.
+        call @fatal_Invalid_instruction_error
+        # Halts after fatal
+
+:end_3_execution_phase
 ret
 
 
 ##### HELPERS
 
+#### Phase 2 compile helpers
+:handle_goto_cmd
+    nop             ; for now a dummy
+    jmp :2_compile_loop
+
+
+#### Phase 3 execution helpers
+:3_execute_num_token
+    inc I $CODE_BUFFER_PTR      ; Points to the value now
+    ldx A $CODE_BUFFER_BASE     ; Reads the value in A
+    call @push_A                ; Push the number to the stack
+
+    jmp :3_execution_loop
+
+:3_execute_var_token
+    nop             ; for now a dummy
+    jmp :3_execution_loop
+
+:3_execution_label_token
+    nop             ; for now a dummy
+    jmp :3_execution_loop
+
+:3_execution_unkwon_token
+    nop             ; for now a dummy
+    jmp :3_execution_loop
+
+:3_execution_add_token
+    inc I $CODE_BUFFER_PTR
+    ldx A $CODE_BUFFER_BASE
+    ld I A 
+    callx $start_memory ; Call the command handler
+    jmp :3_execution_loop
+
+:3_execution_print_token
+    inc I $CODE_BUFFER_PTR
+    ldx A $CODE_BUFFER_BASE
+    ld I A 
+    callx $start_memory ; Call the command handler
+    jmp :3_execution_loop
+
+
+### Executers for the Immediate execution mode
 @_execute_cmd_token
     ldm I $TOKEN_VALUE
     callx $start_memory ; Call the command handler
