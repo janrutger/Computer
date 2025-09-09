@@ -162,7 +162,11 @@ ret
     addi A $PROG_BUFFER             ; Add start adres of buffer to get linestart adres
 
     call @init_tokenizer_buffer 
-    call @execute_command_buffer
+    call @execute_command_buffer   ; to call the old executer
+
+    ## running the new one
+    ; ldi A 1         ; set the execution mode to 1 (program mode) in A
+    ; call @run_stacks
 
     jmp :run_loop
 
@@ -171,6 +175,25 @@ ret
     ldi I ~SYS_PRINT_CHAR
     int $INT_VECTORS
 
+    ret
+
+@rt_stacks_cmd_run2         ; this runs the new implementation
+    ; First, check if there is any code to run.
+    ldm A $PROG_BUFFER_PTR
+    tste A Z
+    jmpt :rt_run_empty ; If buffer pointer is zero, do nothing.
+
+    ; --- This is the new logic ---
+    ; Set mode to 1 (program mode) and call the compiler.
+    ; It will handle scanning and compiling the entire buffer at once.
+    
+    ldm A $PROG_BUFFER_BASE
+    call @init_tokenizer_buffer
+
+    ldi A 1
+    call @run_stacks
+
+:rt_run_empty
     ret
 
 
@@ -219,7 +242,6 @@ ret
     int $INT_VECTORS
 
 :cmd_load_end
-
     ret  ; end of load command
 
 

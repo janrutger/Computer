@@ -47,7 +47,7 @@ EQU ~add 200        ; tos + tos[-1] = tos
 # don forget to update the LUT_LEN after adding or deleting commands
 EQU ~LUT_LEN 12
 ;. $LUT_LEN 1
-% $CMD_TABLE @cli_cmd_cls @cli_cmd_quit @rt_add @rt_print_tos @interpreter_start @rt_stacks_cmd_list @rt_stacks_cmd_run @rt_next @rt_store_var @rt_restore_var @rt_stacks_cmd_load @rt_stacks_cmd_save
+% $CMD_TABLE @cli_cmd_cls @cli_cmd_quit @rt_add @rt_print_tos @interpreter_start @rt_stacks_cmd_list @rt_stacks_cmd_run2 @rt_next @rt_store_var @rt_restore_var @rt_stacks_cmd_load @rt_stacks_cmd_save
 % $STR_TABLE $CMD_CLS_STR $CMD_QUIT_STR $RT_ADD_STR $RT_DOT_STR $CMD_STACKS_STR $CMD_LIST_STR $CMD_RUN_STR $RT_NEXT_STR $RT_STORE_VAR $RT_RESTORE_VAR $CMD_LOAD_STR $CMD_SAVE_STR
 % $ID_TABLE  ~cls ~quit ~add ~dot ~stacks ~list ~run ~next ~store ~restore ~load ~save
 

@@ -182,7 +182,7 @@ EQU ~TOKEN_LABEL 5          ; Label token
     sto B $TOKEN_ID             ; Store the label ID
     sto A $TOKEN_VALUE          ; Store the label value (A hold hash value)
 
-:debug
+
     ; sto Z $current_label_ptr    ; Reset the current label buffer pointer
     ret
     

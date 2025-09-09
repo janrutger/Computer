@@ -57,6 +57,9 @@ EQU ~max_count_labels 32
 MALLOC $CODE_BUFFER 5120         ; prog_start + PROG_BUFFER_SIZE
 MALLOC $FUNCTION_BUFFER 5632     ; + 512
 
+. $CODE_LOCATION_COUNTER 1
+% $CODE_LOCATION_COUNTER 0
+
 
 
 
@@ -142,7 +145,39 @@ ret
 ret
 
 @_1_scan_phase
-    nop
+    sto Z $CMD_BUFFER_SCAN_PTR      ; Make sure the tokenizer1 start at the beginning
+    sto Z $CODE_LOCATION_COUNTER    ; Make sure start at the beginning
+    sto Z $LABEL_HASH_ADRES_INDEX   ; Make sure start at the beginning
+
+    :1_scan_loop
+        call @get_next_token
+        ldm A $TOKEN_TYPE       ; A is Token type
+:step
+        tst A ~TOKEN_NONE       ; no tokens anymore left
+        jmpt :end_1_scan_phase  ; Jump to the end 
+
+        tst A ~TOKEN_LABEL      ; test if it a label (where we searching for)
+        jmpf :not_a_label       ; if not a label; go for the next token
+
+        inc I $LABEL_HASH_ADRES_INDEX   ; get the current Index
+        ldm K $CODE_LOCATION_COUNTER    ; K holds the current Location Counter
+        stx K $LABEL_ADRES_TABLE_BASE   
+
+        ldm A $TOKEN_VALUE              ; A holds the hash of the label
+        stx A $LABEL_HASH_TABLE_BASE
+
+        jmp :1_scan_loop                ; go for the next token
+
+
+    :not_a_label
+        ldm K $CODE_LOCATION_COUNTER   ; Get Location, and increment $CODE_LOCATION_COUNTER
+        addi K 2                       ; Advance by 2 
+        sto K $CODE_LOCATION_COUNTER   ; Save the new Location Pointer
+
+        jmp :1_scan_loop               ; if not a label; go for the next token
+
+:end_1_scan_phase
+:debug 
 ret
 
 @_2_compile_phase
