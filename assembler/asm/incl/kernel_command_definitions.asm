@@ -41,6 +41,7 @@ EQU ~save 110       ; Save the PROG_BUFFER to disk
 EQU ~add 200        ; tos + tos[-1] = tos
 
 # keyword Stacks keyword commands [300 ... 399]
+EQU ~print 300
 
 
 # Configure the lookup tables

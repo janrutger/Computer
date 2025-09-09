@@ -153,6 +153,18 @@ ret
         call @get_next_token
         ldm A $TOKEN_TYPE       ; A is Token type
 :step
+        ldm B $TOKEN_ID
+        ldi C ~cls
+        tstg C B                ; includes [0 .. 99]
+        jmpt :valid_program_token
+        ldi C 199               
+        tstg B C                ; exclude [100 .. 199]
+        jmpt :valid_program_token
+
+        call @fatal_Invalid_instruction_error
+        # after a fatal, the computer is stopped
+
+:valid_program_token
         tst A ~TOKEN_NONE       ; no tokens anymore left
         jmpt :end_1_scan_phase  ; Jump to the end 
 

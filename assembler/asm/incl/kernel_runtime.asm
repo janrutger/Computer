@@ -188,6 +188,7 @@ ret
     ; It will handle scanning and compiling the entire buffer at once.
     
     ldm A $PROG_BUFFER_BASE
+    ldm B $PROG_BUFFER_PTR
     call @init_tokenizer_buffer
 
     ldi A 1

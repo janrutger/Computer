@@ -107,6 +107,7 @@ EQU ~CMD_BUFFER_SIZE 80
     stx M $CMD_BUFFER_BASE      ; Terminate the command string
 
     ldm A $CMD_BUFFER_BASE      ; Set A to the command buffer for the executor
+    ldm B $CMD_BUFFER_PTR       ; Set B to the command buffer pointer for the executor
     call @init_tokenizer_buffer  
     ;call @execute_command_buffer ; Using the 'old' executer
     ldi A 0         ; set execution mode to 0 (immediate) in A

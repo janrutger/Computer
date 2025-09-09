@@ -12,6 +12,12 @@
     call @print_error_string
     jmp :end_warning
 
+@fatal_Invalid_instruction_error
+    . $string_invalid_instruction 27
+    % $string_invalid_instruction \I \n \v \a \l \i \d \space \i \n \s \t \r \u \c \t \i \o \n \space \e \r \r \o \r \Return \null
+    ldi A $string_invalid_instruction
+    call @print_error_string
+    jmp :end_fatal
 
 @error_wrong_filename
     . $string_wrong_filename 16

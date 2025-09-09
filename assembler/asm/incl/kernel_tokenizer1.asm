@@ -8,6 +8,8 @@
 . $TOKEN_ID 1               ; variable to store the ID of the token
 . $TOKEN_BUFFER_BASE 1      ; Base address of the input string buffer
 % $TOKEN_BUFFER_BASE \null  ; Initialize the buffer with a null terminator
+. $TOKEN_BUFFER_LEN 1       ; Length of the input string buffer
+
 . $CMD_BUFFER_SCAN_PTR 1    ; Pointer to the current position in the input string buffer
 % $CMD_BUFFER_SCAN_PTR 0    ; Initialize the scan pointer to the beginning of the buffer
 
@@ -37,6 +39,7 @@ EQU ~TOKEN_LABEL 5          ; Label token
 # Input: A = address of the input string
 @init_tokenizer_buffer
     sto A $TOKEN_BUFFER_BASE    ; Store the input string address
+    sto B $TOKEN_BUFFER_LEN     ; Store the input string length
     sto Z $CMD_BUFFER_SCAN_PTR  ; Reset the scan pointer
     ret
 
@@ -44,23 +47,49 @@ EQU ~TOKEN_LABEL 5          ; Label token
 @get_next_token
     ; --- Skip Whitespace ---
 :skip_loop
+    ldm B $TOKEN_BUFFER_LEN     ; Load the length of the input string
+    tste B Z                    ; Check if the input string is empty
+    jmpt :return_no_token       ; If empty, there are no more tokens
+
     ldm I $CMD_BUFFER_SCAN_PTR  ; Load the scan pointer
     ldx C $TOKEN_BUFFER_BASE    ; Load the character at the scan pointer
     tst C \space                ; Test if the character is a space
-    jmpf :found_token_start     ; If not a space, start parsing the token
+    jmpt :skip_token
     tst C \null                 ; Test if the character is a null terminator
-    jmpt :return_no_token       ; If null, there are no more tokens
+    jmpt :skip_token
+
+    jmp :found_token_start      ; Start parsing the token
+
+
+    ; ldm I $CMD_BUFFER_SCAN_PTR  ; Load the scan pointer
+    ; ldx C $TOKEN_BUFFER_BASE    ; Load the character at the scan pointer
+    ; tst C \space                ; Test if the character is a space
+    ; jmpf :found_token_start     ; If not a space, start parsing the token
+    ; tst C \null                 ; Test if the character is a null terminator
+    ; jmpt :return_no_token       ; If null, there are no more tokens
     
-    ; --- Move to the next character ---
-    ldm K $CMD_BUFFER_SCAN_PTR  ; Load the scan pointer
-    addi K 1                    ; Increment the scan pointer
-    sto K $CMD_BUFFER_SCAN_PTR  ; Store the updated scan pointer
+    ; ; --- Move to the next character ---
+    ; ldm K $CMD_BUFFER_SCAN_PTR  ; Load the scan pointer
+    ; addi K 1                    ; Increment the scan pointer
+    ; sto K $CMD_BUFFER_SCAN_PTR  ; Store the updated scan pointer
+    ; jmp :skip_loop              ; Continue skipping whitespace
+
+:skip_token
+    ldm I $CMD_BUFFER_SCAN_PTR  ; Load the scan pointer
+    addi I 1                    ; Increment the scan pointer
+    sto I $CMD_BUFFER_SCAN_PTR  ; Store the updated scan pointer
+    dec B $TOKEN_BUFFER_LEN     ; Decrement the length of the input string
     jmp :skip_loop              ; Continue skipping whitespace
 
 :found_token_start
     ; --- Parse Token ---
     sto Z $current_part_ptr     ; Reset the current token buffer pointer
 :parse_loop
+    ; Check remaining lenght
+    ldm B $TOKEN_BUFFER_LEN     
+    tste B Z                    ; Check if the input string is empty
+    jmpt :end_token             ; If empty, there are no more tokens
+
     ldm I $CMD_BUFFER_SCAN_PTR  ; Load the scan pointer
     ldx C $TOKEN_BUFFER_BASE    ; Load the character at the scan pointer
     tst C \space                ; Test if the character is a space
@@ -81,7 +110,13 @@ EQU ~TOKEN_LABEL 5          ; Label token
     ldm K $CMD_BUFFER_SCAN_PTR  ; Load the scan pointer
     addi K 1                    ; Increment the scan pointer
     sto K $CMD_BUFFER_SCAN_PTR  ; Store the updated scan pointer
+    
+    ; --- Decrement buffer lentgh
+    subi B 1                    ; Decrement the length of the input string
+    sto B $TOKEN_BUFFER_LEN     
+
     jmp :parse_loop             ; Continue parsing the token
+
 
 :end_token
     ; --- Null-terminate the current token ---
