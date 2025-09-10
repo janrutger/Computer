@@ -1,4 +1,19 @@
-12 30 + print
-128 128 + print
+42 A !
+:start
+1 print
+goto loop
+2 print
+:loop
+A @ print
+A @ 1 + A !
+goto start
 
-5896 5986 + print
+
+0 A !
+:start
+A @ print
+goto Next
+goto start
+:Next
+A @ + 1 A !
+goto start

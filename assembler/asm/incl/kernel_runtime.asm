@@ -40,10 +40,10 @@ ret
     int $INT_VECTORS
 ret
 
-@rt_next                    ; read TOS and update the current linepointer (jump/goto)
-    call @pop_A
-    sto A $line_to_print    ; update the curent line pointer (line_to_print)
-ret 
+; @rt_next                    ; read TOS and update the current linepointer (jump/goto)
+;     call @pop_A
+;     sto A $line_to_print    ; update the curent line pointer (line_to_print)
+; ret 
 
 @rt_store_var               ; ! instruction 
     call @pop_A             ; Read the var-number from the stack

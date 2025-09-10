@@ -9,6 +9,10 @@
     ldi I ~SYS_PRINT_STRING ; Syscall for print_string
     int $INT_VECTORS
 
+    ### init the command lookup tables
+    call @init_command_lookup_tables
+
+    # start the kernel after init is done
     call @main_loop
 
 ret
@@ -32,6 +36,8 @@ INCLUDE kernel_runtime
 INCLUDE kernel_interpreter
 INCLUDE kernel_tokenizer1
 INCLUDE kernel_command_definitions
+INCLUDE kernel_command_lookup_tables
 INCLUDE kernel_stacks
+
 
 
