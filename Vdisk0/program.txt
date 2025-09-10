@@ -1,19 +1,19 @@
 42 A !
 :start
-1 print
-goto loop
-2 print
+1 PRINT
+GOTO loop
+2 PRINT
 :loop
-A @ print
+A @ PRINT
 A @ 1 + A !
-goto start
+GOTO start
 
 
 0 A !
 :start
-A @ print
-goto Next
-goto start
+A @ PRINT
+GOTO Next
+GOTO start
 :Next
 A @ + 1 A !
-goto start
+GOTO start

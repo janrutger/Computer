@@ -95,9 +95,9 @@ EQU ~goto 301
 % $RT_RESTORE_VAR \@ \null
 
 . $PROG_PRINT_STR 6
-% $PROG_PRINT_STR \p \r \i \n \t \null
+% $PROG_PRINT_STR \P \R \I \N \T \null
 
 . $PROG_GOTO_STR 5
-% $PROG_GOTO_STR \g \o \t \o \null
+% $PROG_GOTO_STR \G \O \T \O \null
 
 
