@@ -195,24 +195,60 @@
     ldi A ~lt
     stx A $ID_TABLE_BASE
 
+    ## DUP
+    inc I $table_pointer
+    ldi A @rt_dup
+    stx A $CMD_TABLE_BASE
+    ldi A $PROG_DUP_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~dup
+    stx A $ID_TABLE_BASE
+
+    ## SWAP
+    inc I $table_pointer
+    ldi A @rt_swap
+    stx A $CMD_TABLE_BASE
+    ldi A $PROG_SWAP_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~swap
+    stx A $ID_TABLE_BASE
+
+    ## DROP
+    inc I $table_pointer
+    ldi A @rt_drop
+    stx A $CMD_TABLE_BASE
+    ldi A $PROG_DROP_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~drop
+    stx A $ID_TABLE_BASE
+
+    ## OVER
+    inc I $table_pointer
+    ldi A @rt_over
+    stx A $CMD_TABLE_BASE
+    ldi A $PROG_OVER_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~over
+    stx A $ID_TABLE_BASE
+
 
     ### DO NOT FORGET UPDATE ~LUT_LEN AFTER ADDING OR DELETING COMMANDS
-    EQU ~LUT_LEN 21
+    EQU ~LUT_LEN 25
 
 ret
 
 ; Command routine look up table
-. $CMD_TABLE 24         ; room for 16 commands,  1 bytes per command
+. $CMD_TABLE 32         ; room for 32 commands,  1 bytes per command
 . $CMD_TABLE_BASE 1
 % $CMD_TABLE_BASE $CMD_TABLE    
 
 ; Command string loop up table 
-. $STR_TABLE 24         ; room for 16 commands,  1 bytes per command
+. $STR_TABLE 32         ; room for 32 commands,  1 bytes per command
 . $STR_TABLE_BASE 1
 % $STR_TABLE_BASE $STR_TABLE
 
 ; Command ID loop up table 
-. $ID_TABLE 24         ; room for 16 commands,  1 bytes per command
+. $ID_TABLE 32         ; room for 32 commands,  1 bytes per command
 . $ID_TABLE_BASE 1
 % $ID_TABLE_BASE $ID_TABLE
 

@@ -31,6 +31,10 @@ EQU ~eq 207         ; tos == tos[-1] = tos
 EQU ~neq 208        ; tos != tos[-1] = tos
 EQU ~gt 209         ; tos > tos[-1] = tos
 EQU ~lt 210         ; tos < tos[-1] = tos
+EQU ~dup 211        ; t1 -> t1 t1
+EQU ~swap 212       ; t1 t2 -> t2 t1
+EQU ~drop 213       ; t1 -> 
+EQU ~over 214       ; t1 t2 -> t1 t2 t1      
 
 # keyword Stacks keyword commands [300 ... 399]
 EQU ~print 300
@@ -113,5 +117,21 @@ EQU ~goto 301
 
 . $PROG_LT_STR 2
 % $PROG_LT_STR \< \null
+
+. $PROG_DUP_STR 4
+% $PROG_DUP_STR \D \U \P \null
+
+. $PROG_SWAP_STR 5
+% $PROG_SWAP_STR \S \W \A \P \null
+
+. $PROG_DROP_STR 5
+% $PROG_DROP_STR \D \R \O \P \null
+
+. $PROG_OVER_STR 5
+% $PROG_OVER_STR \O \V \E \R \null
+
+
+
+
 
 

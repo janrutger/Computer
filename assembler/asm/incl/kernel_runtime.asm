@@ -30,8 +30,8 @@ ret
 @rt_sub
     call @pop_A
     call @pop_B
-    sub A B
-    call @push_A
+    sub B A
+    call @push_B
 ret
 
 @rt_mul
@@ -44,15 +44,15 @@ ret
 @rt_div
     call @pop_A
     call @pop_B
-    dmod A B
-    call @push_A
+    dmod B A
+    call @push_B
 ret
 
 @rt_mod
     call @pop_A
     call @pop_B
-    dmod A B
-    call @push_B
+    dmod B A
+    call @push_A
 ret
 
 @rt_eq
@@ -84,7 +84,7 @@ ret
 @rt_gt 
     call @pop_A
     call @pop_B
-    tstg A B
+    tstg B A
     jmpt :gt_true
     ldi A 0
     jmp :gt_end
@@ -97,7 +97,7 @@ ret
 @rt_lt
     call @pop_A
     call @pop_B
-    tstg B A
+    tstg A B
     jmpt :lt_true
     ldi A 0
     jmp :lt_end
@@ -105,6 +105,31 @@ ret
     ldi A 1
 :lt_end
     call @push_A
+ret
+
+@rt_dup
+    call @pop_A
+    call @push_A
+    call @push_A
+ret
+
+@rt_swap
+    call @pop_A
+    call @pop_B
+    call @push_A
+    call @push_B
+ret
+
+@rt_drop
+    call @pop_A
+ret
+
+@rt_over
+    call @pop_A
+    call @pop_B
+    call @push_B
+    call @push_A
+    call @push_B
 ret
     
 

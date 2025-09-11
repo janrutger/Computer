@@ -190,12 +190,6 @@ ret
         jmp :1_scan_loop                ; go for the next token
 
 
-    ; :not_a_label
-    ;     ldm K $CODE_LOCATION_COUNTER   ; Get Location, and increment $CODE_LOCATION_COUNTER
-    ;     addi K 2                       ; Advance by 2 
-    ;     sto K $CODE_LOCATION_COUNTER   ; Save the new Location Pointer
-
-    ;     jmp :1_scan_loop               ; if not a label; go for the next token
 
     :not_a_label
         ; It's not a label, so it's part of an instruction.
@@ -247,25 +241,12 @@ ret
     :handle_num_token                   ; All num tokens are handle the same way
         tst A ~TOKEN_NUM
         jmpf :handle_var_token
-
-        ; ldm A $TOKEN_ID
-        ; inc I $CODE_BUFFER_PTR
-        ; stx A $CODE_BUFFER_BASE
-        ; ldm A $TOKEN_VALUE
-        ; inc I $CODE_BUFFER_PTR
-        ; stx A $CODE_BUFFER_BASE
         call @2_compile_generic_token
         jmp :2_compile_loop
 
     :handle_var_token
         tst A ~TOKEN_VAR
         jmpf :handle_cmd_token
-        ; ldm A $TOKEN_ID
-        ; inc I $CODE_BUFFER_PTR
-        ; stx A $CODE_BUFFER_BASE
-        ; ldm A $TOKEN_VALUE
-        ; inc I $CODE_BUFFER_PTR
-        ; stx A $CODE_BUFFER_BASE
         call @2_compile_generic_token
         jmp :2_compile_loop
 
@@ -278,17 +259,9 @@ ret
         jmpt :handle_goto_cmd       ; must retrun to the :2_compile_loop
 
 
-        #fall thru to the 'simple' tokens, like add and print
+        #fall thru to the 'simple' command tokens, like add, print, ==, ..... alot of them
         # the all can be handled the same way
-        ;ldm A $TOKEN_TYPE
-        ; ldm A $TOKEN_ID
-        ; inc I $CODE_BUFFER_PTR
-        ; stx A $CODE_BUFFER_BASE
-        ; ldm A $TOKEN_VALUE
-        ; inc I $CODE_BUFFER_PTR
-        ; stx A $CODE_BUFFER_BASE
         call @2_compile_generic_token
-
         jmp :2_compile_loop
 
     :handle_unknown_token
@@ -345,8 +318,8 @@ ret
         tst A ~print
         jmpt :3_execution_runtime_token   ; must jumpback to :3_execution_loop
 
-        tst A ~label
-        jmpt :3_execution_label_token   ; must jumpback to :3_execution_loop
+        ; tst A ~label
+        ; jmpt :3_execution_label_token   ; must jumpback to :3_execution_loop
 
         tst A ~ident
         jmpt :3_execution_unknown_token ; must jumpback to :3_execution_loop
@@ -364,6 +337,18 @@ ret
         jmpt :3_execution_runtime_token      ; must jumpback to :3_execution_loop
 
         tst A ~lt
+        jmpt :3_execution_runtime_token      ; must jumpback to :3_execution_loop
+
+        tst A ~dup
+        jmpt :3_execution_runtime_token      ; must jumpback to :3_execution_loop
+
+        tst A ~swap
+        jmpt :3_execution_runtime_token      ; must jumpback to :3_execution_loop
+
+        tst A ~drop
+        jmpt :3_execution_runtime_token      ; must jumpback to :3_execution_loop
+
+        tst A ~over
         jmpt :3_execution_runtime_token      ; must jumpback to :3_execution_loop
 
 
@@ -441,96 +426,27 @@ ret
     ret
 
 :3_execute_num_token
-    ; inc I $CODE_BUFFER_PTR      ; Points to the value now
-    ; ldx A $CODE_BUFFER_BASE     ; Reads the value in A
-    ; call @push_A                ; Push the number to the stack
     call @3_execute_push_value
     jmp :3_execution_loop
 
 :3_execute_var_token
-    ; inc I $CODE_BUFFER_PTR      ; Points to the value now
-    ; ldx A $CODE_BUFFER_BASE     ; Reads the value in A
-    ; call @push_A                ; Push the number to the stack
     call @3_execute_push_value
     jmp :3_execution_loop
 
-:3_execution_label_token        ; Phase 3 will never see an label token
-    nop             ; for now a dummy
-    jmp :3_execution_loop
+; :3_execution_label_token        ; Phase 3 will never see an label token
+;     nop             ; for now a dummy
+;     jmp :3_execution_loop
 
 :3_execution_unknown_token
     nop             ; for now a dummy
     jmp :3_execution_loop
 
-; :3_execution_add_token
-;     ; inc I $CODE_BUFFER_PTR
-;     ; ldx A $CODE_BUFFER_BASE
-;     ; ld I A 
-;     ; callx $start_memory ; Call the command handler
-;     call @3_execute_runtime_command
-;     jmp :3_execution_loop
-
-; :3_execution_sub_token
-;     call @3_execute_runtime_command
-;     jmp :3_execution_loop
-
-; :3_execution_mul_token
-;     call @3_execute_runtime_command
-;     jmp :3_execution_loop
-
-; :3_execution_div_token
-;     call @3_execute_runtime_command
-;     jmp :3_execution_loop
-
-; :3_execution_mod_token
-;     call @3_execute_runtime_command
-;     jmp :3_execution_loop
-
-; :3_execution_print_token
-;     ; inc I $CODE_BUFFER_PTR
-;     ; ldx A $CODE_BUFFER_BASE
-;     ; ld I A 
-;     ; callx $start_memory ; Call the command handler
-;     call @3_execute_runtime_command
-;     jmp :3_execution_loop
-
-; :3_execute_store_var_token
-;     ; inc I $CODE_BUFFER_PTR
-;     ; ldx A $CODE_BUFFER_BASE
-;     ; ld I A              ; I is pointer to command handler
-;     ; callx $start_memory ; Call start_memory(0) + I
-;     call @3_execute_runtime_command
-;     jmp :3_execution_loop
-
-; :3_execute_restore_var_token
-;     ; inc I $CODE_BUFFER_PTR
-;     ; ldx A $CODE_BUFFER_BASE
-;     ; ld I A              ; I is pointer to command handler
-;     ; callx $start_memory ; Call start_memory(0) + I
-;     call @3_execute_runtime_command
-;     jmp :3_execution_loop
 
 :3_execution_goto_token
     inc I $CODE_BUFFER_PTR
     ldx A $CODE_BUFFER_BASE     ; A contains new buffer_ptr
     sto A $CODE_BUFFER_PTR
     jmp :3_execution_loop
-
-; :3_execution_eq_token
-;     call @3_execute_runtime_command
-;     jmp :3_execution_loop
-
-; :3_execution_neq_token
-;     call @3_execute_runtime_command
-;     jmp :3_execution_loop
-
-; :3_execution_gt_token
-;     call @3_execute_runtime_command
-;     jmp :3_execution_loop
-
-; :3_execution_lt_token
-;     call @3_execute_runtime_command
-;     jmp :3_execution_loop
 
 # Generic executer for runtime tokens
 :3_execution_runtime_token
