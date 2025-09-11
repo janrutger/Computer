@@ -66,10 +66,9 @@ MALLOC $CODE_BUFFER 5120         ; prog_start + PROG_BUFFER_SIZE
 
 MALLOC $FUNCTION_BUFFER 5632     ; + 512
 
+. $PATCH_ADRES 1
 . $CODE_LOCATION_COUNTER 1
 % $CODE_LOCATION_COUNTER 0
-
-
 
 
 @run_stacks
@@ -253,10 +252,20 @@ ret
     :handle_cmd_token
         tst A ~TOKEN_CMD
         jmpf :handle_unknown_token
-        #check for complex token like gote, if .. else, while
+        #check for complex token like gote, if else end 
         ldm B $TOKEN_ID
+
         tst B ~goto
-        jmpt :handle_goto_cmd       ; must retrun to the :2_compile_loop
+        jmpt :2_handle_goto_cmd       ; must retrun to the :2_compile_loop
+
+        tst B ~if 
+        jmpt :2_handle_if_cmd         ; must retrun to the :2_compile_loop
+
+        tst B ~else
+        jmpt :2_handle_else_cmd       ; must retrun to the :2_compile_loop
+
+        tst B ~end
+        jmpt :2_handle_end_cmd        ; must retrun to the :2_compile_loop
 
 
         #fall thru to the 'simple' command tokens, like add, print, ==, ..... alot of them
@@ -351,6 +360,11 @@ ret
         tst A ~over
         jmpt :3_execution_runtime_token      ; must jumpback to :3_execution_loop
 
+        tst A ~if
+        jmpt :3_execution_if_token      ; must jumpback to :3_execution_loop
+
+        tst A ~else
+        jmpt :3_execution_else_token      ; must jumpback to :3_execution_loop
 
         ; If we get here, it means none of the above matched.
         ; This is an invalid token type in the bytecode.
@@ -364,7 +378,7 @@ ret
 ##### HELPERS
 
 #### Phase 2 compile helpers
-:handle_goto_cmd
+:2_handle_goto_cmd
     call @get_next_token
     ldm A $TOKEN_ID
     tst A ~ident
@@ -400,6 +414,59 @@ ret
     :error_goto_label
         call @error_invalid_goto_label
         jmp :2_compile_loop
+
+
+:2_handle_if_cmd
+    ; Manually compile the IF token with a placeholder for the jump offset.
+    ; 1. Write the token ID (~if) to the code buffer
+    ldm A $TOKEN_ID
+    inc I $CODE_BUFFER_PTR
+    stx A $CODE_BUFFER_BASE
+
+    ; 2. Write a 0 placeholder and get its address
+    inc I $CODE_BUFFER_PTR
+    stx Z $CODE_BUFFER_BASE     ; Write 0 as the placeholder value (location)
+
+    ; 3. Push the placeholder's address onto the stack for later patching
+    ld A I
+    call @push_placeholder_A
+    jmp :2_compile_loop
+
+:2_handle_else_cmd
+    ; 1. Pop the IF placeholder address and save it temporarily.
+    call @pop_placeholder_A     
+    sto A $PATCH_ADRES
+
+    ; 2. Manually compile the ELSE token with its own placeholder.
+    ldm A $TOKEN_ID
+    inc I $CODE_BUFFER_PTR
+    stx A $CODE_BUFFER_BASE
+    inc I $CODE_BUFFER_PTR
+    stx Z $CODE_BUFFER_BASE
+
+    ; 3. Push the new ELSE placeholder's address onto the stack.
+    ld A I
+    call @push_placeholder_A
+
+    ; 4. Patch the original IF's placeholder to jump to the current location.
+    ldm I $PATCH_ADRES          ; I = address of IF's placeholder
+    ldm B $CODE_BUFFER_PTR      ; B = current location (target for the jump)
+    stx B $CODE_BUFFER_BASE     ; Patch the IF's jump destination
+    jmp :2_compile_loop
+
+:2_handle_end_cmd
+    ; 1. Pop the placeholder address from the last IF or ELSE.
+    call @pop_placeholder_A
+    sto A $PATCH_ADRES
+
+    ; 2. Patch the placeholder to jump to the current location.
+    ldm I $PATCH_ADRES          ; I = address of the placeholder
+    ldm B $CODE_BUFFER_PTR      ; B = current location (target for the jump)
+    stx B $CODE_BUFFER_BASE     ; Patch the jump destination
+
+    ; 3. END does not generate any bytecode, so just continue.
+    jmp :2_compile_loop
+
 
 @2_compile_generic_token
     ldm A $TOKEN_ID
@@ -448,6 +515,32 @@ ret
     sto A $CODE_BUFFER_PTR
     jmp :3_execution_loop
 
+
+
+:3_execution_if_token
+    call @pop_A                 ; Pop comparison result into A
+    inc I $CODE_BUFFER_PTR      ; Point to the jump offset value
+    ldx B $CODE_BUFFER_BASE     ; Load the jump offset into B
+    tste A Z                     ; Check if result is zero (false)
+    jmpf :if_true               ; If not zero (true), continue past jump
+
+    ; Condition is false, so jump
+    sto B $CODE_BUFFER_PTR      ; Set the instruction pointer
+    jmp :3_execution_loop       ; Continue execution from new location
+
+:if_true
+    ; Condition is true, just continue to the next instruction
+    jmp :3_execution_loop
+
+:3_execution_else_token
+    ; Unconditional jump
+    inc I $CODE_BUFFER_PTR      ; Move to the offset value
+    ldx A $CODE_BUFFER_BASE     ; Load the jump offset into A
+    sto A $CODE_BUFFER_PTR      ; Set the instruction pointer
+    jmp :3_execution_loop       ; Continue execution from new location
+
+
+
 # Generic executer for runtime tokens
 :3_execution_runtime_token
     call @3_execute_runtime_command
@@ -477,7 +570,18 @@ ret
     ret
 
 
-# other helpers
+# General helpers
+# used for  making IF .. ELSE .. END work
+@push_placeholder_A
+    inc I $PLACEHOLDER_STACK_INDEX
+    stx A $PLACEHOLDER_STACK_PTR
+    ret
+
+@pop_placeholder_A
+    dec I $PLACEHOLDER_STACK_INDEX
+    ldx A $PLACEHOLDER_STACK_PTR
+    ret
+
 
 @_store_registers
 # register Z remains 0 all the time
