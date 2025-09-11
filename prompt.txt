@@ -25,10 +25,10 @@ PROGRAM:
 
 
 Conditions
-     == != < >
+     == != < > (eq. ne ,lt, gt)
 
  Expressions
-     + - * / mod DUP SWAP DROP OVER
+     + - * / % DUP SWAP DROP OVER
 
 keywords
     :

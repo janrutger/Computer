@@ -20,13 +20,95 @@
     ldx B $DATASTACK_PTR    ; Load value from index I into B
     ret
 
-
 @rt_add
     call @pop_A
     call @pop_B
     add A B
     call @push_A
 ret
+
+@rt_sub
+    call @pop_A
+    call @pop_B
+    sub A B
+    call @push_A
+ret
+
+@rt_mul
+    call @pop_A
+    call @pop_B
+    mul A B
+    call @push_A
+ret
+
+@rt_div
+    call @pop_A
+    call @pop_B
+    dmod A B
+    call @push_A
+ret
+
+@rt_mod
+    call @pop_A
+    call @pop_B
+    dmod A B
+    call @push_B
+ret
+
+@rt_eq
+    call @pop_A
+    call @pop_B
+    tste A B
+    jmpt :eq_true
+    ldi A 0
+    jmp :eq_end
+:eq_true
+    ldi A 1
+:eq_end
+    call @push_A
+ret
+
+@rt_neq
+    call @pop_A
+    call @pop_B
+    tste A B
+    jmpf :neq_true
+    ldi A 0
+    jmp :neq_end
+:neq_true
+    ldi A 1
+:neq_end
+    call @push_A
+ret
+
+@rt_gt 
+    call @pop_A
+    call @pop_B
+    tstg A B
+    jmpt :gt_true
+    ldi A 0
+    jmp :gt_end
+:gt_true
+    ldi A 1
+:gt_end
+    call @push_A
+ret
+
+@rt_lt
+    call @pop_A
+    call @pop_B
+    tstg B A
+    jmpt :lt_true
+    ldi A 0
+    jmp :lt_end
+:lt_true
+    ldi A 1
+:lt_end
+    call @push_A
+ret
+    
+
+
 
 @rt_print_tos
     call @pop_A

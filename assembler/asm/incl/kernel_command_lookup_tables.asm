@@ -33,6 +33,42 @@
     ldi A ~add
     stx A $ID_TABLE_BASE
 
+    ## SUB
+    inc I $table_pointer
+    ldi A @rt_sub
+    stx A $CMD_TABLE_BASE
+    ldi A $RT_SUB_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~sub
+    stx A $ID_TABLE_BASE
+
+    ## MUL
+    inc I $table_pointer
+    ldi A @rt_mul
+    stx A $CMD_TABLE_BASE
+    ldi A $RT_MUL_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~mul
+    stx A $ID_TABLE_BASE
+
+    ## DIV
+    inc I $table_pointer
+    ldi A @rt_div
+    stx A $CMD_TABLE_BASE
+    ldi A $RT_DIV_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~div
+    stx A $ID_TABLE_BASE
+
+    ## MOD
+    inc I $table_pointer
+    ldi A @rt_mod
+    stx A $CMD_TABLE_BASE
+    ldi A $RT_MOD_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~mod
+    stx A $ID_TABLE_BASE
+
     ## DOT
     inc I $table_pointer
     ldi A @rt_print_tos
@@ -123,7 +159,67 @@
     ldi A ~goto
     stx A $ID_TABLE_BASE
 
+    ## EQ
+    inc I $table_pointer
+    ldi A @rt_eq
+    stx A $CMD_TABLE_BASE
+    ldi A $PROG_EQ_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~eq
+    stx A $ID_TABLE_BASE
+
+    ## NEQ
+    inc I $table_pointer
+    ldi A @rt_neq
+    stx A $CMD_TABLE_BASE
+    ldi A $PROG_NEQ_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~neq
+    stx A $ID_TABLE_BASE
+
+    ## GT
+    inc I $table_pointer
+    ldi A @rt_gt
+    stx A $CMD_TABLE_BASE
+    ldi A $PROG_GT_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~gt
+    stx A $ID_TABLE_BASE
+
+    ## LT
+    inc I $table_pointer
+    ldi A @rt_lt
+    stx A $CMD_TABLE_BASE
+    ldi A $PROG_LT_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~lt
+    stx A $ID_TABLE_BASE
+
+
     ### DO NOT FORGET UPDATE ~LUT_LEN AFTER ADDING OR DELETING COMMANDS
-    EQU ~LUT_LEN 13
+    EQU ~LUT_LEN 21
 
 ret
+
+; Command routine look up table
+. $CMD_TABLE 24         ; room for 16 commands,  1 bytes per command
+. $CMD_TABLE_BASE 1
+% $CMD_TABLE_BASE $CMD_TABLE    
+
+; Command string loop up table 
+. $STR_TABLE 24         ; room for 16 commands,  1 bytes per command
+. $STR_TABLE_BASE 1
+% $STR_TABLE_BASE $STR_TABLE
+
+; Command ID loop up table 
+. $ID_TABLE 24         ; room for 16 commands,  1 bytes per command
+. $ID_TABLE_BASE 1
+% $ID_TABLE_BASE $ID_TABLE
+
+. $LUT_INDEX 1
+% $LUT_INDEX 0
+
+
+@_stub_handler
+    nop         ; will never be executed
+    ret

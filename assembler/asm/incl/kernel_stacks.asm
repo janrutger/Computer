@@ -90,13 +90,11 @@ MALLOC $FUNCTION_BUFFER 5632     ; + 512
 
 :run_program_mode
     call @_1_scan_phase
-:scan
+:run_compile
     call @_2_compile_phase
-:compile
+:run_execute
     call @_3_execution_phase    
-
     jmp :end_of_stacks_program
-
 
 :end_of_stacks_program
     call @_restore_registers
@@ -324,16 +322,28 @@ ret
         jmpt :3_execute_var_token   ; must jumpback to :3_execution_loop
 
         tst A ~add
-        jmpt :3_execution_add_token  ; must jumpback to :3_execution_loop
+        jmpt :3_execution_runtime_token  ; must jumpback to :3_execution_loop
+
+        tst A ~sub
+        jmpt :3_execution_runtime_token  ; must jumpback to :3_execution_loop
+
+        tst A ~mul
+        jmpt :3_execution_runtime_token  ; must jumpback to :3_execution_loop
+
+        tst A ~div
+        jmpt :3_execution_runtime_token  ; must jumpback to :3_execution_loop
+
+        tst A ~mod
+        jmpt :3_execution_runtime_token  ; must jumpback to :3_execution_loop
 
         tst A ~store                       ; ! instruction to store a var 
-        jmpt :3_execute_store_var_token    ; must jumpback to :3_execution_loop
+        jmpt :3_execution_runtime_token    ; must jumpback to :3_execution_loop
 
         tst A ~restore                     ; @ instruction to restore a var 
-        jmpt :3_execute_restore_var_token  ; must jumpback to :3_execution_loop
+        jmpt :3_execution_runtime_token  ; must jumpback to :3_execution_loop
 
         tst A ~print
-        jmpt :3_execution_print_token   ; must jumpback to :3_execution_loop
+        jmpt :3_execution_runtime_token   ; must jumpback to :3_execution_loop
 
         tst A ~label
         jmpt :3_execution_label_token   ; must jumpback to :3_execution_loop
@@ -343,6 +353,18 @@ ret
 
         tst A ~goto
         jmpt :3_execution_goto_token    ; must jumpback to :3_execution_loop
+
+        tst A ~eq
+        jmpt :3_execution_runtime_token      ; must jumpback to :3_execution_loop
+        
+        tst A ~neq
+        jmpt :3_execution_runtime_token     ; must jumpback to :3_execution_loop
+
+        tst A ~gt
+        jmpt :3_execution_runtime_token      ; must jumpback to :3_execution_loop
+
+        tst A ~lt
+        jmpt :3_execution_runtime_token      ; must jumpback to :3_execution_loop
 
 
         ; If we get here, it means none of the above matched.
@@ -362,7 +384,7 @@ ret
     ldm A $TOKEN_ID
     tst A ~ident
     jmpf :error_goto_label
-:goto
+
     ldm A $TOKEN_VALUE              ; A holds the hash of the label
     sto Z $LABEL_HASH_ADRES_PTR     ; start at 0
     ldm B $LABEL_HASH_ADRES_INDEX   ; the total
@@ -440,42 +462,79 @@ ret
     nop             ; for now a dummy
     jmp :3_execution_loop
 
-:3_execution_add_token
-    ; inc I $CODE_BUFFER_PTR
-    ; ldx A $CODE_BUFFER_BASE
-    ; ld I A 
-    ; callx $start_memory ; Call the command handler
-    call @3_execute_runtime_command
-    jmp :3_execution_loop
+; :3_execution_add_token
+;     ; inc I $CODE_BUFFER_PTR
+;     ; ldx A $CODE_BUFFER_BASE
+;     ; ld I A 
+;     ; callx $start_memory ; Call the command handler
+;     call @3_execute_runtime_command
+;     jmp :3_execution_loop
 
-:3_execution_print_token
-    ; inc I $CODE_BUFFER_PTR
-    ; ldx A $CODE_BUFFER_BASE
-    ; ld I A 
-    ; callx $start_memory ; Call the command handler
-    call @3_execute_runtime_command
-    jmp :3_execution_loop
+; :3_execution_sub_token
+;     call @3_execute_runtime_command
+;     jmp :3_execution_loop
 
-:3_execute_store_var_token
-    ; inc I $CODE_BUFFER_PTR
-    ; ldx A $CODE_BUFFER_BASE
-    ; ld I A              ; I is pointer to command handler
-    ; callx $start_memory ; Call start_memory(0) + I
-    call @3_execute_runtime_command
-    jmp :3_execution_loop
+; :3_execution_mul_token
+;     call @3_execute_runtime_command
+;     jmp :3_execution_loop
 
-:3_execute_restore_var_token
-    ; inc I $CODE_BUFFER_PTR
-    ; ldx A $CODE_BUFFER_BASE
-    ; ld I A              ; I is pointer to command handler
-    ; callx $start_memory ; Call start_memory(0) + I
-    call @3_execute_runtime_command
-    jmp :3_execution_loop
+; :3_execution_div_token
+;     call @3_execute_runtime_command
+;     jmp :3_execution_loop
+
+; :3_execution_mod_token
+;     call @3_execute_runtime_command
+;     jmp :3_execution_loop
+
+; :3_execution_print_token
+;     ; inc I $CODE_BUFFER_PTR
+;     ; ldx A $CODE_BUFFER_BASE
+;     ; ld I A 
+;     ; callx $start_memory ; Call the command handler
+;     call @3_execute_runtime_command
+;     jmp :3_execution_loop
+
+; :3_execute_store_var_token
+;     ; inc I $CODE_BUFFER_PTR
+;     ; ldx A $CODE_BUFFER_BASE
+;     ; ld I A              ; I is pointer to command handler
+;     ; callx $start_memory ; Call start_memory(0) + I
+;     call @3_execute_runtime_command
+;     jmp :3_execution_loop
+
+; :3_execute_restore_var_token
+;     ; inc I $CODE_BUFFER_PTR
+;     ; ldx A $CODE_BUFFER_BASE
+;     ; ld I A              ; I is pointer to command handler
+;     ; callx $start_memory ; Call start_memory(0) + I
+;     call @3_execute_runtime_command
+;     jmp :3_execution_loop
 
 :3_execution_goto_token
     inc I $CODE_BUFFER_PTR
     ldx A $CODE_BUFFER_BASE     ; A contains new buffer_ptr
     sto A $CODE_BUFFER_PTR
+    jmp :3_execution_loop
+
+; :3_execution_eq_token
+;     call @3_execute_runtime_command
+;     jmp :3_execution_loop
+
+; :3_execution_neq_token
+;     call @3_execute_runtime_command
+;     jmp :3_execution_loop
+
+; :3_execution_gt_token
+;     call @3_execute_runtime_command
+;     jmp :3_execution_loop
+
+; :3_execution_lt_token
+;     call @3_execute_runtime_command
+;     jmp :3_execution_loop
+
+# Generic executer for runtime tokens
+:3_execution_runtime_token
+    call @3_execute_runtime_command
     jmp :3_execution_loop
 
 

@@ -1,20 +1,4 @@
-; Command routine look up table
-. $CMD_TABLE 24         ; room for 16 commands,  1 bytes per command
-. $CMD_TABLE_BASE 1
-% $CMD_TABLE_BASE $CMD_TABLE    
 
-; Command string loop up table 
-. $STR_TABLE 24         ; room for 16 commands,  1 bytes per command
-. $STR_TABLE_BASE 1
-% $STR_TABLE_BASE $STR_TABLE
-
-; Command ID loop up table 
-. $ID_TABLE 24         ; room for 16 commands,  1 bytes per command
-. $ID_TABLE_BASE 1
-% $ID_TABLE_BASE $ID_TABLE
-
-. $LUT_INDEX 1
-% $LUT_INDEX 0
 
 # Configure the command ID numbers
 EQU ~ident 96       ; General indentifier ID, tokentype = unknown, 
@@ -39,6 +23,14 @@ EQU ~save 108       ; Save the PROG_BUFFER to disk
 EQU ~store 200      ; Store TOS to var [A .. Z]
 EQU ~restore 201    ; Restore var [A .. Z] to TOS
 EQU ~add 202        ; tos + tos[-1] = tos
+EQU ~sub 203        ; tos - tos[-1] = tos
+EQU ~mul 204        ; tos * tos[-1] = tos
+EQU ~div 205        ; tos / tos[-1] = tos
+EQU ~mod 206        ; tos % tos[-1] = tos
+EQU ~eq 207         ; tos == tos[-1] = tos
+EQU ~neq 208        ; tos != tos[-1] = tos
+EQU ~gt 209         ; tos > tos[-1] = tos
+EQU ~lt 210         ; tos < tos[-1] = tos
 
 # keyword Stacks keyword commands [300 ... 399]
 EQU ~print 300
@@ -55,9 +47,7 @@ EQU ~goto 301
 ; % $ID_TABLE  ~cls ~quit ~add ~dot ~stacks ~list ~run ~store ~restore ~load ~save ~print ~goto
 
 
-@_stub_handler
-    nop         ; will never be executed
-    ret
+
 
 
 # Define the command strings
@@ -85,6 +75,18 @@ EQU ~goto 301
 . $RT_ADD_STR 2
 % $RT_ADD_STR \+ \null
 
+. $RT_SUB_STR 2
+% $RT_SUB_STR \- \null
+
+. $RT_MUL_STR 2
+% $RT_MUL_STR \* \null
+
+. $RT_DIV_STR 2
+% $RT_DIV_STR \/ \null
+
+. $RT_MOD_STR 2
+% $RT_MOD_STR \% \null
+
 . $RT_DOT_STR 2
 % $RT_DOT_STR \. \null
 
@@ -99,5 +101,17 @@ EQU ~goto 301
 
 . $PROG_GOTO_STR 5
 % $PROG_GOTO_STR \G \O \T \O \null
+
+. $PROG_EQ_STR 3
+% $PROG_EQ_STR \= \= \null
+
+. $PROG_NEQ_STR 3
+% $PROG_NEQ_STR \! \= \null
+
+. $PROG_GT_STR 2
+% $PROG_GT_STR \> \null
+
+. $PROG_LT_STR 2
+% $PROG_LT_STR \< \null
 
 
