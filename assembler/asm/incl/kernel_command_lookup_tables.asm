@@ -231,9 +231,36 @@
     ldi A ~over
     stx A $ID_TABLE_BASE
 
+    ## IF
+    inc I $table_pointer
+    ldi A @_stub_handler
+    stx A $CMD_TABLE_BASE
+    ldi A $PROG_IF_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~if
+    stx A $ID_TABLE_BASE
+
+    ## ELSE
+    inc I $table_pointer
+    ldi A @_stub_handler
+    stx A $CMD_TABLE_BASE
+    ldi A $PROG_ELSE_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~else
+    stx A $ID_TABLE_BASE
+
+    ## END
+    inc I $table_pointer
+    ldi A @_stub_handler
+    stx A $CMD_TABLE_BASE
+    ldi A $PROG_END_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~end
+    stx A $ID_TABLE_BASE
+
 
     ### DO NOT FORGET UPDATE ~LUT_LEN AFTER ADDING OR DELETING COMMANDS
-    EQU ~LUT_LEN 25
+    EQU ~LUT_LEN 28
 
 ret
 

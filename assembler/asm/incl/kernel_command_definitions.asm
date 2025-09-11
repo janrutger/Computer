@@ -39,7 +39,9 @@ EQU ~over 214       ; t1 t2 -> t1 t2 t1
 # keyword Stacks keyword commands [300 ... 399]
 EQU ~print 300
 EQU ~goto 301
-
+EQU ~if 302
+EQU ~else 303
+EQU ~end 304
 
 # Configure the lookup tables
 # don forget to update the LUT_LEN after adding or deleting commands
@@ -130,7 +132,14 @@ EQU ~goto 301
 . $PROG_OVER_STR 5
 % $PROG_OVER_STR \O \V \E \R \null
 
+. $PROG_IF_STR 3
+% $PROG_IF_STR \I \F \null
 
+. $PROG_ELSE_STR 5
+% $PROG_ELSE_STR \E \L \S \E \null
+
+. $PROG_END_STR 4
+% $PROG_END_STR \E \N \D \null
 
 
 

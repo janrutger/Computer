@@ -109,7 +109,7 @@ EQU ~CMD_BUFFER_SIZE 80
     ldm A $CMD_BUFFER_BASE      ; Set A to the command buffer for the executor
     ldm B $CMD_BUFFER_PTR       ; Set B to the command buffer pointer for the executor
     call @init_tokenizer_buffer  
-    ;call @execute_command_buffer ; Using the 'old' executer
+   
     ldi A 0         ; set execution mode to 0 (immediate) in A
     call @run_stacks
 
@@ -125,48 +125,3 @@ EQU ~CMD_BUFFER_SIZE 80
     jmp @cli_main_loop          ; Start over
 
 
-; @execute_command_buffer
-;     nop ; stub-code
-; ret
-; :executor_loop
-;     call @get_next_token
-;     ldm A $TOKEN_TYPE
-
-;     tst A ~TOKEN_CMD
-;     jmpt :execute_cmd_token
-
-;     tst A ~TOKEN_NUM
-;     jmpt :execute_num_token
-
-;     tst A ~TOKEN_VAR
-;     jmpt :execute_var_token
-
-;     tst A ~TOKEN_UNKNOWN
-;     jmpt :execute_unknown_token
-
-;     tst A ~TOKEN_NONE
-;     jmpt :executor_loop_end ; No more tokens
-
-;     jmp :executor_loop ; Loop for next token
-
-; :execute_cmd_token
-;     ldm I $TOKEN_VALUE
-;     callx $start_memory ; Call the command handler
-;     jmp :executor_loop
-
-; :execute_num_token
-;     ldm A $TOKEN_VALUE
-;     call @push_A ; Push the number to the stack
-;     jmp :executor_loop
-
-; :execute_var_token
-;     ldm A $TOKEN_VALUE
-;     call @push_A ; Push the variable to the stack
-;     jmp :executor_loop
-
-; :execute_unknown_token
-;     call @error_invalid_cmd
-;     jmp :executor_loop
-
-; :executor_loop_end
-;     ret
