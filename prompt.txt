@@ -10,7 +10,7 @@ PROGRAM:
      condition GOTO :label
 
 - For the while loop construction
-    { condition } DO expression DONE
+    WHILE condition  DO expression DONE
 
 - expression    
     expression [PRINT | PLOT]
@@ -73,13 +73,13 @@ Let's summarize your three-phase plan:
 
 
 
-{ A @ 10 < } DO A @ DUP PRINT 1 + A ! END
+WHILE A @ 10 <  DO A @ DUP PRINT 1 + A ! END
 
 WHILE Loop: { condition } DO expression END
 Phase 2: The Tokenizer's Job
 The Tokenizer reads the text and writes numeric tokens to the TOKEN_BUFFER.
 
-1 When it sees {:
+1 When it sees WHILE:
     It records the current address in the TOKEN_BUFFER. This is the start of the loop.
     It pushes this "start address" onto the loop_address_stack.
 

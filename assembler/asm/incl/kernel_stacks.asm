@@ -100,7 +100,6 @@ MALLOC $FUNCTION_BUFFER 5632     ; + 512
 ret
 
 
-
 @_executed_immediate 
     :immediate_loop
         call @get_next_token
@@ -191,8 +190,8 @@ ret
 
 
     :not_a_label
-        ; It's not a label, so it's part of an instruction.
-        ; Check if it's a special instruction that consumes an argument.
+        ; It\'s not a label, so it\'s part of an instruction.
+        ; Check if it\'s a special instruction that consumes an argument.
         ldm B $TOKEN_ID
         tst B ~goto
         jmpt :handle_scan_goto
@@ -201,6 +200,10 @@ ret
         ; We skip advancing the location counter to ensure subsequent label addresses are calculated correctly.
         tst B ~end
         jmpt :1_scan_loop
+
+        ; WHILE is also a zero-width compile-time directive.
+        tst B ~while
+        jmpt :1_scan_loop 
 
         ; --- Default case for simple tokens ---
         ; Most tokens correspond to a 2-word block in the bytecode.
@@ -217,7 +220,7 @@ ret
         sto K $CODE_LOCATION_COUNTER
 
         ; We must also consume the next token (the label identifier)
-        ; from the token stream so we don't process it again.
+        ; from the token stream so we don\'t process it again.
         call @get_next_token
 
         jmp :1_scan_loop
@@ -271,6 +274,15 @@ ret
 
         tst B ~end
         jmpt :2_handle_end_cmd        ; must retrun to the :2_compile_loop
+
+        tst B ~while
+        jmpt :2_handle_while_cmd      ; must retrun to the :2_compile_loop
+
+        tst B ~do
+        jmpt :2_handle_do_cmd         ; must retrun to the :2_compile_loop
+
+        tst B ~done
+        jmpt :2_handle_done_cmd       ; must retrun to the :2_compile_loop
 
 
         #fall thru to the 'simple' command tokens, like add, print, ==, ..... alot of them
@@ -371,6 +383,9 @@ ret
         tst A ~else
         jmpt :3_execution_else_token      ; must jumpback to :3_execution_loop
 
+        # The 'WHILE condition DO code END' construction is reusing the IF-END, and GOTO implementation
+        # so no traces found here for the WHILE loop construction
+
         ; If we get here, it means none of the above matched.
         ; This is an invalid token type in the bytecode.
         call @fatal_Invalid_instruction_error
@@ -432,7 +447,7 @@ ret
     inc I $CODE_BUFFER_PTR
     stx Z $CODE_BUFFER_BASE     ; Write 0 as the placeholder value (location)
 
-    ; 3. Push the placeholder's address onto the stack for later patching
+    ; 3. Push the placeholder\'s address onto the stack for later patching
     ld A I
     call @push_placeholder_A
     jmp :2_compile_loop
@@ -449,14 +464,14 @@ ret
     inc I $CODE_BUFFER_PTR
     stx Z $CODE_BUFFER_BASE
 
-    ; 3. Push the new ELSE placeholder's address onto the stack.
+    ; 3. Push the new ELSE placeholder\'s address onto the stack.
     ld A I
     call @push_placeholder_A
 
-    ; 4. Patch the original IF's placeholder to jump to the current location.
-    ldm I $PATCH_ADRES          ; I = address of IF's placeholder
+    ; 4. Patch the original IF\'s placeholder to jump to the current location.
+    ldm I $PATCH_ADRES          ; I = address of IF\'s placeholder
     ldm B $CODE_BUFFER_PTR      ; B = current location (target for the jump)
-    stx B $CODE_BUFFER_BASE     ; Patch the IF's jump destination
+    stx B $CODE_BUFFER_BASE     ; Patch the IF\'s jump destination
     jmp :2_compile_loop
 
 :2_handle_end_cmd
@@ -471,6 +486,52 @@ ret
 
     ; 3. END does not generate any bytecode, so just continue.
     jmp :2_compile_loop
+
+:2_handle_while_cmd
+    ; WHILE marks the start of the loop's condition.
+    ; Save the current address to the loop stack for the eventual backward jump.
+    ldm A $CODE_BUFFER_PTR
+    call @push_loop_A
+    ; WHILE does not generate any bytecode, so just continue
+    jmp :2_compile_loop
+
+:2_handle_do_cmd
+    ; DO marks the end of the condition and compiles a forward conditional jump.
+    ; We reuse the IF token for this.
+    ldi A ~if
+    inc I $CODE_BUFFER_PTR
+    stx A $CODE_BUFFER_BASE     ; Write ~if token
+    inc I $CODE_BUFFER_PTR
+    stx Z $CODE_BUFFER_BASE     ; Write 0 placeholder for the jump address
+    ld A I                      ; Get the address of the placeholder
+    call @push_placeholder_A    ; Push it for patching later by DONE
+    jmp :2_compile_loop
+
+
+:2_handle_done_cmd
+    ; DONE closes a DO loop with two actions:
+    ; 1. Create the unconditional GOTO to jump back to the start of the loop.
+    ; 2. Patch the DO's conditional jump to exit the loop.
+
+    ; Action 1: Create the loop-back GOTO
+    call @pop_loop_A            ; Get loop start address in A
+    ld B A                     ; Temporarily save it in B
+    ldi A ~goto                 ; Load ~goto token ID
+    inc I $CODE_BUFFER_PTR
+    stx A $CODE_BUFFER_BASE     ; Write ~goto token
+    inc I $CODE_BUFFER_PTR
+    stx B $CODE_BUFFER_BASE     ; Write the loop start address as the target
+
+    ; Action 2: Patch the DO's forward jump
+    call @pop_placeholder_A     ; Get DO's placeholder address in A
+    sto A $PATCH_ADRES
+    ldm I $PATCH_ADRES
+    ldm B $CODE_BUFFER_PTR      ; B = current location (the exit address)
+    stx B $CODE_BUFFER_BASE     ; Patch the placeholder with the exit address
+
+    jmp :2_compile_loop
+
+
 
 
 @2_compile_generic_token
@@ -553,7 +614,6 @@ ret
 
 
 
-
 ### Executers for the Immediate execution mode
 @_execute_cmd_token
     ldm I $TOKEN_VALUE
@@ -576,15 +636,37 @@ ret
 
 
 # General helpers
-# used for  making IF .. ELSE .. END work
+
+# Pushes the value in register A onto the placeholder stack.
+# This stack is used by the compiler to store the memory addresses
+# of forward-jump placeholders (from IF and DO) that need to be patched later.
 @push_placeholder_A
     inc I $PLACEHOLDER_STACK_INDEX
     stx A $PLACEHOLDER_STACK_PTR
     ret
 
+# Pops a value from the placeholder stack into register A.
+# This is used by ELSE, END, and DONE to retrieve the address
+# of a placeholder that needs to be patched with a jump destination.
 @pop_placeholder_A
     dec I $PLACEHOLDER_STACK_INDEX
     ldx A $PLACEHOLDER_STACK_PTR
+    ret
+
+# Pushes the value in register A onto the loop stack.
+# This stack is used by the compiler to store the starting address
+# of a DO..DONE loop, so the DONE handler knows where to jump back to.
+@push_loop_A
+    inc I $LOOP_STACK_INDEX
+    stx A $LOOP_STACK_PTR
+    ret
+
+# Pops a value from the loop stack into register A.
+# This is used by the DONE handler to retrieve the starting address
+# of the loop to create the backward jump.
+@pop_loop_A
+    dec I $LOOP_STACK_INDEX
+    ldx A $LOOP_STACK_PTR
     ret
 
 

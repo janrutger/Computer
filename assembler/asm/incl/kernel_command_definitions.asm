@@ -42,6 +42,9 @@ EQU ~goto 301
 EQU ~if 302
 EQU ~else 303
 EQU ~end 304
+EQU ~while 305
+EQU ~do 306
+EQU ~done 307
 
 # Configure the lookup tables
 # don forget to update the LUT_LEN after adding or deleting commands
@@ -140,6 +143,16 @@ EQU ~end 304
 
 . $PROG_END_STR 4
 % $PROG_END_STR \E \N \D \null
+
+. $PROG_WHILE_STR 6
+% $PROG_WHILE_STR \W \H \I \L \E \null
+
+. $PROG_DO_STR 3
+% $PROG_DO_STR \D \O \null
+
+. $PROG_DONE_STR 5
+% $PROG_DONE_STR \D \O \N \E \null
+
 
 
 
