@@ -1,1 +1,43 @@
-1 2  == IF 42 PRINT ELSE 43 PRINT END
+0 A !
+
+:loop
+
+A @ 10 == 
+IF
+  GOTO end
+ELSE
+  A @ PRINT
+  A @ 1 + A !
+  GOTO loop
+END
+
+:end 0 PRINT
+
+
+
+
+1 1 == IF 42 ELSE END 42 - PRINT
+1 1 != IF ELSE 42 END 42 - PRINT
+
+
+1 1 != IF 0  ELSE END 42  42 - PRINT
+1 1 == IF ELSE 0  END 42  42 - PRINT
+
+
+10 3 -   7 - PRINT
+10 3 *  30 - PRINT
+10 3 /   3 - PRINT 
+10 3 %   1 - PRINT 
+
+
+
+5 DUP *  25 - PRINT
+10 5 SWAP -   5 + PRINT
+10 5 OVER +  15 - PRINT
+ 5 DROP  10 - PRINT
+
+10 5 > IF 1  ELSE 0  END  1 - PRINT
+10 5 < IF 0  ELSE 1  END  1 - PRINT
+
+
+

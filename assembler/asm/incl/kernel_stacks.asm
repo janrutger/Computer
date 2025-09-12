@@ -197,6 +197,11 @@ ret
         tst B ~goto
         jmpt :handle_scan_goto
 
+        ; The END keyword is a compile-time directive and produces no bytecode.
+        ; We skip advancing the location counter to ensure subsequent label addresses are calculated correctly.
+        tst B ~end
+        jmpt :1_scan_loop
+
         ; --- Default case for simple tokens ---
         ; Most tokens correspond to a 2-word block in the bytecode.
         ldm K $CODE_LOCATION_COUNTER

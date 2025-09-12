@@ -10,7 +10,7 @@ PROGRAM:
      condition GOTO :label
 
 - For the while loop construction
-    { condition } DO expression END
+    { condition } DO expression DONE
 
 - expression    
     expression [PRINT | PLOT]
@@ -138,13 +138,10 @@ The Tokenizer's Internal Stacks: Private stacks (like jump_stack and loop_addres
         34 7 gcd PRINT
 
 
-Iam not 100% sure we are on the same page
+# IF ELSE END Construct
 
-IF <true-code> ELSE <false-code> END
-IF <true-code> ELSE END
-IF ELSE <false-code> END
-
-Are the tree valid syntaxes, and easy to handle 
-thats is correct?
+    IF <true-code> ELSE <false-code> END
+    IF <true-code> ELSE END
+    IF ELSE <false-code> END
 
 
