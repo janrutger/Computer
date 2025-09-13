@@ -25,6 +25,14 @@
 % $LOOP_STACK_INDEX 0
 % $LOOP_STACK_PTR $LOOP_STACK
 
+# to keep track of the function return adres
+. $CALL_STACK 16
+. $CALL_STACK_PTR 1
+. $CALL_STACK_INDEX 1
+% $CALL_STACK_INDEX 0
+% $CALL_STACK_PTR $CALL_STACK
+
+
 
 # I need some look-ups to match
 # Lookup label addresses
@@ -54,6 +62,8 @@ EQU ~max_count_labels 32
 
 . $FUNCTION_HASH_ADRES_INDEX 1
 % $FUNCTION_HASH_ADRES_INDEX 0
+. $FUNCTION_HASH_ADRES_PTR 1
+% $FUNCTION_HASH_ADRES_PTR 0
 
 # And some buffer
 MALLOC $CODE_BUFFER 5120         ; prog_start + PROG_BUFFER_SIZE
@@ -65,10 +75,22 @@ MALLOC $CODE_BUFFER 5120         ; prog_start + PROG_BUFFER_SIZE
 
 
 MALLOC $FUNCTION_BUFFER 5632     ; + 512
+. $FUNCTION_BUFFER_BASE 1
+% $FUNCTION_BUFFER_BASE $FUNCTION_BUFFER
+. $FUNCTION_BUFFER_PTR 1
+% $FUNCTION_BUFFER_PTR 0
 
 . $PATCH_ADRES 1
 . $CODE_LOCATION_COUNTER 1
 % $CODE_LOCATION_COUNTER 0
+
+# to save compiler pointers when compiling functions
+. $COMPILER_STATE_STACK 16
+. $COMPILER_STATE_STACK_PTR 1
+. $COMPILER_STATE_STACK_INDEX 1
+% $COMPILER_STATE_STACK_INDEX 0
+% $COMPILER_STATE_STACK_PTR $COMPILER_STATE_STACK
+
 
 
 @run_stacks
@@ -196,6 +218,9 @@ ret
         tst B ~goto
         jmpt :handle_scan_goto
 
+        tst B ~def
+        jmpt :1_handle_scan_def
+
         ; The END keyword is a compile-time directive and produces no bytecode.
         ; We skip advancing the location counter to ensure subsequent label addresses are calculated correctly.
         tst B ~end
@@ -222,14 +247,49 @@ ret
         ; We must also consume the next token (the label identifier)
         ; from the token stream so we don\'t process it again.
         call @get_next_token
-
         jmp :1_scan_loop
+
+
+    :1_handle_scan_def
+    ; A DEF block is being defined. We need to consume all tokens
+    ; until we find the closing '}' without advancing the code location counter,
+    ; as the function body is compiled elsewhere.
+
+        ; First, consume the function name token
+        call @get_next_token
+
+        ; Next, consume the '{' token
+        call @get_next_token
+
+        ; Now, loop until we find '}'
+    :1_scan_def_loop
+        call @get_next_token
+        
+        ldm A $TOKEN_ID
+        tst A ~close-curly
+        jmpt :1_scan_def_end ; Found the '}', we are done with the block.
+
+        ldm A $TOKEN_TYPE
+        tst A ~TOKEN_NONE
+        jmpf :1_scan_def_loop           ; proceed when token found
+        call @errors_fatal_invalid_syntax   ; Else throw an fatal syntax error 
+
+        # YOU WILL NEVER REACH THIS LINE
+        jmp :1_scan_def_loop
+
+    :1_scan_def_end
+        ; We have successfully consumed the entire DEF block.
+        ; Now, jump back to the main scan loop to process the rest of the program.
+        jmp :1_scan_loop
+
 
 :end_1_scan_phase
 ret
 
 @_2_compile_phase
+
     ; sto Z $CMD_BUFFER_SCAN_PTR    ; Make sure the tokenizer1 start at the beginning
+    
     ldm A $PROG_BUFFER_BASE         ; load PROG_BUFFER
     ldm B $TOKEN_BUFFER_TOTAL_LEN   ; Restore the lenght of the buffer
     call @init_tokenizer_buffer     ; reinit tokenizer
@@ -263,6 +323,12 @@ ret
         #check for complex token like gote, if else end 
         ldm B $TOKEN_ID
 
+        tst B ~def
+        jmpt :2_handle_def_cmd        ; must retrun to the :2_compile_loop
+
+        tst B ~close-curly
+        jmpt :2_end_def_compile_loop  ; must retrun to the :2_compile_loop
+
         tst B ~goto
         jmpt :2_handle_goto_cmd       ; must retrun to the :2_compile_loop
 
@@ -292,8 +358,9 @@ ret
 
     :handle_unknown_token
         tst A ~TOKEN_UNKNOWN
-        jmpf :handle_fatal_token_error
-        nop
+        call @2_compile_generic_token
+        ; jmpf :handle_fatal_token_error
+        ; nop
         jmp :2_compile_loop
 
     :handle_fatal_token_error
@@ -344,11 +411,11 @@ ret
         tst A ~print
         jmpt :3_execution_runtime_token   ; must jumpback to :3_execution_loop
 
-        ; tst A ~label
-        ; jmpt :3_execution_label_token   ; must jumpback to :3_execution_loop
+        tst A ~ret
+        jmpt :3_execute_ret_token      ; must jumpback to :3_execution_loop
 
         tst A ~ident
-        jmpt :3_execution_unknown_token ; must jumpback to :3_execution_loop
+        jmpt :3_execute_unknown_token_smart ; must jumpback to :3_execution_loop
 
         tst A ~goto
         jmpt :3_execution_goto_token    ; must jumpback to :3_execution_loop
@@ -398,6 +465,74 @@ ret
 ##### HELPERS
 
 #### Phase 2 compile helpers
+:2_handle_def_cmd
+    ; 1. Get function name
+    call @get_next_token
+    ldm A $TOKEN_ID
+    tst A ~ident
+    jmpf :error_def_name ; Expected an identifier for the function name
+
+    ; 2. Store function metadata
+    inc I $FUNCTION_HASH_ADRES_INDEX
+    ldm A $TOKEN_VALUE              ; A holds the hash of the function name
+    stx A $FUNCTION_HASH_TABLE_BASE
+
+    ldm K $FUNCTION_BUFFER_PTR      ; K holds the current function buffer pointer
+    stx K $FUNCTION_ADRES_TABLE_BASE
+
+    ; 3. Find '{'
+    call @get_next_token
+    ldm A $TOKEN_ID
+    tst A ~open-curly
+    jmpf :error_def_body ; Expected '{' to start function body
+
+    ; 4. HIJACK PHASE: Save current pointers and switch to FUNCTION_BUFFER
+    ldm A $CODE_BUFFER_PTR
+    call @push_compilerstate_A
+    ldm A $CODE_BUFFER_BASE
+    call @push_compilerstate_A
+
+    ldm A $FUNCTION_BUFFER_PTR
+    sto A $CODE_BUFFER_PTR
+    ldm A $FUNCTION_BUFFER_BASE
+    sto A $CODE_BUFFER_BASE
+
+    ; 4b. Re-enter the main compile loop to process the function body
+    jmp :2_compile_loop
+
+:2_end_def_compile_loop
+    ; 6. Write the implicit ~ret token by setting the token variables
+    ;    and calling the generic compiler function.
+    ldi A ~ret
+    sto A $TOKEN_ID
+    sto Z $TOKEN_VALUE ; ret has no value, so we store 0
+    call @2_compile_generic_token ; This now writes (~ret, 0) to the hijacked buffer
+
+    ; 7. Update the FUNCTION_BUFFER_PTR for the next function
+    ldm A $CODE_BUFFER_PTR
+    sto A $FUNCTION_BUFFER_PTR
+
+    ; 8. RESTORE PHASE: Restore original pointers
+    call @pop_compilerstate_A
+    sto A $CODE_BUFFER_BASE
+    call @pop_compilerstate_A
+    sto A $CODE_BUFFER_PTR
+
+    jmp :2_compile_loop ; Continue compiling the main program
+
+:error_def_name
+    call @errors_invalid_def_name
+    jmp :2_compile_loop
+
+:error_def_body
+    call @errors_invalid_def_body
+    jmp :2_compile_loop
+
+:error_def_body_end
+    call @errors_unterminated_def
+    jmp :2_compile_loop
+
+
 :2_handle_goto_cmd
     call @get_next_token
     ldm A $TOKEN_ID
@@ -488,7 +623,7 @@ ret
     jmp :2_compile_loop
 
 :2_handle_while_cmd
-    ; WHILE marks the start of the loop's condition.
+    ; WHILE marks the start of the loop\'s condition.
     ; Save the current address to the loop stack for the eventual backward jump.
     ldm A $CODE_BUFFER_PTR
     call @push_loop_A
@@ -511,7 +646,7 @@ ret
 :2_handle_done_cmd
     ; DONE closes a DO loop with two actions:
     ; 1. Create the unconditional GOTO to jump back to the start of the loop.
-    ; 2. Patch the DO's conditional jump to exit the loop.
+    ; 2. Patch the DO\'s conditional jump to exit the loop.
 
     ; Action 1: Create the loop-back GOTO
     call @pop_loop_A            ; Get loop start address in A
@@ -522,15 +657,14 @@ ret
     inc I $CODE_BUFFER_PTR
     stx B $CODE_BUFFER_BASE     ; Write the loop start address as the target
 
-    ; Action 2: Patch the DO's forward jump
-    call @pop_placeholder_A     ; Get DO's placeholder address in A
+    ; Action 2: Patch the DO\'s forward jump
+    call @pop_placeholder_A     ; Get DO\'s placeholder address in A
     sto A $PATCH_ADRES
     ldm I $PATCH_ADRES
     ldm B $CODE_BUFFER_PTR      ; B = current location (the exit address)
     stx B $CODE_BUFFER_BASE     ; Patch the placeholder with the exit address
 
     jmp :2_compile_loop
-
 
 
 
@@ -605,6 +739,79 @@ ret
     sto A $CODE_BUFFER_PTR      ; Set the instruction pointer
     jmp :3_execution_loop       ; Continue execution from new location
 
+:3_execute_ret_token
+    ; 1. RESTORE STATE from the Call Stack
+    ; First, pop the old code_base pointer and restore it
+    call @pop_return_adres_A
+    sto A $CODE_BUFFER_BASE
+
+    ; Second, pop the return address
+    call @pop_return_adres_A
+    ; Decrement to account for the loop's 'inc' at the top
+    subi A 1
+    sto A $CODE_BUFFER_PTR
+
+    ; 2. JUMP (by continuing the execution loop with the restored pointers)
+    jmp :3_execution_loop
+
+
+
+:3_execute_unknown_token_smart
+    ; An ~ident token was found. Its value is a hash.
+    inc I $CODE_BUFFER_PTR
+    ldx A $CODE_BUFFER_BASE ; A = hash value
+
+    ; Search the function hash table
+    sto Z $FUNCTION_HASH_ADRES_PTR
+    ldm B $FUNCTION_HASH_ADRES_INDEX
+
+:search_func_loop
+    ldm I $FUNCTION_HASH_ADRES_PTR
+    tstg B I
+    jmpf :unknown_word_error ; If search pointer >= total, hash not found
+
+    ldx C $FUNCTION_HASH_TABLE_BASE
+    tste A C
+    jmpf :try_next_function_in_loop
+
+    ; --- MATCH FOUND! ---
+    ; I holds the index of the function.
+
+    ; 1. SAVE STATE to the Call Stack
+    ; First, save the return address (the instruction *after* this call)
+    ldm A $CODE_BUFFER_PTR
+    addi A 1
+    call @push_return_adres_A
+
+    ; Second, save the current code base pointer
+    ldm A $CODE_BUFFER_BASE
+    call @push_return_adres_A
+
+    ; 2. SET NEW STATE FOR JUMP
+    ; Get the function's start address (which is an offset, e.g., 0)
+    ldx B $FUNCTION_ADRES_TABLE_BASE
+
+    ; Set the code pointer to this offset
+    sto B $CODE_BUFFER_PTR
+
+    ; Set the code *base* pointer to the function buffer's base
+    ldm A $FUNCTION_BUFFER_BASE
+    sto A $CODE_BUFFER_BASE
+
+    ; 3. JUMP (by continuing the execution loop with the new pointers)
+    jmp :3_execution_loop
+
+:try_next_function_in_loop
+    inc I $FUNCTION_HASH_ADRES_PTR
+    jmp :search_func_loop
+
+:unknown_word_error
+    call @errors_unkown_token
+    jmp :3_execution_loop
+
+
+
+
 
 
 # Generic executer for runtime tokens
@@ -667,6 +874,26 @@ ret
 @pop_loop_A
     dec I $LOOP_STACK_INDEX
     ldx A $LOOP_STACK_PTR
+    ret
+
+@push_compilerstate_A
+    inc I $COMPILER_STATE_STACK_INDEX
+    stx A $COMPILER_STATE_STACK_PTR
+    ret
+
+@pop_compilerstate_A
+    dec I $COMPILER_STATE_STACK_INDEX
+    ldx A $COMPILER_STATE_STACK_PTR
+    ret
+
+@push_return_adres_A
+    inc I $CALL_STACK_INDEX
+    stx A $CALL_STACK_PTR
+    ret
+
+@pop_return_adres_A
+    dec I $CALL_STACK_INDEX
+    ldx A $CALL_STACK_PTR
     ret
 
 

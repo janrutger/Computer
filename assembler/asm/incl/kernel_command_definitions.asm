@@ -1,6 +1,7 @@
 
 
 # Configure the command ID numbers
+EQU ~ret 97         ; return from function call
 EQU ~ident 96       ; General indentifier ID, tokentype = unknown, 
                     ; token value can be an Label or an function or really unkown
 EQU ~label 97       ; token is label, toeken value points to label-array +\ null
@@ -45,6 +46,12 @@ EQU ~end 304
 EQU ~while 305
 EQU ~do 306
 EQU ~done 307
+EQU ~def 308
+EQU ~open-curly 309
+EQU ~close-curly 310
+
+
+
 
 # Configure the lookup tables
 # don forget to update the LUT_LEN after adding or deleting commands
@@ -153,6 +160,14 @@ EQU ~done 307
 . $PROG_DONE_STR 5
 % $PROG_DONE_STR \D \O \N \E \null
 
+. $PROG_DEF_STR 4
+% $PROG_DEF_STR \D \E \F \null
+
+. $PROG_O_CURLY_STR 2
+% $PROG_O_CURLY_STR \{ \null
+
+. $PROG_C_CURLY_STR 2
+% $PROG_C_CURLY_STR \} \null
 
 
 

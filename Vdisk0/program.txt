@@ -1,11 +1,22 @@
-0 A !
+DEF square {
+    DUP *
+}
 
-WHILE A @ 5 < DO
-    A @ PRINT
-    A @ 1 + A !
+DEF square_if_large {
+    DUP 5 >
+    IF
+        square
+    ELSE END
+}
+
+
+0 A ! 
+WHILE A @ 10 < DO
+    A @ PRINT     
+    
+    A @ square_if_large
+    PRINT     
+    A @ 1 + A ! 
 DONE
-
-42 PRINT
-
 
 

@@ -19,6 +19,36 @@
     call @print_error_string
     jmp :end_warning
 
+@errors_invalid_def_name
+    . $string_invalid_def_name 17   
+    % $string_invalid_def_name \I \n \v \a \l \i \d \space \d \e \f \n \a \m \e \Return \null
+    ldi A $string_invalid_def_name
+    call @print_error_string
+    jmp :end_warning
+
+@errors_invalid_def_body
+    . $string_invalid_def_body 17
+    % $string_invalid_def_body \I \n \v \a \l \i \d \space \d \e \f \b \o \d \y \Return \null
+    ldi A $string_invalid_def_body
+    call @print_error_string
+    jmp :end_warning
+
+@errors_unterminated_def
+    . $string_unterminated_def 23
+    % $string_unterminated_def \U \n \t \e \r \m \i \n \a \t \e \d \space \f \u \n \c \t \i \o \n \Return \null
+    ldi A $string_unterminated_def
+    call @print_error_string
+    jmp :end_warning
+
+@errors_fatal_invalid_syntax
+    . $string_fatal_invalid_syntax 30
+    % $string_fatal_invalid_syntax \F \a \t \a \l \space \i \n \v \a \l \i \d \space \s \y \n \t \a \x \i \n \space \e \r \r \o \r \Return \null
+    ldi A $string_fatal_invalid_syntax
+    call @print_error_string
+    jmp :end_fatal
+
+
+
 @fatal_Invalid_instruction_error
     . $string_invalid_instruction 27
     % $string_invalid_instruction \I \n \v \a \l \i \d \space \i \n \s \t \r \u \c \t \i \o \n \space \e \r \r \o \r \Return \null

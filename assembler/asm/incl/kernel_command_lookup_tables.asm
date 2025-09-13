@@ -285,10 +285,36 @@
     ldi A ~done
     stx A $ID_TABLE_BASE
 
+    ## DEF
+    inc I $table_pointer
+    ldi A @_stub_handler
+    stx A $CMD_TABLE_BASE
+    ldi A $PROG_DEF_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~def
+    stx A $ID_TABLE_BASE
+
+    ## {
+    inc I $table_pointer
+    ldi A @_stub_handler
+    stx A $CMD_TABLE_BASE
+    ldi A $PROG_O_CURLY_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~open-curly
+    stx A $ID_TABLE_BASE
+
+    ## }
+    inc I $table_pointer
+    ldi A @_stub_handler
+    stx A $CMD_TABLE_BASE
+    ldi A $PROG_C_CURLY_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~close-curly
+    stx A $ID_TABLE_BASE
 
 
     ### DO NOT FORGET UPDATE ~LUT_LEN AFTER ADDING OR DELETING COMMANDS
-    EQU ~LUT_LEN 31
+    EQU ~LUT_LEN 34
 
 ret
 
