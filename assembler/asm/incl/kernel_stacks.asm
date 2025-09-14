@@ -106,7 +106,6 @@ MALLOC $FUNCTION_BUFFER 5632     ; + 512
 
 :run_immediate_mode
     call @_executed_immediate
-
     jmp :end_of_stacks_program
 
 :run_program_mode
@@ -700,9 +699,6 @@ ret
     call @3_execute_push_value
     jmp :3_execution_loop
 
-; :3_execution_label_token        ; Phase 3 will never see an label token
-;     nop             ; for now a dummy
-;     jmp :3_execution_loop
 
 :3_execution_unknown_token
     nop             ; for now a dummy
@@ -919,7 +915,7 @@ ret         ; return to main loop
 # never trust I rgeister
 pop I       ; get return adres of this call
 
-pop Y      ; restore all registers
+pop Y       ; restore all registers
 pop X 
 pop M
 pop L  

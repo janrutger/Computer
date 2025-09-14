@@ -41,8 +41,8 @@
     jmp :end_warning
 
 @errors_fatal_invalid_syntax
-    . $string_fatal_invalid_syntax 30
-    % $string_fatal_invalid_syntax \F \a \t \a \l \space \i \n \v \a \l \i \d \space \s \y \n \t \a \x \i \n \space \e \r \r \o \r \Return \null
+    . $string_fatal_invalid_syntax 28
+    % $string_fatal_invalid_syntax \F \a \t \a \l \space \i \n \v \a \l \i \d \space \s \y \n \t \a \x  \space \e \r \r \o \r \Return \null
     ldi A $string_fatal_invalid_syntax
     call @print_error_string
     jmp :end_fatal

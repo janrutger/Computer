@@ -1,22 +1,11 @@
-DEF square {
-    DUP *
+DEF factorial {
+  DUP 1 > IF     
+    DUP 1 -      
+    factorial     
+    *             
+  ELSE
+  END
 }
 
-DEF square_if_large {
-    DUP 5 >
-    IF
-        square
-    ELSE END
-}
-
-
-0 A ! 
-WHILE A @ 10 < DO
-    A @ PRINT     
-    
-    A @ square_if_large
-    PRINT     
-    A @ 1 + A ! 
-DONE
-
-
+5 factorial PRINT
+7 factorial PRINT
