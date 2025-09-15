@@ -10,9 +10,11 @@ from devices.cpu import CPU
 from devices.memory import Memory
 from devices.interrupt_controller import InterruptController
 from devices.keyboard import Keyboard
-from devices.sio import SIO
+#from devices.sio import SIO
 from devices.debugger import Debugger
 from devices.VirtualDisk import VirtualDisk
+
+
 
 # --- Constants ---
 # Memory Map
@@ -127,7 +129,7 @@ def main():
     cpu = CPU(ram, interrupt_controller, debug_mode=debug_mode)
     cpu.registers["PC"] = MEM_LOADER_START # Set PC to the start of the loaded program
     keyboard = Keyboard(interrupt_controller, vector=KEYBOARD_INTERRUPT_VECTOR)
-    sio = SIO(ram, interrupt_controller)
+    #sio = SIO(ram, interrupt_controller)
     vdisk = VirtualDisk(ram, MEM_VDSK_I0_BASE, "Vdisk0")
     debugger = Debugger(cpu, ram)
 
@@ -136,7 +138,7 @@ def main():
         debugger.add_breakpoint(0)
 
     # 4. Create and Start Background Threads
-    print("Starting background threads (CPU, SIO)...")
+    print("Starting background threads (CPU, debugger)...")
     cpu_thread = CpuThread(cpu, debugger)
     
     cpu_thread.start()
@@ -176,7 +178,8 @@ def main():
     # 6. Shutdown
     print("GUI loop exited. Halting system...")
     cpu_thread.stop()
-    #sio.stop()
+
+
     pygame.quit()
     print("System shutdown complete.")
     # A small delay to allow background threads to print final messages

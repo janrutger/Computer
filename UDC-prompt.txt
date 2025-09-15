@@ -1,0 +1,55 @@
+Universal Device Controler to manage multiple devices, and device type in the Stern-XT envroinment
+devices can be eg an Plotter, or an sensor
+
+
+each device is connected via the Universal Device Controler (UDC) to the Stern-XT architecture
+a device has an device-type and an configurable channel ID, The channel ID must match to the UDC channel, where the device is "connected" to
+The device-type is used by the UDC for derterming the right (sub) commandset for this device type
+
+the commandset includes device specifik instructions, like 
+- reset (to reset the device)
+- new   (to start an new plot on a plotter)
+- plot  (when the payload containt data to plot)
+- color (setting the collor of the dot)
+
+- aquare    (to read an value from an senortype device)
+
+and generic instruction, like
+- init      (to get the device type)
+- online    (when a channel is activated by the host)
+- offline   (when a channel is deactivated by the host)
+
+
+when a CPU tries to use an invalid instruction for this device-type, the controller flags the CPU for this
+And all communication to/from the device starts at the CPU side
+
+
+At power on all devices start in an off-line idle mode 
+During startup (boot time) the CPU sends an INIT to the, by the CPU known, channels and is waiting for the device type descriptor for this channel
+when the device type matches the expected device for this channel, the CPU can send an online instruction and the device is then waiting for instrcutructions
+while sending an off-line, the device will go in sleeping mode, and is not accepting any new instructions. 
+
+
+the UDC is commuinication with the CPU via memory-maped-IO, herefore it has several reserved registers
+at least:
+- Channel register 
+- status register(s)
+- command register(s)
+- a devicerype register per channel (8 channels in our design)
+- dataregister(s)
+
+to ensure we are not running in timing issues the UDC hols chache memory for the CPU communication and the cache hold an send and a receivebuffer(s) per channel
+
+
+When the UDC communicates to to an device it send an packets with includes and instructionfield (reset, plot, ...) and an datafield
+(since this is python code it can be an dictionary)
+
+During boottime the CPU checks every known channels and checks if the devicetype is the expected divicetype for that channel.
+So upstream instructions/routines can rely on the fact that devices are on a pre-agrreed channel
+
+
+Clock tick wise, the UDC and the devices are ticking from the Stern-XT mainloop, with is also drivng the screen, keyboard and the Virtualdisk
+
+for the plotter i (like to) use the MAtplotlib library, becuase this can do the heavy lifting of (re)scaling
+But i also must work together wich the pygame library with runs the screen
+With an Proof of Concept plotterPOC.py, with i temperaly plugged into the Stern-XT.py proofs it will work

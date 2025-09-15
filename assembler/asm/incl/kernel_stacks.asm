@@ -5,28 +5,29 @@
 
 # Define stacks
 # the datastack definition is replaced from os_loader to here
-. $DATASTACK 16
+. $DATASTACK 32
 . $DATASTACK_PTR 1
 . $DATASTACK_INDEX 1
 % $DATASTACK_INDEX 0
 % $DATASTACK_PTR $DATASTACK
 
 # to keep track of jump-adresses
-. $PLACEHOLDER_STACK 16
+. $PLACEHOLDER_STACK 16     ;16 nested if else end or while do loop
 . $PLACEHOLDER_STACK_PTR 1
 . $PLACEHOLDER_STACK_INDEX 1
 % $PLACEHOLDER_STACK_INDEX 0
 % $PLACEHOLDER_STACK_PTR $PLACEHOLDER_STACK
 
 # to jump back to the loop start
-. $LOOP_STACK 16
+. $LOOP_STACK 16            ; 16 nested while loops
 . $LOOP_STACK_PTR 1
 . $LOOP_STACK_INDEX 1
 % $LOOP_STACK_INDEX 0
 % $LOOP_STACK_PTR $LOOP_STACK
 
 # to keep track of the function return adres
-. $CALL_STACK 16
+# and the code-base pointer at return
+. $CALL_STACK 32            ; max 16 nesting calls deep
 . $CALL_STACK_PTR 1
 . $CALL_STACK_INDEX 1
 % $CALL_STACK_INDEX 0
