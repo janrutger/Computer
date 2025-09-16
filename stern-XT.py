@@ -10,9 +10,11 @@ from devices.cpu import CPU
 from devices.memory import Memory
 from devices.interrupt_controller import InterruptController
 from devices.keyboard import Keyboard
-#from devices.sio import SIO
+
 from devices.debugger import Debugger
 from devices.VirtualDisk import VirtualDisk
+from devices.UDC import UDC
+from devices.sensor import Sensor
 
 
 
@@ -40,9 +42,10 @@ BG_COLOR = (0, 0, 20) # Dark Blue
 FG_COLOR = (200, 200, 200) # Light Grey
 
 # Device Memory Locations
-MEM_KBD_I0_BASE = MEM_VAR_START -8
-MEM_KEYBOARD_DATA = MEM_KBD_I0_BASE + 0 # Keyboard data register at the top of the I/O space
-MEM_VDSK_I0_BASE = MEM_KBD_I0_BASE - 8 # Virtual Disk registers start here
+MEM_KBD_I0_BASE   = MEM_VAR_START -8        # Keayborad device base adres (max 8 registers)
+MEM_KEYBOARD_DATA = MEM_KBD_I0_BASE + 0     # Keyboard data register at the top of the I/O space
+MEM_VDSK_I0_BASE  = MEM_KBD_I0_BASE - 8     # Virtual Disk registers start here (max 8 registers)
+MEM_UDC_I0_BASE   = MEM_VDSK_I0_BASE - 24   # UDC virtual controler starts here (max 24 registers)
 
 
 # --- CPU Thread ---
@@ -129,9 +132,13 @@ def main():
     cpu = CPU(ram, interrupt_controller, debug_mode=debug_mode)
     cpu.registers["PC"] = MEM_LOADER_START # Set PC to the start of the loaded program
     keyboard = Keyboard(interrupt_controller, vector=KEYBOARD_INTERRUPT_VECTOR)
-    #sio = SIO(ram, interrupt_controller)
+
     vdisk = VirtualDisk(ram, MEM_VDSK_I0_BASE, "Vdisk0")
+    udc = UDC(ram, MEM_UDC_I0_BASE)
     debugger = Debugger(cpu, ram)
+
+    # Initialize UDC devices
+    sensor1 = Sensor(udc, 0) # Connect a sensor to channel 0
 
     # Check for debug flag
     if debug_mode:
@@ -158,6 +165,9 @@ def main():
 
         # Poll virtual disk
         vdisk.access()
+        # Universal Device Controler
+        udc.tick()
+        sensor1.tick()
 
         # --- Drawing Logic --- 
         screen.fill(BG_COLOR)

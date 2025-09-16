@@ -53,3 +53,29 @@ Clock tick wise, the UDC and the devices are ticking from the Stern-XT mainloop,
 for the plotter i (like to) use the MAtplotlib library, becuase this can do the heavy lifting of (re)scaling
 But i also must work together wich the pygame library with runs the screen
 With an Proof of Concept plotterPOC.py, with i temperaly plugged into the Stern-XT.py proofs it will work
+
+
+### SOME NOTES about the plotter implementation
+
+Here is the refined, more correct architecture:
+
+The Refined Plotter Architecture
+plotter.tick() (Called every Pygame frame)
+
+This method's primary job is to keep the plotter's window responsive.
+It should call super().tick() to check for new commands from the UDC.
+It should also call self.fig.canvas.flush_events(). This is a fast operation that handles window events (like mouse movement or expose events) and prevents the "Not Responding" state.
+plotter.handle_command() (Called only when a command arrives)
+
+When a command like UDC_DEVICE_SEND arrives, this method does two things:
+Update Data: It updates the plot's internal data (self.scatter.set_offsets(...)).
+Request Redraw: It calls self.fig.canvas.draw_idle().
+Why This Works (The Key Difference)
+The magic is in using draw_idle() instead of a direct draw() call.
+
+draw_idle() is non-blocking. It doesn't draw immediately. It simply marks the canvas as "dirty" and requests a redraw to happen the next time the GUI event loop is idle.
+The flush_events() call in your tick() method is what gives the matplotlib backend the "idle time" it needs to perform the redraw that was requested by draw_idle().
+With this refined design:
+
+Your main Pygame loop stays fast, because plotter.tick() only makes a quick flush_events() call.
+The heavy work of redrawing the plot only happens when handle_command has received new data and has requested a redraw via draw_idle().
