@@ -47,6 +47,7 @@ ldi Z 0     ; Start of loader at mem_start
 ##########
 call @KBD_INIT
 call @init_vdisk
+call @init_udc
 call @init_interrupt_vector_table   
 ei
 
@@ -64,6 +65,7 @@ INCLUDE loader_errors
 INCLUDE loader_screen_routines
 INCLUDE loader_keyboard_routines
 INCLUDE loader_vdisk_routines
+INCLUDE loader_UDC_routines
 
 
 

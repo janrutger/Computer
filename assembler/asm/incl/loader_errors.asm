@@ -71,6 +71,27 @@
     call @print_error_string
     jmp :end_fatal
 
+@error_udc_send_error
+    . $string_udc_send_error 16
+    % $string_udc_send_error \U \D \C \space \S \e \n \d \space \e \r \r \o \r \Return \null
+    ldi A $string_udc_send_error
+    call @print_error_string
+    jmp :end_fatal
+
+
+@error_wrong_device_error
+    . $string_wrong_device_error 20
+    % $string_wrong_device_error \W \r \o \n \g \space \d \e \v \i \c \e  \space \e \r \r \o \r \Return \null
+    ldi A $string_wrong_device_error
+    call @print_error_string
+    jmp :end_fatal
+
+
+
+
+
+
+
 
 :end_warning
     ret

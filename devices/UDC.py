@@ -13,7 +13,7 @@ UDC_ERROR_DEVICE    = 4     # for exceptions in the device logic
                             # value.register shows the error code
 
 # Known device errors
-DEV_ERROR_UNKOWN    = 0     # an none specific error
+DEV_ERROR_UNKNOWN   = 0     # an none specific error
 DEV_ERROR_DEVICE    = 1     # incorrect device request
 DEV_ERROR_VALUE     = 2     # invalid value for this device
 DEV_ERROR_INDEX     = 3     # unknown idex value for this device
@@ -31,14 +31,13 @@ UDC_DEVICE_NEW      = 10    # The CPU request to start over, like an new plot
 UDC_DEVICE_SEND     = 11    # The CPU send 'just' data to the device
 UDC_DEVICE_GET      = 12    # The CPU request data from the device, the value register can give an argumment
 UDC_DEVICE_COLOR    = 13    # Sets color of something, like the color of the plotted dot
-UDC_DEVICE_MODE     = 14    # sets the device in a mode, eg Yplotter/XYplotter,
+UDC_DEVICE_MODE     = 14    # sets the device in a mode, eg Yplotter/XYplotter, 
 
 
 # Device type defintion
-GENERIC_TYPE        = 0     # the generic instructions
-YPLOT_TYPE          = 1     # Type is an Y-plotter
-XYPLOT_TYPE         = 2     # Type is an XY-plotter
-SENSOR_TYPE         = 3     # Type is an sensor
+GENERIC         = 0  # generic type
+PLOTTER         = 1  # A plotter
+SENSOR          = 2  # A sensor
 
 
 class UDC:
@@ -54,13 +53,12 @@ class UDC:
         
 
         # easy find the device components
-        self.device_types = [YPLOT_TYPE, XYPLOT_TYPE, SENSOR_TYPE]
+        self.device_types = [GENERIC, PLOTTER, SENSOR]
         self.device_type_instructions = {}
 
-        self.device_type_instructions[GENERIC_TYPE] = [UDC_DEVICE_INIT, UDC_DEVICE_ONLINE, UDC_DEVICE_OFFLINE, UDC_DEVICE_RESET]
-        self.device_type_instructions[YPLOT_TYPE]   = [UDC_DEVICE_NEW, UDC_DEVICE_SEND, UDC_DEVICE_COLOR, UDC_DEVICE_MODE]
-        self.device_type_instructions[XYPLOT_TYPE]  = [UDC_DEVICE_NEW, UDC_DEVICE_SEND, UDC_DEVICE_COLOR, UDC_DEVICE_MODE]
-        self.device_type_instructions[SENSOR_TYPE]  = [UDC_DEVICE_GET]
+        self.device_type_instructions[GENERIC]   = [UDC_DEVICE_INIT, UDC_DEVICE_ONLINE, UDC_DEVICE_OFFLINE, UDC_DEVICE_RESET]
+        self.device_type_instructions[PLOTTER]   = [UDC_DEVICE_NEW, UDC_DEVICE_SEND, UDC_DEVICE_COLOR, UDC_DEVICE_MODE]
+        self.device_type_instructions[SENSOR]    = [UDC_DEVICE_GET]
 
 
         # setting up registers
@@ -73,7 +71,7 @@ class UDC:
         
         self.memory.write(self.command_register, -1)
         for i in range(self.channels):
-            self.memory.write(self.device_type_registers[i], GENERIC_TYPE)
+            self.memory.write(self.device_type_registers[i], GENERIC)
         self.memory.write(self.status_register, UDC_WAITING)
 
     # --- Public API for Devices ---
@@ -112,13 +110,13 @@ class UDC:
             data    = int(self.memory.read(self.data_register))
             
             if command == UDC_DEVICE_RESET:
-                self.memory.write(self.device_type_registers[channel], GENERIC_TYPE)
+                self.memory.write(self.device_type_registers[channel], GENERIC)
                 self.cpu_snd_caches[channel].append((command, data))
                 self.memory.write(self.status_register, UDC_WAITING)
                 return
 
             device_type = int(self.memory.read(self.device_type_registers[channel]))
-            is_generic = command in self.device_type_instructions[GENERIC_TYPE]
+            is_generic = command in self.device_type_instructions[GENERIC]
             is_valid_for_type = device_type in self.device_type_instructions and \
                                 command in self.device_type_instructions[device_type]
 
@@ -184,12 +182,14 @@ class UDCDevice:
                 self.initialized = True
                 self.online = False
                 self.udc.post_data(self.channel, self.device_type)
+                self.on_init()
                 return
             
             if command == UDC_DEVICE_ONLINE:
                 # A device can only be brought online if it has been initialized first.
                 if self.initialized:
                     self.online = True
+                    self.on_online()
                 else:
                     # Trying to bring an uninitialized device online is an error.
                     self.udc.post_error(self.channel, DEV_ERROR_DEVICE)
@@ -197,13 +197,14 @@ class UDCDevice:
 
             if command == UDC_DEVICE_OFFLINE:
                 self.online = False
+                self.on_offline()
                 return
 
             if command == UDC_DEVICE_RESET:
                 self.online = False
                 self.initialized = False
                 # Subclasses can override this method to add more reset logic
-                self.reset()
+                self.on_reset()
                 return
 
             # --- Handle Device-Specific Commands ---
@@ -222,7 +223,21 @@ class UDCDevice:
         """
         raise NotImplementedError("Subclasses must implement handle_command")
 
-    def reset(self):
+    
+
+    def on_init(self):
+        """Can be overridden by subclasses for custom logic when brought online."""
+        pass
+
+    def on_online(self):
+        """Can be overridden by subclasses for custom logic when brought online."""
+        pass
+
+    def on_offline(self):
+        """Can be overridden by subclasses for custom logic when brought online."""
+        pass
+
+    def on_reset(self):
         """
         Can be overridden by subclasses for custom reset logic.
         """

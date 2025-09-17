@@ -79,3 +79,9 @@ With this refined design:
 
 Your main Pygame loop stays fast, because plotter.tick() only makes a quick flush_events() call.
 The heavy work of redrawing the plot only happens when handle_command has received new data and has requested a redraw via draw_idle().
+
+
+250 1 IO SEND
+1 IO RESET
+0 IO GET 
+1 IO NEW | ONLINE | OFFLINE

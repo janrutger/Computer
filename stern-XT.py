@@ -15,6 +15,7 @@ from devices.debugger import Debugger
 from devices.VirtualDisk import VirtualDisk
 from devices.UDC import UDC
 from devices.sensor import Sensor
+from devices.plotter import Plotter
 
 
 
@@ -138,7 +139,8 @@ def main():
     debugger = Debugger(cpu, ram)
 
     # Initialize UDC devices
-    sensor1 = Sensor(udc, 0) # Connect a sensor to channel 0
+    sensor1  = Sensor(udc, 0)  # Connect a sensor to channel 0
+    plotter1 = Plotter(udc, 1) # Connect a plotter to channel 1
 
     # Check for debug flag
     if debug_mode:
@@ -168,6 +170,8 @@ def main():
         # Universal Device Controler
         udc.tick()
         sensor1.tick()
+        plotter1.tick()
+        plotter1.draw() # Keep the plotter window responsive
 
         # --- Drawing Logic --- 
         screen.fill(BG_COLOR)

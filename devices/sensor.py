@@ -1,5 +1,5 @@
 import random
-from .UDC import UDCDevice, SENSOR_TYPE, UDC_DEVICE_GET, DEV_ERROR_DEVICE
+from .UDC import UDCDevice, SENSOR, UDC_DEVICE_GET, DEV_ERROR_DEVICE
 
 # ======================================================================
 # |                                                                    |
@@ -13,7 +13,7 @@ class Sensor(UDCDevice):
     """
     def __init__(self, udc, channel):
         # Call the parent class's __init__ to set up the device type and UDC connection
-        super().__init__(SENSOR_TYPE, udc, channel)
+        super().__init__(SENSOR, udc, channel)
         self._internal_value = 0
 
     def tick(self):
