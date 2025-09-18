@@ -13,7 +13,7 @@ MALLOC $udc_device_type_5    12257
 MALLOC $udc_device_type_6    12258
 MALLOC $udc_device_type_7    12259
 
-# Deine all CDU controller statussen
+# Define all CDU controller statussen
 EQU ~UDC_WAITING        0
 EQU ~UDC_CPU_WAITING    1
 EQU ~UDC_UDC_WAITING    2
@@ -67,72 +67,72 @@ EQU ~CHANNEL_1_DEVICE   1   ; ~PLOTTER type
 :udc_init_done
 ret
 
-@udc_channel_online
-    ; expect: A = channel number
-    ; B = command UDC_DEVICE_ONLINE
-    ; return nothing
-    ldi B ~UDC_DEVICE_ONLINE
-    call @_send_udc_command
-ret
+; @udc_channel_online
+;     ; expect: A = channel number
+;     ; B = command UDC_DEVICE_ONLINE
+;     ; return nothing
+;     ldi B ~UDC_DEVICE_ONLINE
+;     call @_send_udc_command
+; ret
 
-@udc_channel_offline
-    ; expect: A = channel number
-    ; B = command UDC_DEVICE_OFFLINE
-    ; return nothing
-    ldi B ~UDC_DEVICE_OFFLINE
-    call @_send_udc_command
-ret
+; @udc_channel_offline
+;     ; expect: A = channel number
+;     ; B = command UDC_DEVICE_OFFLINE
+;     ; return nothing
+;     ldi B ~UDC_DEVICE_OFFLINE
+;     call @_send_udc_command
+; ret
 
-@udc_channel_reset
-    ; expect: A = channel number
-    ; B = command UDC_DEVICE_RESET
-    ; return nothing
-    ldi B ~UDC_DEVICE_RESET
-    call @_send_udc_command
-ret
+; @udc_channel_reset
+;     ; expect: A = channel number
+;     ; B = command UDC_DEVICE_RESET
+;     ; return nothing
+;     ldi B ~UDC_DEVICE_RESET
+;     call @_send_udc_command
+; ret
 
-@udc_device_new
-    ; expect: A = channel number
-    ; B = command UDC_DEVICE_NEW
-    ; return nothing
-    ldi B ~UDC_DEVICE_NEW
-    ldi C 0                 ; actually no data to send
-    call @_send_udc_command
-ret
+; @udc_device_new
+;     ; expect: A = channel number
+;     ; B = command UDC_DEVICE_NEW
+;     ; return nothing
+;     ldi B ~UDC_DEVICE_NEW
+;     ldi C 0                 ; actually no data to send
+;     call @_send_udc_command
+; ret
 
-@udc_device_send
-    ; expect: A = channel number, C = value to send
-    ; B = command UDC_DEVICE_SEND
-    ; return nothing
-    ldi B ~UDC_DEVICE_SEND
-    call @_send_udc_command
-ret
+; @udc_device_send
+;     ; expect: A = channel number, C = value to send
+;     ; B = command UDC_DEVICE_SEND
+;     ; return nothing
+;     ldi B ~UDC_DEVICE_SEND
+;     call @_send_udc_command
+; ret
 
-@udc_device_get
-    ; expect: A = channel number, 
-    ; B = command UDC_DEVICE_GET
-    ; returns C = value to get
-    ldi B ~UDC_DEVICE_GET
-    ldi C 0                 ; actually no data to send
-    call @_send_udc_command
-    ldm C $udc_data_register    ; Load the return value into C
-ret
+; @udc_device_get
+;     ; expect: A = channel number, 
+;     ; B = command UDC_DEVICE_GET
+;     ; returns C = value to get
+;     ldi B ~UDC_DEVICE_GET
+;     ldi C 0                 ; actually no data to send
+;     call @_send_udc_command
+;     ldm C $udc_data_register    ; Load the return value into C
+; ret
 
-@udc_device_color
-    ; expect: A = channel number, C = value (color) to send
-    ; B = command UDC_DEVICE_COLOR
-    ; return nothing
-    ldi B ~UDC_DEVICE_COLOR
-    call @_send_udc_command
-ret
+; @udc_device_color
+;     ; expect: A = channel number, C = value (color) to send
+;     ; B = command UDC_DEVICE_COLOR
+;     ; return nothing
+;     ldi B ~UDC_DEVICE_COLOR
+;     call @_send_udc_command
+; ret
 
-@udc_device_mode
-    ; expect: A = channel number, C = value (mode) to send
-    ; B = command UDC_DEVICE_MODE
-    ; return nothing
-    ldi B ~UDC_DEVICE_MODE
-    call @_send_udc_command
-ret
+; @udc_device_mode
+;     ; expect: A = channel number, C = value (mode) to send
+;     ; B = command UDC_DEVICE_MODE
+;     ; return nothing
+;     ldi B ~UDC_DEVICE_MODE
+;     call @_send_udc_command
+; ret
 
 
 

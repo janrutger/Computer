@@ -21,21 +21,22 @@ EQU ~save 108       ; Save the PROG_BUFFER to disk
 
 
 # Keyword operations [200 ... 299]
-EQU ~store 200      ; Store TOS to var [A .. Z]
+EQU ~store   200    ; Store TOS to var [A .. Z]
 EQU ~restore 201    ; Restore var [A .. Z] to TOS
 EQU ~add 202        ; tos + tos[-1] = tos
 EQU ~sub 203        ; tos - tos[-1] = tos
 EQU ~mul 204        ; tos * tos[-1] = tos
 EQU ~div 205        ; tos / tos[-1] = tos
 EQU ~mod 206        ; tos % tos[-1] = tos
-EQU ~eq 207         ; tos == tos[-1] = tos
+EQU ~eq  207        ; tos == tos[-1] = tos
 EQU ~neq 208        ; tos != tos[-1] = tos
-EQU ~gt 209         ; tos > tos[-1] = tos
-EQU ~lt 210         ; tos < tos[-1] = tos
+EQU ~gt  209        ; tos > tos[-1] = tos
+EQU ~lt  210        ; tos < tos[-1] = tos
 EQU ~dup 211        ; t1 -> t1 t1
 EQU ~swap 212       ; t1 t2 -> t2 t1
 EQU ~drop 213       ; t1 -> 
-EQU ~over 214       ; t1 t2 -> t1 t2 t1      
+EQU ~over 214       ; t1 t2 -> t1 t2 t1
+EQU ~io   215       ; IO command
 
 # keyword Stacks keyword commands [300 ... 399]
 EQU ~print 300
@@ -168,6 +169,11 @@ EQU ~close-curly 310
 
 . $PROG_C_CURLY_STR 2
 % $PROG_C_CURLY_STR \} \null
+
+
+. $PROG_IO_STR 4
+% $PROG_IO_STR \& \i \o \null
+
 
 
 

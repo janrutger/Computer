@@ -312,9 +312,19 @@
     ldi A ~close-curly
     stx A $ID_TABLE_BASE
 
+    ## &io
+    inc I $table_pointer
+    ldi A @rt_udc_control
+    stx A $CMD_TABLE_BASE
+    ldi A $PROG_IO_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~io
+    stx A $ID_TABLE_BASE
+
+
 
     ### DO NOT FORGET UPDATE ~LUT_LEN AFTER ADDING OR DELETING COMMANDS
-    EQU ~LUT_LEN 34
+    EQU ~LUT_LEN 35
 
 ret
 

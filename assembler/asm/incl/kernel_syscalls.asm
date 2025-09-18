@@ -66,7 +66,10 @@
     ldi M @sys_f_write_block  ; Start of the ISR
     stx M $INT_VECTORS       ; Store ISR
 
-
+    EQU ~SYS_UDC_CONTROL 33
+    ldi I ~SYS_UDC_CONTROL    ; syscall 33 @sys_udc_control
+    ldi M @sys_udc_control    ; Start of the ISR
+    stx M $INT_VECTORS        ; Store ISR
 
 
 ret
@@ -122,6 +125,8 @@ ret
 @sys_print_number       ; Syscall 27
     call @print_number
     rti
+
+## Vdisk syscalls
 
 @sys_f_open_read        ; Syscall 28, A holds the address of the filename string
     call @open_file_read
@@ -193,3 +198,27 @@ ret
     ldi A 0             ; signal False to the caller
     sto A $SYSCALL_RETURN_STATUS
     rti
+
+
+### UDC Syscalls
+@sys_udc_control        ; Syscall 33
+    ; IN: A = channel, B = command, C = data
+    ; OUT: C = return value (for GET commands)
+    call @_send_udc_command
+
+    ; For GET commands, the return value is in the data register.
+    ; We must check if the command was a GET command.
+    tst B ~UDC_DEVICE_GET
+    jmpf :skip_get_logic
+
+    ; If it was, load the returned value into C and store it
+    ; in the official syscall return value location.
+    ldm C $udc_data_register
+    sto C $SYSCALL_RETURN_VALUE
+
+:skip_get_logic
+    ; Set status to success and return.
+    ldi A 1
+    sto A $SYSCALL_RETURN_STATUS
+    rti
+    

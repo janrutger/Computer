@@ -503,3 +503,34 @@ ret
     sto A $PROG_BUFFER_TEMP_PTR  ; update the new start point for the next line
     jmp :read_next
 
+
+
+
+### UDC Control run-times
+@rt_udc_control
+    call @pop_B     ; Pop command code into B
+    call @pop_A     
+    ld M A          ; Save the Channel number
+    call @pop_A
+    ld C A          ; load data/arugumnet in C
+    ld A M          ; load channel number in A
+
+    ldi I ~SYS_UDC_CONTROL      ; Load the syscall number
+    int $INT_VECTORS            ; call the kernel
+
+    ; Check status and push return value for GET commands
+    ldm A $SYSCALL_RETURN_STATUS
+    tste A Z
+    jmpf :rt_udc_ok
+    ; Error handeling here, for now, just continue
+
+:rt_udc_ok  
+    ; if command was GET, push the return value
+    tst B ~UDC_DEVICE_GET
+    jmpf :rt_udc_end        ; goto end if no return value
+
+    ldm A $SYSCALL_RETURN_VALUE
+    call @push_A            ; Push the return value on the datastack
+
+:rt_udc_end
+ret
