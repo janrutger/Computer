@@ -450,6 +450,10 @@ ret
         tst A ~else
         jmpt :3_execution_else_token      ; must jumpback to :3_execution_loop
 
+        tst A ~io
+        jmpt :3_execution_runtime_token      ; must jumpback to :3_execution_loop
+
+
         # The 'WHILE condition DO code END' construction is reusing the IF-END, and GOTO implementation
         # so no traces found here for the WHILE loop construction
 
