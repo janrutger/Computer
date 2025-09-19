@@ -11,7 +11,7 @@ DEF number {
 }
 
 0 A !
-WHILE A @ 2000 < DO
+WHILE A @ 23 < DO
     number plot
     A @ 1 + A !
 DONE
