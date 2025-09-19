@@ -780,6 +780,7 @@ ret
 
     ; 1. SAVE STATE to the Call Stack
     ; First, save the return address (the instruction *after* this call)
+    push I      ; save I
     ldm A $CODE_BUFFER_PTR
     addi A 1
     call @push_return_adres_A
@@ -787,6 +788,8 @@ ret
     ; Second, save the current code base pointer
     ldm A $CODE_BUFFER_BASE
     call @push_return_adres_A
+
+    pop I       ; restore I Index of function
 
     ; 2. SET NEW STATE FOR JUMP
     ; Get the function's start address (which is an offset, e.g., 0)

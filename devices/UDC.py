@@ -111,7 +111,7 @@ class UDC:
             
             if command == UDC_DEVICE_RESET:
                 self.memory.write(self.device_type_registers[channel], GENERIC)
-                self.cpu_snd_caches[channel].append((command, data))
+                self.cpu_snd_caches[el].append((command, data))
                 self.memory.write(self.status_register, UDC_WAITING)
                 return
 
@@ -126,6 +126,7 @@ class UDC:
                     self.memory.write(self.status_register, UDC_UDC_WAITING)
                 else:
                     self.memory.write(self.status_register, UDC_WAITING)
+                    self.memory.write(self.data_register, 0)
             else:
                 self.memory.write(self.status_register, UDC_ERROR_DEVICE)
                 self.memory.write(self.data_register, DEV_ERROR_DEVICE)

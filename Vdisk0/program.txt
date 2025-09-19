@@ -1,20 +1,17 @@
-DEF factorial {
-  DUP 1 > IF     
-    DUP 1 -      
-    factorial     
-    *             
-  ELSE
-  END
+0 1 1 &io
+0 0 1 &io 
+
+
+DEF plot {
+  1 11 &io
 }
 
-5 factorial PRINT
-7 factorial PRINT
-8 factorial PRINT
-9 factorial PRINT
-10 factorial PRINT
-11 factorial PRINT
-12 factorial PRINT
-13 factorial PRINT
-14 factorial PRINT
-15 factorial PRINT
+DEF number {
+  0 0 12 &io
+}
 
+0 A !
+WHILE A @ 2000 < DO
+    number plot
+    A @ 1 + A !
+DONE
