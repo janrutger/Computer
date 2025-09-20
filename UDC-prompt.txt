@@ -12,7 +12,7 @@ the commandset includes device specifik instructions, like
 - plot  (when the payload containt data to plot)
 - color (setting the collor of the dot)
 
-- aquare    (to read an value from an senortype device)
+- get    (to read an value from an senortype device)
 
 and generic instruction, like
 - init      (to get the device type)

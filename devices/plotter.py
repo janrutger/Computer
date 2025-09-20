@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
+from matplotlib.ticker import MaxNLocator, MultipleLocator
 import numpy as np
 from .UDC import UDCDevice, PLOTTER, UDC_DEVICE_NEW, UDC_DEVICE_SEND, UDC_DEVICE_COLOR, UDC_DEVICE_MODE, DEV_ERROR_DEVICE
 
@@ -120,12 +120,13 @@ class Plotter(UDCDevice):
         elif self.fig.canvas.manager.toolbar:
             self.fig.canvas.manager.toolbar.pack_forget()
 
-        self.line, = self.ax.plot([], [], linestyle='none', marker='x', color=self.color)
-        self.ax.set_title(f"Y-Plotter")
-        self.ax.set_xlabel("X (time)")
-        self.ax.set_ylabel("Y Value")
+        self.line, = self.ax.plot([], [], linestyle='none', markersize=4, marker='.', color=self.color)
+        self.ax.set_title(f"PLOTTER")
+        self.ax.set_xlabel("(X) Time")
+        self.ax.set_ylabel("(Y) Value")
 
         self.ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        # self.ax.xaxis.set_major_locator(MultipleLocator(10))
         self.ax.yaxis.set_major_locator(MaxNLocator(integer=True))
 
         self.ax.grid(True, linestyle='--', alpha=0.6)

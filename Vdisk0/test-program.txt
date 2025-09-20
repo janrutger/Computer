@@ -83,9 +83,10 @@ DEF number {
 }
 
 0 A !
-WHILE A @ 1 < DO
-    number 1 11 &io
+WHILE A @ 23 < DO
+    number plot
     A @ 1 + A !
 DONE
+
 
 

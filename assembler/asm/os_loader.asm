@@ -65,7 +65,7 @@ INCLUDE loader_errors
 INCLUDE loader_screen_routines
 INCLUDE loader_keyboard_routines
 INCLUDE loader_vdisk_routines
-INCLUDE loader_UDC_routines
+INCLUDE loader_udc_routines
 
 
 

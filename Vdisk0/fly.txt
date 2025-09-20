@@ -1,0 +1,38 @@
+DEF gcd {
+    WHILE DUP 0 != DO
+        SWAP OVER %
+    DONE
+    DROP
+}
+
+
+
+
+
+DEF plot {
+  1 11 &io
+}
+
+
+
+
+0 1 1 &io
+
+1 plot
+1 plot
+
+1 P !
+2 N !
+
+WHILE 700 N @ > DO
+  P @ N @ gcd C !
+  C @ 1 == IF
+    P @ N @ 1 + + R !
+  ELSE
+    P @ C @ / R !
+  END
+
+  R @ plot
+  R @ P !
+  N @ 1 +  N !
+DONE
