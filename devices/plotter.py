@@ -1,3 +1,4 @@
+import time
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator, MultipleLocator
 import numpy as np
@@ -27,6 +28,7 @@ class Plotter(UDCDevice):
 
         self.dirty = True
         self.max_lenght = 1024
+        self.last_draw_time = 0
 
         # --- Matplotlib Objects ---
         self.fig = None
@@ -43,6 +45,10 @@ class Plotter(UDCDevice):
         """
         Keeps the matplotlib window responsive. This should be called frequently from the main loop.
         """
+        current_time = time.time()
+        if current_time - self.last_draw_time < 1: # Only draw once every 1 second
+            return
+
         if self.fig and self.dirty:
             try:
                 self.update_plot()
@@ -50,6 +56,7 @@ class Plotter(UDCDevice):
                 # self.fig.canvas.draw()
                 self.fig.canvas.flush_events()
                 self.dirty = False
+                self.last_draw_time = current_time
             except (AttributeError, TypeError):
                 self.close_plot()
 
@@ -142,8 +149,14 @@ class Plotter(UDCDevice):
 
         # Adjust plot limits efficiently
         self.ax.relim() # Recalculate data limits based on the *current* line data
-        self.ax.autoscale_view(True, True, True) 
-
+        #self.ax.autoscale_view(True, True, True)  # and quite CPU comsuming
+        
+        # Autoscale Y-axis and set X-axis to scroll with the data
+        self.ax.autoscale_view(scalex=False, scaley=True)
+        if self.x_buffer:
+            x_min = self.x_buffer[-self.max_lenght] if len(self.x_buffer) > self.max_lenght else self.x_buffer[0]
+            x_max = self.x_buffer[-1]
+            self.ax.set_xlim(x_min, x_max + 1) # Add 1 for padding
 
 
     def close_plot(self):
