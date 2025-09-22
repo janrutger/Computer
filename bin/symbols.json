@@ -80,8 +80,8 @@
         "$udc_device_type_6": 12258,
         "$udc_device_type_7": 12259,
         "@init_udc": 353,
-        "@_init_udc_channel": 364,
-        "@_send_udc_command": 367,
+        "@_init_udc_channel": 369,
+        "@_send_udc_command": 372,
         "$kernel_prompt": 12583,
         "@init_kernel": 1024,
         "@main_loop": 1031,
@@ -311,11 +311,11 @@
             ":return_succes_status": 345,
             ":return_file_error_status": 347,
             ":return_disk_error_status": 350,
-            ":udc_init_done": 363,
-            ":udc_send_wait_loop": 376,
-            ":send_udc_command_done": 384,
-            ":udc_send_error": 389,
-            ":udc_wrong_device_error": 390
+            ":udc_init_done": 368,
+            ":udc_send_wait_loop": 381,
+            ":send_udc_command_done": 389,
+            ":udc_send_error": 394,
+            ":udc_wrong_device_error": 395
         },
         {
             ":set_status_true": 1091,

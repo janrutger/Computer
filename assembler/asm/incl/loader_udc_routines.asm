@@ -31,6 +31,8 @@ EQU ~DEV_ERROR_OFFLINE 4
 EQU ~GENERIC 0
 EQU ~PLOTTER 1
 EQU ~SENSOR  2
+EQU ~SCREEN  3
+
 
 # UDC GENERIC commands
 EQU ~UDC_DEVICE_INIT    0
@@ -48,6 +50,7 @@ EQU ~UDC_DEVICE_MODE    14
 # Define used channels / device_type
 EQU ~CHANNEL_0_DEVICE   2   ; ~SENSOR  type
 EQU ~CHANNEL_1_DEVICE   1   ; ~PLOTTER type
+EQU ~CHANNEL_2_DEVICE   3   ; ~SCREEN  type
 
 
 @init_udc
@@ -61,6 +64,12 @@ EQU ~CHANNEL_1_DEVICE   1   ; ~PLOTTER type
     call @_init_udc_channel
     ldm C $udc_device_type_1
     tst C ~CHANNEL_1_DEVICE         ; check for expected type
+    jmpf :udc_wrong_device_error
+
+    ldi A 2                         ; Init channel 2
+    call @_init_udc_channel
+    ldm C $udc_device_type_2
+    tst C ~CHANNEL_2_DEVICE         ; check for expected type
     jmpf :udc_wrong_device_error
 
     ; when here, all expected devices fount

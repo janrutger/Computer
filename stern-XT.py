@@ -16,7 +16,7 @@ from devices.VirtualDisk import VirtualDisk
 from devices.UDC import UDC
 from devices.sensor import Sensor
 from devices.plotter import Plotter
-
+from devices.lcd_screen import VirtualLCD
 
 
 # --- Constants ---
@@ -43,7 +43,7 @@ BG_COLOR = (0, 0, 20) # Dark Blue
 FG_COLOR = (200, 200, 200) # Light Grey
 
 # Device Memory Locations
-MEM_KBD_I0_BASE   = MEM_VAR_START -8        # Keayborad device base adres (max 8 registers)
+MEM_KBD_I0_BASE   = MEM_VAR_START   - 8        # Keayborad device base adres (max 8 registers)
 MEM_KEYBOARD_DATA = MEM_KBD_I0_BASE + 0     # Keyboard data register at the top of the I/O space
 MEM_VDSK_I0_BASE  = MEM_KBD_I0_BASE - 8     # Virtual Disk registers start here (max 8 registers)
 MEM_UDC_I0_BASE   = MEM_VDSK_I0_BASE - 24   # UDC virtual controler starts here (max 24 registers)
@@ -141,6 +141,7 @@ def main():
     # Initialize UDC devices
     sensor1  = Sensor(udc, 0)  # Connect a sensor to channel 0
     plotter1 = Plotter(udc, 1) # Connect a plotter to channel 1
+    lcd = VirtualLCD(udc, 2)   # connect an lcd to channel 2
 
     # Check for debug flag
     if debug_mode:
@@ -167,11 +168,19 @@ def main():
 
         # Poll virtual disk
         vdisk.access()
+
         # Universal Device Controler
         udc.tick()
-        sensor1.tick()
-        plotter1.tick()
-        plotter1.draw() # Keep the plotter window responsive
+
+        # The devices
+        sensor1.tick()      # generates a number [0 .. 255]
+
+        plotter1.tick()     # Y-plotter
+        plotter1.draw()     # Keep the plotter window responsive
+
+        lcd.tick()          # LCD screen
+        lcd.draw()          # Keep the LCD window responsive
+
 
         # --- Drawing Logic --- 
         screen.fill(BG_COLOR)
@@ -197,7 +206,7 @@ def main():
     pygame.quit()
     print("System shutdown complete.")
     # A small delay to allow background threads to print final messages
-    time.sleep(0.001)
+    time.sleep(0.002)
 
 if __name__ == "__main__":
     main()
