@@ -32,12 +32,17 @@ UDC_DEVICE_SEND     = 11    # The CPU send 'just' data to the device
 UDC_DEVICE_GET      = 12    # The CPU request data from the device, the value register can give an argumment
 UDC_DEVICE_COLOR    = 13    # Sets color of something, like the color of the plotted dot
 UDC_DEVICE_MODE     = 14    # sets the device in a mode, eg Yplotter/XYplotter, 
+UDC_DEVICE_X        = 15    # sets the X-ax parameter of the device
+UDC_DEVICE_Y        = 16    # sets the Y-ax parameter of the device
+UDC_DEVICE_DRAW     = 17    # Draw the XY-point on the device
 
 
 # Device type defintion
 GENERIC         = 0  # generic type
 PLOTTER         = 1  # A plotter
 SENSOR          = 2  # A sensor
+SCREEN          = 3  # A screen (like an virtual 480x640 screen)
+
 
 
 class UDC:
@@ -53,12 +58,14 @@ class UDC:
         
 
         # easy find the device components
-        self.device_types = [GENERIC, PLOTTER, SENSOR]
+        self.device_types = [GENERIC, PLOTTER, SENSOR, SCREEN]
         self.device_type_instructions = {}
 
         self.device_type_instructions[GENERIC]   = [UDC_DEVICE_INIT, UDC_DEVICE_ONLINE, UDC_DEVICE_OFFLINE, UDC_DEVICE_RESET]
         self.device_type_instructions[PLOTTER]   = [UDC_DEVICE_NEW, UDC_DEVICE_SEND, UDC_DEVICE_COLOR, UDC_DEVICE_MODE]
         self.device_type_instructions[SENSOR]    = [UDC_DEVICE_GET]
+        self.device_type_instructions[SCREEN]    = [UDC_DEVICE_NEW, UDC_DEVICE_DRAW, UDC_DEVICE_COLOR, UDC_DEVICE_MODE, UDC_DEVICE_X, UDC_DEVICE_Y]
+
 
 
         # setting up registers

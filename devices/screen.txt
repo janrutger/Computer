@@ -1,0 +1,103 @@
+# UDC Virtual LCD Screen Device Plan
+
+## 1. Overview
+
+This document outlines the design for a new Universal Device Controller (UDC) device: a virtual LCD screen. This device will provide advanced graphics capabilities to the Stern-XT computer, supporting two distinct drawing modes and a 16-color palette.
+
+## 2. Specifications
+
+*   **Device Type:** UDC Device
+*   **Resolution:** 640x480 pixels
+*   **Color Depth:** 16-color palette (4-bit)
+
+## 3. Internal State
+
+The virtual LCD screen device will maintain its own internal state, which is not directly memory-mapped. This state includes:
+
+*   **Current X Coordinate:** The X position for the next drawing operation.
+*   **Current Y Coordinate:** The Y position for the next drawing operation.
+*   **Current Color:** The color to be used for drawing in Block/Sprite Mode.
+*   **Current Mode:** The active operating mode (Pixel Mode or Block/Sprite Mode).
+
+## 4. Operating Modes
+
+The device will support two operating modes, selectable via the standard `UDC_DEVICE_MODE` command.
+
+### Mode 1: Pixel Mode (High-Resolution)
+
+*   **Description:** In this mode, each dot corresponds to a single screen pixel.
+*   **Coordinate System:** 640x480.
+*   **Drawing:** The `draw` command will take a single argument representing a color from the 16-color palette. It will draw a single pixel at the current (X, Y) coordinates in the specified color.
+
+### Mode 2: Block/Sprite Mode (Low-Resolution)
+
+*   **Description:** In this mode, each 'dot' corresponds to an 8x8 pixel block.
+*   **Coordinate System:** 80x60.
+*   **Drawing:** The `draw` command will take a single argument representing a sprite index. The device will draw the corresponding 8x8 sprite at the specified (X, Y) block coordinate. The sprite will be drawn using the color set by the `UDC_DEVICE_COLOR` command.
+
+## 5. UDC Command Set
+
+The following commands will be available for controlling the LCD device via the UDC. The `setColor` and `setMode` commands reuse the existing generic UDC commands.
+
+| Command Name      | Command Value (Proposed) | Data Value                                                                                                                      | Description                                                                                                                            |
+|-------------------|--------------------------|---------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| `setX`            | 15                       | 0-639                                                                                                                           | Sets the X coordinate for the next draw operation. The valid range depends on the current mode.                                        |
+| `setY`            | 16                       | 0-479                                                                                                                           | Sets the Y coordinate for the next draw operation. The valid range depends on the current mode.                                        |
+| `draw`            | 17                       | 0-255                                                                                                                           | In Pixel Mode, this value is a color index (0-15). In Block/Sprite Mode, this value is a sprite index (0-255).                           |
+| `new`             | `UDC_DEVICE_NEW` (10)    | N/A                                                                                                                             | Clears the entire screen to a default color (e.g., black).                                                                             |
+| `Color`           | `UDC_DEVICE_COLOR` (13)  | 0-15                                                                                                                            | Sets the foreground color for drawing operations in Block/Sprite Mode. Reuses the generic UDC command.                                 |
+| `Mode`            | `UDC_DEVICE_MODE` (14)   | 0-1                                                                                                                             | Sets the operating mode. 0 for Pixel Mode, 1 for Block/Sprite Mode. Reuses the generic UDC command.                                    |
+
+## 6. 16-Color Palette
+
+The device will use a standard 4-bit color palette.
+
+| Index | Color       |
+|-------|-------------|
+| 0     | Black       |
+| 1     | White       |
+| 2     | Red         |
+| 3     | Cyan        |
+| 4     | Purple      |
+| 5     | Green       |
+| 6     | Blue        |
+| 7     | Yellow      |
+| 8     | Orange      |
+| 9     | Brown       |
+| 10    | Light Red   |
+| 11    | Dark Grey   |
+| 12    | Grey        |
+| 13    | Light Green |
+| 14    | Light Blue  |
+| 15    | Light Grey  |
+
+## 7. Sprite Map
+
+In Block/Sprite Mode, the `draw` command's argument is an index to a sprite map. 
+This sprite map will be loaded from an external ROM file (e.g., `lcd_sprites.json`) 
+into the device's memory during the `INIT` sequence. 
+Each sprite would be an 8x8 bitmap (8 bytes). 
+For example, a simple character 'A' could be defined as a sprite.
+
+
+{
+  "sprites": {
+    "1": {
+      "name": "CHAR_A",
+      "bitmap": [
+        48,
+        120,
+        204,
+        204,
+        252,
+        204,
+        204,
+        0
+      ]
+    }
+  }
+}
+
+
+
+

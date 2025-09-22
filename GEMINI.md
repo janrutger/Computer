@@ -8,6 +8,52 @@ The core mission of developing a CPU/computer simulation has been successfully a
 
 The "Stern" computer system simulates a complete computer architecture, including a CPU, RAM, and peripheral devices. The CPU executes instructions defined by microcode programs, allowing for a flexible and extensible Instruction Set Architecture (ISA). The system is designed to be debugged and tested from the command line.
 
+### In-Depth Architecture
+
+This repository implements a full-fledged, custom-built computer system called **Stern-XT**. It's not just a single program, but an entire ecosystem that includes a custom CPU, peripheral devices, an assembly language, and the toolchain to compile and run software for it.
+
+Here’s a deeper look at the key components:
+
+#### 1. The Hardware Core (`devices/` directory)
+
+This is the heart of the simulation. It’s a collection of Python classes that emulate the hardware components of the Stern-XT computer:
+
+*   **`cpu.py`**: Implements the Central Processing Unit (CPU). A key feature is that it's a **microcode-based CPU**. This means its instruction set is not hardwired. Instead, it loads a `stern_rom.json` file at startup, which defines the instructions it can execute. This makes the CPU's instruction set completely customizable.
+*   **`memory.py`**: Simulates the 16KB of RAM. It's a simple byte-addressable memory block.
+*   **`interrupt_controller.py`**: Manages hardware interrupts from peripheral devices, allowing them to signal the CPU for attention.
+*   **`keyboard.py`**: Captures keystrokes from your real keyboard and sends keyboard interrupts to the CPU.
+*   **`VirtualDisk.py`**: A fascinating device that simulates a disk drive. It allows the Stern-XT computer to read and write to files in the `Vdisk0/` directory on your actual machine, effectively giving the simulated computer persistent storage.
+*   **`UDC.py` (Universal Device Controller)**: A generic controller that allows for connecting other, more abstract devices like the `sensor.py` and `plotter.py`. This is a good example of an extensible I/O system.
+
+#### 2. The Toolchain (`microcode_assembler/` and `assembler/` directories)
+
+You can't write software for a new computer without a compiler or assembler. This project has a two-layered toolchain:
+
+*   **`microcode_assembler/`**: This is the lower-level tool. It reads `.uasm` files (microcode assembly) and compiles them into the `stern_rom.json` file. This is where you **define the CPU's instruction set**. For example, you could define what the `ADD` instruction does at the CPU's most fundamental level. The `base_rom.uasm` file contains the standard instruction set for the Stern-XT.
+*   **`assembler/`**: This is the higher-level tool, the one you would use to write actual programs. It reads `.asm` files (Stern-XT assembly language) and assembles them into a `program.bin` file. Crucially, this assembler is **"smart"**. It reads the `stern_rom.json` file to understand the available instructions, their opcodes, and their formats. This means if you add a new instruction in the microcode, the assembler will automatically be able to use it.
+
+#### 3. The Main Application (`stern-XT.py` and `Makefile`)
+
+*   **`stern-XT.py`**: This is the main executable that brings everything together. It:
+    *   Initializes all the hardware devices (CPU, memory, keyboard, etc.).
+    *   Loads the `program.bin` file into the simulated memory.
+    *   Starts the CPU in a separate thread.
+    *   Runs the main Pygame loop to render the display and handle user input.
+    *   Includes the interactive debugger.
+*   **`Makefile`**: This file automates the build process. It defines commands like:
+    *   `make`: Assembles both the microcode and the ISA assembly code to produce the final `program.bin`.
+    *   `make run`: Runs the simulation.
+    *   `make debug`: Runs the simulation with the debugger enabled.
+    *   `make clean`: Removes the compiled files.
+
+### Summary of the Workflow
+
+1.  **Define the ISA**: You write microcode in a `.uasm` file to define the instructions your CPU will understand.
+2.  **Assemble the Microcode**: You run `make` (or the `microcode_assembler` directly) to create `stern_rom.json`.
+3.  **Write a Program**: You write a program in Stern-XT assembly language in a `.asm` file.
+4.  **Assemble the Program**: You run `make` again (or the `assembler` directly) to create `program.bin`.
+5.  **Run the Simulation**: You execute `make run` or `python3 stern-XT.py` to boot up your virtual computer and run the program.
+
 ### Internal Architecture Overview
 
 ```
@@ -42,7 +88,7 @@ This architecture uses a sophisticated, segmented memory model:
 | 3072 - 4095               | Interrupt / SYSCALL Vectors               |
 | 4096 - 12287              | Program & Free Memory                     |
 | 12288 - 14335             | Data and I/O Region  This region is centered around the $VAR_START address (12288) and is split: • Upward (12288 ->): For static program variables and arrays. • Downward (<- 12287): For memory-mapped hardware device registers                     |
-| 14336 - 16383             | Video & Stack Region This region is centered around the $VIDEO_MEM address (14336) and is also split: • Upward (14336 ->): The video display buffer. • Downward (<- 14335): The system stack, which grows towards the program data area.       
+| 14336 - 16383             | Video & Stack Region This region is centered around the $VIDEO_MEM address (14336) and is also split: • Upward (14336 ->): The video display buffer. • Downward (<- 14335): The system stack, which grows towards the program data area.       |
 
 ### Key Architectural Summary:
 * OS Space (0 - 4095): The lower 4KB of memory are dedicated to the foundational OS components (Loader, Kernel, Vectors), creating a protected system area.
