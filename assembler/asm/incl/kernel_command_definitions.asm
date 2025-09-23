@@ -37,6 +37,7 @@ EQU ~swap 212       ; t1 t2 -> t2 t1
 EQU ~drop 213       ; t1 -> 
 EQU ~over 214       ; t1 t2 -> t1 t2 t1
 EQU ~io   215       ; IO command
+EQU ~rnd  216       ; generates speudo random nummer [0 ..99]
 
 # keyword Stacks keyword commands [300 ... 399]
 EQU ~print 300
@@ -173,6 +174,9 @@ EQU ~close-curly 310
 
 . $PROG_IO_STR 4
 % $PROG_IO_STR \& \i \o \null
+
+. $PROG_RND_STR 4
+% $PROG_RND_STR \R \N \D \null
 
 
 

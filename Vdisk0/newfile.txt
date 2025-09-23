@@ -1,3 +1,9 @@
-1234 5678 9
-ab a
- bc
+X Y     function
+------+----------
+A B     point 1
+C D     point 2
+E F     point 3
+
+X Y     current position
+
+K L     target position

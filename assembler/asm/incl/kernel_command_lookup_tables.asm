@@ -321,10 +321,20 @@
     ldi A ~io
     stx A $ID_TABLE_BASE
 
+    ## RND
+    inc I $table_pointer
+    ldi A @rt_rnd
+    stx A $CMD_TABLE_BASE
+    ldi A $PROG_RND_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~rnd
+    stx A $ID_TABLE_BASE
+
+
 
 
     ### DO NOT FORGET UPDATE ~LUT_LEN AFTER ADDING OR DELETING COMMANDS
-    EQU ~LUT_LEN 35
+    EQU ~LUT_LEN 36
 
 ret
 

@@ -33,6 +33,7 @@ ret
 INCLUDE kernel_syscalls
 INCLUDE kernel_cliV4
 INCLUDE kernel_runtime
+INCLUDE kernel_rt_random
 INCLUDE kernel_interpreter
 INCLUDE kernel_tokenizer1
 INCLUDE kernel_command_definitions

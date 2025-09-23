@@ -1,38 +1,70 @@
-0 1 1  &io
-0 1 10 &io
-1 1 13 &io
+DEF screen {
+  0 2 1  &io
+  0 2 10 &io
+  1 2 13 &io
+  0 2 14 &io
+}
 
-1 plot
-1 plot
+DEF setX {
+  2 15 &io
+}
 
-1 P !
-2 N !
+DEF setY {
+  2 16 &io
+}
 
-WHILE N @ 700 < DO
-  P @ N @ gcd C !
-  C @ 1 == IF
-    P @ N @ 1 + + R !
-  ELSE
-    P @ C @ / R !
-  END
+DEF draw {
+  setY
+  setX
+  RND 15 * 999 / 1 +
+  2 17 &io
+}
 
-  R @ plot
-  R @ P !
+10  A !
+10  B !
+
+630 C !
+10  D !
+
+320 E !
+470 F !
+
+10  X !
+10  Y !
+
+
+DEF select1 {
+  A @ K !
+  B @ L !
+}
+
+DEF select2 {
+  C @ K !
+  D @ L !
+}
+
+DEF select3 {
+  E @ K !
+  F @ L ! 
+}
+
+
+screen
+
+0 N !
+
+WHILE 20000 N @ > DO
+  RND 3 * 999 / R !
+
+  R @ 0 == IF select1 ELSE END
+  R @ 1 == IF select2 ELSE END
+  R @ 2 == IF select3 ELSE END
+
+  X @ K @ + 2 / X !
+  Y @ L @ + 2 / Y !
+
+  X @ Y @ draw
+
   N @ 1 + N !
+
 DONE
-
-
-
-DEF plot {
-  1 11 &io
-}
-
-
-
-DEF gcd {
-    WHILE DUP 0 != DO
-        SWAP OVER %
-    DONE
-    DROP
-}
-

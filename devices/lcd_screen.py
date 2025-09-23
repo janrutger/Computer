@@ -55,7 +55,7 @@ class VirtualLCD(UDCDevice):
     def draw(self):
         """Keeps the matplotlib window responsive. Called from the main loop."""
         current_time = time.time()
-        if current_time - self.last_draw_time < 0.1: # Limit redraw rate
+        if current_time - self.last_draw_time < 0.5:  # Limit redraw rate
             return
 
         if self.fig and self.dirty:
@@ -154,8 +154,10 @@ class VirtualLCD(UDCDevice):
         """Initializes the matplotlib window."""
         if self.fig: return
         
+        scale = 1.5 # Scale factor for the window size
+
         plt.ion()
-        self.fig, self.ax = plt.subplots(figsize=(self.width/100, self.height/100), dpi=100)
+        self.fig, self.ax = plt.subplots(figsize=(self.width/100 * scale, self.height/100 * scale), dpi=100)
         self.fig.canvas.manager.set_window_title(f"Stern-XT Virtual LCD (Channel {self.channel})")
 
         # Hide toolbar and axes
