@@ -52,7 +52,7 @@ class VirtualDisk:
     def _build_file_map(self):
         self.file_map = {}
         for filename in os.listdir(self.real_directory):
-            if filename.endswith(".txt"):
+            if filename.endswith(".spc"):
                 file_path = os.path.join(self.real_directory, filename)
                 if os.path.isfile(file_path):
                     basename = os.path.splitext(filename)[0]
@@ -177,7 +177,7 @@ class VirtualDisk:
             return
 
         # Create the file
-        new_filename = filename_str + ".txt"
+        new_filename = filename_str + ".spc"
         new_filepath = os.path.join(self.real_directory, new_filename)
 
         if os.path.exists(new_filepath):

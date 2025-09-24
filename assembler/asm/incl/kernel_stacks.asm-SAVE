@@ -145,30 +145,7 @@ ret
     :immediate_cmd_check
         tst A ~TOKEN_CMD    ; A is Token type
         jmpf :immediate_num_check
-        
-        ldm B $TOKEN_ID     ; Get token ID in B
-        tst B ~load         ; Check if it's the load command
-        jmpt :is_load_or_save_cmd
-        tst B ~save
-        jmpt :is_load_or_save_cmd
-
-        ; checked for Load/Save command
-        ; If not, execute normally
         call @_execute_cmd_token
-        jmp :immediate_loop
-
-    :is_load_or_save_cmd
-        ; It is the LOAD or SAVE command
-        ldm I $TOKEN_VALUE   ; Read the token: Load or Save
-        push I               ; Save the Token on the stack
-
-        call @get_next_token     ; Get the filename
-        ldm A $current_part_base ; Get pointer to filename
-        call @push_A             ; Push pointer to stack
-
-        ; now execute the command
-        pop I                ; Restore I 
-        callx $start_memory  ; Call the command handler
         jmp :immediate_loop
 
 
@@ -605,7 +582,7 @@ ret
 :2_handle_if_cmd
     ; Manually compile the IF token with a placeholder for the jump offset.
     ; 1. Write the token ID (~if) to the code buffer
-    ldi A ~if
+    ldm A $TOKEN_ID
     inc I $CODE_BUFFER_PTR
     stx A $CODE_BUFFER_BASE
 
@@ -843,10 +820,13 @@ ret
 
 
 
+
+
 # Generic executer for runtime tokens
 :3_execution_runtime_token
     call @3_execute_runtime_command
     jmp :3_execution_loop
+
 
 
 ### Executers for the Immediate execution mode

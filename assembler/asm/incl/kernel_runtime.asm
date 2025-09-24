@@ -244,46 +244,6 @@ ret
     ret
 
 
-#### RUN command
-; @rt_stacks_cmd_run
-;     ldi C \Return
-;     ldi I ~SYS_PRINT_CHAR
-;     int $INT_VECTORS
-
-;     ldm C $PROG_BUFFER_PTR  ; test for empty PROG_BUFFER
-;     tste C Z    
-;     jmpt :run_loop_end     ; goto end when nothing to print
-
-;     ldi C 1
-;     sto C $line_to_print
-
-; :run_loop
-;     inc L $line_to_print
-;     ldm M $LINE_NUMBER
-;     tste L M                ; by using tste, tstg, iam fixing a bug i hope
-;     jmpt :run_loop_end
-
-;     ld I L
-;     subi I 1
-;     ldx A $LINE_INDEX_ARRAY_BASE    ; A cointains the line index 
-;     addi A $PROG_BUFFER             ; Add start adres of buffer to get linestart adres
-
-;     call @init_tokenizer_buffer 
-;     call @execute_command_buffer   ; to call the old executer
-
-;     ## running the new one
-;     ; ldi A 1         ; set the execution mode to 1 (program mode) in A
-;     ; call @run_stacks
-
-;     jmp :run_loop
-
-; :run_loop_end
-;     ldi C \Return
-;     ldi I ~SYS_PRINT_CHAR
-;     int $INT_VECTORS
-
-;     ret
-
 @rt_stacks_cmd_run2         ; this runs the new implementation
     ; First, check if there is any code to run.
     ldm A $PROG_BUFFER_PTR
@@ -307,10 +267,12 @@ ret
 
 #### LOAD command
 @rt_stacks_cmd_load
-    . $test_filename 8
-    % $test_filename \p \r \o \g \r \a \m \null
+    ; . $test_filename 8
+    ; % $test_filename \p \r \o \g \r \a \m \null
+    ; ldi A $test_filename
 
-    ldi A $test_filename
+    # Pointer to File_name_string on the stack (kernel_stacks.asm)
+    call @pop_A ; Pop filename pointer into A
     
     ##
     ldi I ~SYS_F_OPEN_READ
@@ -358,8 +320,10 @@ ret
 
     ; . $test_filename 8  ; already done in the read command
     ; % $test_filename \p \r \o \g \r \a \m \null
+    ; ldi A $test_filename
 
-    ldi A $test_filename
+    # Pointer to File_name_string on the stack (kernel_stacks.asm)
+    call @pop_A ; Pop filename pointer into A
 
     ##
     # first, check if the PROG_BUFFER is maybe empty
