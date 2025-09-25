@@ -32,7 +32,7 @@ class VirtualLCD(UDCDevice):
         # --- Internal State ---
         self.x = 0
         self.y = 0
-        self.mode = 0  # 0: Pixel, 1: Sprite, 2: Pixel (DB), 3: Sprite (DB)
+        self.mode = 0  # 0 for Pixel Mode, 1 for Block/Sprite Mode
         self.color = 0 # Default color index
         
         # --- Screen Buffers ---
@@ -88,7 +88,6 @@ class VirtualLCD(UDCDevice):
         """Resets the device state."""
         self.close_plot()
         self.screen_buffer.fill(0)
-        self.shadow_buffer.fill(0)
         self.x = 0
         self.y = 0
         self.mode = 0
@@ -100,12 +99,8 @@ class VirtualLCD(UDCDevice):
     def handle_command(self, command, data):
         """Handles commands specific to the VirtualLCD."""
         if command == UDC_DEVICE_NEW:
-            # Clear the appropriate buffer
-            if self.mode in [2, 3]: # Double buffer modes
-                self.shadow_buffer.fill(0)
-            else: # Direct modes
-                self.screen_buffer.fill(0)
-                self.dirty = True
+            self.screen_buffer.fill(0)
+            self.dirty = True
 
         elif command == UDC_DEVICE_MODE:
             self.mode = data
@@ -120,39 +115,25 @@ class VirtualLCD(UDCDevice):
             self.y = data
 
         elif command == UDC_DEVICE_DRAW:
-            # In non-buffered modes, drawing sets the dirty flag immediately.
-            # In buffered modes, the dirty flag is only set by UDC_DEVICE_FLIP.
-            if self.mode in [0, 2]: # Pixel Modes
+            if self.mode == 0: # Pixel Mode
                 self.draw_pixel(self.x, self.y, data)
-            else: # Block/Sprite Modes
+            else: # Block/Sprite Mode
                 self.draw_sprite_new(self.x, self.y, data)
+            self.dirty = True
             
-            if self.mode not in [2, 3]:
-                self.dirty = True
-        
-        elif command == UDC_DEVICE_FLIP:
-            if self.mode in [2, 3]:
-                np.copyto(self.screen_buffer, self.shadow_buffer)
-                self.dirty = True
-            else:
-                # It's an error to flip in non-buffered mode
-                self.udc.post_error(self.channel, DEV_ERROR_VALUE)
-
         else:
             self.udc.post_error(self.channel, DEV_ERROR_DEVICE)
 
     # --- Drawing Logic ---
 
     def draw_pixel(self, x, y, color_index):
-        """Draws a single pixel to the appropriate buffer."""
-        buffer = self.shadow_buffer if self.mode in [2, 3] else self.screen_buffer
+        """Draws a single pixel to the screen buffer."""
         if 0 <= x < self.width and 0 <= y < self.height:
-            buffer[y, x] = color_index
+            self.screen_buffer[y, x] = color_index
 
     ## the newer (faster?) draw_sprite method
     def draw_sprite_new(self, block_x, block_y, sprite_index):
-        """Draws an 8x8 sprite to the appropriate buffer using numpy for efficiency."""
-        buffer = self.shadow_buffer if self.mode in [2, 3] else self.screen_buffer
+        """Draws an 8x8 sprite to the screen buffer using numpy for efficiency."""
         sprite_key = str(sprite_index)
         if sprite_key not in self.sprites:
             print(f"Sprite with index {sprite_index} not found in ROM.")
@@ -189,13 +170,13 @@ class VirtualLCD(UDCDevice):
         sprite_part = sprite_mask[src_y_start:src_y_start+height, src_x_start:src_x_start+width]
         
         # Get the slice of the screen buffer to update
-        screen_slice = buffer[dst_y_start:dst_y_start+height, dst_x_start:dst_x_start+width]
+        screen_slice = self.screen_buffer[dst_y_start:dst_y_start+height, dst_x_start:dst_x_start+width]
 
         # Use np.where to apply the color only where the sprite mask is 1
         updated_slice = np.where(sprite_part == 1, self.color, screen_slice)
         
         # Put the updated slice back into the screen buffer
-        buffer[dst_y_start:dst_y_start+height, dst_x_start:dst_x_start+width] = updated_slice
+        self.screen_buffer[dst_y_start:dst_y_start+height, dst_x_start:dst_x_start+width] = updated_slice
 
 
     ## the first draw sprite method
@@ -409,44 +390,6 @@ if __name__ == '__main__':
     print("Displaying all sprites for 5 seconds...")
     plt.pause(10)
 
-    # 7. Test Double Buffering
-    print("Testing Double Buffering. Drawing to shadow buffer...")
-    lcd.handle_command(UDC_DEVICE_NEW, 0) # Clear screen (shadow buffer)
-    lcd.handle_command(UDC_DEVICE_MODE, 3) # Sprite mode with double buffering
-    lcd.handle_command(UDC_DEVICE_COLOR, 10) # A green color
-    
-    text_to_draw = "DOUBLE BUFFER!"
-    start_x = 30
-    start_y = 30
-    
-    char_x = start_x
-    
-    for char in text_to_draw:
-        if char == ' ':
-            char_x += 1
-            continue
-            
-        sprite_index = ord(char)
-        
-        lcd.handle_command(UDC_DEVICE_X, char_x)
-        lcd.handle_command(UDC_DEVICE_Y, start_y)
-        lcd.handle_command(UDC_DEVICE_DRAW, sprite_index)
-        
-        char_x += 1
-    
-    # At this point, the drawing is only in the shadow buffer.
-    # The screen should still be clear.
-    lcd.draw()
-    print("...nothing should be on screen yet. Pausing for 3 seconds...")
-    plt.pause(3)
-
-    # Now, flip the buffer to make the text appear.
-    print("Flipping buffer...")
-    lcd.handle_command(UDC_DEVICE_FLIP, 0)
-    lcd.draw()
-    print("Text should now be visible. Pausing for 5 seconds...")
-    plt.pause(5)
-
-    # 8. Test Offline/Cleanup
+    # 7. Test Offline/Cleanup
     lcd.on_offline()
     print("LCD Offline. Selftest complete.")

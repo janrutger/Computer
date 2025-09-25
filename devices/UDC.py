@@ -35,6 +35,7 @@ UDC_DEVICE_MODE     = 14    # sets the device in a mode, eg Yplotter/XYplotter,
 UDC_DEVICE_X        = 15    # sets the X-ax parameter of the device
 UDC_DEVICE_Y        = 16    # sets the Y-ax parameter of the device
 UDC_DEVICE_DRAW     = 17    # Draw the XY-point on the device
+UDC_DEVICE_FLIP     = 18    # Flips screenbuffer in dual buffer mode
 
 
 # Device type defintion
@@ -64,7 +65,7 @@ class UDC:
         self.device_type_instructions[GENERIC]   = [UDC_DEVICE_INIT, UDC_DEVICE_ONLINE, UDC_DEVICE_OFFLINE, UDC_DEVICE_RESET]
         self.device_type_instructions[PLOTTER]   = [UDC_DEVICE_NEW, UDC_DEVICE_SEND, UDC_DEVICE_COLOR, UDC_DEVICE_MODE]
         self.device_type_instructions[SENSOR]    = [UDC_DEVICE_GET]
-        self.device_type_instructions[SCREEN]    = [UDC_DEVICE_NEW, UDC_DEVICE_DRAW, UDC_DEVICE_COLOR, UDC_DEVICE_MODE, UDC_DEVICE_X, UDC_DEVICE_Y]
+        self.device_type_instructions[SCREEN]    = [UDC_DEVICE_NEW, UDC_DEVICE_DRAW, UDC_DEVICE_COLOR, UDC_DEVICE_MODE, UDC_DEVICE_X, UDC_DEVICE_Y, UDC_DEVICE_FLIP]
 
 
 

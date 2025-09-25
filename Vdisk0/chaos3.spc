@@ -2,7 +2,7 @@ DEF screen {
   0 2 1  &io
   0 2 10 &io
   1 2 13 &io
-  0 2 14 &io
+  2 2 14 &io
 }
 
 DEF setX {
@@ -48,12 +48,10 @@ DEF select3 {
   F @ L ! 
 }
 
-
 screen
-
 0 N !
 
-WHILE 20000 N @ > DO
+WHILE 50000 N @ > DO
   RND 3 * 999 / R !
 
   R @ 0 == IF select1 ELSE END
@@ -66,5 +64,5 @@ WHILE 20000 N @ > DO
   X @ Y @ draw
 
   N @ 1 + N !
-
+  N @ 750 % 0 == IF N @ PRINT 0 2 18 &io ELSE END
 DONE
