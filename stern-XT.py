@@ -5,6 +5,8 @@ import threading
 import time
 import sys
 import os
+import cProfile
+import pstats
 
 from devices.cpu import CPU
 from devices.memory import Memory
@@ -221,4 +223,18 @@ def main():
     time.sleep(0.002)
 
 if __name__ == "__main__":
-    main()
+    profile = False
+
+    if profile:
+        profiler = cProfile.Profile()
+        try:
+            profiler.enable()
+            main()
+        finally:
+            profiler.disable()
+            print("\n--- CProfile Results ---")
+            stats = pstats.Stats(profiler).sort_stats('cumulative')
+            stats.print_stats(20)
+    else:
+        main()
+

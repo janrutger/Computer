@@ -1,7 +1,8 @@
 import time
 import json
 import os
-import matplotlib.pyplot as plt
+import tkinter as tk
+from PIL import Image, ImageTk
 import numpy as np
 from .UDC import (
     UDCDevice, 
@@ -19,8 +20,7 @@ from .UDC import (
 
 class VirtualLCD(UDCDevice):
     """
-    A Virtual LCD Screen device that uses matplotlib to render a 640x480 display.
-    It supports a high-resolution pixel mode and a low-resolution block/sprite mode.
+    A Virtual LCD Screen device that uses tkinter and Pillow to render a 640x480 display.
     """
     def __init__(self, udc, channel):
         super().__init__(SCREEN, udc, channel)
@@ -28,6 +28,7 @@ class VirtualLCD(UDCDevice):
         # --- Device Specifications ---
         self.width = 640
         self.height = 480
+        self.scale = 1.5
         
         # --- Internal State ---
         self.x = 0
@@ -36,39 +37,58 @@ class VirtualLCD(UDCDevice):
         self.color = 0 # Default color index
         
         # --- Screen Buffers ---
-        # Use a NumPy array for efficient pixel manipulation
         self.screen_buffer = np.zeros((self.height, self.width), dtype=np.uint8)
         self.shadow_buffer = np.zeros((self.height, self.width), dtype=np.uint8)
         
         # --- Sprite ROM ---
         self.sprites = {}
         
-        # --- Matplotlib Objects ---
-        self.fig = None
-        self.ax = None
-        self.image = None
+        # --- Tkinter Objects ---
+        self.window = None
+        self.canvas = None
+        self.photo_image = None
         self.dirty = True
-        self.last_draw_time = 0
+
+        # --- Color Palette (for PIL) ---
+        # RGB values for the 16-color palette
+        self.palette_data = [
+            0,0,0, 255,255,255, 255,0,0, 0,255,255, 128,0,128, 0,255,0, 0,0,255, 255,255,0,
+            255,128,0, 153,102,51, 255,102,102, 76,76,76, 128,128,128,
+            102,255,102, 102,102,255, 178,178,178
+        ]
+        # Pad palette to 256 colors (768 values) as required by PIL's 'P' mode
+        self.palette_data.extend([0] * (768 - len(self.palette_data)))
 
     def tick(self):
         """Main tick for the LCD. Handles UDC commands."""
         super().tick()
 
     def draw(self):
-        """Keeps the matplotlib window responsive. Called from the main loop."""
-        current_time = time.time()
-        if current_time - self.last_draw_time < 1:  # Limit redraw rate
+        """Draws the screen buffer to the tkinter window if it's dirty."""
+        if not self.window or not self.dirty:
             return
 
-        if self.fig and self.dirty:
-            try:
-                self.update_plot()
-                self.fig.canvas.draw_idle()
-                self.fig.canvas.flush_events()
-                self.dirty = False
-                self.last_draw_time = current_time
-            except Exception:
-                self.close_plot()
+        try:
+            # Create a PIL image from the numpy buffer in Palette mode
+            img = Image.fromarray(self.screen_buffer, mode='P')
+            img.putpalette(self.palette_data)
+
+            # Scale the image if a scale factor is set
+            if self.scale != 1.0:
+                new_size = (int(self.width * self.scale), int(self.height * self.scale))
+                img = img.resize(new_size, Image.NEAREST)
+
+            # Convert to a PhotoImage that tkinter can display
+            self.photo_image = ImageTk.PhotoImage(image=img)
+
+            # Update the canvas with the new image
+            self.canvas.create_image(0, 0, image=self.photo_image, anchor=tk.NW)
+            self.window.update()
+            self.dirty = False
+        except Exception as e:
+            # This can happen if the window is closed while drawing
+            print(f"Info: Could not draw to LCD window: {e}")
+            self.close_tkinter_window()
 
     # --- UDC Hooks ---
 
@@ -77,16 +97,16 @@ class VirtualLCD(UDCDevice):
         self.load_sprite_rom()
 
     def on_online(self):
-        """When the device is brought online, create the plot window."""
-        self.init_plot()
+        """When the device is brought online, create the tkinter window."""
+        self.init_tkinter_window()
 
     def on_offline(self):
-        """When the device is brought offline, close the plot window."""
-        self.close_plot()
+        """When the device is brought offline, close the tkinter window."""
+        self.close_tkinter_window()
 
     def on_reset(self):
         """Resets the device state."""
-        self.close_plot()
+        self.close_tkinter_window()
         self.screen_buffer.fill(0)
         self.shadow_buffer.fill(0)
         self.x = 0
@@ -95,53 +115,41 @@ class VirtualLCD(UDCDevice):
         self.color = 0
         self.dirty = True
 
-    # --- Command Handling ---
+    # --- Command Handling (Unchanged) ---
 
     def handle_command(self, command, data):
         """Handles commands specific to the VirtualLCD."""
         if command == UDC_DEVICE_NEW:
-            # Clear the appropriate buffer
             if self.mode in [2, 3]: # Double buffer modes
                 self.shadow_buffer.fill(0)
             else: # Direct modes
                 self.screen_buffer.fill(0)
                 self.dirty = True
-
         elif command == UDC_DEVICE_MODE:
             self.mode = data
-            
         elif command == UDC_DEVICE_COLOR:
             self.color = data
-
         elif command == UDC_DEVICE_X:
             self.x = data
-
         elif command == UDC_DEVICE_Y:
             self.y = data
-
         elif command == UDC_DEVICE_DRAW:
-            # In non-buffered modes, drawing sets the dirty flag immediately.
-            # In buffered modes, the dirty flag is only set by UDC_DEVICE_FLIP.
             if self.mode in [0, 2]: # Pixel Modes
                 self.draw_pixel(self.x, self.y, data)
             else: # Block/Sprite Modes
                 self.draw_sprite_new(self.x, self.y, data)
-            
             if self.mode not in [2, 3]:
                 self.dirty = True
-        
         elif command == UDC_DEVICE_FLIP:
             if self.mode in [2, 3]:
                 np.copyto(self.screen_buffer, self.shadow_buffer)
                 self.dirty = True
             else:
-                # It's an error to flip in non-buffered mode
                 self.udc.post_error(self.channel, DEV_ERROR_VALUE)
-
         else:
             self.udc.post_error(self.channel, DEV_ERROR_DEVICE)
 
-    # --- Drawing Logic ---
+    # --- Drawing Logic (Unchanged) ---
 
     def draw_pixel(self, x, y, color_index):
         """Draws a single pixel to the appropriate buffer."""
@@ -149,143 +157,75 @@ class VirtualLCD(UDCDevice):
         if 0 <= x < self.width and 0 <= y < self.height:
             buffer[y, x] = color_index
 
-    ## the newer (faster?) draw_sprite method
     def draw_sprite_new(self, block_x, block_y, sprite_index):
         """Draws an 8x8 sprite to the appropriate buffer using numpy for efficiency."""
         buffer = self.shadow_buffer if self.mode in [2, 3] else self.screen_buffer
         sprite_key = str(sprite_index)
         if sprite_key not in self.sprites:
-            print(f"Sprite with index {sprite_index} not found in ROM.")
             return
 
         bitmap = self.sprites[sprite_key]['bitmap']
-        
-        # Convert bitmap to an 8x8 numpy array of 0s and 1s
         sprite_mask = np.unpackbits(np.array(bitmap, dtype=np.uint8)[:, np.newaxis], axis=1)
+        x_start, y_start = block_x * 8, block_y * 8
+        x_end, y_end = x_start + 8, y_start + 8
 
-        # Calculate pixel coordinates
-        x_start = block_x * 8
-        y_start = block_y * 8
-        x_end = x_start + 8
-        y_end = y_start + 8
-
-        # Don't draw if sprite is completely off-screen
         if x_end <= 0 or x_start >= self.width or y_end <= 0 or y_start >= self.height:
             return
 
-        # Clip source (sprite) and destination (screen) coordinates
-        src_x_start = max(0, -x_start)
-        src_y_start = max(0, -y_start)
-        dst_x_start = max(0, x_start)
-        dst_y_start = max(0, y_start)
-        
+        src_x_start, src_y_start = max(0, -x_start), max(0, -y_start)
+        dst_x_start, dst_y_start = max(0, x_start), max(0, y_start)
         width = min(x_end, self.width) - dst_x_start
         height = min(y_end, self.height) - dst_y_start
 
-        if width <= 0 or height <= 0:
-            return
+        if width <= 0 or height <= 0: return
 
-        # Get the part of the sprite to draw
         sprite_part = sprite_mask[src_y_start:src_y_start+height, src_x_start:src_x_start+width]
-        
-        # Get the slice of the screen buffer to update
         screen_slice = buffer[dst_y_start:dst_y_start+height, dst_x_start:dst_x_start+width]
-
-        # Use np.where to apply the color only where the sprite mask is 1
         updated_slice = np.where(sprite_part == 1, self.color, screen_slice)
-        
-        # Put the updated slice back into the screen buffer
         buffer[dst_y_start:dst_y_start+height, dst_x_start:dst_x_start+width] = updated_slice
 
+    # --- New Tkinter Window Methods ---
 
-    ## the first draw sprite method
-    def draw_sprite(self, block_x, block_y, sprite_index):
-        """Draws an 8x8 sprite to the screen buffer."""
-        sprite_key = str(sprite_index)
-        if sprite_key not in self.sprites:
-            print(f"Sprite with index {sprite_index} not found in ROM.")
-            return
-
-        bitmap = self.sprites[sprite_key]['bitmap']
-        pixel_x_start = block_x * 8
-        pixel_y_start = block_y * 8
-
-        for i, row_bits in enumerate(bitmap):
-            for j in range(8):
-                if (row_bits >> (7 - j)) & 1:
-                    px = pixel_x_start + j
-                    py = pixel_y_start + i
-                    if 0 <= px < self.width and 0 <= py < self.height:
-                        self.screen_buffer[py, px] = self.color
-
-
-    # --- Plotting Methods ---
-
-    def init_plot(self):
-        """Initializes the matplotlib window."""
-        if self.fig: return
+    def init_tkinter_window(self):
+        """Initializes the tkinter window."""
+        if self.window: return
         
-        scale = 1.5 # Scale factor for the window size
-
-        plt.ion()
-        self.fig, self.ax = plt.subplots(figsize=(self.width/100 * scale, self.height/100 * scale), dpi=100)
-        self.fig.canvas.manager.set_window_title(f"Stern-XT Virtual LCD (Channel {self.channel})")
-
-        # Hide toolbar and axes
-        if self.fig.canvas.manager.toolmanager:
-            self.fig.canvas.manager.toolmanager.remove_tool("navigation")
-        elif self.fig.canvas.manager.toolbar:
-            self.fig.canvas.manager.toolbar.pack_forget()
-        self.ax.set_axis_off()
-
-        # Define a 16-color map
-        colors = [
-            (0,0,0), (1,1,1), (1,0,0), (0,1,1), (0.5,0,0.5), (0,1,0), (0,0,1), (1,1,0),
-            (1,0.5,0), (0.6,0.4,0.2), (1,0.4,0.4), (0.3,0.3,0.3), (0.5,0.5,0.5),
-            (0.4,1,0.4), (0.4,0.4,1), (0.7,0.7,0.7)
-        ]
-        from matplotlib.colors import ListedColormap
-        cmap = ListedColormap(colors)
-
-        # Use imshow for efficient image rendering
-        self.image = self.ax.imshow(self.screen_buffer, cmap=cmap, interpolation='nearest', vmin=0, vmax=15)
+        # This setup is to ensure tkinter plays nice when it's not the main GUI
+        if tk._default_root is None:
+            root = tk.Tk()
+            root.withdraw()
         
-        self.fig.tight_layout(pad=0)
-        self.fig.canvas.flush_events()
+        self.window = tk.Toplevel()
+        self.window.title(f"Stern-XT Virtual LCD (Channel {self.channel})")
+        self.window.resizable(False, False)
+        self.window.protocol("WM_DELETE_WINDOW", self.close_tkinter_window)
 
-    def update_plot(self):
-        """Updates the plot with the current screen buffer."""
-        if not self.image: return
-        self.image.set_data(self.screen_buffer)
+        window_width = int(self.width * self.scale)
+        window_height = int(self.height * self.scale)
+        self.canvas = tk.Canvas(self.window, width=window_width, height=window_height, borderwidth=0, highlightthickness=0)
+        self.canvas.pack()
+        self.dirty = True
 
-    def close_plot(self):
-        """Closes the matplotlib window."""
-        if self.fig:
-            plt.close(self.fig)
-        self.fig = None
-        self.ax = None
-        self.image = None
+    def close_tkinter_window(self):
+        """Closes the tkinter window."""
+        if self.window:
+            self.window.destroy()
+        self.window = None
+        self.canvas = None
+        self.photo_image = None
 
-    # --- Helper Methods ---
+    # --- Helper Methods (Unchanged) ---
     
     def load_sprite_rom(self):
         """Loads sprites from the JSON ROM file."""
         rom_path = os.path.join(os.path.dirname(__file__), 'lcd_sprites.json')
         try:
             with open(rom_path, 'r') as f:
-                data = json.load(f)
-                self.sprites = data.get("sprites", {})
+                self.sprites = json.load(f).get("sprites", {})
         except (FileNotFoundError, json.JSONDecodeError):
-            # If the file doesn't exist or is invalid, continue with no sprites
             self.sprites = {}
 
-
-
-
-
-
-
-# --- Selftest ---
+# --- Selftest (Updated for Tkinter) ---
 
 class MockUDC:
     def post_error(self, channel, error_code):
@@ -293,160 +233,69 @@ class MockUDC:
 
 if __name__ == '__main__':
     print("Starting Virtual LCD Selftest...")
-
-    # 1. Setup
     mock_udc = MockUDC()
     lcd = VirtualLCD(udc=mock_udc, channel=7)
 
-    # 2. Initialize and bring online
-    lcd.on_init() # Loads sprites
-    lcd.on_online() # Creates plot
+    def run_test(title, duration_sec):
+        print(title)
+        lcd.draw()
+        end_time = time.time() + duration_sec
+        while time.time() < end_time:
+            if lcd.window:
+                lcd.window.update()
+            time.sleep(0.01)
+
+    lcd.on_init()
+    lcd.on_online()
     print("LCD Online. Drawing...")
 
-    # 3. Test Pixel Mode (Mode 0)
+    # Test Pixel Mode
     lcd.handle_command(UDC_DEVICE_MODE, 0)
-    # Draw a colorful square
     for y in range(100):
         for x in range(100):
             lcd.handle_command(UDC_DEVICE_X, 150 + x)
             lcd.handle_command(UDC_DEVICE_Y, 50 + y)
             lcd.handle_command(UDC_DEVICE_DRAW, (x + y) % 16)
-    lcd.draw() # Update display
-    plt.pause(5) # Show for 2 seconds
+    run_test("Pixel test. Displaying for 5 seconds...", 5)
 
-    # 4. Test Block/Sprite Mode (Mode 1)
-    lcd.handle_command(UDC_DEVICE_NEW, 0) # Clear screen
+    # Test Sprite Mode
+    lcd.handle_command(UDC_DEVICE_NEW, 0)
     lcd.handle_command(UDC_DEVICE_MODE, 1)
-    # Draw a pattern of sprites
-    for i in range(10):
-        for j in range(10):
-            lcd.handle_command(UDC_DEVICE_COLOR, (i + j) % 16)
-            lcd.handle_command(UDC_DEVICE_X, 5 + i)
-            lcd.handle_command(UDC_DEVICE_Y, 5 + j)
-            # Draw sprite '49' (the character '1')
-            lcd.handle_command(UDC_DEVICE_DRAW, 49)
-    lcd.draw()
-    print("Sprite test. Displaying for 5 seconds...")
-    plt.pause(5)
+    lcd.handle_command(UDC_DEVICE_COLOR, 15)
+    text_to_draw = "HELLO TKINTER WORLD!"
+    for i, char in enumerate(text_to_draw):
+        lcd.handle_command(UDC_DEVICE_X, 25 + i)
+        lcd.handle_command(UDC_DEVICE_Y, 25)
+        lcd.handle_command(UDC_DEVICE_DRAW, ord(char))
+    run_test("Text drawing test. Displaying for 5 seconds...", 5)
 
-    # 5. Test Text Drawing
-    lcd.handle_command(UDC_DEVICE_NEW, 0) # Clear screen
+    # --- Character Set Test ---
+    lcd.handle_command(UDC_DEVICE_NEW, 0)
     lcd.handle_command(UDC_DEVICE_MODE, 1)
-    lcd.handle_command(UDC_DEVICE_COLOR, 15) # A light color
-    
-    text_to_draw = "HELLO STERN XT WORLD!"
-    start_x = 25
-    start_y = 25
-    
-    char_x = start_x
-    
-    for char in text_to_draw:
-        if char == ' ':
-            char_x += 1
-            continue
-            
-        sprite_index = ord(char)
-        
-        lcd.handle_command(UDC_DEVICE_X, char_x)
-        lcd.handle_command(UDC_DEVICE_Y, start_y)
-        lcd.handle_command(UDC_DEVICE_DRAW, sprite_index)
-        
-        char_x += 1
-        
-    lcd.draw()
-    print("Text drawing test. Displaying for 5 seconds...")
-    plt.pause(2)
-
-    text_to_draw = "HELLO STERN XT WORLD!"
-    start_x = 25
-    start_y = 26
-    
-    char_x = start_x
-    
-    for char in text_to_draw:
-        if char == ' ':
-            char_x += 1
-            continue
-            
-        sprite_index = ord(char)
-        
-        lcd.handle_command(UDC_DEVICE_X, char_x)
-        lcd.handle_command(UDC_DEVICE_Y, start_y)
-        lcd.handle_command(UDC_DEVICE_DRAW, sprite_index)
-        
-        char_x += 1
-        
-    lcd.draw()
-    print("Text drawing test. Displaying for 5 seconds...")
-    plt.pause(5)
-
-    # 6. Display all sprites
-    lcd.handle_command(UDC_DEVICE_NEW, 0) # Clear screen
-    lcd.handle_command(UDC_DEVICE_MODE, 1)
-    lcd.handle_command(UDC_DEVICE_COLOR, 1) # White
-
-    sprite_keys = sorted(lcd.sprites.keys(), key=int)
-    
-    start_x = 1
-    start_y = 1
-    char_x = start_x
-    char_y = start_y
-    max_width = 80 - 2
-
-    for key in sprite_keys:
-        sprite_index = int(key)
-        
+    lcd.handle_command(UDC_DEVICE_COLOR, 15)
+    for i in range(256):
+        char_x = (i % 32) * 2 + 5
+        char_y = (i // 32) * 2 + 5
         lcd.handle_command(UDC_DEVICE_X, char_x)
         lcd.handle_command(UDC_DEVICE_Y, char_y)
-        lcd.handle_command(UDC_DEVICE_DRAW, sprite_index)
-        
-        char_x += 2
-        if char_x >= max_width:
-            char_x = start_x
-            char_y += 2
+        lcd.handle_command(UDC_DEVICE_DRAW, i)
+    run_test("Character set test. Displaying for 5 seconds...", 5)
 
-    lcd.draw()
-    print("Displaying all sprites for 5 seconds...")
-    plt.pause(10)
+    # --- Color Palette Test ---
+    lcd.handle_command(UDC_DEVICE_NEW, 0)
+    lcd.handle_command(UDC_DEVICE_MODE, 0)
+    for c in range(16):
+        col = c % 4
+        row = c // 4
+        start_x = col * 120 + 80
+        start_y = row * 100 + 40
+        for y in range(start_y, start_y + 80):
+            for x in range(start_x, start_x + 100):
+                lcd.handle_command(UDC_DEVICE_X, x)
+                lcd.handle_command(UDC_DEVICE_Y, y)
+                lcd.handle_command(UDC_DEVICE_DRAW, c)
+    run_test("Color palette test. Displaying for 5 seconds...", 5)
 
-    # 7. Test Double Buffering
-    print("Testing Double Buffering. Drawing to shadow buffer...")
-    lcd.handle_command(UDC_DEVICE_NEW, 0) # Clear screen (shadow buffer)
-    lcd.handle_command(UDC_DEVICE_MODE, 3) # Sprite mode with double buffering
-    lcd.handle_command(UDC_DEVICE_COLOR, 10) # A green color
-    
-    text_to_draw = "DOUBLE BUFFER!"
-    start_x = 30
-    start_y = 30
-    
-    char_x = start_x
-    
-    for char in text_to_draw:
-        if char == ' ':
-            char_x += 1
-            continue
-            
-        sprite_index = ord(char)
-        
-        lcd.handle_command(UDC_DEVICE_X, char_x)
-        lcd.handle_command(UDC_DEVICE_Y, start_y)
-        lcd.handle_command(UDC_DEVICE_DRAW, sprite_index)
-        
-        char_x += 1
-    
-    # At this point, the drawing is only in the shadow buffer.
-    # The screen should still be clear.
-    lcd.draw()
-    print("...nothing should be on screen yet. Pausing for 3 seconds...")
-    plt.pause(3)
 
-    # Now, flip the buffer to make the text appear.
-    print("Flipping buffer...")
-    lcd.handle_command(UDC_DEVICE_FLIP, 0)
-    lcd.draw()
-    print("Text should now be visible. Pausing for 5 seconds...")
-    plt.pause(5)
-
-    # 8. Test Offline/Cleanup
     lcd.on_offline()
     print("LCD Offline. Selftest complete.")

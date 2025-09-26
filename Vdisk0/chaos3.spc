@@ -64,5 +64,5 @@ WHILE 50000 N @ > DO
   X @ Y @ draw
 
   N @ 1 + N !
-  N @ 750 % 0 == IF N @ PRINT 0 2 18 &io ELSE END
+  N @ 100 % 0 == IF N @ PRINT 0 2 18 &io ELSE END
 DONE
