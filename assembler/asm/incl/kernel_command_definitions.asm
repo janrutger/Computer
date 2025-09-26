@@ -19,6 +19,8 @@ EQU ~run 105        ; Run/execute current programbuffer
 EQU ~load 107       ; Load a file from disk to PROG_BUFFER
 EQU ~save 108       ; Save the PROG_BUFFER to disk
 
+EQU ~main 109       ; starts main.asm assembly code
+
 
 # Keyword operations [200 ... 299]
 EQU ~store   200    ; Store TOS to var [A .. Z]
@@ -177,6 +179,11 @@ EQU ~close-curly 310
 
 . $PROG_RND_STR 4
 % $PROG_RND_STR \R \N \D \null
+
+. $PROG_MAIN_STR 5
+% $PROG_MAIN_STR \m \a \i \n \null
+
+
 
 
 

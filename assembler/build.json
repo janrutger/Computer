@@ -11,6 +11,11 @@
       "file": "asm/os_kernel.asm",
       "base_address": 1024,
       "restore_symbols": false
+    },
+    {
+      "file": "asm/main.asm",
+      "base_address": 7170,
+      "restore_symbols": false
     }
   ]
 }

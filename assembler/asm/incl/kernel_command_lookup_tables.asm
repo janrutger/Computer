@@ -105,6 +105,15 @@
     ldi A ~run
     stx A $ID_TABLE_BASE
 
+    ## MAIN
+    inc I $table_pointer
+    ldi A 7170              ; hardcode start adres of main, for now
+    stx A $CMD_TABLE_BASE
+    ldi A $PROG_MAIN_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~main
+    stx A $ID_TABLE_BASE
+
     ## STORE
     inc I $table_pointer
     ldi A @rt_store_var
@@ -334,7 +343,7 @@
 
 
     ### DO NOT FORGET UPDATE ~LUT_LEN AFTER ADDING OR DELETING COMMANDS
-    EQU ~LUT_LEN 36
+    EQU ~LUT_LEN 37
 
 ret
 

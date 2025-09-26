@@ -157,13 +157,8 @@ def main():
     # 5. Main GUI Loop
     print("Starting GUI... Press keys in the window to generate interrupts.")
     running = True
-    
-    TARGET_FPS = 30
-    draw_interval = 1.0 / TARGET_FPS
-    last_draw_time = time.time()
-
     while running and cpu_thread.is_alive():
-        # --- Event Handling (runs as fast as possible) ---
+        # --- Event Handling ---
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -171,7 +166,6 @@ def main():
             if event.type == pygame.KEYDOWN:
                 keyboard.handle_key_event(event)
 
-        # --- Simulation Logic (runs as fast as possible) ---
         # Poll virtual disk
         vdisk.access()
 
@@ -180,35 +174,29 @@ def main():
 
         # The devices
         sensor1.tick()      # generates a number [0 .. 255]
+
         plotter1.tick()     # Y-plotter
+        plotter1.draw()     # Keep the plotter window responsive
+
         lcd.tick()          # LCD screen
+        lcd.draw()          # Keep the LCD window responsive
 
-        # --- Drawing Logic (runs periodically) ---
-        current_time = time.time()
-        if current_time - last_draw_time >= draw_interval:
-            last_draw_time = current_time
 
-            # Keep the device windows responsive
-            plotter1.draw()
-            lcd.draw()
+        # --- Drawing Logic --- 
+        screen.fill(BG_COLOR)
 
-            # Main screen rendering
-            screen.fill(BG_COLOR)
+        # Read the screen buffer from memory and render it
+        for y in range(SCREEN_HEIGHT_CHARS):
+            for x in range(SCREEN_WIDTH_CHARS):
+                mem_addr = MEM_VIDEO_START + (y * SCREEN_WIDTH_CHARS) + x
+                char_code = int(ram.read(mem_addr))
+                if char_code > 0:
+                    char_surface = font.render(chr(char_code), True, FG_COLOR)
+                    screen.blit(char_surface, (x * CHAR_WIDTH, y * CHAR_HEIGHT))
 
-            # Read the screen buffer from memory and render it
-            for y in range(SCREEN_HEIGHT_CHARS):
-                for x in range(SCREEN_WIDTH_CHARS):
-                    mem_addr = MEM_VIDEO_START + (y * SCREEN_WIDTH_CHARS) + x
-                    char_code = int(ram.read(mem_addr))
-                    if char_code > 0:
-                        char_surface = font.render(chr(char_code), True, FG_COLOR)
-                        screen.blit(char_surface, (x * CHAR_WIDTH, y * CHAR_HEIGHT))
-
-            # Update Display
-            pygame.display.flip()
-
-        # Yield a tiny amount of time to the OS to prevent 100% CPU usage
-        time.sleep(0.00001) # 10 microseconds sleep
+        # --- Update Display ---
+        pygame.display.flip()
+        clock.tick(30) # Limit to 30 FPS
 
     # 6. Shutdown
     print("GUI loop exited. Halting system...")
