@@ -4,6 +4,15 @@ class Memory:
         self.size = size
         self.memory = ["0"] * size  # Initialize memory with "0" as string
 
+        self.video_dirty = True   # Start dirty to draw the initial frame
+        
+        # These constants are from stern-XT.py
+        video_start = 14336
+        video_width = 80
+        video_height = 24
+        self.video_end = video_start + (video_width * video_height)
+        self.video_start = video_start
+
     def read(self, address):
         if 0 <= address < self.size:
             return self.memory[address]
@@ -14,8 +23,16 @@ class Memory:
         if 0 <= address < self.size:
             # Ensure the value is a string, as per the specification
             self.memory[address] = str(value)
+            if self.video_start <= address < self.video_end:
+                self.video_dirty = True
         else:
             raise IndexError("Memory address out of bounds")
+        
+    def is_video_dirty(self):
+        return self.video_dirty
+    
+    def unset_video_dirty_flag(self):
+        self.video_dirty = False
 
     def __len__(self):
         return self.size

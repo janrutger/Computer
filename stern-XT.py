@@ -123,7 +123,7 @@ def main():
             sys.exit(1)
         except Exception as e:
             print(f"Error loading program.bin: {e}", file=sys.stderr)
-            sys.exit(1) 
+            sys.exit(1)
 
     # Load the program
     program_bin_path = os.path.join(os.path.dirname(__file__), 'bin', 'program.bin')
@@ -152,9 +152,7 @@ def main():
     # 4. Create and Start Background Threads
     print("Starting background threads (CPU, debugger)...")
     cpu_thread = CpuThread(cpu, debugger)
-    
     cpu_thread.start()
-    #sio.start() # SIO still runs in the background for future plotter use
 
     # 5. Main GUI Loop
     print("Starting GUI... Press keys in the window to generate interrupts.")
@@ -194,23 +192,28 @@ def main():
             plotter1.draw()
             lcd.draw()
 
-            # Main screen rendering
-            screen.fill(BG_COLOR)
+            # Main screen rendering, only if dirty
+            if ram.is_video_dirty():
+                # Clear the flag *before* drawing. This prevents a race condition
+                # where the CPU dirties the buffer during the draw, and we would
+                # miss it on the next frame.
+                ram.unset_video_dirty_flag()
 
-            # Read the screen buffer from memory and render it
-            for y in range(SCREEN_HEIGHT_CHARS):
-                for x in range(SCREEN_WIDTH_CHARS):
-                    mem_addr = MEM_VIDEO_START + (y * SCREEN_WIDTH_CHARS) + x
-                    char_code = int(ram.read(mem_addr))
-                    if char_code > 0:
-                        char_surface = font.render(chr(char_code), True, FG_COLOR)
-                        screen.blit(char_surface, (x * CHAR_WIDTH, y * CHAR_HEIGHT))
+                screen.fill(BG_COLOR)
+                # Read the screen buffer from memory and render it
+                for y in range(SCREEN_HEIGHT_CHARS):
+                    for x in range(SCREEN_WIDTH_CHARS):
+                        mem_addr = MEM_VIDEO_START + (y * SCREEN_WIDTH_CHARS) + x
+                        char_code = int(ram.read(mem_addr))
+                        if char_code > 0:
+                            char_surface = font.render(chr(char_code), True, FG_COLOR)
+                            screen.blit(char_surface, (x * CHAR_WIDTH, y * CHAR_HEIGHT))
 
-            # Update Display
-            pygame.display.flip()
+                # Update Display
+                pygame.display.flip()
 
         # Yield a tiny amount of time to the OS to prevent 100% CPU usage
-        time.sleep(0.00001) # 10 microseconds sleep
+        time.sleep(0.0001) # 10 microseconds sleep
 
     # 6. Shutdown
     print("GUI loop exited. Halting system...")
@@ -237,4 +240,3 @@ if __name__ == "__main__":
             stats.print_stats(20)
     else:
         main()
-
