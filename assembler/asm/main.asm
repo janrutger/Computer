@@ -11,8 +11,8 @@ EQU ~color 3
 EQU ~deviceMode  14
 EQU ~mode 1 
 
-EQU ~char1 129
-EQU ~char2 130 
+EQU ~char1 202
+EQU ~char2 202
 
 
 @main

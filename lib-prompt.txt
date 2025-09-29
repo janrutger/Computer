@@ -1,0 +1,85 @@
+Here is a breakdown of the steps you outlined, confirming that you are on the right track:
+
+Define the Data Structures ("Stacks"):
+
+Library Registry: A set of tables ($LIB_REGISTRY_HASH_TABLE, $LIB_REGISTRY_ADRES_TABLE) to hold the name and _init address of each library. A size of 4 is a good starting point for your built-in ROM libraries.
+External Function Table: A set of tables ($LIB_FUNCTION_HASH_TABLE, $LIB_FUNCTION_ADRES_TABLE) to hold the name and absolute execution address of the individual library functions/methods. A size of 32 is a reasonable choice, allowing for a good number of total external functions across all libraries.
+Create a Library Registration Routine:
+
+This routine needs to be part of your operating system's startup sequence, likely in os_loader.asm as you said.
+Its job is to populate the "Library Registry" (from step 1) with the details of all the libraries that are pre-loaded in the ROM.
+Implement the USE Instruction:
+
+Add a new ~use token to your language.
+In kernel_stacks.asm, modify the immediate-mode executor (@_executed_immediate) to recognize the ~use token.
+The handler for USE will look up the library name in the "Library Registry", get the _init address, and call it. This triggers the library to register all its individual methods.
+Modify the Execution Logic:
+
+Update the function execution routine (:3_execute_unknown_token_smart) to perform a chained search.
+Search 1: Look for the called function name in the internal function table ($FUNCTION_HASH_TABLE).
+Search 2: If not found, look for it in the "External Function Table" ($LIB_FUNCTION_HASH_TABLE).
+If found in the external table, execute it using a native callx to its absolute address.
+If it's not found in either table, then it's an "unknown word" error.
+You have laid out the correct, complete, and logical sequence of steps. Following this plan will result in the powerful and flexible library system you've envisioned.
+
+---
+### Implementation Notes & Conventions (ToAdd)
+---
+
+**1. Direct Call for Registration (No Syscall):**
+   - The library `_init` functions are trusted code within the ROM.
+   - Therefore, they should register their methods by using a direct `CALL` to a public kernel routine (e.g., `@register_external_word`), not by using a `SYSCALL`. This is simpler and more efficient.
+
+**2. Example: Registering a Built-in Library in `os_loader.asm`:**
+   - Your OS loader will need a routine to populate the `$LIB_REGISTRY`.
+
+   ```stern-asm
+   @register_builtin_libraries
+       ; Register the 'turtle' library
+       PUSH <HASH_OF("turtle")>
+       PUSH @turtle_lib_init ; Address of the library's init function
+       CALL @add_to_library_registry
+
+       ; Register the 'sound' library
+       PUSH <HASH_OF("sound")>
+       PUSH @sound_lib_init
+       CALL @add_to_library_registry
+       RET
+
+   @add_to_library_registry
+       ; Pops address and hash, adds them to the registry tables
+       ; ...
+       RET
+   ```
+
+**3. Example: A Library's `_init` Function:**
+   - Each library must provide an `_init` function that registers its own public methods.
+
+   ```stern-asm
+   -- turtle_lib.asm
+   @turtle_lib_init
+       ; Register the 'forward' method
+       PUSH <HASH_OF("forward")>
+       PUSH @turtle_forward_method
+       CALL @register_external_word ; The public kernel routine
+
+       ; Register the 'turn' method
+       PUSH <HASH_OF("turn")>
+       PUSH @turtle_turn_method
+       CALL @register_external_word
+       RET
+
+   @turtle_forward_method
+       ; ... code for 'forward' ...
+       RET
+
+   @turtle_turn_method
+       ; ... code for 'turn' ...
+       RET
+   ```
+
+**4. Token Definition:**
+   - Remember to add `~use` to your token definition file (e.g., `kernel_command_definitions.asm`) and ensure the tokenizer recognizes it.
+
+**5. Error Handling:**
+   - The `USE` command handler will need a new error routine (`@error_unknown_library`) for when a user tries to `USE` a library name that isn't in the registry.
