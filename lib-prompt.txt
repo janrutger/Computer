@@ -2,8 +2,19 @@ Here is a breakdown of the steps you outlined, confirming that you are on the ri
 
 Define the Data Structures ("Stacks"):
 
-Library Registry: A set of tables ($LIB_REGISTRY_HASH_TABLE, $LIB_REGISTRY_ADRES_TABLE) to hold the name and _init address of each library. A size of 4 is a good starting point for your built-in ROM libraries.
-External Function Table: A set of tables ($LIB_FUNCTION_HASH_TABLE, $LIB_FUNCTION_ADRES_TABLE) to hold the name and absolute execution address of the individual library functions/methods. A size of 32 is a reasonable choice, allowing for a good number of total external functions across all libraries.
+Library Registry: A set of tables ($LIB_REGISTRY_HASH_TABLE, $LIB_REGISTRY_ADRES_TABLE)
+to hold the name and _init address of each library. 
+size of 4 is a good starting point for your built-in ROM libraries.
+
+External Function Table: A set of tables ($LIB_FUNCTION_HASH_TABLE, $LIB_FUNCTION_ADRES_TABLE) 
+to hold the name and absolute execution address of the individual library 
+functions/methods. 
+A size of 32 is a reasonable choice, allowing for a good number of total external 
+functions across all libraries.
+
+
+
+
 Create a Library Registration Routine:
 
 This routine needs to be part of your operating system's startup sequence, likely in os_loader.asm as you said.

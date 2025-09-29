@@ -196,21 +196,6 @@ EQU ~TOKEN_LABEL 5          ; Label token
     call @hash_filename         ; borrowd from loader_vdisk_routines
                                 ; returns the hask in A
 
-    ; sto Z $current_label_ptr    ; Reset the current label buffer pointer
-
-    ; :label_loop                 ; when entering A holds the first char of the label
-    ;     inc I $current_label_ptr    ; 
-    ;     stx A $current_label_base   ; Store the character in the label buffer
-
-    ;     inc I $current_part_ptr     ; Move to the next character
-    ;     ldx A $current_part_base    ; Load the next character
-    ;     tst A \null                 ; Check if it is the end
-
-    ;     jmpf :label_loop
-    
-    ; ; ldi A \null                   ; A is already \null here
-    ; inc I $current_label_ptr    ; Move to the next character
-    ; stx A $current_label_base   ; Store the null terminator in the label buffer
 
     ; --- It is a label ---
 

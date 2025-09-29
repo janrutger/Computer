@@ -93,6 +93,38 @@ MALLOC $FUNCTION_BUFFER 5632     ; + 512
 % $COMPILER_STATE_STACK_PTR $COMPILER_STATE_STACK
 
 
+# lookup tables for loading external libraries
+# load max 4 libraries
+## registraion tables
+. $LIB_REG_HASH_TABLE 4
+. $LIB_REG_HASH_TABLE_BASE 1
+% $LIB_REG_HASH_TABLE_BASE $LIB_REG_HASH_TABLE
+
+. $LIB_REG_ADRES_TABLE 4
+. $LIB_REG_ADRES_TABLE_BASE 1
+% $LIB_REG_ADRES_TABLE_BASE $LIB_REG_ADRES_TABLE
+
+. $LIB_REG_HASH_ADRES_PTR 1
+% $LIB_REG_HASH_ADRES_PTR 0
+##
+
+## Lib function tables
+## In total 32 functions for all 4 libraries
+. $LIB_FUNC_HASH_TABLE 32
+. $LIB_FUNC_HASH_TABLE_BASE 1
+% $LIB_FUNC_HASH_TABLE_BASE $LIB_FUNC_HASH_TABLE
+
+. $LIB_FUNC_ADRES_TABLE 32
+. $LIB_FUNC_ADRES_TABLE_BASE 1
+% $LIB_FUNC_ADRES_TABLE_BASE $LIB_FUNC_ADRES_TABLE
+
+. $LIB_FUNC_HASH_ADRES_PTR 1
+% $LIB_FUNC_HASH_ADRES_PTR 0
+##
+
+
+
+
 
 @run_stacks
     call @_store_registers
@@ -244,6 +276,9 @@ ret
         tst B ~def
         jmpt :1_handle_scan_def
 
+        tst B ~use
+        jmpt :1_handle_scan_use
+
         ; The END keyword is a compile-time directive and produces no bytecode.
         ; We skip advancing the location counter to ensure subsequent label addresses are calculated correctly.
         tst B ~end
@@ -299,10 +334,23 @@ ret
 
         # YOU WILL NEVER REACH THIS LINE
         jmp :1_scan_def_loop
-
+        
     :1_scan_def_end
         ; We have successfully consumed the entire DEF block.
         ; Now, jump back to the main scan loop to process the rest of the program.
+        jmp :1_scan_loop
+
+    :1_handle_scan_use
+        ; A 'use <libname>' sequence is two tokens in the source, but
+        ; becomes one 2-word instruction in the bytecode.
+        ; So we advance the counter by 2.
+        ldm K $CODE_LOCATION_COUNTER
+        addi K 2
+        sto K $CODE_LOCATION_COUNTER
+
+        ; We must also consume the next token (the libname identifier)
+        ; from the token stream so we don't process it again.
+        call @get_next_token
         jmp :1_scan_loop
 
 
@@ -356,22 +404,25 @@ ret
         jmpt :2_handle_goto_cmd       ; must retrun to the :2_compile_loop
 
         tst B ~if 
-        jmpt :2_handle_if_cmd         ; must retrun to the :2_compile_loop
+        jmpt :2_handle_if_cmd         ; must return to the :2_compile_loop
 
         tst B ~else
-        jmpt :2_handle_else_cmd       ; must retrun to the :2_compile_loop
+        jmpt :2_handle_else_cmd       ; must return to the :2_compile_loop
 
         tst B ~end
-        jmpt :2_handle_end_cmd        ; must retrun to the :2_compile_loop
+        jmpt :2_handle_end_cmd        ; must return to the :2_compile_loop
 
         tst B ~while
-        jmpt :2_handle_while_cmd      ; must retrun to the :2_compile_loop
+        jmpt :2_handle_while_cmd      ; must return to the :2_compile_loop
 
         tst B ~do
-        jmpt :2_handle_do_cmd         ; must retrun to the :2_compile_loop
+        jmpt :2_handle_do_cmd         ; must return to the :2_compile_loop
 
         tst B ~done
-        jmpt :2_handle_done_cmd       ; must retrun to the :2_compile_loop
+        jmpt :2_handle_done_cmd       ; must return to the :2_compile_loop
+
+        tst B ~use
+        jmpt :2_handle_use_cmd        ; must return to the :2_compile loop
 
 
         #fall thru to the 'simple' command tokens, like add, print, ==, ..... alot of them
@@ -474,11 +525,13 @@ ret
         jmpt :3_execution_else_token      ; must jumpback to :3_execution_loop
 
         tst A ~io
-        jmpt :3_execution_runtime_token      ; must jumpback to :3_execution_loop
+        jmpt :3_execution_runtime_token     ;  must jumpback to :3_execution_loop
 
         tst A ~rnd
-        jmpt :3_execution_runtime_token      ; must jumpback to :3_execution_loop
+        jmpt :3_execution_runtime_token     ; must jumpback to :3_execution_loop
 
+        tst A ~use
+        jmpt :3_execution_use_token         ; must jumpback to :3_execution_loop
 
 
         # The 'WHILE condition DO code END' construction is reusing the IF-END, and GOTO implementation
@@ -697,6 +750,44 @@ ret
 
     jmp :2_compile_loop
 
+:2_handle_use_cmd 
+    call @get_next_token
+    ldm A $TOKEN_ID
+    tst A ~ident
+    jmpf :error_use_name
+
+    ldm A $TOKEN_VALUE      ; A holds the hash of the Library name
+    ld I Z                  ; Use I as index and start at 0
+
+    :use_loop
+        ldm B $LIB_REG_HASH_ADRES_PTR
+        tstg B I                        ; test for last hash    
+        jmpf :error_use_name            ; library not found
+
+        ldx C $LIB_REG_HASH_TABLE_BASE  ; the hash of the lib
+        tste A C                        ; Compare hash labels
+        jmpf :try_next_use
+
+        ldx B $LIB_REG_ADRES_TABLE_BASE ; The adres of the init funciton of the lib
+        ## If found
+        ldi A ~use
+        inc I $CODE_BUFFER_PTR          ; Write use to the codebuffer
+        stx A $CODE_BUFFER_BASE
+
+        inc I $CODE_BUFFER_PTR          ; write adres to codebuffer
+        stx B $CODE_BUFFER_BASE
+
+    jmp :2_compile_loop
+
+    :try_next_use
+        addi I 1
+        jmp :use_loop
+
+    :error_use_name
+        call @error_unkown_library
+        jmp :2_compile_loop
+
+
 
 
 @2_compile_generic_token
@@ -782,6 +873,15 @@ ret
     ; 2. JUMP (by continuing the execution loop with the restored pointers)
     jmp :3_execution_loop
 
+:3_execution_use_token
+    inc I $CODE_BUFFER_PTR
+    ldx A $CODE_BUFFER_BASE     ; A contains the adres of the init function
+    ld I A                      ; Load adres to Index
+    callx $start_memory         ; Call the init function
+
+    jmp :3_execution_loop
+
+
 
 
 :3_execute_unknown_token_smart
@@ -793,10 +893,10 @@ ret
     sto Z $FUNCTION_HASH_ADRES_PTR
     ldm B $FUNCTION_HASH_ADRES_INDEX
 
-:search_func_loop
+:search_func_loop   # user DEFined functions
     ldm I $FUNCTION_HASH_ADRES_PTR
     tstg B I
-    jmpf :unknown_word_error ; If search pointer >= total, hash not found
+    jmpf :check_for_library_word      ; If search pointer >= total, hash not found
 
     ldx C $FUNCTION_HASH_TABLE_BASE
     tste A C
@@ -835,6 +935,30 @@ ret
 :try_next_function_in_loop
     inc I $FUNCTION_HASH_ADRES_PTR
     jmp :search_func_loop
+
+#check the (external) library words from here, otherwise an error is thrown
+:check_for_library_word
+    ld I Z      ; Start at zero
+
+    :search_libword_loop
+        ldm B $LIB_FUNC_HASH_ADRES_PTR
+        tstg B I 
+        jmpf :unknown_word_error
+
+        ldx C $LIB_FUNC_HASH_TABLE_BASE
+        tste A C
+        jmpf :check_next_libword
+
+        ## match found
+        ldx B $LIB_FUNC_ADRES_TABLE_BASE ; load the execution adres
+        ld I B                           ; Load adres in Index register
+        callx $start_memory              ; execute the function
+    jmp :3_execution_loop
+
+    :check_next_libword
+        addi I 1
+        jmp :search_libword_loop
+
 
 :unknown_word_error
     call @errors_unkown_token

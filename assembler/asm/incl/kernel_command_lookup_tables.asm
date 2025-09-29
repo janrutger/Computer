@@ -109,7 +109,7 @@
     inc I $table_pointer
     ldi A 7170              ; hardcode start adres of main, for now
     stx A $CMD_TABLE_BASE
-    ldi A $PROG_MAIN_STR
+    ldi A $CMD_MAIN_STR
     stx A $STR_TABLE_BASE
     ldi A ~main
     stx A $ID_TABLE_BASE
@@ -149,6 +149,16 @@
     stx A $STR_TABLE_BASE
     ldi A ~save
     stx A $ID_TABLE_BASE
+
+    ## USE
+    inc I $table_pointer
+    ldi A @_stub_handler  
+    stx A $CMD_TABLE_BASE
+    ldi A $PROG_USE_LIB_STR
+    stx A $STR_TABLE_BASE
+    ldi A ~use
+    stx A $ID_TABLE_BASE
+
 
     # PRINT
     inc I $table_pointer
@@ -343,7 +353,7 @@
 
 
     ### DO NOT FORGET UPDATE ~LUT_LEN AFTER ADDING OR DELETING COMMANDS
-    EQU ~LUT_LEN 37
+    EQU ~LUT_LEN 38
 
 ret
 

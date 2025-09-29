@@ -12,6 +12,14 @@
     call @print_error_string
     jmp :end_warning
 
+@error_unkown_library
+    . $string_unkown_library 17
+    % $string_unkown_library \U \n \k \n \o \w \n \space \l \i \b \r \a \r \y \Return \null
+    ldi A $string_unkown_library
+    call @print_error_string
+    jmp :end_warning
+
+
 @errors_unkown_token
     . $string_unkown_token 15
     % $string_unkown_token \U \n \k \n \o \w \n \space \t \o \k \e \n \Return \null

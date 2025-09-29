@@ -53,6 +53,7 @@ EQU ~done 307
 EQU ~def 308
 EQU ~open-curly 309
 EQU ~close-curly 310
+EQU ~use 311        ; init one of the lib to use
 
 
 
@@ -180,8 +181,14 @@ EQU ~close-curly 310
 . $PROG_RND_STR 4
 % $PROG_RND_STR \R \N \D \null
 
-. $PROG_MAIN_STR 5
-% $PROG_MAIN_STR \m \a \i \n \null
+. $CMD_MAIN_STR 5
+% $CMD_MAIN_STR \m \a \i \n \null
+
+
+. $PROG_USE_LIB_STR 4
+% $PROG_USE_LIB_STR \U \S \E \null
+
+
 
 
 

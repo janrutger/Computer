@@ -42,13 +42,17 @@ EQU ~STACK_TOP 14335
 ldi Z 0     ; Start of loader at mem_start
             ; Z is zero and must retain zero all the time
 
-
+. $init_library_support 1
 
 ##########
 call @KBD_INIT
 call @init_vdisk
 call @init_udc
 call @init_interrupt_vector_table   
+
+ldm I $init_library_support     ; the value will be set on compiletime when library.asm is compiled
+callx $start_memory
+
 ei
 
 # start the kernel by calling the kernel entry point
@@ -66,6 +70,5 @@ INCLUDE loader_screen_routines
 INCLUDE loader_keyboard_routines
 INCLUDE loader_vdisk_routines
 INCLUDE loader_udc_routines
-
 
 
