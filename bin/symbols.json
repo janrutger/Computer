@@ -292,17 +292,17 @@
         "@setX": 7220,
         "@setY": 7226,
         "$plotlib_str": 13522,
-        "@init_import_lib": 8194,
+        "@init_import_libs": 8194,
         "@add_method_to_stacks": 8201,
         "$plot.online_str": 13530,
-        "$plot.offline_str": 13542,
-        "$plot.send_str": 13555,
-        "$plot.color_str": 13565,
+        "$plot.offline_str": 13541,
+        "$plot.draw_str": 13553,
+        "$plot.color_str": 13562,
         "@plotlib_init": 8205,
-        "@plot.online": 8222,
-        "@plot.offline": 8228,
-        "@plot.send": 8234,
-        "@plot.color": 8241
+        "@plt.online": 8222,
+        "@plt.offline": 8228,
+        "@plt.draw": 8234,
+        "@plt.color": 8241
     },
     "labels": [
         {

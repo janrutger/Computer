@@ -120,8 +120,12 @@ class VirtualLCD(UDCDevice):
     def handle_command(self, command, data):
         """Handles commands specific to the VirtualLCD."""
         if command == UDC_DEVICE_NEW:
+            self.x = 0
+            self.y = 0
             if self.mode in [2, 3]: # Double buffer modes
                 self.shadow_buffer.fill(0)
+                #self.screen_buffer.fill(0)
+                self.dirty = True
             else: # Direct modes
                 self.screen_buffer.fill(0)
                 self.dirty = True

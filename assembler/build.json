@@ -18,7 +18,7 @@
       "restore_symbols": false
     },
     {
-      "file": "asm/libraries.asm",
+      "file": "asm/os_lib_loader.asm",
       "base_address": 8194,
       "restore_symbols": false    
     }

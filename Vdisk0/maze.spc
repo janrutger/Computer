@@ -1,22 +1,17 @@
 DEF screen {
+  0 X !
+  0 Y ! 
   0 2 1  &io
   0 2 10 &io
   3 2 13 &io
   3 2 14 &io
 }
 
-DEF setX {
-  X @ 2 15 &io
-}
 
-DEF setY {
-  Y @ 2 16 &io
-}
 
 screen 
 
-0 X !
-0 Y !
+
 
 
 WHILE 60 Y @ > DO

@@ -5,17 +5,18 @@ EQU ~plotter 1
 EQU ~send 11
 ; EQU ~deviceColor 13
 
-# $init_library_support pointer is set and consumed in os_loader
-% $init_library_support @init_import_lib
+# $init_library_support pointer is set here at compile time
+# and consumed in os_loader at runtime
+% $init_library_support @init_import_libs
 
 ## All current libraies are part of the base rom
 ## and are loaded at boottime
 
 . $plotlib_str 8
-% $plotlib_str \p \l \o \t \l \i \b \null
+% $plotlib_str \p \l \o \t \t \e \r \null
 
 
-@init_import_lib
+@init_import_libs
 
     ## Register the plotter library
     ldi A $plotlib_str  ; A points to the string to hash
