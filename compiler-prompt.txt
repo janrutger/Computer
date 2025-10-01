@@ -1,0 +1,53 @@
+To complete the Computer project i like to finsich which an Stack Language Compiler
+
+The language supports multiple lenght var-names
+to assign an value to an var use the AS(SIGN) keyword as in 10 AS varname
+to read a var just use varname
+
+
+supports
+ * - + // % (for modulo)
+ == != < >
+ DUP SWAP DROP OVER 
+ RND (creates an pseudo random number)
+
+ IF ELSE END
+ WHILE DO DONE
+
+ DEF { function } (to define functions)
+
+IO  (to communicate with devices)
+USE (to load/activate a library)
+` (back-tick, to call assembly routines directly)
+
+ASM {assembly code} (to emmbed assembly code in the source code)
+
+
+
+The compilers should the source compile to Stern CPU assembly
+its all RPN based (some Forth influances)
+
+Runtime routines to do an operations are used from the current kernel 
+
+the language has 
+    numbers     (a positive, or negative whole numbers)
+    strings     ("a string", \null terminated)
+    arrays      (since the kernel does not have array-support, an new buildin libray is fore seen)
+
+
+the language must beable to write an loader and an kernel for this system
+
+
+Phase 1: The Core Compiler:
+Build the Lexer (to tokenize the source code) and Parser (to understand the structure).
+Implement the Code Generator for basic features: numbers, arithmetic, and stack operations. The output should be a valid .asm file.
+
+Phase 2: Control Flow and Functions:
+Implement IF/ELSE/END and WHILE/DO/DONE. This will involve generating labels and conditional jump instructions (tst, bz, jmp).
+Implement DEF and function calls, which will involve managing a call stack and generating CALL and RET instructions.
+
+Phase 3: Libraries and Advanced Features:
+Develop the array support library in assembly.
+Implement the USE directive in the compiler to load this library.
+Add support for strings, RND, and %io.
+

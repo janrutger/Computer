@@ -285,12 +285,6 @@
         "@pop_return_adres_A": 2523,
         "@_store_registers": 2526,
         "@_restore_registers": 2537,
-        "@main": 7170,
-        "@screen_on": 7194,
-        "@draw1": 7208,
-        "@draw2": 7214,
-        "@setX": 7220,
-        "@setY": 7226,
         "$plotlib_str": 13522,
         "@init_import_libs": 8194,
         "@add_method_to_stacks": 8201,
@@ -502,11 +496,7 @@
             ":unknown_word_error": 2487,
             ":3_execution_runtime_token": 2489
         },
-        {
-            ":draw_loop": 7176,
-            ":next_line": 7187,
-            ":end_main": 7193
-        },
+        {},
         {}
     ]
 }

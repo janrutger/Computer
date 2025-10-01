@@ -1,0 +1,274 @@
+# compiler/lexer.py
+from enum import Enum
+
+class TokenType(Enum):
+    # Literals
+    NUMBER = "NUMBER"
+    STRING = "STRING"
+    
+    # Identifiers
+    IDENTIFIER = "IDENTIFIER"
+
+    # Keywords
+    DEF = "DEF"
+    IF = "IF"
+    ELSE = "ELSE"
+    END = "END"
+    WHILE = "WHILE"
+    DO = "DO"
+    DONE = "DONE"
+    DUP = "DUP"
+    SWAP = "SWAP"
+    DROP = "DROP"
+    OVER = "OVER"
+    RND = "RND"
+    IO = "IO"
+    USE = "USE"
+    ASM = "ASM"
+    PRINT = "PRINT"
+    AS = "AS"
+
+
+
+    # Operators
+    PLUS = "+"
+    MINUS = "-"
+    MUL = "*"
+    IDIV = "//"     # intger Divison
+    MOD = "%"       # modulo
+
+    EQ = "=="
+    NEQ = "!="
+    LT = "<"
+    GT = ">"
+
+    BACKTICK = "`"
+    OPEN_BRACE = "{"
+    CLOSE_BRACE = "}"
+   
+
+
+
+    # ... add all other operators
+
+    # Special Tokens
+    ILLEGAL = "ILLEGAL"
+    EOF = "EOF"
+
+# Map string keywords to their TokenType
+KEYWORDS = {
+    "DEF": TokenType.DEF,
+    "IF": TokenType.IF,
+    "ELSE": TokenType.ELSE,
+    "END": TokenType.END,
+    "WHILE": TokenType.WHILE,
+    "DO": TokenType.DO,
+    "DONE": TokenType.DONE,
+    "DUP": TokenType.DUP,
+    "SWAP": TokenType.SWAP,
+    "DROP": TokenType.DROP,
+    "OVER": TokenType.OVER,
+    "RND": TokenType.RND,
+    "IO": TokenType.IO,
+    "USE": TokenType.USE,
+    "ASM": TokenType.ASM,
+    "PRINT": TokenType.PRINT,
+    "AS": TokenType.AS,
+}
+
+class Token:
+    def __init__(self, type, value=None, line=1, column=1):
+        self.type = type
+        self.value = value
+        self.line = line
+        self.column = column
+
+    def __repr__(self):
+        return f"Token({self.type}, {repr(self.value)})"
+
+class Lexer:
+    def __init__(self, source_code):
+        self.source = source_code
+        self.errors = []
+        self.pos = 0
+        self.current_char = self.source[self.pos] if self.pos < len(self.source) else None
+        self.line = 1
+        self.column = 1
+
+    def advance(self):
+        if self.current_char == '\n':
+            self.line += 1
+            self.column = 0
+        self.pos += 1
+        self.column += 1
+        self.current_char = self.source[self.pos] if self.pos < len(self.source) else None
+
+    def peek(self):
+        peek_pos = self.pos + 1
+        if peek_pos < len(self.source):
+            return self.source[peek_pos]
+        return None
+
+    def skip_whitespace(self):
+        while self.current_char is not None and self.current_char.isspace():
+            self.advance()
+
+    def get_number(self):
+        result = ''
+        start_column = self.column
+        while self.current_char is not None and self.current_char.isdigit():
+            result += self.current_char
+            self.advance()
+
+        if self.current_char is not None and self.current_char.isalpha():
+            # This is a malformed number (e.g., "123a").
+            # Consume the rest of the alphanumeric part.
+            while self.current_char is not None and self.current_char.isalnum():
+                result += self.current_char
+                self.advance()
+            
+            error_msg = f"Lexer error: Invalid number format '{result}' at line {self.line}, column {start_column}"
+            self.errors.append(error_msg)
+            return Token(TokenType.ILLEGAL, result, self.line, start_column)
+        
+        return Token(TokenType.NUMBER, int(result), self.line, start_column)
+
+    def get_string(self):
+        result = ''
+        start_line = self.line
+        start_column = self.column
+        self.advance()  # Consume the opening "
+
+        while self.current_char is not None and self.current_char != '"':
+            result += self.current_char
+            self.advance()
+
+        if self.current_char is None:
+            # Unterminated string
+            error_msg = f"Lexer error: Unterminated string literal at line {self.line}, column {self.column}"
+            self.errors.append(error_msg)
+            return Token(TokenType.ILLEGAL, result, start_line, start_column)
+
+        # Found the closing quote
+        self.advance()  # Consume the closing "
+        return Token(TokenType.STRING, result, start_line, start_column)
+
+    def get_identifier(self):
+        result = ''
+        start_column = self.column
+        while self.current_char is not None and (self.current_char.isalnum() or self.current_char == '_'):
+            result += self.current_char
+            self.advance()
+        
+        # check if it is an keyword, otherwise its an identifier
+        token_type = KEYWORDS.get(result.upper(), TokenType.IDENTIFIER)
+        return Token(token_type, result, self.line, start_column)
+
+    def get_next_token(self):
+        while self.current_char is not None:
+            if self.current_char.isspace():
+                self.skip_whitespace()
+                continue
+
+            if self.current_char == '"':
+                return self.get_string()
+
+            if self.current_char.isdigit():
+                return self.get_number()
+
+            if self.current_char.isalpha() or self.current_char == '_':
+                return self.get_identifier()
+
+            if self.current_char == '/' and self.peek() == '/':
+                start_column = self.column
+                self.advance()
+                self.advance()
+                return Token(TokenType.IDIV, '//', self.line, start_column)
+
+            if self.current_char == '=' and self.peek() == '=':
+                start_column = self.column
+                self.advance()
+                self.advance()
+                return Token(TokenType.EQ, '==', self.line, start_column)
+
+            if self.current_char == '!' and self.peek() == '=':
+                start_column = self.column
+                self.advance()
+                self.advance()
+                return Token(TokenType.NEQ, '!=', self.line, start_column)
+
+            if self.current_char == '+':
+                token = Token(TokenType.PLUS, '+', self.line, self.column)
+                self.advance()
+                return token
+
+            if self.current_char == '-':
+                token = Token(TokenType.MINUS, '-', self.line, self.column)
+                self.advance()
+                return token
+            
+            if self.current_char == '*':
+                token = Token(TokenType.MUL, '*', self.line, self.column)
+                self.advance()
+                return token
+
+            if self.current_char == '%':
+                token = Token(TokenType.MOD, '%', self.line, self.column)
+                self.advance()
+                return token
+            
+            if self.current_char == '>':
+                token = Token(TokenType.GT, '>', self.line, self.column)
+                self.advance()
+                return token
+
+            if self.current_char == '<':
+                token = Token(TokenType.LT, '<', self.line, self.column)
+                self.advance()
+                return token
+            
+            if self.current_char == '{':
+                token = Token(TokenType.OPEN_BRACE, '{', self.line, self.column)
+                self.advance()
+                return token
+            
+            if self.current_char == '}':
+                token = Token(TokenType.CLOSE_BRACE, '}', self.line, self.column)
+                self.advance()
+                return token
+
+            if self.current_char == '`':
+                token = Token(TokenType.BACKTICK, '`', self.line, self.column)
+                self.advance()
+                return token
+            
+            error_msg = f"Lexer error: Illegal character '{self.current_char}' at line {self.line}, column {self.column}"
+            self.errors.append(error_msg)
+            char = self.current_char
+            token = Token(TokenType.ILLEGAL, char, self.line, self.column)
+            self.advance()
+            return token
+        
+        return Token(TokenType.EOF, None, self.line, self.column)
+
+if __name__ == '__main__':
+    source = '10 == 20 // 2 != 0 "hello world" ASM DEF 12a DUP END {}'
+    lexer = Lexer(source)
+
+    print(f"Tokenizing source: \"{source}\"\n")
+
+    tokens = []
+    token = lexer.get_next_token()
+    while token.type != TokenType.EOF:
+        tokens.append(token)
+        token = lexer.get_next_token()
+    tokens.append(token)
+
+    print("--- TOKENS ---")
+    for t in tokens:
+        print(t)
+    
+    if lexer.errors:
+        print("\n--- ERRORS ---")
+        for err in lexer.errors:
+            print(err)

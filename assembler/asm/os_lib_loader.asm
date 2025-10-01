@@ -1,9 +1,19 @@
 # Library to test the new USE lib function in ste Stacks language
 EQU ~plotter 1
-; EQU ~online 1
-; EQU ~offline 2
 EQU ~send 11
-; EQU ~deviceColor 13
+EQU ~device 2
+EQU ~online 1
+EQU ~offline 2
+
+EQU ~setX 15
+EQU ~setY 16
+EQU ~draw 17
+
+EQU ~deviceColor 13
+EQU ~color 3
+EQU ~deviceMode  14
+EQU ~mode 1 
+
 
 # $init_library_support pointer is set here at compile time
 # and consumed in os_loader at runtime
