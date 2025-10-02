@@ -27,6 +27,8 @@ class TokenType(Enum):
     ASM = "ASM"
     PRINT = "PRINT"
     AS = "AS"
+    GOTO = "GOTO"
+
 
     # Declaration Keywords
     KEYWORD_VAR = "KEYWORD_VAR"
@@ -46,6 +48,7 @@ class TokenType(Enum):
     LT = "<"
     GT = ">"
 
+    COLON = ":"
     BACKTICK = "`"
     OPEN_BRACE = "{"
     CLOSE_BRACE = "}"
@@ -78,6 +81,8 @@ KEYWORDS = {
     "LIST": TokenType.KEYWORD_LIST,
     "STRING": TokenType.KEYWORD_STRING,
     "VALUE": TokenType.KEYWORD_VALUE,
+    "GOTO": TokenType.GOTO,
+    
 }
 
 class Token:
@@ -238,6 +243,11 @@ class Lexer:
             
             if self.current_char == '}':
                 token = Token(TokenType.CLOSE_BRACE, '}', self.line, self.column)
+                self.advance()
+                return token
+
+            if self.current_char == ':':
+                token = Token(TokenType.COLON, ':', self.line, self.column)
                 self.advance()
                 return token
 

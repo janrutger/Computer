@@ -1,5 +1,3 @@
-# compiler/codegen.py
-
 from .parser import (
     ASTNode,
     ProgramNode,
@@ -8,6 +6,10 @@ from .parser import (
     WordNode,
     IfNode,
     VarDeclarationNode,
+    FunctionDefinitionNode,
+    BacktickNode,
+    GotoNode,
+    LabelNode,
     # The following nodes will be used in upcoming steps
     # AssignmentNode,
     # VariableNode,
@@ -19,20 +21,27 @@ class CodeGenerator:
         self.header_section = ""
         self.code_section = ""
         self.data_section = ""
+        self.functions_section = ""
         
         self.string_literals = {}
         self.next_string_label = 0
         
         self.symbols = set()
+        self.function_symbols = set()
+        self.labels = {}
+
 
     def generate(self, ast):
         # Reset sections for each generation run
         self.header_section = ""
         self.code_section = ""
         self.data_section = ""
+        self.functions_section = ""
         self.string_literals = {}
         self.next_string_label = 0
         self.symbols = set()
+        self.function_symbols = set()
+        self.labels = {}
         
         # Main code generation
         self.code_section = self.generate_program(ast)
@@ -44,6 +53,9 @@ class CodeGenerator:
         
         final_assembly += "# .CODE\n" + self.code_section
         
+        if self.functions_section:
+            final_assembly += "\n# .FUNCTIONS\n" + self.functions_section
+            
         if self.data_section:
             final_assembly += "\n# .DATA\n" + self.data_section
         
@@ -62,6 +74,20 @@ class CodeGenerator:
         elif isinstance(node, StringNode):
             label = self.add_string_literal(node.value)
             return f"    ldi A ${label}\n    call @push_A\n"
+        
+        elif isinstance(node, BacktickNode):
+            return f"    call @{node.routine_name}\n"
+        
+        elif isinstance(node, LabelNode):
+            self.labels[node.label_name] = len(self.code_section)
+            return f":{node.label_name}\n"
+
+        elif isinstance(node, GotoNode):
+            if node.label_name in self.labels:
+                # offset = self.labels[node.label_name] - len(self.code_section)
+                return f"    jmp :{node.label_name}\n"
+            else:
+                raise Exception(f"Undefined label '{node.label_name}'.")
 
         elif isinstance(node, VarDeclarationNode):
             var_name = node.var_name
@@ -105,6 +131,21 @@ class CodeGenerator:
                 self.data_section += f"% {var_name} {node.initial_value}\n"
                 return ""
 
+        elif isinstance(node, FunctionDefinitionNode):
+            # Add the function name to the function symbol table so it can be called
+            self.function_symbols.add(node.name)
+            
+            # Generate the assembly code for the function's body
+            function_body_code = self.generate_program(node.body)
+            
+            # Assemble the full function block with a label and a return instruction
+            self.functions_section += f"@{node.name}\n"
+            self.functions_section += function_body_code
+            self.functions_section += "    ret\n\n"
+            
+            # A function definition does not produce inline code, so return an empty string
+            return ""
+
         elif isinstance(node, WordNode):
             return self.generate_word(node)
 
@@ -123,6 +164,9 @@ class CodeGenerator:
     def generate_word(self, node):
         op = node.value if node.value is not None else node.token.type.value
         
+        if op in self.function_symbols:
+            return f"    call @{op}\n"
+
         if op in self.symbols:
             return f"    ldm A {op}\n    call @push_A\n"
 
@@ -148,9 +192,7 @@ class CodeGenerator:
         elif op in op_map: # for operators like '+'
             return f"    call {op_map[op]}\n"
         else:
-            # For now, assume it's a function call (identifier)
-            # This will be expanded in Phase 2 for function definitions
-            return f"    call @{op}\n"
+            raise Exception(f"Undefined word '{op}'. It is not a built-in operator, a defined variable, or a function.")
 
     def add_string_literal(self, string_value):
         if string_value not in self.string_literals:
@@ -188,8 +230,9 @@ if __name__ == '__main__':
     from .lexer import Lexer
     from .parser import Parser
 
-    source = 'VAR my_ptr 1024 VALUE my_val 42 my_ptr my_val + PRINT "test string" LIST my_list 12'
-    
+    # source = 'VAR my_ptr 1024 VALUE my_val 42 my_ptr my_val + PRINT "test string" LIST my_list 12'
+    source = ':label DEF my_add { 2 * } 3 my_add PRINT `test GOTO label DEF myX { }'
+
     lexer = Lexer(source)
     parser = Parser(lexer)
     ast = parser.parse()
@@ -197,9 +240,12 @@ if __name__ == '__main__':
     if parser.errors or lexer.errors:
         print("Errors during parsing, aborting code generation.")
     else:
-        codegen = CodeGenerator()
-        assembly = codegen.generate(ast)
+        try:
+            codegen = CodeGenerator()
+            assembly = codegen.generate(ast)
 
-        print(f"--- Source ---\n{source}\n")
-        print(f"--- AST ---\n{ast}\n")
-        print(f"--- Generated Assembly ---\n{assembly}")
+            print(f"--- Source ---\n{source}\n")
+            print(f"--- AST ---\n{ast}\n")
+            print(f"--- Generated Assembly ---\n{assembly}")
+        except Exception as e:
+            print(f"--- CODEGEN ERROR ---\n{e}")

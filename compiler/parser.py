@@ -78,6 +78,37 @@ class VarDeclarationNode(ASTNode):
             parts.append(f"value='{self.initial_value}'")
         return f"VarDeclarationNode({', '.join(parts)})"
 
+class FunctionDefinitionNode(ASTNode):
+    def __init__(self, name, body):
+        self.name = name
+        self.body = body
+
+    def __repr__(self):
+        return f"FunctionDefinitionNode(name='{self.name}', body={self.body})"
+
+class BacktickNode(ASTNode):
+    def __init__(self, routine_name_token):
+        self.token = routine_name_token
+        self.routine_name = routine_name_token.value
+
+    def __repr__(self):
+        return f"BacktickNode('{self.routine_name}')"
+
+class LabelNode(ASTNode):
+    def __init__(self, label_name):
+        self.label_name = label_name
+
+    def __repr__(self):
+        return f"LabelNode('{self.label_name}')"
+
+class GotoNode(ASTNode):
+    def __init__(self, label_name):
+        self.label_name = label_name
+
+    def __repr__(self):
+        return f"GotoNode('{self.label_name}')"
+
+
 # --- Parser ----------------------------------------------------------------
 
 class Parser:
@@ -107,32 +138,44 @@ class Parser:
             return StringNode(token)
         elif token.type == TokenType.IF:
             return self.parse_if_statement()
+        elif token.type == TokenType.DEF:
+            return self.parse_function_definition()
+        elif token.type == TokenType.BACKTICK:
+            return self.parse_backtick_call()
         elif token.type in (TokenType.KEYWORD_VAR, TokenType.KEYWORD_VALUE, TokenType.KEYWORD_LIST, TokenType.KEYWORD_STRING):
             return self.parse_declaration()
-        # For now, treat all keywords, identifiers, and operators as "words"
+        elif token.type == TokenType.COLON:
+            return self.parse_label()
+        elif token.type == TokenType.GOTO:
+            return self.parse_goto()
+        
+        # Fully implemented keywords and operators that are treated as "words"
         elif token.type in [
             TokenType.IDENTIFIER,
-            # Keywords
-            TokenType.DEF,
-            TokenType.WHILE, TokenType.DO, TokenType.DONE,
             TokenType.DUP, TokenType.SWAP, TokenType.DROP, TokenType.OVER,
-            TokenType.RND, TokenType.IO, TokenType.USE, TokenType.ASM,
-            TokenType.PRINT, TokenType.AS,
-            # Operators
+            TokenType.PRINT,
             TokenType.PLUS, TokenType.MINUS, TokenType.MUL, TokenType.IDIV, TokenType.MOD,
             TokenType.EQ, TokenType.NEQ, TokenType.LT, TokenType.GT,
-            TokenType.BACKTICK, TokenType.OPEN_BRACE, TokenType.CLOSE_BRACE,
         ]:
-            # We don't want to parse ELSE and END as standalone words here
-            if token.type in (TokenType.ELSE, TokenType.END):
-                self.errors.append(f"Parser error: Unexpected token '{token.value}'.")
-                return None
             return WordNode(token)
+
+        # Stubbed keywords for features in development (currently treated as words)
+        elif token.type in [
+            TokenType.WHILE, TokenType.DO, TokenType.DONE,
+            TokenType.RND, TokenType.IO, TokenType.USE, TokenType.ASM, TokenType.AS,
+        ]:
+            # Note: These will likely need their own specific parsing methods in the future.
+            return WordNode(token)
+
         elif token.type == TokenType.ILLEGAL:
             self.errors.append(f"Parser error: Illegal token '{token.value}' found.")
             return None
         
-        return None # Should not be reached if all tokens are handled
+        # Any other token at this level is unexpected. 
+        # ELSE, END, OPEN_BRACE, CLOSE_BRACE should be handled by their parent structures.
+        if token.type not in (TokenType.EOF, TokenType.ELSE, TokenType.END, TokenType.OPEN_BRACE, TokenType.CLOSE_BRACE):
+             self.errors.append(f"Parser error: Unexpected token '{token.value}'.")
+        return None
 
     def parse_if_statement(self):
         self.advance() # Consume 'IF'
@@ -158,6 +201,59 @@ class Parser:
             self.errors.append("Parser error: Expected 'END' to close 'IF' block.")
         
         return IfNode(true_branch, false_branch)
+
+    def parse_function_definition(self):
+        self.advance() # Consume 'DEF'
+
+        if self.current_token.type != TokenType.IDENTIFIER:
+            self.errors.append("Parser error: Expected function name after 'DEF'.")
+            return None
+        name = self.current_token.value
+        self.advance() # Consume function name
+
+        if self.current_token.type != TokenType.OPEN_BRACE:
+            self.errors.append("Parser error: Expected '{' after function name.")
+            return None
+        self.advance() # Consume '{'
+
+        body = ProgramNode()
+        while self.current_token.type not in (TokenType.CLOSE_BRACE, TokenType.EOF):
+            statement = self.parse_statement()
+            if statement:
+                body.statements.append(statement)
+            self.advance()
+
+        if self.current_token.type != TokenType.CLOSE_BRACE:
+            self.errors.append("Parser error: Expected '}' to close function definition.")
+            return None
+        
+        return FunctionDefinitionNode(name, body)
+
+    def parse_backtick_call(self):
+        self.advance() # Consume '`'
+
+        if self.current_token.type != TokenType.IDENTIFIER:
+            self.errors.append("Parser error: Expected identifier after '`'.")
+            return None
+        
+        routine_name_token = self.current_token
+        return BacktickNode(routine_name_token)
+
+    def parse_label(self):
+        self.advance() # consume ':'
+        if self.current_token.type != TokenType.IDENTIFIER:
+            self.errors.append(f"Parser error: Expected label name after ':'.")
+            return None
+        label_name = self.current_token.value
+        return LabelNode(label_name)
+
+    def parse_goto(self):
+        self.advance() # consume 'GOTO'
+        if self.current_token.type != TokenType.IDENTIFIER:
+            self.errors.append(f"Parser error: Expected label name after 'GOTO'.")
+            return None
+        label_name = self.current_token.value
+        return GotoNode(label_name)
 
     def parse_declaration(self):
         decl_token = self.current_token
@@ -208,7 +304,7 @@ class Parser:
 # --- Main (for testing) ----------------------------------------------------
 
 if __name__ == '__main__':
-    source = 'VAR my_ptr 1024 VALUE my_val 42 STRING my_greeting "hello" LIST my_buffer 100'
+    source = ':start VAR my_ptr 1024 VALUE my_val 42 STRING my_greeting "hello" LIST my_buffer 100 goto start'
     lexer = Lexer(source)
     parser = Parser(lexer)
     ast = parser.parse()
