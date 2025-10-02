@@ -4,7 +4,7 @@ from enum import Enum
 class TokenType(Enum):
     # Literals
     NUMBER = "NUMBER"
-    STRING = "STRING"
+    STRING = "STRING" # For literal values like "hello"
     
     # Identifiers
     IDENTIFIER = "IDENTIFIER"
@@ -28,7 +28,11 @@ class TokenType(Enum):
     PRINT = "PRINT"
     AS = "AS"
 
-
+    # Declaration Keywords
+    KEYWORD_VAR = "KEYWORD_VAR"
+    KEYWORD_LIST = "KEYWORD_LIST"
+    KEYWORD_STRING = "KEYWORD_STRING"
+    KEYWORD_VALUE = "KEYWORD_VALUE"
 
     # Operators
     PLUS = "+"
@@ -46,11 +50,6 @@ class TokenType(Enum):
     OPEN_BRACE = "{"
     CLOSE_BRACE = "}"
    
-
-
-
-    # ... add all other operators
-
     # Special Tokens
     ILLEGAL = "ILLEGAL"
     EOF = "EOF"
@@ -74,6 +73,11 @@ KEYWORDS = {
     "ASM": TokenType.ASM,
     "PRINT": TokenType.PRINT,
     "AS": TokenType.AS,
+    # Declaration Keywords
+    "VAR": TokenType.KEYWORD_VAR,
+    "LIST": TokenType.KEYWORD_LIST,
+    "STRING": TokenType.KEYWORD_STRING,
+    "VALUE": TokenType.KEYWORD_VALUE,
 }
 
 class Token:
@@ -252,7 +256,7 @@ class Lexer:
         return Token(TokenType.EOF, None, self.line, self.column)
 
 if __name__ == '__main__':
-    source = '10 == 20 // 2 != 0 "hello world" ASM DEF 12a DUP END {}'
+    source = 'VAR my_var 100 LIST my_list 20 STRING my_str "hello"'
     lexer = Lexer(source)
 
     print(f"Tokenizing source: \"{source}\"\n")
