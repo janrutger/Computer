@@ -1,3 +1,6 @@
+import os
+import json
+
 from parser import (
     ASTNode,
     ProgramNode,
@@ -15,6 +18,7 @@ from parser import (
     AddressOfNode,
     DereferenceNode,
     IONode,
+    UseNode,
     # The following nodes will be used in upcoming steps
     # AssignmentNode,
     # VariableNode,
@@ -34,6 +38,7 @@ class CodeGenerator:
         self.if_label_count = 0
         
         self.symbols = set()
+        self.current_context = "_main" # To scope labels for if/while
         self.function_symbols = set()
         self.labels = {}
         
@@ -59,6 +64,7 @@ class CodeGenerator:
         self.if_label_count = 0
         self.symbols = set()
         self.function_symbols = set()
+        self.current_context = "_main"
         self.labels = {}
         
         # Add the required $_start_memory_ symbol for pointer operations.
@@ -67,30 +73,44 @@ class CodeGenerator:
         self.symbols.add("$_start_memory_")
 
         # Main code generation
-        self.code_section = self.generate_program(ast)
-        # Check for -module flag to end with ret
-        if setModule:
-            self.code_section += "\n    ret\n" 
+        self.code_section = self.generate_program(ast, is_module_compilation=setModule)
 
         # Assemble the final code from sections
         final_assembly = ""
-        if self.header_section:
-            final_assembly += "# .HEADER\n" + self.header_section + "\n"
-        
-        
-        final_assembly += "# .CODE\n" + self.code_section
-        
-        if self.functions_section:
-            final_assembly += "\n# .FUNCTIONS\n" + self.functions_section
+
+        if setModule:
+            # For a module, we only care about functions and data.
+            # The main code section is not even generated for modules.
+            if self.functions_section:
+                final_assembly += "# .FUNCTIONS\n" + self.functions_section
+            if self.data_section:
+                final_assembly += "\n# .DATA\n" + self.data_section
+        else:
+            # For a normal program, assemble all sections.
+            if self.header_section:
+                final_assembly += "# .HEADER\n" + self.header_section + "\n"
             
-        if self.data_section:
-            final_assembly += "\n# .DATA\n" + self.data_section
-        
+            # For a runnable program, add the final 'ret' instruction.
+            self.code_section += "    ret\n"
+
+            final_assembly += "# .CODE\n" + self.code_section
+            
+            if self.functions_section:
+                final_assembly += "\n# .FUNCTIONS\n" + self.functions_section
+                
+            if self.data_section:
+                final_assembly += "\n# .DATA\n" + self.data_section
+
         return final_assembly
 
-    def generate_program(self, node):
+    def generate_program(self, node, is_module_compilation=False):
         code = ""
         for statement in node.statements:
+            # When compiling a module, only process declarations and function definitions.
+            # Ignore all other "mainline" code.
+            if is_module_compilation and not isinstance(statement, (VarDeclarationNode, FunctionDefinitionNode, UseNode)):
+                continue
+
             code += self.generate_statement(statement)
         return code
 
@@ -179,9 +199,16 @@ class CodeGenerator:
             # Add the function name to the function symbol table so it can be called
             self.function_symbols.add(node.name)
             
+            # Set context for unique label generation within the function
+            previous_context = self.current_context
+            self.current_context = node.name
+
             # Generate the assembly code for the function's body
             function_body_code = self.generate_program(node.body)
             
+            # Restore previous context
+            self.current_context = previous_context
+
             # Assemble the full function block with a label and a return instruction
             self.functions_section += f"@{node.name}\n"
             self.functions_section += function_body_code
@@ -201,8 +228,8 @@ class CodeGenerator:
             
             if node.false_branch:
                 false_code = self.generate_program(node.false_branch)
-                else_label = f"if_else_{if_id}"
-                end_label = f"if_end_{if_id}"
+                else_label = f"{self.current_context}_if_else_{if_id}"
+                end_label = f"{self.current_context}_if_end_{if_id}"
                 
                 return (
                     f"    call @pop_A\n"
@@ -215,7 +242,7 @@ class CodeGenerator:
                     f":{end_label}\n"
                 )
             else:
-                end_label = f"if_end_{if_id}"
+                end_label = f"{self.current_context}_if_end_{if_id}"
                 return (
                     f"    call @pop_A\n"
                     f"    tst A 0\n"
@@ -227,8 +254,8 @@ class CodeGenerator:
         elif isinstance(node, WhileNode):
             loop_id = self.while_loop_count
             self.while_loop_count += 1
-            start_label = f"while_start_{loop_id}"
-            end_label = f"while_end_{loop_id}"
+            start_label = f"{self.current_context}_while_start_{loop_id}"
+            end_label = f"{self.current_context}_while_end_{loop_id}"
 
             condition_code = self.generate_program(node.condition)
             body_code = self.generate_program(node.body)
@@ -264,6 +291,45 @@ class CodeGenerator:
             # This part is now generated for ALL IO commands.
             code += f"    ldi A {channel}\n    call @push_A\n    ldi A {command_code}\n    call @push_A\n    call @rt_udc_control\n"
             return code
+
+        elif isinstance(node, UseNode):
+            module_name = node.module_name
+            # Assuming modules are in a 'lib' directory relative to the compiler's execution path
+            # A more robust solution might search multiple paths.
+            module_dir = "compiler/lib"
+            sym_path = os.path.join(module_dir, f"{module_name}.sym")
+            smod_path = os.path.join(module_dir, f"{module_name}.smod")
+
+            # 1. Load symbols from .sym file
+            try:
+                with open(sym_path, 'r') as f:
+                    symbols_data = json.load(f)
+                
+                # Add symbols to the current compilation context
+                for func in symbols_data.get("functions", []):
+                    self.function_symbols.add(func)
+                for var in symbols_data.get("variables", []):
+                    self.symbols.add(var)
+
+            except FileNotFoundError:
+                raise Exception(f"Symbol file not found for module '{module_name}': {sym_path}")
+            except json.JSONDecodeError:
+                raise Exception(f"Could not parse symbol file for module '{module_name}': {sym_path}")
+
+            # 2. Load code from .smod file
+            try:
+                with open(smod_path, 'r') as f:
+                    module_code = f.read()
+                
+                # A simple way to split sections. A more robust parser could be used.
+                if "# .FUNCTIONS" in module_code:
+                    self.functions_section += module_code.split("# .FUNCTIONS")[1].split("# .DATA")[0]
+                if "# .DATA" in module_code:
+                    self.data_section += module_code.split("# .DATA")[1]
+            except FileNotFoundError:
+                raise Exception(f"Module file not found for module '{module_name}': {smod_path}")
+
+            return "" # The USE statement itself produces no inline code
 
         else:
             raise Exception(f"Unknown AST node type: {type(node)}")

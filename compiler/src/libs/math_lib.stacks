@@ -1,0 +1,6 @@
+DEF gcd {
+    WHILE DUP 0 != DO
+        SWAP OVER %
+    DONE
+    DROP
+}

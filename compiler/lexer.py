@@ -124,6 +124,10 @@ class Lexer:
         while self.current_char is not None and self.current_char.isspace():
             self.advance()
 
+    def skip_comment(self):
+        while self.current_char is not None and self.current_char != '\n':
+            self.advance()
+
     def get_number(self):
         result = ''
         start_column = self.column
@@ -179,6 +183,15 @@ class Lexer:
         while self.current_char is not None:
             if self.current_char.isspace():
                 self.skip_whitespace()
+                continue
+
+            # Handle full-line comments
+            if self.current_char == '#':
+                self.skip_comment()
+                continue
+            # Handle inline/end-of-line comments
+            if self.current_char == ';':
+                self.skip_comment()
                 continue
 
             if self.current_char == '"':

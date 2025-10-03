@@ -1,0 +1,45 @@
+# maze.stacks
+#
+# Generates a simple random maze on the virtual LCD screen.
+# This is a compiled version of the original maze.spc interpreter script.
+
+# --- Variable Declarations ---
+VALUE X 0
+VALUE Y 0
+
+# --- Function Definitions ---
+
+# Initializes the LCD screen on UDC channel 2
+DEF screen {
+  0 AS X
+  0 AS Y 
+  IO 2 ONLINE   ; Bring screen online
+  IO 2 NEW      ; Clear the screen
+  3 IO 2 COLOR  ; Set draw color to Cyan
+  3 IO 2 MODE   ; Set to Sprite mode with double buffering
+}
+
+
+# --- Main Program ---
+
+screen  ; Initialize the screen
+
+# Loop through each row (Y)
+WHILE Y 60 < DO
+  # Loop through each column (X)
+  WHILE X 80 < DO
+    # Generate a random number to decide between wall and path
+    RND 2 * 999 // 0 == IF
+        129 IO 2 DRAW  ; Draw a wall sprite ('/')
+    ELSE
+        130 IO 2 DRAW  ; Draw a path sprite ('\')
+    END
+    X 1 + AS X
+    X IO 2 X         ; Set next X coordinate
+  DONE
+  IO 2 FLIP          ; Flip the buffer to show the completed row
+  0 AS X
+  X IO 2 X           ; Reset X coordinate for next row
+  Y 1 + AS Y
+  Y IO 2 Y           ; Set next Y coordinate
+DONE

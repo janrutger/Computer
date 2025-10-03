@@ -151,6 +151,15 @@ class IONode(ASTNode):
     def __repr__(self):
         return f"IONode(channel={self.channel}, command='{self.command}')"
 
+class UseNode(ASTNode):
+    def __init__(self, module_name_token):
+        self.module_name_token = module_name_token
+        self.module_name = module_name_token.value
+
+    def __repr__(self):
+        return f"UseNode(module='{self.module_name}')"
+
+
 
 # --- Parser ----------------------------------------------------------------
 
@@ -214,7 +223,7 @@ class Parser:
 
         # Stubbed keywords for features in development (currently treated as words)
         elif token.type in [
-            TokenType.USE, TokenType.ASM,
+            TokenType.ASM,
         ]:
             # Note: These will likely need their own specific parsing methods in the future.
             return WordNode(token)
@@ -225,8 +234,11 @@ class Parser:
         
         # Any other token at this level is unexpected. 
         # ELSE, END, OPEN_BRACE, CLOSE_BRACE should be handled by their parent structures.
-        if token.type not in (TokenType.EOF, TokenType.ELSE, TokenType.END, TokenType.OPEN_BRACE, TokenType.CLOSE_BRACE, TokenType.DO, TokenType.DONE):
-             self.errors.append(f"Parser error: Unexpected token '{token.value}'.")
+        if token.type not in (TokenType.EOF, TokenType.ELSE, TokenType.END, TokenType.OPEN_BRACE, TokenType.CLOSE_BRACE, TokenType.DO, TokenType.DONE, TokenType.USE):
+            # Special case for USE, which we now handle properly
+            self.errors.append(f"Parser error: Unexpected token '{token.value}'.")
+        elif token.type == TokenType.USE:
+            return self.parse_use_statement()
         return None
 
     def parse_if_statement(self):
@@ -374,6 +386,16 @@ class Parser:
         # The command token value will be validated in the code generator.
 
         return IONode(channel_token, command_token)
+
+    def parse_use_statement(self):
+        self.advance() # Consume 'USE'
+
+        if self.current_token.type != TokenType.IDENTIFIER:
+            self.errors.append(f"Parser error: Expected module name (identifier) after 'USE', but got {self.current_token.type}.")
+            return None
+        
+        module_name_token = self.current_token
+        return UseNode(module_name_token)
 
 
     def parse_declaration(self):

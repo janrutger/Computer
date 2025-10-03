@@ -3,13 +3,14 @@ from lexer import Lexer
 from parser import Parser
 from codegen import CodeGenerator
 import os
+import json
 
 def main():
     parser = argparse.ArgumentParser(description='Compile a source file to assembly.')
     parser.add_argument('input_file', help='The source file to compile.')
     parser.add_argument('-o', '--output', help='The output assembly file.')
 
-    # 👇 Add the new flag here
+    # Add the flag to compile as a library module
     parser.add_argument(
         '-module', '--module',
         action='store_true',  # Defines it as a boolean flag (True if present)
@@ -20,15 +21,24 @@ def main():
 
     args = parser.parse_args()
 
-    # If no output file is specified, create one based on the input file name
-    if not args.output:
-        base_name = os.path.splitext(args.input_file)[0]
-        args.output = base_name + '.asm'
+    is_module_compilation = args.module
 
     if args.module:
-        setModule = True
+        # For modules, output is .smod and .sym, not .asm
+        # Get just the filename from the input path (e.g., "math_lib.stacks")
+        input_filename = os.path.basename(args.input_file)
+        # Get the module name without extension (e.g., "math_lib")
+        module_name = os.path.splitext(input_filename)[0]
+        
+        # Define the output directory for libraries
+        output_dir = "compiler/lib"
+        smod_output = os.path.join(output_dir, f"{module_name}.smod")
+        sym_output = os.path.join(output_dir, f"{module_name}.sym")
     else:
-        setModule = False
+        # If no output file is specified for a normal compile, create .asm
+        if not args.output:
+            base_name = os.path.splitext(args.input_file)[0]
+            args.output = base_name + '.asm'
 
 
     try:
@@ -56,12 +66,27 @@ def main():
     
     try:
         codegen = CodeGenerator()
-        assembly = codegen.generate(ast, setModule)
+        assembly = codegen.generate(ast, is_module_compilation)
 
-        with open(args.output, 'w') as f:
-            f.write(assembly)
-        
-        print(f"Successfully compiled '{args.input_file}' to '{args.output}'.")
+        if is_module_compilation:
+            # Write the .smod file
+            os.makedirs(os.path.dirname(smod_output), exist_ok=True)
+            with open(smod_output, 'w') as f:
+                f.write(assembly)
+            print(f"Successfully compiled module to '{smod_output}'.")
+
+            # Write the .sym file
+            symbols_to_export = {
+                "functions": list(codegen.function_symbols),
+                "variables": list(codegen.symbols)
+            }
+            with open(sym_output, 'w') as f:
+                json.dump(symbols_to_export, f, indent=2)
+            print(f"Successfully wrote symbols to '{sym_output}'.")
+        else:
+            with open(args.output, 'w') as f:
+                f.write(assembly)
+            print(f"Successfully compiled '{args.input_file}' to '{args.output}'.")
 
     except Exception as e:
         print(f"--- CODEGEN ERROR---\n{e}")

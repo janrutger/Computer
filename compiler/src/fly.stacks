@@ -1,16 +1,14 @@
-IO 1 ONLINE
-IO 1 NEW
+USE math_lib
+
+# Init the plotter
+IO 1 ONLINE    ; set plotter online
+IO 1 NEW       ; create new plot
 
 DEF plot {
     IO 1 SEND
 }
 
-DEF gcd {
-    WHILE DUP 0 != DO
-        SWAP OVER %
-    DONE
-    DROP
-}
+
 
 1 plot
 1 plot
