@@ -1,11 +1,11 @@
 # The Stacks Programming Language Manual
 
-## Introduction
+## 1. Introduction
 
-Welcome to Stacks, a stack-oriented programming language designed for simplicity and low-level control. It compiles directly into an assembly-like language for a custom virtual machine. Its syntax is minimal, and its operations are based on manipulating a central data stack.
+Welcome to Stacks, a stack-oriented programming language designed for simplicity and low-level control for the Stern-XT computer. It compiles directly into Stern-XT assembly. Its syntax is minimal, and its operations are based on manipulating a central data stack using Reverse Polish Notation (RPN).
 
-This manual provides a comprehensive guide to the language's features, based on its implementation in the compiler.
-
+This manual provides a comprehensive guide to the language's features as implemented in the Stacks compiler.
+---
 ## Core Concepts
 
 ### Stack-Based Operations
@@ -21,15 +21,15 @@ For example, to add two numbers, you first push both numbers onto the stack and 
 3.  `+` pops 10 and 5, calculates `5 + 10`, and pushes `15`. Stack: `[15]`
 
 ### Data Types
+The language supports two primary literal data types:
 
-The language has two primary literal data types:
+*   **Numbers:** Positive integers (e.g., `42`, `100`).
+*   **Strings:** Sequences of characters enclosed in double quotes (e.g., `"hello world"`). When a string literal is used, a pointer to its memory location is pushed onto the stack.
 
-*   **Numbers:** Integers (e.g., `42`, `-100`).
-*   **Strings:** Sequences of characters enclosed in double quotes (e.g., `"hello world"`). When a string literal is used in code, a pointer to its location in memory is pushed onto the stack.
+---
+## 2. Language Reference
 
-## Language Reference
-
-### 1. Literals
+### 2.1. Literals
 
 *   **Numbers:** Any sequence of digits is treated as a number and its value is pushed onto the stack.
     ```
@@ -40,14 +40,14 @@ The language has two primary literal data types:
     "This is a string"
     ```
 
-### 2. Stack Manipulation
+### 2.2. Stack Manipulation
 
 *   `DUP`: Duplicates the top item on the stack.
 *   `SWAP`: Swaps the top two items on the stack.
 *   `DROP`: Removes the top item from the stack.
 *   `OVER`: Copies the second item from the top of the stack and pushes it to the top.
 
-### 3. Arithmetic and Comparison
+### 2.3. Arithmetic and Comparison
 
 These operators pop the required operands from the stack and push the result.
 
@@ -62,7 +62,7 @@ These operators pop the required operands from the stack and push the result.
 *   `>`: Greater than.
 *   `<`: Less than.
 
-### 4. Variable and Data Declaration
+### 2.4. Variables and Data
 
 Variables and data structures are declared at the top level.
 
@@ -82,9 +82,34 @@ Variables and data structures are declared at the top level.
     ```
     STRING greeting "Hello!"
     ```
-To use a declared variable, simply use its name. This will push its value (or address for `VAR` and `LIST`) onto the stack.
 
-### 5. Control Flow
+#### Using Variables
+
+*   **Reading a Value:** To push a variable's value onto the stack, simply use its name.
+    ```
+    my_var  # Pushes the value of my_var onto the stack
+    ```
+*   **Assigning a Value:** Use the `AS` keyword to pop a value from the stack and store it in a variable.
+    ```
+    100 AS my_var  # Sets my_var to 100
+    ```
+
+### 2.5. Pointers and Memory
+
+*   **Getting an Address (`&`):** The `&` operator gets the memory address of a variable and pushes it onto the stack.
+    ```
+    &my_var  # Pushes the address of my_var
+    ```
+*   **Dereferencing (Reading):** The `*` operator before a variable name reads the value from the memory address *contained within* that variable.
+    ```
+    *my_pointer  # Reads from the address stored in my_pointer
+    ```
+*   **Dereferencing (Writing):** The `*` operator can also be used with `AS` to write to a memory address.
+    ```
+    42 AS *my_pointer # Writes 42 to the address stored in my_pointer
+    ```
+
+### 2.6. Control Flow
 
 *   **Labels:** Define a location in the code.
     ```
@@ -94,7 +119,7 @@ To use a declared variable, simply use its name. This will push its value (or ad
     ```
     GOTO my_label
     ```
-*   **Conditional Blocks:** The `IF`/`ELSE`/`END` structure allows for conditional execution. The `IF` statement pops a value from the stack; if it's non-zero (true), the `true` branch is executed.
+*   **Conditional Blocks (`IF`/`ELSE`/`END`):** The `IF` statement pops a value from the stack. If it's non-zero (true), the code block until `ELSE` or `END` is executed.
     ```
     1           # Push a "true" value
     IF
@@ -103,11 +128,16 @@ To use a declared variable, simply use its name. This will push its value (or ad
         "It was false!" PRINT
     END
     ```
-    *(Note: The code generator implementation for `IF` is currently a placeholder and will be fully implemented in a future version.)*
+*   **Loops (`WHILE`/`DO`/`DONE`):** The `WHILE` loop executes a block of code as long as a condition is true. The condition is evaluated at the start of each iteration.
+    ```
+    WHILE counter 0 > DO
+        # Loop body
+    DONE
+    ```
 
-### 6. Functions
+### 2.7. Functions
 
-*   **Definition:** Functions are defined using `DEF`, a name, and a body enclosed in curly braces `{}`.
+*   **Definition:** Functions are defined using `DEF`, a name, and a body enclosed in curly braces `{}`. The function name becomes a new word in the language.
     ```
     DEF my_function {
         # Function body
@@ -119,20 +149,37 @@ To use a declared variable, simply use its name. This will push its value (or ad
     5 my_function PRINT  # Pushes 5, calls the function, prints the result (25)
     ```
 
-### 7. System Routines
+### 2.8. Hardware and System Interaction
 
-The language provides a way to call low-level system routines using the backtick (`` ` ``) syntax.
-
-*   `` `routine_name ``: Calls the specified system routine.
+*   **System Routines (Backtick):** Call low-level assembly routines directly using the backtick (`` ` ``).
     ```
-    `read_keyboard  # Example system call
+    `rt_add  # Directly calls the runtime's addition routine
+    ```
+*   **Device I/O (`IO`):** Communicate with hardware devices through the Universal Device Controller (UDC).
+    *   **Syntax:** `[value] IO <channel> <command>`
+    *   The `IO` instruction interacts with the runtime, which expects `Value`, `Command`, and `Channel` on the stack. The compiler handles the stack setup.
+    *   For commands that require a value from the stack (e.g., `SEND`), the value must be pushed first.
+    *   For commands that do not require a value (e.g., `ONLINE`, `GET`), the compiler automatically pushes a dummy `0`.
+    
+    **Examples:**
+    ```
+    # Send the value 150 to the plotter on channel 1
+    150 IO 1 SEND
+
+    # Bring the plotter on channel 1 online
+    IO 1 ONLINE
+
+    # Get a value from a sensor on channel 0
+    IO 0 GET
     ```
 
-### 8. Output
+### 2.9. Miscellaneous
 
-*   `PRINT`: Pops the top value from the stack and prints it to the standard output.
+*   `PRINT`: Pops the top value from the stack and prints it to the console.
+*   `RND`: Pushes a pseudo-random number onto the stack.
 
-## Code Examples
+---
+## 3. Code Examples
 
 ### Example 1: Simple Arithmetic
 

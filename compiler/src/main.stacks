@@ -1,2 +1,36 @@
-12 30 + PRINT
-42 PRINT
+IO 1 ONLINE
+IO 1 NEW
+
+DEF plot {
+    IO 1 SEND
+}
+
+DEF gcd {
+    WHILE DUP 0 != DO
+        SWAP OVER %
+    DONE
+    DROP
+}
+
+1 plot
+1 plot
+
+VALUE P 1
+VALUE N 2
+VALUE C 0
+VALUE R 0
+
+
+
+WHILE N 700 < DO
+    P N gcd AS C 
+    C 1 == IF
+        P N 1 + + AS R 
+    ELSE 
+        P C // AS R 
+    END
+
+    R plot
+    R AS P 
+    N 1 + AS N 
+DONE

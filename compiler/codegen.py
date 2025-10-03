@@ -14,6 +14,7 @@ from parser import (
     AsNode,
     AddressOfNode,
     DereferenceNode,
+    IONode,
     # The following nodes will be used in upcoming steps
     # AssignmentNode,
     # VariableNode,
@@ -35,6 +36,15 @@ class CodeGenerator:
         self.symbols = set()
         self.function_symbols = set()
         self.labels = {}
+        
+        self.udc_commands = {
+            # Generic Commands
+            'INIT': 0, 'ONLINE': 1, 'OFFLINE': 2, 'RESET': 3,
+            # Device-Specific Commands
+            'NEW': 10, 'SEND': 11, 'GET': 12, 'COLOR': 13, 'MODE': 14,
+            'X': 15, 'Y': 16, 'DRAW': 17, 'FLIP': 18,
+        }
+
 
 
     def generate(self, ast, setModule=False):
@@ -115,7 +125,7 @@ class CodeGenerator:
             if node.dereference:
                 return f"    call @pop_B\n    ldm I ${var_name}\n    stx B $_start_memory_\n"
             else:
-                return f"    call @pop_A\n    stm A ${var_name}\n"
+                return f"    call @pop_A\n    sto A ${var_name}\n"
 
         elif isinstance(node, AddressOfNode):
             return f"    ldi A ${node.var_name}\n    call @push_A\n"
@@ -233,6 +243,27 @@ class CodeGenerator:
                 f"    jmp :{start_label}\n"
                 f":{end_label}\n"
             )
+        
+        elif isinstance(node, IONode):
+            command_upper = node.command.upper()
+            if command_upper not in self.udc_commands:
+                raise Exception(f"Unknown IO command '{node.command}'.")
+            
+            command_code = self.udc_commands[command_upper]
+            channel = node.channel
+
+            code = ""
+            # For commands that don't take a value from the stack, we push a 0.
+            # The runtime routine `&io` always expects 3 items: value, command, channel.
+            if command_upper in ['ONLINE', 'OFFLINE', 'RESET', 'NEW', 'GET', 'FLIP', 'INIT']:
+                code += (
+                    f"    ldi A 0\n"              # Push dummy value 0
+                    f"    call @push_A\n"
+                )
+            
+            # This part is now generated for ALL IO commands.
+            code += f"    ldi A {channel}\n    call @push_A\n    ldi A {command_code}\n    call @push_A\n    call @rt_udc_control\n"
+            return code
 
         else:
             raise Exception(f"Unknown AST node type: {type(node)}")
@@ -261,6 +292,7 @@ class CodeGenerator:
             'DROP': '@rt_drop',
             'OVER': '@rt_over',
             'PRINT': '@rt_print_tos',
+            'RND': '@rt_rnd',
         }
 
         if op.upper() in op_map:

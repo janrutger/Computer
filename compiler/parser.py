@@ -141,6 +141,16 @@ class GotoNode(ASTNode):
     def __repr__(self):
         return f"GotoNode('{self.label_name}')"
 
+class IONode(ASTNode):
+    def __init__(self, channel_token, command_token):
+        self.channel_token = channel_token
+        self.command_token = command_token
+        self.channel = channel_token.value
+        self.command = command_token.value
+
+    def __repr__(self):
+        return f"IONode(channel={self.channel}, command='{self.command}')"
+
 
 # --- Parser ----------------------------------------------------------------
 
@@ -189,6 +199,8 @@ class Parser:
             return self.parse_address_of()
         elif token.type == TokenType.DEREF_VAR:
             return DereferenceNode(token)
+        elif token.type == TokenType.IO:
+            return self.parse_io_statement()
         
         # Fully implemented keywords and operators that are treated as "words"
         elif token.type in [
@@ -196,13 +208,13 @@ class Parser:
             TokenType.DUP, TokenType.SWAP, TokenType.DROP, TokenType.OVER,
             TokenType.PRINT,
             TokenType.PLUS, TokenType.MINUS, TokenType.MUL, TokenType.IDIV, TokenType.MOD,
-            TokenType.EQ, TokenType.NEQ, TokenType.LT, TokenType.GT,
+            TokenType.EQ, TokenType.NEQ, TokenType.LT, TokenType.GT, TokenType.RND,
         ]:
             return WordNode(token)
 
         # Stubbed keywords for features in development (currently treated as words)
         elif token.type in [
-            TokenType.RND, TokenType.IO, TokenType.USE, TokenType.ASM,
+            TokenType.USE, TokenType.ASM,
         ]:
             # Note: These will likely need their own specific parsing methods in the future.
             return WordNode(token)
@@ -345,6 +357,24 @@ class Parser:
             return None
         
         return AsNode(var_name_token, dereference)
+
+    def parse_io_statement(self):
+        self.advance() # Consume 'IO'
+
+        if self.current_token.type != TokenType.NUMBER:
+            self.errors.append(f"Parser error: Expected channel number after 'IO', but got {self.current_token.type}.")
+            return None
+        channel_token = self.current_token
+        self.advance() # Consume channel number
+
+        if self.current_token.type != TokenType.IDENTIFIER:
+            self.errors.append(f"Parser error: Expected command identifier (e.g., SEND, GET) after channel, but got {self.current_token.type}.")
+            return None
+        command_token = self.current_token
+        # The command token value will be validated in the code generator.
+
+        return IONode(channel_token, command_token)
+
 
     def parse_declaration(self):
         decl_token = self.current_token
