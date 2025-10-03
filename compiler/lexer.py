@@ -8,6 +8,7 @@ class TokenType(Enum):
     
     # Identifiers
     IDENTIFIER = "IDENTIFIER"
+    DEREF_VAR = "DEREF_VAR" # For *varname
 
     # Keywords
     DEF = "DEF"
@@ -48,6 +49,7 @@ class TokenType(Enum):
     LT = "<"
     GT = ">"
 
+    AMPERSAND = "&"
     COLON = ":"
     BACKTICK = "`"
     OPEN_BRACE = "{"
@@ -206,53 +208,67 @@ class Lexer:
                 self.advance()
                 return Token(TokenType.NEQ, '!=', self.line, start_column)
 
-            if self.current_char == '+':
+            if self.current_char == '+' :
                 token = Token(TokenType.PLUS, '+', self.line, self.column)
                 self.advance()
                 return token
 
-            if self.current_char == '-':
+            if self.current_char == '-' :
                 token = Token(TokenType.MINUS, '-', self.line, self.column)
                 self.advance()
                 return token
             
-            if self.current_char == '*':
-                token = Token(TokenType.MUL, '*', self.line, self.column)
-                self.advance()
-                return token
+            if self.current_char == '*' :
+                peek_char = self.peek()
+                if peek_char is not None and (peek_char.isalpha() or peek_char == '_'):
+                    start_line = self.line
+                    start_column = self.column
+                    self.advance() # consume the '*'.
+                    identifier_token = self.get_identifier()
+                    return Token(TokenType.DEREF_VAR, identifier_token.value, start_line, start_column)
+                else:
+                    # This is multiplication
+                    token = Token(TokenType.MUL, '*', self.line, self.column)
+                    self.advance()
+                    return token
 
-            if self.current_char == '%':
+            if self.current_char == '%' :
                 token = Token(TokenType.MOD, '%', self.line, self.column)
                 self.advance()
                 return token
             
-            if self.current_char == '>':
+            if self.current_char == '>' :
                 token = Token(TokenType.GT, '>', self.line, self.column)
                 self.advance()
                 return token
 
-            if self.current_char == '<':
+            if self.current_char == '<' :
                 token = Token(TokenType.LT, '<', self.line, self.column)
                 self.advance()
                 return token
             
-            if self.current_char == '{':
+            if self.current_char == '{' :
                 token = Token(TokenType.OPEN_BRACE, '{', self.line, self.column)
                 self.advance()
                 return token
             
-            if self.current_char == '}':
+            if self.current_char == '}' :
                 token = Token(TokenType.CLOSE_BRACE, '}', self.line, self.column)
                 self.advance()
                 return token
 
-            if self.current_char == ':':
+            if self.current_char == ':' :
                 token = Token(TokenType.COLON, ':', self.line, self.column)
                 self.advance()
                 return token
 
-            if self.current_char == '`':
+            if self.current_char == '`' :
                 token = Token(TokenType.BACKTICK, '`', self.line, self.column)
+                self.advance()
+                return token
+
+            if self.current_char == '&' :
+                token = Token(TokenType.AMPERSAND, '&', self.line, self.column)
                 self.advance()
                 return token
             

@@ -1,6 +1,6 @@
 # compiler/parser.py
 
-from .lexer import Lexer, Token, TokenType
+from lexer import Lexer, Token, TokenType
 
 # --- AST Nodes -------------------------------------------------------------
 
@@ -55,6 +55,31 @@ class VariableNode(ASTNode):
     def __repr__(self):
         return f"VariableNode('{self.var_name}')"
 
+class AddressOfNode(ASTNode):
+    def __init__(self, var_name_token):
+        self.token = var_name_token
+        self.var_name = var_name_token.value
+
+    def __repr__(self):
+        return f"AddressOfNode('{self.var_name}')"
+
+class DereferenceNode(ASTNode):
+    def __init__(self, var_name_token):
+        self.token = var_name_token
+        self.var_name = var_name_token.value
+
+    def __repr__(self):
+        return f"DereferenceNode('{self.var_name}')"
+
+class AsNode(ASTNode):
+    def __init__(self, var_name_token, dereference=False):
+        self.var_name_token = var_name_token
+        self.var_name = var_name_token.value
+        self.dereference = dereference
+
+    def __repr__(self):
+        return f"AsNode(var='{self.var_name}', deref={self.dereference})"
+
 class IfNode(ASTNode):
     def __init__(self, true_branch, false_branch=None):
         self.true_branch = true_branch
@@ -62,6 +87,14 @@ class IfNode(ASTNode):
 
     def __repr__(self):
         return f"IfNode(true={self.true_branch}, false={self.false_branch})"
+
+class WhileNode(ASTNode):
+    def __init__(self, condition, body):
+        self.condition = condition
+        self.body = body
+
+    def __repr__(self):
+        return f"WhileNode(condition={self.condition}, body={self.body})"
 
 class VarDeclarationNode(ASTNode):
     def __init__(self, decl_type, var_name, size=None, initial_value=None):
@@ -138,6 +171,8 @@ class Parser:
             return StringNode(token)
         elif token.type == TokenType.IF:
             return self.parse_if_statement()
+        elif token.type == TokenType.WHILE:
+            return self.parse_while_statement()
         elif token.type == TokenType.DEF:
             return self.parse_function_definition()
         elif token.type == TokenType.BACKTICK:
@@ -148,6 +183,12 @@ class Parser:
             return self.parse_label()
         elif token.type == TokenType.GOTO:
             return self.parse_goto()
+        elif token.type == TokenType.AS:
+            return self.parse_as_statement()
+        elif token.type == TokenType.AMPERSAND:
+            return self.parse_address_of()
+        elif token.type == TokenType.DEREF_VAR:
+            return DereferenceNode(token)
         
         # Fully implemented keywords and operators that are treated as "words"
         elif token.type in [
@@ -161,8 +202,7 @@ class Parser:
 
         # Stubbed keywords for features in development (currently treated as words)
         elif token.type in [
-            TokenType.WHILE, TokenType.DO, TokenType.DONE,
-            TokenType.RND, TokenType.IO, TokenType.USE, TokenType.ASM, TokenType.AS,
+            TokenType.RND, TokenType.IO, TokenType.USE, TokenType.ASM,
         ]:
             # Note: These will likely need their own specific parsing methods in the future.
             return WordNode(token)
@@ -173,7 +213,7 @@ class Parser:
         
         # Any other token at this level is unexpected. 
         # ELSE, END, OPEN_BRACE, CLOSE_BRACE should be handled by their parent structures.
-        if token.type not in (TokenType.EOF, TokenType.ELSE, TokenType.END, TokenType.OPEN_BRACE, TokenType.CLOSE_BRACE):
+        if token.type not in (TokenType.EOF, TokenType.ELSE, TokenType.END, TokenType.OPEN_BRACE, TokenType.CLOSE_BRACE, TokenType.DO, TokenType.DONE):
              self.errors.append(f"Parser error: Unexpected token '{token.value}'.")
         return None
 
@@ -201,6 +241,34 @@ class Parser:
             self.errors.append("Parser error: Expected 'END' to close 'IF' block.")
         
         return IfNode(true_branch, false_branch)
+
+    def parse_while_statement(self):
+        self.advance() # Consume 'WHILE'
+        
+        condition = ProgramNode()
+        while self.current_token.type not in (TokenType.DO, TokenType.EOF):
+            statement = self.parse_statement()
+            if statement:
+                condition.statements.append(statement)
+            self.advance()
+
+        if self.current_token.type != TokenType.DO:
+            self.errors.append("Parser error: Expected 'DO' to start 'WHILE' loop body.")
+            return None
+        
+        self.advance() # Consume 'DO'
+        
+        body = ProgramNode()
+        while self.current_token.type not in (TokenType.DONE, TokenType.EOF):
+            statement = self.parse_statement()
+            if statement:
+                body.statements.append(statement)
+            self.advance()
+
+        if self.current_token.type != TokenType.DONE:
+            self.errors.append("Parser error: Expected 'DONE' to close 'WHILE' loop.")
+        
+        return WhileNode(condition, body)
 
     def parse_function_definition(self):
         self.advance() # Consume 'DEF'
@@ -254,6 +322,29 @@ class Parser:
             return None
         label_name = self.current_token.value
         return GotoNode(label_name)
+
+    def parse_address_of(self):
+        self.advance() # consume '&'
+        if self.current_token.type != TokenType.IDENTIFIER:
+            self.errors.append(f"Parser error: Expected identifier after '&'.")
+            return None
+        return AddressOfNode(self.current_token)
+
+    def parse_as_statement(self):
+        self.advance() # Consume 'AS'
+
+        dereference = False
+        
+        if self.current_token.type == TokenType.DEREF_VAR:
+            dereference = True
+            var_name_token = self.current_token
+        elif self.current_token.type == TokenType.IDENTIFIER:
+            var_name_token = self.current_token
+        else:
+            self.errors.append("Parser error: Expected identifier or *identifier after 'AS'.")
+            return None
+        
+        return AsNode(var_name_token, dereference)
 
     def parse_declaration(self):
         decl_token = self.current_token

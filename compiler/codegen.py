@@ -1,20 +1,24 @@
-from .parser import (
+from parser import (
     ASTNode,
     ProgramNode,
     NumberNode,
     StringNode,
     WordNode,
     IfNode,
+    WhileNode,
     VarDeclarationNode,
     FunctionDefinitionNode,
     BacktickNode,
     GotoNode,
     LabelNode,
+    AsNode,
+    AddressOfNode,
+    DereferenceNode,
     # The following nodes will be used in upcoming steps
     # AssignmentNode,
     # VariableNode,
 )
-from .lexer import TokenType
+from lexer import TokenType
 
 class CodeGenerator:
     def __init__(self):
@@ -25,13 +29,15 @@ class CodeGenerator:
         
         self.string_literals = {}
         self.next_string_label = 0
+        self.while_loop_count = 0
+        self.if_label_count = 0
         
         self.symbols = set()
         self.function_symbols = set()
         self.labels = {}
 
 
-    def generate(self, ast):
+    def generate(self, ast, setModule=False):
         # Reset sections for each generation run
         self.header_section = ""
         self.code_section = ""
@@ -39,17 +45,28 @@ class CodeGenerator:
         self.functions_section = ""
         self.string_literals = {}
         self.next_string_label = 0
+        self.while_loop_count = 0
+        self.if_label_count = 0
         self.symbols = set()
         self.function_symbols = set()
         self.labels = {}
         
+        # Add the required $_start_memory_ symbol for pointer operations.
+        self.header_section += ". $_start_memory_ 1\n"
+        self.data_section += "% $_start_memory_ 0\n"
+        self.symbols.add("$_start_memory_")
+
         # Main code generation
         self.code_section = self.generate_program(ast)
+        # Check for -module flag to end with ret
+        if setModule:
+            self.code_section += "\n    ret\n" 
 
         # Assemble the final code from sections
         final_assembly = ""
         if self.header_section:
             final_assembly += "# .HEADER\n" + self.header_section + "\n"
+        
         
         final_assembly += "# .CODE\n" + self.code_section
         
@@ -88,6 +105,23 @@ class CodeGenerator:
                 return f"    jmp :{node.label_name}\n"
             else:
                 raise Exception(f"Undefined label '{node.label_name}'.")
+
+        elif isinstance(node, AsNode):
+            var_name = node.var_name
+            if var_name not in self.symbols:
+                self.symbols.add(var_name)
+                self.header_section += f". ${var_name} 1\n"
+            
+            if node.dereference:
+                return f"    call @pop_B\n    ldm I ${var_name}\n    stx B $_start_memory_\n"
+            else:
+                return f"    call @pop_A\n    stm A ${var_name}\n"
+
+        elif isinstance(node, AddressOfNode):
+            return f"    ldi A ${node.var_name}\n    call @push_A\n"
+
+        elif isinstance(node, DereferenceNode):
+            return f"    ldm I ${node.var_name}\n    ldx A $_start_memory_\n    call @push_A\n"
 
         elif isinstance(node, VarDeclarationNode):
             var_name = node.var_name
@@ -128,7 +162,7 @@ class CodeGenerator:
 
             elif node.decl_type == 'VALUE':
                 self.header_section += f". ${var_name} 1\n"
-                self.data_section += f"% {var_name} {node.initial_value}\n"
+                self.data_section += f"% ${var_name} {node.initial_value}\n"
                 return ""
 
         elif isinstance(node, FunctionDefinitionNode):
@@ -150,13 +184,55 @@ class CodeGenerator:
             return self.generate_word(node)
 
         elif isinstance(node, IfNode):
-            # For now, just generate the content of the branches
-            # A real implementation needs labels and jumps
+            if_id = self.if_label_count
+            self.if_label_count += 1
+            
             true_code = self.generate_program(node.true_branch)
-            false_code = ""
+            
             if node.false_branch:
                 false_code = self.generate_program(node.false_branch)
-            return f"# IF statement placeholder\n{true_code}{false_code}"
+                else_label = f"if_else_{if_id}"
+                end_label = f"if_end_{if_id}"
+                
+                return (
+                    f"    call @pop_A\n"
+                    f"    tst A 0\n"
+                    f"    jmpt :{else_label}\n"  # Jump if false (zero)
+                    f"{true_code}"
+                    f"    jmp :{end_label}\n"
+                    f":{else_label}\n"
+                    f"{false_code}"
+                    f":{end_label}\n"
+                )
+            else:
+                end_label = f"if_end_{if_id}"
+                return (
+                    f"    call @pop_A\n"
+                    f"    tst A 0\n"
+                    f"    jmpt :{end_label}\n"  # Jump if false (zero)
+                    f"{true_code}"
+                    f":{end_label}\n"
+                )
+
+        elif isinstance(node, WhileNode):
+            loop_id = self.while_loop_count
+            self.while_loop_count += 1
+            start_label = f"while_start_{loop_id}"
+            end_label = f"while_end_{loop_id}"
+
+            condition_code = self.generate_program(node.condition)
+            body_code = self.generate_program(node.body)
+
+            return (
+                f":{start_label}\n"
+                f"{condition_code}"
+                f"    call @pop_A\n"
+                f"    tst A 0\n"
+                f"    jmpt :{end_label}\n"
+                f"{body_code}"
+                f"    jmp :{start_label}\n"
+                f":{end_label}\n"
+            )
 
         else:
             raise Exception(f"Unknown AST node type: {type(node)}")
@@ -168,19 +244,19 @@ class CodeGenerator:
             return f"    call @{op}\n"
 
         if op in self.symbols:
-            return f"    ldm A {op}\n    call @push_A\n"
+            return f"    ldm A ${op}\n    call @push_A\n"
 
         op_map = {
             '+':    '@rt_add',
             '-':    '@rt_sub',
             '*':    '@rt_mul',
             '//':   '@rt_div',
-            '%':    '@rt_mod',
+            '%' :   '@rt_mod',
             '==':   '@rt_eq',
             '!=':   '@rt_neq',
             '>':    '@rt_gt',
             '<':    '@rt_lt',
-            'DUP':  '@rt_dup',
+            'DUP' : '@rt_dup',
             'SWAP': '@rt_swap',
             'DROP': '@rt_drop',
             'OVER': '@rt_over',
@@ -201,7 +277,7 @@ class CodeGenerator:
             self.string_literals[string_value] = label
             
             special_chars_map = {
-                ' ': '\space',
+                ' ' : '\space',
                 '\n': '\Return',
                 '\t': '\tab', # A reasonable guess
             }
@@ -230,15 +306,23 @@ if __name__ == '__main__':
     from .lexer import Lexer
     from .parser import Parser
 
-    # source = 'VAR my_ptr 1024 VALUE my_val 42 my_ptr my_val + PRINT "test string" LIST my_list 12'
-    source = ':label DEF my_add { 2 * } 3 my_add PRINT `test GOTO label DEF myX { }'
-
+    # source = 'VALUE my_val 42 VALUE my_ptr 0 &my_val AS my_ptr 99 AS *my_ptr my_val PRINT'
+    # source = 'WHILE 10 12 > DO 42 PRINT DONE'
+    source = '10 12 > IF 42 PRINT ELSE 99 PRINT END 12 30 == IF 42 PRINT END'
     lexer = Lexer(source)
     parser = Parser(lexer)
     ast = parser.parse()
     
     if parser.errors or lexer.errors:
         print("Errors during parsing, aborting code generation.")
+        if lexer.errors:
+            print("\n--- LEXER ERRORS ---")
+            for err in lexer.errors:
+                print(err)
+        if parser.errors:
+            print("\n--- PARSER ERRORS ---")
+            for err in parser.errors:
+                print(err)
     else:
         try:
             codegen = CodeGenerator()
@@ -246,6 +330,6 @@ if __name__ == '__main__':
 
             print(f"--- Source ---\n{source}\n")
             print(f"--- AST ---\n{ast}\n")
-            print(f"--- Generated Assembly ---\n{assembly}")
+            print(f"--- Generated Assembly---\n{assembly}")
         except Exception as e:
-            print(f"--- CODEGEN ERROR ---\n{e}")
+            print(f"--- CODEGEN ERROR---\n{e}")
