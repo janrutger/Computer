@@ -1,0 +1,8 @@
+{
+  "functions": [
+    "gcd"
+  ],
+  "variables": [
+    "$_start_memory_"
+  ]
+}
