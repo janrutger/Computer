@@ -27,6 +27,7 @@ class TokenType(Enum):
     USE = "USE"
     ASM = "ASM"
     PRINT = "PRINT"
+    ASM_BLOCK = "ASM_BLOCK" # A special token for the raw assembly code
     AS = "AS"
     GOTO = "GOTO"
 
@@ -179,6 +180,31 @@ class Lexer:
         token_type = KEYWORDS.get(result.upper(), TokenType.IDENTIFIER)
         return Token(token_type, result, self.line, start_column)
 
+    def get_asm_block(self):
+        """
+        Consumes and returns the raw text inside an ASM { ... } block.
+        This method is called after the 'ASM {' has been seen.
+        """
+        result = ''
+        start_line = self.line
+        start_column = self.column
+        brace_level = 1
+
+        while self.current_char is not None:
+            if self.current_char == '{':
+                brace_level += 1
+            elif self.current_char == '}':
+                brace_level -= 1
+                if brace_level == 0:
+                    self.advance() # Consume the final '}'
+                    return Token(TokenType.ASM_BLOCK, result, start_line, start_column)
+            
+            result += self.current_char
+            self.advance()
+        
+        self.errors.append(f"Lexer error: Unterminated ASM block starting at line {start_line}")
+        return Token(TokenType.ILLEGAL, result, start_line, start_column)
+
     def get_next_token(self):
         while self.current_char is not None:
             if self.current_char.isspace():
@@ -201,7 +227,15 @@ class Lexer:
                 return self.get_number()
 
             if self.current_char.isalpha() or self.current_char == '_':
-                return self.get_identifier()
+                identifier_token = self.get_identifier()
+                # Check if the identifier is 'ASM' followed by '{'
+                if identifier_token.type == TokenType.ASM:
+                    self.skip_whitespace()
+                    if self.current_char == '{':
+                        self.advance() # Consume '{'
+                        return self.get_asm_block()
+                
+                return identifier_token
 
             if self.current_char == '/' and self.peek() == '/':
                 start_column = self.column

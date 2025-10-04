@@ -159,6 +159,15 @@ class UseNode(ASTNode):
     def __repr__(self):
         return f"UseNode(module='{self.module_name}')"
 
+class AsmNode(ASTNode):
+    def __init__(self, asm_code_token):
+        self.asm_code_token = asm_code_token
+        self.asm_code = asm_code_token.value
+
+    def __repr__(self):
+        return f"AsmNode(...)"
+
+
 
 
 # --- Parser ----------------------------------------------------------------
@@ -210,6 +219,10 @@ class Parser:
             return DereferenceNode(token)
         elif token.type == TokenType.IO:
             return self.parse_io_statement()
+        
+        # Handle the raw assembly block token
+        elif token.type == TokenType.ASM_BLOCK:
+            return AsmNode(token)
         
         # Fully implemented keywords and operators that are treated as "words"
         elif token.type in [

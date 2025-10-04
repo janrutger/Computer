@@ -19,6 +19,7 @@ from parser import (
     DereferenceNode,
     IONode,
     UseNode,
+    AsmNode,
     # The following nodes will be used in upcoming steps
     # AssignmentNode,
     # VariableNode,
@@ -212,7 +213,7 @@ class CodeGenerator:
             # Assemble the full function block with a label and a return instruction
             self.functions_section += f"@{node.name}\n"
             self.functions_section += function_body_code
-            self.functions_section += "    ret\n\n"
+            self.functions_section += "    ret\n"
             
             # A function definition does not produce inline code, so return an empty string
             return ""
@@ -330,6 +331,10 @@ class CodeGenerator:
                 raise Exception(f"Module file not found for module '{module_name}': {smod_path}")
 
             return "" # The USE statement itself produces no inline code
+
+        elif isinstance(node, AsmNode):
+            # For an ASM block, just return the raw code it contains.
+            return node.asm_code
 
         else:
             raise Exception(f"Unknown AST node type: {type(node)}")
