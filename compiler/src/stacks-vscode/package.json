@@ -1,0 +1,26 @@
+{
+  "name": "stacks-vscode",
+  "displayName": "Stacks Language Support",
+  "description": "Syntax highlighting and language support for the Stacks language.",
+  "version": "0.1.0",
+  "publisher": "JanRutger",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "stacks",
+      "aliases": ["Stacks", "stacks"],
+      "extensions": [".stacks"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "stacks",
+      "scopeName": "source.stacks",
+      "path": "./syntaxes/stacks.tmLanguage.json"
+    }]
+  }
+}

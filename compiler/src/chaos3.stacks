@@ -37,6 +37,7 @@ DEF setX {
   IO 2 X
 }
 
+
 # Sets the Y coordinate for drawing
 DEF setY {
   IO 2 Y

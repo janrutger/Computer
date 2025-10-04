@@ -3,7 +3,8 @@
 
 # 1. Declare the string data using the high-level `STRING` keyword.
 #    The compiler will correctly place this in the .HEADER and .DATA sections.
-STRING hello_msg "Hello from ASM!"
+STRING hello_msg "Hello from ASM!
+"
 
 # 2. Define a high-level Stacks function that uses an `ASM` block for its logic.
 #    The `DEF` block ensures this code is placed in the .FUNCTIONS section
@@ -11,9 +12,9 @@ STRING hello_msg "Hello from ASM!"
 DEF hello_from_asm {
     ASM {
         ; This is just the body of the function.
-        ldi A $hello_msg    ; Load the address of our message into register A
-        ldi ~SYS_PRINT_STRING        ; Push the address onto the stack
-        int $INT_VECTORS  ; Call the runtime routine that prints a string
+        ldi A $hello_msg            ; Load the address of our message into register A
+        ldi I ~SYS_PRINT_STRING     ; Load I with the syscall Vector
+        int $INT_VECTORS            ; Call the syscall to print the message
     }
 }
 
