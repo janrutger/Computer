@@ -183,7 +183,7 @@ class CodeGenerator:
                 size = len(asm_chars) + 1
                 char_list_str = " ".join(asm_chars)
                 
-                self.header_section += f". {var_name} {size}\n"
+                self.header_section += f". ${var_name} {size}\n"
                 self.data_section += f"% ${var_name} {char_list_str} \\null\n"
                 return ""
 

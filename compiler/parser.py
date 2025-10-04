@@ -234,13 +234,6 @@ class Parser:
         ]:
             return WordNode(token)
 
-        # Stubbed keywords for features in development (currently treated as words)
-        elif token.type in [
-            TokenType.ASM,
-        ]:
-            # Note: These will likely need their own specific parsing methods in the future.
-            return WordNode(token)
-
         elif token.type == TokenType.ILLEGAL:
             self.errors.append(f"Parser error: Illegal token '{token.value}' found.")
             return None

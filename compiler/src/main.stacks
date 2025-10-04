@@ -1,0 +1,21 @@
+# A simple program to test the interaction between high-level
+# data declarations and low-level ASM blocks.
+
+# 1. Declare the string data using the high-level `STRING` keyword.
+#    The compiler will correctly place this in the .HEADER and .DATA sections.
+STRING hello_msg "Hello from ASM!"
+
+# 2. Define a high-level Stacks function that uses an `ASM` block for its logic.
+#    The `DEF` block ensures this code is placed in the .FUNCTIONS section
+#    and gets a proper label (`@hello_from_asm`) and a `ret` instruction.
+DEF hello_from_asm {
+    ASM {
+        ; This is just the body of the function.
+        ldi A $hello_msg    ; Load the address of our message into register A
+        ldi ~SYS_PRINT_STRING        ; Push the address onto the stack
+        int $INT_VECTORS  ; Call the runtime routine that prints a string
+    }
+}
+
+# 3. Call the function from the main program, just like any other Stacks function.
+hello_from_asm
