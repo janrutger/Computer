@@ -10,6 +10,7 @@ from parser import (
     IfNode,
     WhileNode,
     VarDeclarationNode,
+    ConstDeclarationNode,
     FunctionDefinitionNode,
     BacktickNode,
     GotoNode,
@@ -39,6 +40,7 @@ class CodeGenerator:
         self.if_label_count = 0
         
         self.symbols = set()
+        self.constants = {}
         self.current_context = "_main" # To scope labels for if/while
         self.function_symbols = set()
         self.labels = {}
@@ -64,6 +66,7 @@ class CodeGenerator:
         self.while_loop_count = 0
         self.if_label_count = 0
         self.symbols = set()
+        self.constants = {}
         self.function_symbols = set()
         self.current_context = "_main"
         self.labels = {}
@@ -109,7 +112,7 @@ class CodeGenerator:
         for statement in node.statements:
             # When compiling a module, only process declarations and function definitions.
             # Ignore all other "mainline" code.
-            if is_module_compilation and not isinstance(statement, (VarDeclarationNode, FunctionDefinitionNode, UseNode)):
+            if is_module_compilation and not isinstance(statement, (VarDeclarationNode, ConstDeclarationNode, FunctionDefinitionNode, UseNode)):
                 continue
 
             code += self.generate_statement(statement)
@@ -195,6 +198,14 @@ class CodeGenerator:
                 self.header_section += f". ${var_name} 1\n"
                 self.data_section += f"% ${var_name} {node.initial_value}\n"
                 return ""
+
+        elif isinstance(node, ConstDeclarationNode):
+            const_name = node.const_name
+            if const_name in self.symbols or const_name in self.function_symbols or const_name in self.constants:
+                raise Exception(f"Duplicate symbol declaration for '{const_name}'.")
+            
+            self.constants[const_name] = node.value_node
+            return "" # No code is generated for a const declaration itself
 
         elif isinstance(node, FunctionDefinitionNode):
             # Add the function name to the function symbol table so it can be called
@@ -342,6 +353,12 @@ class CodeGenerator:
     def generate_word(self, node):
         op = node.value if node.value is not None else node.token.type.value
         
+        if op in self.constants:
+            const_value_node = self.constants[op]
+
+            # We can just re-use the statement generator for number and string literals
+            return self.generate_statement(const_value_node)
+
         if op in self.function_symbols:
             return f"    call @{op}\n"
 
@@ -411,7 +428,7 @@ if __name__ == '__main__':
 
     # source = 'VALUE my_val 42 VALUE my_ptr 0 &my_val AS my_ptr 99 AS *my_ptr my_val PRINT'
     # source = 'WHILE 10 12 > DO 42 PRINT DONE'
-    source = '10 12 > IF 42 PRINT ELSE 99 PRINT END 12 30 == IF 42 PRINT END'
+    source = 'CONST my_const 42 CONST my_str "hello" my_const PRINT my_str PRINT'
     lexer = Lexer(source)
     parser = Parser(lexer)
     ast = parser.parse()

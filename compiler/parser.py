@@ -111,6 +111,14 @@ class VarDeclarationNode(ASTNode):
             parts.append(f"value='{self.initial_value}'")
         return f"VarDeclarationNode({', '.join(parts)})"
 
+class ConstDeclarationNode(ASTNode):
+    def __init__(self, const_name, value_node):
+        self.const_name = const_name
+        self.value_node = value_node
+
+    def __repr__(self):
+        return f"ConstDeclarationNode('{self.const_name}', {self.value_node})"
+
 class FunctionDefinitionNode(ASTNode):
     def __init__(self, name, body):
         self.name = name
@@ -205,7 +213,7 @@ class Parser:
             return self.parse_function_definition()
         elif token.type == TokenType.BACKTICK:
             return self.parse_backtick_call()
-        elif token.type in (TokenType.KEYWORD_VAR, TokenType.KEYWORD_VALUE, TokenType.KEYWORD_LIST, TokenType.KEYWORD_STRING):
+        elif token.type in (TokenType.KEYWORD_VAR, TokenType.KEYWORD_VALUE, TokenType.KEYWORD_LIST, TokenType.KEYWORD_STRING, TokenType.KEYWORD_CONST):
             return self.parse_declaration()
         elif token.type == TokenType.COLON:
             return self.parse_label()
@@ -448,6 +456,20 @@ class Parser:
             value_token = self.current_token
             return VarDeclarationNode(decl_type='VALUE', var_name=var_name_token.value, initial_value=value_token.value)
         
+        # Handle CONST name value
+        elif decl_token.type == TokenType.KEYWORD_CONST:
+            if self.current_token.type not in (TokenType.NUMBER, TokenType.STRING):
+                self.errors.append(f"Expected number or string for CONST value, but got {self.current_token.type}")
+                return None
+            
+            value_node = None
+            if self.current_token.type == TokenType.NUMBER:
+                value_node = NumberNode(self.current_token)
+            else: # It must be a string
+                value_node = StringNode(self.current_token)
+
+            return ConstDeclarationNode(const_name=var_name_token.value, value_node=value_node)
+
         return None # Should not be reached
 
 # --- Main (for testing) ----------------------------------------------------

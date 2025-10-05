@@ -1,76 +1,132 @@
-# Define output files
-MICROCODE_ROM = bin/stern_rom.json
-PROGRAM_BIN = bin/program.bin
-SYMBOLS = bin/symbols.json
-COMPILED_ASM = assembler/asm/main.asm
+# =============================================================================
+# Main Build Makefile for the Stern-XT Computer Project
+#
+# This Makefile is responsible for:
+#   1. Assembling the Microcode ROM.
+#   2. Compiling Stacks language libraries into the `compiler/lib` directory.
+#   3. Compiling kernel modules written in Stacks (.stacks -> .stacks.asm).
+#   4. Compiling the main Stacks program (e.g., fly.stacks -> build/main.asm).
+#   5. Copying the compiled program to `assembler/asm/main_stacks.asm`.
+#   6. Assembling the final Program ROM from all assembly sources.
+# =============================================================================
 
+# --- Stop on Error ---
+.DELETE_ON_ERROR:
 
-# Microcode source files
-MICROCODE_SOURCES = microcode_assembler/base_rom.uasm
+# =============================================================================
+# Configuration
+# =============================================================================
 
-# Source files
-ISA_SOURCES = $(shell find assembler/asm -name "*.asm")
-COMPILER_SOURCES = $(shell find compiler -name "*.py")
-LIB_STACKS_SOURCES = $(shell find compiler/src/libs -name "*.stacks")
+# --- Directories ---
+BUILD_DIR := build
+BIN_DIR := bin
+SRC_DIR := compiler/src
+LIB_SRC_DIR := $(SRC_DIR)/libs
+LIB_OUT_DIR := compiler/lib
+KERNEL_STACKS_SRC_DIR := $(SRC_DIR)/kernel_stacks
+ASM_DIR := assembler/asm
+INCL_DIR := $(ASM_DIR)/incl
+MICROCODE_DIR := microcode_assembler
 
-# --- Dynamic Source File Selection ---
-# Any command-line target that isn't a known rule (run, debug, clean, all)
-# is assumed to be the name of the source file to compile.
-# Example: `make fly` will set SRC to 'fly'.
-KNOWN_TARGETS := run debug all clean
+# --- Tools ---
+COMPILER := python3 compiler/compiler.py
+ASSEMBLER := python3 assembler/assembler.py
+MICROCODE_ASSEMBLER := python3 $(MICROCODE_DIR)/assembler.py
+
+# --- Main Programs ---
+MAIN_PROGRAMS := main fly maze chaos3 test
+DEFAULT_PROGRAM := $(firstword $(MAIN_PROGRAMS))
+
+# --- Target Calculation ---
+KNOWN_TARGETS := all run debug clean
 SRC_TARGET := $(filter-out $(KNOWN_TARGETS),$(MAKECMDGOALS))
+SRC := $(if $(SRC_TARGET),$(SRC_TARGET),$(DEFAULT_PROGRAM))
 
-# Set SRC to the found target, or default to 'main' if no target is given.
-SRC := $(if $(SRC_TARGET),$(firstword $(SRC_TARGET)),main)
-MAIN_STACKS_SOURCE = compiler/src/$(SRC).stacks
+# --- Output Files ---
+PROGRAM_ROM := $(BIN_DIR)/program.bin
+MICROCODE_ROM := $(BIN_DIR)/stern_rom.json
+# Intermediate file for the compiled main program
+MAIN_ASM_TEMP_TARGET := $(BUILD_DIR)/main.asm
+# Final destination for the compiled main program
+MAIN_ASM_FINAL_TARGET := $(ASM_DIR)/main_stacks.asm
 
-# Find compiled library modules
-COMPILED_LIBS = $(patsubst compiler/src/libs/%.stacks,compiler/lib/%.smod,$(LIB_STACKS_SOURCES))
+# =============================================================================
+# Source File Discovery
+# =============================================================================
 
-# Assembler scripts
-MICROCODE_ASSEMBLER_SCRIPT = microcode_assembler/assembler.py
-ISA_ASSEMBLER_SCRIPT = assembler/assembler.py
-COMPILER_SCRIPT = compiler/compiler.py
+LIB_STACKS_SOURCES    := $(wildcard $(LIB_SRC_DIR)/*.stacks)
+KERNEL_STACKS_SOURCES := $(wildcard $(KERNEL_STACKS_SRC_DIR)/*.stacks)
+ALL_ASM_FILES         := $(wildcard $(ASM_DIR)/**/*.asm)
+MICROCODE_SOURCES     := $(MICROCODE_DIR)/base_rom.uasm
 
-all: $(PROGRAM_BIN)
- 
-# Rule to compile a single .stacks library file into a .smod module
-compiler/lib/%.smod: compiler/src/libs/%.stacks $(COMPILER_SOURCES)
-	@echo "Compiling Stacks library: $<"
-	@mkdir -p compiler/lib
-	python3 $(COMPILER_SCRIPT) $< --module
- 
-# The main compiled ASM depends on the main source file AND any compiled libraries
-# The pipe symbol '|' makes $(COMPILED_LIBS) an "order-only" prerequisite.
-# This ensures libraries are built first before the main compilation command is run.
-$(COMPILED_ASM): $(MAIN_STACKS_SOURCE) $(COMPILER_SOURCES) | $(COMPILED_LIBS)
-	@echo "Compiling Stacks language to assembly..."
-	python3 $(COMPILER_SCRIPT) $(MAIN_STACKS_SOURCE) -o $(COMPILED_ASM)
+# --- Define paths for generated files ---
+COMPILED_LIBS := $(patsubst $(LIB_SRC_DIR)/%.stacks,$(LIB_OUT_DIR)/%.smod,$(LIB_STACKS_SOURCES))
+GENERATED_KERNEL_ASM := $(patsubst $(KERNEL_STACKS_SRC_DIR)/%.stacks,$(INCL_DIR)/%.stacks.asm,$(KERNEL_STACKS_SOURCES))
 
-$(MICROCODE_ROM): $(MICROCODE_SOURCES) $(MICROCODE_ASSEMBLER_SCRIPT) microcode_assembler/parser.py
-	@echo "Assembling microcode..."
-	python3 $(MICROCODE_ASSEMBLER_SCRIPT) $(MICROCODE_SOURCES)
 
-# The program binary depends on the compiled assembly file now
-$(PROGRAM_BIN): $(COMPILED_ASM) $(ISA_SOURCES) $(MICROCODE_ROM) $(ISA_ASSEMBLER_SCRIPT) assembler/build.json
-	@echo "Assembling ISA code..."
-	python3 $(ISA_ASSEMBLER_SCRIPT) assembler/build.json
+# =============================================================================
+# Main Targets
+# =============================================================================
 
-run: $(PROGRAM_BIN)
-	@echo "Running simulation..."
+.PHONY: all run debug clean $(MAIN_PROGRAMS)
+
+all: $(PROGRAM_ROM)
+
+run: $(PROGRAM_ROM)
+	@echo "====== Running Simulation ======"
 	python3 stern-XT.py
 
-debug: $(PROGRAM_BIN)
-	@echo "Running simulation in debug mode..."
+debug: $(PROGRAM_ROM)
+	@echo "====== Running Simulation (Debug) ======"
 	python3 stern-XT.py -debug
 
 clean:
-	@echo "Cleaning up build artifacts..."
-	rm -f $(PROGRAM_BIN) $(MICROCODE_ROM) $(SYMBOLS) $(COMPILED_ASM)
-	rm -rf compiler/lib
+	@echo "====== Cleaning up build artifacts ======"
+	rm -rf $(BUILD_DIR) $(BIN_DIR) $(LIB_OUT_DIR)
+	rm -f $(GENERATED_KERNEL_ASM) $(MAIN_ASM_FINAL_TARGET)
 
-# --- Phony and Dynamic Targets ---
-# This makes `make <src_name>` work. It declares the dynamic target as .PHONY,
-# which forces the compilation rule to run every time.
-.PHONY: $(SRC_TARGET)
-$(SRC_TARGET): $(COMPILED_ASM)
+
+# =============================================================================
+# Build Rules
+# =============================================================================
+
+# --- 1. Final Program ROM Assembly ---
+# Depends on all assembly sources AND the microcode ROM being built first.
+$(PROGRAM_ROM): $(GENERATED_KERNEL_ASM) $(MAIN_ASM_FINAL_TARGET) $(ALL_ASM_FILES) $(MICROCODE_ROM) assembler/build.json
+	@echo "====== Assembling Final Program ROM ======"
+	$(ASSEMBLER) assembler/build.json
+
+# --- 2. Microcode ROM Assembly ---
+$(MICROCODE_ROM): $(MICROCODE_SOURCES)
+	@echo "====== Assembling Microcode ROM ======"
+	@mkdir -p $(@D)
+	$(MICROCODE_ASSEMBLER) $(MICROCODE_SOURCES)
+
+# --- 3. Install Compiled Main Program ---
+# Copies the temporary compiled file to its final destination.
+$(MAIN_ASM_FINAL_TARGET): $(MAIN_ASM_TEMP_TARGET)
+	@echo "====== Installing compiled program: $< -> $@ ======"
+	cp $< $@
+
+# --- 4. Main Program Compilation (Temporary) ---
+$(MAIN_ASM_TEMP_TARGET): $(SRC_DIR)/$(SRC).stacks $(COMPILED_LIBS)
+	@echo "====== Compiling Main Program: $(SRC).stacks ======"
+	@mkdir -p $(@D)
+	$(COMPILER) $< -o $@
+
+# --- 5. Stacks Library Compilation ---
+$(LIB_OUT_DIR)/%.smod: $(LIB_SRC_DIR)/%.stacks
+	@echo "====== Compiling Stacks Library: $< ======"
+	$(COMPILER) $< --module
+
+# --- 6. Stacks Kernel Module Compilation ---
+$(INCL_DIR)/%.stacks.asm: $(KERNEL_STACKS_SRC_DIR)/%.stacks
+	@echo "====== Compiling Stacks Kernel Module: $< ======"
+	$(COMPILER) $< -o $@
+
+# --- Dynamic Target Handling ---
+$(MAIN_PROGRAMS):
+	@: # No-op phony target
+
+# This links the phony program targets to the intermediate compiled file.
+$(MAIN_ASM_TEMP_TARGET): $(MAIN_PROGRAMS)

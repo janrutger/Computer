@@ -6,6 +6,8 @@
 STRING hello_msg "Hello from ASM!
 "
 
+
+
 # 2. Define a high-level Stacks function that uses an `ASM` block for its logic.
 #    The `DEF` block ensures this code is placed in the .FUNCTIONS section
 #    and gets a proper label (`@hello_from_asm`) and a `ret` instruction.

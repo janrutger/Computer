@@ -13,7 +13,7 @@
       "restore_symbols": false
     },
     {
-      "file": "asm/main.asm",
+      "file": "asm/main_stacks.asm",
       "base_address": 7170,
       "restore_symbols": false
     },

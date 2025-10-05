@@ -37,6 +37,7 @@ class TokenType(Enum):
     KEYWORD_LIST = "KEYWORD_LIST"
     KEYWORD_STRING = "KEYWORD_STRING"
     KEYWORD_VALUE = "KEYWORD_VALUE"
+    KEYWORD_CONST = "KEYWORD_CONST"
 
     # Operators
     PLUS = "+"
@@ -85,6 +86,7 @@ KEYWORDS = {
     "STRING": TokenType.KEYWORD_STRING,
     "VALUE": TokenType.KEYWORD_VALUE,
     "GOTO": TokenType.GOTO,
+    "CONST": TokenType.KEYWORD_CONST,
     
 }
 
