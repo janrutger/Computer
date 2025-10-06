@@ -15,6 +15,3 @@
 :gcd_while_end_0
     call @rt_drop
     ret
-
-# .DATA
-% $_start_memory_ 0

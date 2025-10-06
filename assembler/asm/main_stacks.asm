@@ -1,6 +1,6 @@
 # .HEADER
-. $_start_memory_ 1
 . $hello_msg 17
+. $_start_memory_ 1
 
 # .CODE
     call @hello_from_asm
@@ -16,5 +16,5 @@
         ret
 
 # .DATA
-% $_start_memory_ 0
 % $hello_msg \H \e \l \l \o \space \f \r \o \m \space \A \S \M \! \Return \null
+% $_start_memory_ 0

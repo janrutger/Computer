@@ -120,9 +120,9 @@ $(LIB_OUT_DIR)/%.smod: $(LIB_SRC_DIR)/%.stacks
 	$(COMPILER) $< --module
 
 # --- 6. Stacks Kernel Module Compilation ---
-$(INCL_DIR)/%.stacks.asm: $(KERNEL_STACKS_SRC_DIR)/%.stacks
+$(INCL_DIR)/%.stacks.asm: $(KERNEL_STACKS_SRC_DIR)/%.stacks $(COMPILED_LIBS)
 	@echo "====== Compiling Stacks Kernel Module: $< ======"
-	$(COMPILER) $< -o $@
+	$(COMPILER) $< -o $@ --block
 
 # --- Dynamic Target Handling ---
 $(MAIN_PROGRAMS):

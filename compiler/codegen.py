@@ -55,7 +55,7 @@ class CodeGenerator:
 
 
 
-    def generate(self, ast, setModule=False):
+    def generate(self, ast, setModule=False, is_code_block=False):
         # Reset sections for each generation run
         self.header_section = ""
         self.code_section = ""
@@ -71,11 +71,6 @@ class CodeGenerator:
         self.current_context = "_main"
         self.labels = {}
         
-        # Add the required $_start_memory_ symbol for pointer operations.
-        self.header_section += ". $_start_memory_ 1\n"
-        self.data_section += "% $_start_memory_ 0\n"
-        self.symbols.add("$_start_memory_")
-
         # Main code generation
         self.code_section = self.generate_program(ast, is_module_compilation=setModule)
 
@@ -85,18 +80,26 @@ class CodeGenerator:
         if setModule:
             # For a module, we only care about functions and data.
             # The main code section is not even generated for modules.
+            if self.header_section:
+                final_assembly += "# .HEADER\n" + self.header_section
             if self.functions_section:
                 final_assembly += "# .FUNCTIONS\n" + self.functions_section
             if self.data_section:
                 final_assembly += "\n# .DATA\n" + self.data_section
         else:
+            # For a runnable program, add the final 'ret' instruction.
+            if not is_code_block:
+                self.code_section += "    ret\n"
+                # Add the required $_start_memory_ symbol for pointer operations.
+                self.header_section += ". $_start_memory_ 1\n"
+                self.data_section += "% $_start_memory_ 0\n"
+                self.symbols.add("$_start_memory_")
+
+
             # For a normal program, assemble all sections.
             if self.header_section:
                 final_assembly += "# .HEADER\n" + self.header_section + "\n"
             
-            # For a runnable program, add the final 'ret' instruction.
-            self.code_section += "    ret\n"
-
             final_assembly += "# .CODE\n" + self.code_section
             
             if self.functions_section:

@@ -17,6 +17,12 @@ def main():
         default=False,        # Sets the default value if the flag is omitted
         help='Compile the file as a module (run as main program).'
     )
+    parser.add_argument(
+        '--block',
+        action='store_true',
+        default=False,
+        help='Compile the file as a non-executable code block.'
+    )
     
 
     args = parser.parse_args()
@@ -66,7 +72,7 @@ def main():
     
     try:
         codegen = CodeGenerator()
-        assembly = codegen.generate(ast, is_module_compilation)
+        assembly = codegen.generate(ast, is_module_compilation, args.block)
 
         if is_module_compilation:
             # Write the .smod file
