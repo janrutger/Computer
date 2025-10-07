@@ -1,0 +1,8 @@
+{
+  "functions": [
+    "rt_rnd"
+  ],
+  "variables": [
+    "random_seed"
+  ]
+}

@@ -91,9 +91,11 @@ class CodeGenerator:
             if not is_code_block:
                 self.code_section += "    ret\n"
                 # Add the required $_start_memory_ symbol for pointer operations.
-                self.header_section += ". $_start_memory_ 1\n"
-                self.data_section += "% $_start_memory_ 0\n"
-                self.symbols.add("$_start_memory_")
+                # For now, these are added to the os_loader.asm manualy 
+                # i keep this lines for later refference (and use)
+                # self.header_section += ". $_start_memory_ 1\n"
+                # self.data_section += "% $_start_memory_ 0\n"
+                # self.symbols.add("$_start_memory_")
 
 
             # For a normal program, assemble all sections.
@@ -323,8 +325,12 @@ class CodeGenerator:
                 # Add symbols to the current compilation context
                 for func in symbols_data.get("functions", []):
                     self.function_symbols.add(func)
-                for var in symbols_data.get("variables", []):
+                
+                lib_vars = symbols_data.get("variables", [])
+                for var in lib_vars:
                     self.symbols.add(var)
+                    # This is the fix: Add variable declarations to the header
+                    self.header_section += f". ${var} 1\n"
 
             except FileNotFoundError:
                 raise Exception(f"Symbol file not found for module '{module_name}': {sym_path}")

@@ -4,9 +4,9 @@
 ; Routines for handling buffered keyboard input for the OS Kernel.
 ;-------------------------------------------------------------------------------
 
-EQU ~KBD_BUFFER_SIZE 16
-EQU ~KEY_RETURN 13
-EQU ~KEY_BACKSPACE 8
+#EQU ~KBD_BUFFER_SIZE 16
+#EQU ~KEY_RETURN 13
+#EQU ~KEY_BACKSPACE 8
 
 ; --- Keyboard Buffer Data ---
 . $KBD_READ_PNTR 1          ; buffer read pointer

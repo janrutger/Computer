@@ -1,5 +1,8 @@
 . $start_memory 1
 % $start_memory 0
+# Since the Stacks Compiler is using _start_memory we need this also
+. $_start_memory_ 1
+% $_start_memory_ 0
 
 EQU ~SCREEN_WIDTH 80
 EQU ~SCREEN_HEIGHT 24
@@ -64,7 +67,7 @@ halt
 ########## 
 
 
-INCLUDE loader_interrupt_vector_table
+INCLUDE loader_interrupt_vector_table.stacks
 INCLUDE loader_errors
 INCLUDE loader_screen_routines
 INCLUDE loader_keyboard_routines

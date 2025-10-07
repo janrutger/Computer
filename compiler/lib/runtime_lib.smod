@@ -4,3 +4,170 @@
         inc I $DATASTACK_INDEX  ; Load current stack pointer into I 
         stx A $DATASTACK_PTR    ; Store value from A at index I
         ret
+@pop_A
+
+        dec I $DATASTACK_INDEX  ; Load current stack pointer into I
+        ldx A $DATASTACK_PTR    ; Load value from index I into A
+        ret
+@push_B
+
+        inc I $DATASTACK_INDEX  ; Load current stack pointer into I 
+        stx B $DATASTACK_PTR    ; Store value from B at index I
+        ret
+@pop_B
+
+        dec I $DATASTACK_INDEX  ; Load current stack pointer into I
+        ldx B $DATASTACK_PTR    ; Load value from index I into B
+        ret
+@rt_add
+
+        call @pop_A
+        call @pop_B
+        add A B
+        call @push_A
+        ret
+@rt_sub
+
+        call @pop_A
+        call @pop_B
+        sub B A
+        call @push_B
+        ret
+@rt_mul
+
+        call @pop_A
+        call @pop_B
+        mul A B
+        call @push_A
+        ret
+@rt_div
+
+        call @pop_A
+        call @pop_B
+        dmod B A
+        call @push_B
+        ret
+@rt_mod
+
+        call @pop_A
+        call @pop_B
+        dmod B A
+        call @push_A
+        ret
+@rt_eq
+
+        call @pop_A
+        call @pop_B
+        tste A B
+        jmpt :eq_true
+        ldi A 0
+        jmp :eq_end
+    :eq_true
+        ldi A 1
+    :eq_end
+        call @push_A
+        ret
+@rt_neq
+
+        call @pop_A
+        call @pop_B
+        tste A B
+        jmpf :neq_true
+        ldi A 0
+        jmp :neq_end
+    :neq_true
+        ldi A 1
+    :neq_end
+        call @push_A
+        ret
+@rt_gt
+
+        call @pop_A
+        call @pop_B
+        tstg B A
+        jmpt :gt_true
+        ldi A 0
+        jmp :gt_end
+    :gt_true
+        ldi A 1
+    :gt_end
+        call @push_A
+        ret
+@rt_lt
+
+        call @pop_A
+        call @pop_B
+        tstg A B
+        jmpt :lt_true
+        ldi A 0
+        jmp :lt_end
+    :lt_true
+        ldi A 1
+    :lt_end
+        call @push_A
+        ret
+@rt_dup
+
+        call @pop_A
+        call @push_A
+        call @push_A
+        ret
+@rt_swap
+
+        call @pop_A
+        call @pop_B
+        call @push_A
+        call @push_B
+        ret
+@rt_drop
+
+        call @pop_A
+        ret
+@rt_over
+
+        call @pop_A
+        call @pop_B
+        call @push_B
+        call @push_A
+        call @push_B
+        ret
+@rt_print_tos
+
+        call @pop_A
+        ld C A
+
+        ldi I ~SYS_PRINT_NUMBER
+        int $INT_VECTORS
+
+        ldi C \Return
+        ldi I ~SYS_PRINT_CHAR
+        int $INT_VECTORS
+        ret
+@rt_udc_control
+
+        call @pop_B     ; Pop command code into B
+        call @pop_A     
+        ld M A          ; Save the Channel number
+        call @pop_A
+        ld C A          ; load data/arugumnet in C
+        ld A M          ; load channel number in A
+
+        ldi I ~SYS_UDC_CONTROL      ; Load the syscall number
+        int $INT_VECTORS            ; call the kernel
+
+        ; Check status and push return value for GET commands
+        ldm A $SYSCALL_RETURN_STATUS
+        tste A Z
+        jmpf :rt_udc_ok
+        ; Error handeling here, for now, just continue
+
+    :rt_udc_ok  
+        ; if command was GET, push the return value
+        tst B ~UDC_DEVICE_GET
+        jmpf :rt_udc_end        ; goto end if no return value
+
+        ldm A $SYSCALL_RETURN_VALUE
+        call @push_A            ; Push the return value on the datastack
+
+    :rt_udc_end 
+        ret

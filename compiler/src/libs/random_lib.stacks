@@ -1,0 +1,15 @@
+# --- Pseudo-Random Number Generator (LCG) ---
+# Inspired by simple generators like ZX81's.
+# Formula: seed = (a * seed + c) % m
+
+DEF rt_rnd {
+
+    CONST rand_a 134775813
+    CONST rand_c 1
+    CONST rand_m 65536
+
+    VALUE random_seed 54321
+    
+    random_seed rand_a * rand_c + rand_m % AS random_seed
+    random_seed 1000 % 
+}
