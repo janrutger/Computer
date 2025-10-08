@@ -9,6 +9,7 @@ ASM {
 
 12 34 +
 
+# Halt the system nicely after ending kernel
 ASM {
     :HALT    ; Breakpointg before halt
     halt

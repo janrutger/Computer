@@ -1,10 +1,10 @@
 {
     "symbols": {
-        "$INT_VECTORS": 3072,
-        "$_start_memory_": 12288,
-        "$DATASTACK": 12289,
-        "$DATASTACK_PTR": 12321,
-        "$DATASTACK_INDEX": 12322,
+        "$INT_VECTORS": 12288,
+        "$_start_memory_": 12289,
+        "$DATASTACK": 12290,
+        "$DATASTACK_PTR": 12322,
+        "$DATASTACK_INDEX": 12323,
         "@push_A": 8,
         "@pop_A": 11,
         "@push_B": 14,

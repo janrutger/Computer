@@ -8,7 +8,7 @@
     call @push_A
     call @rt_add
 
-    :HALT    ; Breakpointg before halt
+    :HALT    ; Last breakpoint before halt
     halt
 
     INCLUDE hardware_config.stacks

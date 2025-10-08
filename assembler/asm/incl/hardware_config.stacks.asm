@@ -1,5 +1,5 @@
 # .HEADER
-MALLOC $INT_VECTORS 3072
+. $INT_VECTORS 1
 
 # .CODE
 
@@ -148,9 +148,12 @@ MALLOC $INT_VECTORS 3072
         ret
 @init_interrupt_vector_table
 
-        ldi I 1             ; Interrupt vector (0 is keyboard)
+        ldi I 0             ; Interrupt vector (0 is keyboard)
         ldi M @KBD_ISR      ; ISR start adres
         stx M $INT_VECTORS  ; Store ISR adres as pointer
 
         # Next interrupt vector
         ret
+
+# .DATA
+% $INT_VECTORS 3072
