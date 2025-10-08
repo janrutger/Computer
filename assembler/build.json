@@ -3,24 +3,9 @@
   "var_start": 12288,
   "sources": [
     {
-      "file": "asm/os_loader.asm",
+      "file": "asm/bootfile.stacks.asm",
       "base_address": 0,
       "restore_symbols": false
-    },
-    {
-      "file": "asm/os_kernel.asm",
-      "base_address": 1024,
-      "restore_symbols": false
-    },
-    {
-      "file": "asm/main_stacks.asm",
-      "base_address": 7170,
-      "restore_symbols": false
-    },
-    {
-      "file": "asm/os_lib_loader.asm",
-      "base_address": 8194,
-      "restore_symbols": false    
     }
   ]
 }

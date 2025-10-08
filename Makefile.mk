@@ -23,7 +23,8 @@ BIN_DIR := bin
 SRC_DIR := compiler/src
 LIB_SRC_DIR := $(SRC_DIR)/libs
 LIB_OUT_DIR := compiler/lib
-KERNEL_STACKS_SRC_DIR := $(SRC_DIR)/kernel_stacks
+KERNEL_STACKS_SRC_DIR := $(SRC_DIR)/kernel_files
+BOOT_FILES_SRC_DIR := $(SRC_DIR)/boot_files
 ASM_DIR := assembler/asm
 INCL_DIR := $(ASM_DIR)/incl
 MICROCODE_DIR := microcode_assembler
@@ -56,12 +57,14 @@ MAIN_ASM_FINAL_TARGET := $(ASM_DIR)/main_stacks.asm
 
 LIB_STACKS_SOURCES    := $(wildcard $(LIB_SRC_DIR)/*.stacks)
 KERNEL_STACKS_SOURCES := $(wildcard $(KERNEL_STACKS_SRC_DIR)/*.stacks)
+BOOT_FILES_SOURCES    := $(wildcard $(BOOT_FILES_SRC_DIR)/*.stacks)
 ALL_ASM_FILES         := $(wildcard $(ASM_DIR)/**/*.asm)
 MICROCODE_SOURCES     := $(MICROCODE_DIR)/base_rom.uasm
 
 # --- Define paths for generated files ---
 COMPILED_LIBS := $(patsubst $(LIB_SRC_DIR)/%.stacks,$(LIB_OUT_DIR)/%.smod,$(LIB_STACKS_SOURCES))
 GENERATED_KERNEL_ASM := $(patsubst $(KERNEL_STACKS_SRC_DIR)/%.stacks,$(INCL_DIR)/%.stacks.asm,$(KERNEL_STACKS_SOURCES))
+GENERATED_BOOT_ASM   := $(patsubst $(BOOT_FILES_SRC_DIR)/%.stacks,$(ASM_DIR)/%.stacks.asm,$(BOOT_FILES_SOURCES))
 
 
 # =============================================================================
@@ -83,7 +86,7 @@ debug: $(PROGRAM_ROM)
 clean:
 	@echo "====== Cleaning up build artifacts ======"
 	rm -rf $(BUILD_DIR) $(BIN_DIR) $(LIB_OUT_DIR)
-	rm -f $(GENERATED_KERNEL_ASM) $(MAIN_ASM_FINAL_TARGET)
+	rm -f $(GENERATED_KERNEL_ASM) $(GENERATED_BOOT_ASM) $(MAIN_ASM_FINAL_TARGET)
 
 
 # =============================================================================
@@ -92,7 +95,7 @@ clean:
 
 # --- 1. Final Program ROM Assembly ---
 # Depends on all assembly sources AND the microcode ROM being built first.
-$(PROGRAM_ROM): $(GENERATED_KERNEL_ASM) $(MAIN_ASM_FINAL_TARGET) $(ALL_ASM_FILES) $(MICROCODE_ROM) assembler/build.json
+$(PROGRAM_ROM): $(GENERATED_BOOT_ASM) $(GENERATED_KERNEL_ASM) $(MAIN_ASM_FINAL_TARGET) $(ALL_ASM_FILES) $(MICROCODE_ROM) assembler/build.json
 	@echo "====== Assembling Final Program ROM ======"
 	$(ASSEMBLER) assembler/build.json
 
@@ -123,6 +126,11 @@ $(LIB_OUT_DIR)/%.smod: $(LIB_SRC_DIR)/%.stacks
 $(INCL_DIR)/%.stacks.asm: $(KERNEL_STACKS_SRC_DIR)/%.stacks $(COMPILED_LIBS)
 	@echo "====== Compiling Stacks Kernel Module: $< ======"
 	$(COMPILER) $< -o $@ --block
+
+# --- 7. Stacks Boot File Compilation ---
+$(ASM_DIR)/%.stacks.asm: $(BOOT_FILES_SRC_DIR)/%.stacks $(COMPILED_LIBS)
+	@echo "====== Compiling Stacks Boot File: $< ======"
+	$(COMPILER) $< -o $@
 
 # --- Dynamic Target Handling ---
 $(MAIN_PROGRAMS):

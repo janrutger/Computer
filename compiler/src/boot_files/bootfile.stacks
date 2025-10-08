@@ -1,0 +1,20 @@
+ASM {
+    ldi Z 0                 ; init Z register to 0
+}
+
+# Before starting the new Stern-XT kernel
+# Init a few things
+`init_interrupt_vector_table 
+
+
+12 34 +
+
+ASM {
+    :HALT    ; Breakpointg before halt
+    halt
+}
+
+ASM {
+    INCLUDE hardware_config.stacks
+    INCLUDE keyboard_routines.stacks
+}

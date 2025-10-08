@@ -1,0 +1,22 @@
+{
+  "functions": [
+    "rt_div",
+    "rt_gt",
+    "rt_over",
+    "rt_sub",
+    "rt_mod",
+    "rt_eq",
+    "pop_B",
+    "rt_dup",
+    "rt_lt",
+    "rt_mul",
+    "push_B",
+    "rt_swap",
+    "push_A",
+    "pop_A",
+    "rt_drop",
+    "rt_neq",
+    "rt_add"
+  ],
+  "variables": []
+}

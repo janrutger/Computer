@@ -216,7 +216,7 @@ class CodeGenerator:
                 return ""
 
             elif node.decl_type == 'VAR':
-                self.header_section += f".MALLOC ${node.var_name} {node.initial_value}\n"
+                self.header_section += f"MALLOC ${node.var_name} {node.initial_value}\n"
                 return ""
 
             elif node.decl_type == 'VALUE':

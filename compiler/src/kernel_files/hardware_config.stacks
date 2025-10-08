@@ -1,0 +1,32 @@
+# Use the standard Stacks libray to run Stacks
+USE std_stacks_rt 
+
+
+ASM {
+    . $_start_memory_ 1
+    % $_start_memory_ 0     ; Init _start_memory_ to 0 used by the Stacks compiler
+}
+
+
+# Stern-XT is running an stackbased OS
+# So i need an stack as soon as possile
+ASM {
+    . $DATASTACK 32
+    . $DATASTACK_PTR 1
+    . $DATASTACK_INDEX 1
+    % $DATASTACK_INDEX 0
+    % $DATASTACK_PTR $DATASTACK
+}
+
+
+## Initialize Hardware Interrupt Vector Table
+DEF init_interrupt_vector_table{
+    VAR INT_VECTORS 3072    ; Start of the interrupt table
+    ASM {
+        ldi I 0             ; Interrupt vector (0 is keyboard)
+        ldi M @KBD_ISR      ; ISR start adres
+        stx M $INT_VECTORS  ; Store ISR adres as pointer
+
+        # Next interrupt vector
+    }
+} 

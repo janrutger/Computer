@@ -1,79 +1,76 @@
+# .HEADER
+MALLOC $INT_VECTORS 3072
 
-DEF push_A {
-    ASM {
+# .CODE
+
+    . $_start_memory_ 1
+    % $_start_memory_ 0     ; Init _start_memory_ to 0 used by the Stacks compiler
+
+    . $DATASTACK 32
+    . $DATASTACK_PTR 1
+    . $DATASTACK_INDEX 1
+    % $DATASTACK_INDEX 0
+    % $DATASTACK_PTR $DATASTACK
+
+# .FUNCTIONS
+
+@push_A
+
         inc I $DATASTACK_INDEX  ; Load current stack pointer into I 
         stx A $DATASTACK_PTR    ; Store value from A at index I
-    }
-}
+        ret
+@pop_A
 
-DEF pop_A {
-    ASM {
         dec I $DATASTACK_INDEX  ; Load current stack pointer into I
         ldx A $DATASTACK_PTR    ; Load value from index I into A
-    }
-}
+        ret
+@push_B
 
-DEF push_B {
-    ASM {
         inc I $DATASTACK_INDEX  ; Load current stack pointer into I 
         stx B $DATASTACK_PTR    ; Store value from B at index I
-    }
-}
+        ret
+@pop_B
 
-DEF pop_B {
-    ASM {
         dec I $DATASTACK_INDEX  ; Load current stack pointer into I
         ldx B $DATASTACK_PTR    ; Load value from index I into B
-    }
-}
+        ret
+@rt_add
 
-DEF rt_add {
-    ASM {
         call @pop_A
         call @pop_B
         add A B
         call @push_A
-    }
-}
+        ret
+@rt_sub
 
-DEF rt_sub {
-    ASM {
         call @pop_A
         call @pop_B
         sub B A
         call @push_B
-    }
-}
+        ret
+@rt_mul
 
-DEF rt_mul {
-    ASM {
         call @pop_A
         call @pop_B
         mul A B
         call @push_A
-    }
-}
+        ret
+@rt_div
 
-DEF rt_div {
-    ASM {
         call @pop_A
         call @pop_B
         dmod B A
         call @push_B
-    }
-}
+        ret
+@rt_mod
 
-DEF rt_mod {
-    ASM {
         call @pop_A
         call @pop_B
         dmod B A
         call @push_A
-    }
-}
+        ret
+@rt_eq
 
-DEF rt_eq {
-    ASM {
         call @pop_A
         call @pop_B
         tste A B
@@ -84,11 +81,9 @@ DEF rt_eq {
         ldi A 1
     :eq_end
         call @push_A
-    }
-}
+        ret
+@rt_neq
 
-DEF rt_neq {
-    ASM {
         call @pop_A
         call @pop_B
         tste A B
@@ -99,11 +94,9 @@ DEF rt_neq {
         ldi A 1
     :neq_end
         call @push_A
-    }
-}
+        ret
+@rt_gt
 
-DEF rt_gt {
-    ASM {
         call @pop_A
         call @pop_B
         tstg B A
@@ -114,11 +107,9 @@ DEF rt_gt {
         ldi A 1
     :gt_end
         call @push_A
-    }
-}
+        ret
+@rt_lt
 
-DEF rt_lt {
-    ASM {
         call @pop_A
         call @pop_B
         tstg A B
@@ -129,86 +120,37 @@ DEF rt_lt {
         ldi A 1
     :lt_end
         call @push_A
-    }
-}
+        ret
+@rt_dup
 
-DEF rt_dup {
-    ASM {
         call @pop_A
         call @push_A
         call @push_A
-    }
-}
+        ret
+@rt_swap
 
-DEF rt_swap {
-    ASM {
         call @pop_A
         call @pop_B
         call @push_A
         call @push_B
-    }
-}
+        ret
+@rt_drop
 
-DEF rt_drop {
-    ASM {
         call @pop_A
-    }
-}
+        ret
+@rt_over
 
-DEF rt_over {
-    ASM {
         call @pop_A
         call @pop_B
         call @push_B
         call @push_A
         call @push_B
-    }
-}
+        ret
+@init_interrupt_vector_table
 
-DEF rt_print_tos {
-    ASM {
-        call @pop_A
-        ld C A
+        ldi I 1             ; Interrupt vector (0 is keyboard)
+        ldi M @KBD_ISR      ; ISR start adres
+        stx M $INT_VECTORS  ; Store ISR adres as pointer
 
-        ldi I ~SYS_PRINT_NUMBER
-        int $INT_VECTORS
-
-        ldi C \Return
-        ldi I ~SYS_PRINT_CHAR
-        int $INT_VECTORS
-    }
-}
-
-
-
-DEF rt_udc_control {
-    ASM {
-        call @pop_B     ; Pop command code into B
-        call @pop_A     
-        ld M A          ; Save the Channel number
-        call @pop_A
-        ld C A          ; load data/arugumnet in C
-        ld A M          ; load channel number in A
-
-        ldi I ~SYS_UDC_CONTROL      ; Load the syscall number
-        int $INT_VECTORS            ; call the kernel
-
-        ; Check status and push return value for GET commands
-        ldm A $SYSCALL_RETURN_STATUS
-        tste A Z
-        jmpf :rt_udc_ok
-        ; Error handeling here, for now, just continue
-
-    :rt_udc_ok  
-        ; if command was GET, push the return value
-        tst B ~UDC_DEVICE_GET
-        jmpf :rt_udc_end        ; goto end if no return value
-
-        ldm A $SYSCALL_RETURN_VALUE
-        call @push_A            ; Push the return value on the datastack
-
-    :rt_udc_end 
-    }
-}
-
-
+        # Next interrupt vector
+        ret
