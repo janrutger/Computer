@@ -182,11 +182,31 @@ class CodeGenerator:
                     '\t': '\tab',
                 }
                 asm_chars = []
-                for char in string_value:
+                i = 0
+                while i < len(string_value):
+                    char = string_value[i]
+                    if char == '\\':
+                        if i + 1 < len(string_value):
+                            next_char = string_value[i+1]
+                            if next_char == 'n':
+                                asm_chars.append(special_chars_map['\n'])
+                                i += 2
+                                continue
+                            elif next_char == 't':
+                                asm_chars.append(special_chars_map['\t'])
+                                i += 2
+                                continue
+                            else:
+                                # This would handle other escaped characters like \a or \\
+                                asm_chars.append(f"\\{next_char}")
+                                i += 2
+                                continue
+                    
                     if char in special_chars_map:
                         asm_chars.append(special_chars_map[char])
                     else:
                         asm_chars.append(f"\\{char}")
+                    i += 1
                 
                 size = len(asm_chars) + 1
                 char_list_str = " ".join(asm_chars)
@@ -412,12 +432,31 @@ class CodeGenerator:
             }
 
             asm_chars = []
-            for char in string_value:
+            i = 0
+            while i < len(string_value):
+                char = string_value[i]
+                if char == '\\':
+                    if i + 1 < len(string_value):
+                        next_char = string_value[i+1]
+                        if next_char == 'n':
+                            asm_chars.append(special_chars_map['\n'])
+                            i += 2
+                            continue
+                        elif next_char == 't':
+                            asm_chars.append(special_chars_map['\t'])
+                            i += 2
+                            continue
+                        else:
+                            # This would handle other escaped characters like \a or \\
+                            asm_chars.append(f"\\{next_char}")
+                            i += 2
+                            continue
+                
                 if char in special_chars_map:
                     asm_chars.append(special_chars_map[char])
                 else:
-                    # Just escape the character
                     asm_chars.append(f"\\{char}")
+                i += 1
             
             # The size is the number of characters + 1 for the null terminator
             size = len(asm_chars) + 1

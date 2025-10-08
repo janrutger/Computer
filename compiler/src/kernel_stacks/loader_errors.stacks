@@ -1,0 +1,86 @@
+USE runtime_lib
+
+DEF print_error {
+    ASM {
+        call @pop_A          ; load adres from datastack
+        :loop
+        ld I A              ; Load address from A into I (R0)
+        ldx C $start_memory ; Load character from memory[start_memory + I] into C
+        tst C \null         ; Check for null terminator
+        jmpt :end_loop      ; If null, end loop
+
+        call @print_char    ; Directly call print_char routine
+
+        addi A 1            ; Increment string address
+        jmp :loop           ; Continue loop
+    :end_loop
+    }
+}
+
+DEF fatal {
+    ASM {
+    :end_less
+        nop
+    jmp :end_less
+    }
+}
+
+
+
+DEF error_invalid_cmd {
+    "Invallid COMMAND \n" print_error
+}
+
+
+DEF error_invalid_goto_label {
+    "Invalid GOTO label \n" print_error
+}
+
+
+DEF error_unkown_library {
+    "Unkown library\n" print_error
+}
+
+DEF errors_unkown_token {
+    "Unkown token\n" print_error
+}
+
+DEF errors_invalid_def_name {
+    "Invalid DEF name\n" print_error
+}
+
+DEF errors_invalid_def_body {
+    "Invalid DEF body\n" print_error
+}
+
+DEF errors_unterminated_def {
+    "Unterminated function\n" print_error
+}
+
+DEF errors_fatal_invalid_syntax {
+    "Fatal invalid syntax error\n" print_error fatal
+}
+
+DEF fatal_Invalid_instruction_error {
+    "Invalid instruction error\n" print_error fatal
+}
+
+DEF error_wrong_filename {
+    "Wrong filename\n" print_error
+}
+
+DEF error_fatal_disk_error {
+    "FATAL disk error\n" print_error fatal
+}
+
+DEF error_udc_send_error {
+    "UDC Send error\n" print_error fatal
+}
+
+DEF error_wrong_device_error {
+    "Wrong device error\n" print_error fatal
+}
+
+
+
+

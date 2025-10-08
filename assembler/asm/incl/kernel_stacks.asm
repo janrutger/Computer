@@ -5,11 +5,12 @@
 
 # Define stacks
 # the datastack definition is replaced from os_loader to here
-. $DATASTACK 32
-. $DATASTACK_PTR 1
-. $DATASTACK_INDEX 1
-% $DATASTACK_INDEX 0
-% $DATASTACK_PTR $DATASTACK
+# and i plaed it back for better Stacks compiler support
+; . $DATASTACK 32
+; . $DATASTACK_PTR 1
+; . $DATASTACK_INDEX 1
+; % $DATASTACK_INDEX 0
+; % $DATASTACK_PTR $DATASTACK
 
 # to keep track of jump-adresses
 . $PLACEHOLDER_STACK 16     ;16 nested if else end or while do loop

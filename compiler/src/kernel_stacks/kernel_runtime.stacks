@@ -1,4 +1,7 @@
-USE runtime_lib
+# The stacks stacks runtime library is now loaded in the loader_errors
+# USE runtime_lib
+
+
 VALUE line_to_print 0
 
 DEF rt_store_var {

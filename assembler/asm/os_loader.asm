@@ -29,12 +29,13 @@ EQU ~STACK_TOP 14335
 . $SYSCALL_RETURN_STATUS 1
 
 ; Data Stack for Stacks 
-## is REPLACED TO KERNEL_STACKS.ASM ##
-; . $DATASTACK 16
-; . $DATASTACK_PTR 1
-; . $DATASTACK_INDEX 1
-; % $DATASTACK_INDEX 0
-; % $DATASTACK_PTR $DATASTACK
+## is REPLACED TO KERNEL_STACKS.ASM 
+## And placed it back for better Stacks compiler support
+. $DATASTACK 32
+. $DATASTACK_PTR 1
+. $DATASTACK_INDEX 1
+% $DATASTACK_INDEX 0
+% $DATASTACK_PTR $DATASTACK
 
 # Welcomes message
 . $WELCOME_MESSAGE  20
@@ -67,8 +68,9 @@ halt
 ########## 
 
 
+INCLUDE loader_all_defaults
 INCLUDE loader_interrupt_vector_table.stacks
-INCLUDE loader_errors
+INCLUDE loader_errors.stacks
 INCLUDE loader_screen_routines
 INCLUDE loader_keyboard_routines
 INCLUDE loader_vdisk_routines

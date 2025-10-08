@@ -6,7 +6,7 @@
     ldi M @sys_exit     ; Start of the ISR
     stx M $INT_VECTORS  ; Store ISR
 
-    EQU ~SYS_PRINT_CHAR 21
+    #EQU ~SYS_PRINT_CHAR 21
     ldi I ~SYS_PRINT_CHAR ; syscall 21 @sys_print_char
     ldi M @sys_print_char ; Start of the ISR
     stx M $INT_VECTORS    ; Store ISR
@@ -21,7 +21,7 @@
     ldi M @sys_get_char     ; Start of the ISR
     stx M $INT_VECTORS      ; Store ISR
 
-    EQU ~SYS_PRINT_STRING 24
+    #EQU ~SYS_PRINT_STRING 24
     ldi I ~SYS_PRINT_STRING ; syscall 24 @sys_print_string
     ldi M @sys_print_string ; Start of the ISR
     stx M $INT_VECTORS      ; Store ISR
@@ -36,7 +36,7 @@
     ldi M @sys_del_cursor   ; Start of the ISR
     stx M $INT_VECTORS      ; Store ISR
 
-    EQU ~SYS_PRINT_NUMBER 27
+    #EQU ~SYS_PRINT_NUMBER 27
     ldi I ~SYS_PRINT_NUMBER ; syscall 27 @sys_print_number
     ldi M @sys_print_number ; Start of the ISR
     stx M $INT_VECTORS      ; Store ISR
@@ -66,7 +66,7 @@
     ldi M @sys_f_write_block  ; Start of the ISR
     stx M $INT_VECTORS       ; Store ISR
 
-    EQU ~SYS_UDC_CONTROL 33
+    #EQU ~SYS_UDC_CONTROL 33
     ldi I ~SYS_UDC_CONTROL    ; syscall 33 @sys_udc_control
     ldi M @sys_udc_control    ; Start of the ISR
     stx M $INT_VECTORS        ; Store ISR
