@@ -1,43 +1,7 @@
 # .HEADER
-. $p_syscall_status 1
-. $p_syscall_value 1
-. $str_0 13
-
-# .CODE
-
-    ldi Z 0                 ; init Z register to 0
-    call @init_interrupt_vector_table
-    call @init_kernel_syscalls
-    call @KBD_INIT
-:break
-    ldi A $SYSCALL_RETURN_STATUS
-    call @push_A
-    ldi A $SYSCALL_RETURN_VALUE
-    call @push_A
-    call @io_lib_init
-    ldi A 12
-    call @push_A
-    ldi A 30
-    call @push_A
-    call @rt_add
-    call @rt_print_tos
-    ldi A $str_0
-    call @push_A
-    call @PRTstring
-    call @KEYchar
-    call @PRTchar
-
-    :HALT    ; Breakpointg before halt
-    halt
-
-    INCLUDE hardware_config.stacks
-    INCLUDE keyboard_routines.stacks
-    INCLUDE screen_routines.stacks
-    INCLUDE syscalls.stacks
-    ret
-
+MALLOC $p_syscall_status 0
+MALLOC $p_syscall_value 0
 # .FUNCTIONS
-
 @io_lib_init
     call @pop_A
     sto A $p_syscall_value
@@ -92,6 +56,3 @@
     ldx A $_start_memory_
     call @push_A
     ret
-
-# .DATA
-% $str_0 \H \e \l \l \o \space \W \o \r \l \d \! \null

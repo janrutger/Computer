@@ -1,0 +1,94 @@
+# this will be the standard IO library for the Stern-XT hardware
+# USE std_stern_io activate
+# i Need the following methods in this lib
+# PRT.char    to print TOS as char
+# PRT.string  to print a string, pointer on TOS, \null terminated
+# PRT.cls     to clear the console screen
+#
+# KEY.char      to reads keyboard waiting, input char to TOS
+# KEY.pressed   if an key is pressed, input char to TOS-1, successtatus to TOS
+#
+# Just PRINT, to print TOS as numer is part of the STACKS runtime libary
+#
+# expect the SYSCALL are defined
+#
+
+# Pointers to kernel variables. These must be initialized by the main program.
+VAR p_syscall_status 0
+VAR p_syscall_value 0
+
+# Initialization function for this library.
+# Call this once at startup to link the library to kernel variables.
+# Usage: &SYSCALL_RETURN_STATUS &SYSCALL_RETURN_VALUE io_lib_init
+DEF io_lib_init {
+    AS p_syscall_value      # Pop address for value and set pointer
+    AS p_syscall_status     # Pop address for status and set pointer
+}
+
+# Are set globaly in the syscall.stacks file here for referance
+# Syscall vectors used by this library
+#     EQU ~SYS_PRINT_CHAR 21
+#     EQU ~SYS_CLEAR_SCREEN 22
+#     EQU ~SYS_GET_CHAR 23
+#     EQU ~SYS_PRINT_STRING 24
+
+
+# Prints the character on the Top of Stack
+DEF PRTchar {
+    ASM {
+        call @pop_A            ; Pop character from stack into C register for the syscall
+        ld C A
+        ldi I ~SYS_PRINT_CHAR
+        int $INT_VECTORS       ; Interrupt to trigger the syscall
+    }
+}
+
+# Prints a null-terminated string. Pointer should be on Top of Stack.
+DEF PRTstring {
+    ASM {
+        call @pop_A              ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+    }
+}
+
+# Clears the console screen
+DEF PRTcls {
+    ASM {
+        ldi I ~SYS_CLEAR_SCREEN
+        int $INT_VECTORS
+    }
+}
+
+# Waits for a key to be pressed and pushes it to the Top of Stack.
+# This is a blocking call.
+DEF KEYchar {
+    :key_loop
+        ASM {
+            ldi I ~SYS_GET_CHAR
+            int $INT_VECTORS
+        }
+        # Check the status by dereferencing our pointer
+        *p_syscall_status
+        IF
+            # Success, push the character value by dereferencing its pointer
+            *p_syscall_value
+            GOTO key_end_loop
+        END
+        # Failure (status was 0), loop again.
+        GOTO key_loop
+    :key_end_loop
+}
+
+# Checks if a key has been pressed (non-blocking).
+# Pushes the character value, then the status (1 for success, 0 for none).
+# Status will be on the Top of Stack.
+DEF KEYpressed {
+    ASM {
+        ldi I ~SYS_GET_CHAR
+        int $INT_VECTORS
+    }
+    # Push value first, then status, by dereferencing the pointers
+    *p_syscall_value
+    *p_syscall_status
+}

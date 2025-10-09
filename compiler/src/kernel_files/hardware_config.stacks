@@ -7,11 +7,31 @@ ASM {
     % $_start_memory_ 0     ; Init _start_memory_ to 0 used by the Stacks compiler
 }
 
+ASM {
+    EQU ~SCREEN_WIDTH 80
+    EQU ~SCREEN_HEIGHT 24
+    EQU ~SCREEN_POINTER_END 1920
+    EQU ~SCREEN_LAST_ADRES 16256    ; ~VIDEO_MEM + ~SCREEN_POINTER_END
+
+
+    ; Define memory constants
+    EQU ~KERNEL_START 1024
+    EQU ~INT_VECTORS 3072
+    EQU ~PROG_START 4096
+    EQU ~VAR_START 12288
+    EQU ~VIDEO_MEM 14336
+    EQU ~STACK_TOP 14335
+}
+
+VALUE INT_VECTORS 3072    ; Start of the interrupt table
+VALUE VIDEO_MEM 14336     ; Start of the video memory
+
+
 
 # Stern-XT is running an stackbased OS
 # So i need an stack as soon as possile
 ASM {
-    . $DATASTACK 32
+    . $DATASTACK 32             ; Create the datastack
     . $DATASTACK_PTR 1
     . $DATASTACK_INDEX 1
     % $DATASTACK_INDEX 0
@@ -21,7 +41,6 @@ ASM {
 
 ## Initialize Hardware Interrupt Vector Table
 DEF init_interrupt_vector_table{
-    VALUE INT_VECTORS 3072    ; Start of the interrupt table
     ASM {
         ldi I 0             ; Interrupt vector (0 is keyboard)
         ldi M @KBD_ISR      ; ISR start adres
@@ -30,3 +49,4 @@ DEF init_interrupt_vector_table{
         # Next interrupt vector
     }
 } 
+

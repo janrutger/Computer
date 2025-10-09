@@ -170,19 +170,19 @@ DEF rt_over {
     }
 }
 
-# DEF rt_print_tos {
-#     ASM {
-#         call @pop_A
-#         ld C A
+DEF rt_print_tos {
+    ASM {
+        call @pop_A
+        ld C A
 
-#         ldi I ~SYS_PRINT_NUMBER
-#         int $INT_VECTORS
+        ldi I ~SYS_PRINT_NUMBER
+        int $INT_VECTORS
 
-#         ldi C \Return
-#         ldi I ~SYS_PRINT_CHAR
-#         int $INT_VECTORS
-#     }
-# }
+        ldi C \Return
+        ldi I ~SYS_PRINT_CHAR
+        int $INT_VECTORS
+    }
+}
 
 
 

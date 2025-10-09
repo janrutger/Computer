@@ -1,12 +1,27 @@
 # .HEADER
 . $INT_VECTORS 1
+. $VIDEO_MEM 1
 
 # .CODE
 
     . $_start_memory_ 1
     % $_start_memory_ 0     ; Init _start_memory_ to 0 used by the Stacks compiler
 
-    . $DATASTACK 32
+    EQU ~SCREEN_WIDTH 80
+    EQU ~SCREEN_HEIGHT 24
+    EQU ~SCREEN_POINTER_END 1920
+    EQU ~SCREEN_LAST_ADRES 16256    ; ~VIDEO_MEM + ~SCREEN_POINTER_END
+
+
+    ; Define memory constants
+    EQU ~KERNEL_START 1024
+    EQU ~INT_VECTORS 3072
+    EQU ~PROG_START 4096
+    EQU ~VAR_START 12288
+    EQU ~VIDEO_MEM 14336
+    EQU ~STACK_TOP 14335
+
+    . $DATASTACK 32             ; Create the datastack
     . $DATASTACK_PTR 1
     . $DATASTACK_INDEX 1
     % $DATASTACK_INDEX 0
@@ -146,6 +161,18 @@
         call @push_A
         call @push_B
         ret
+@rt_print_tos
+
+        call @pop_A
+        ld C A
+
+        ldi I ~SYS_PRINT_NUMBER
+        int $INT_VECTORS
+
+        ldi C \Return
+        ldi I ~SYS_PRINT_CHAR
+        int $INT_VECTORS
+        ret
 @init_interrupt_vector_table
 
         ldi I 0             ; Interrupt vector (0 is keyboard)
@@ -157,3 +184,4 @@
 
 # .DATA
 % $INT_VECTORS 3072
+% $VIDEO_MEM 14336

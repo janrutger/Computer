@@ -139,12 +139,12 @@ class CodeGenerator:
             return f":{node.label_name}\n"
 
         elif isinstance(node, GotoNode):
-            if node.label_name in self.labels:
-                # offset = self.labels[node.label_name] - len(self.code_section)
-                return f"    jmp :{node.label_name}\n"
-            else:
-                raise Exception(f"Undefined label '{node.label_name}'.")
-
+            # if node.label_name in self.labels:
+            #     # offset = self.labels[node.label_name] - len(self.code_section)
+            #     return f"    jmp :{node.label_name}\n"
+            # else:
+            #     raise Exception(f"Undefined label '{node.label_name}'.")
+            return f"    jmp :{node.label_name}\n"
         elif isinstance(node, AsNode):
             var_name = node.var_name
             if var_name not in self.symbols:

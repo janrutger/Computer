@@ -131,3 +131,15 @@
         call @push_A
         call @push_B
         ret
+@rt_print_tos
+
+        call @pop_A
+        ld C A
+
+        ldi I ~SYS_PRINT_NUMBER
+        int $INT_VECTORS
+
+        ldi C \Return
+        ldi I ~SYS_PRINT_CHAR
+        int $INT_VECTORS
+        ret

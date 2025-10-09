@@ -1,3 +1,6 @@
+USE std_stern_io
+
+
 ASM {
     ldi Z 0                 ; init Z register to 0
 }
@@ -5,9 +8,24 @@ ASM {
 # Before starting the new Stern-XT kernel
 # Init a few things
 `init_interrupt_vector_table 
+`init_kernel_syscalls
+`KBD_INIT
+
+ASM {
+    ei
+}
 
 
-12 34 +
+# Init the standard IO library by passing it the addresses of the
+# kernel variables it needs to communicate.
+&SYSCALL_RETURN_STATUS
+&SYSCALL_RETURN_VALUE
+io_lib_init
+
+
+12 30 + PRINT
+"Hello World!" PRTstring
+KEYchar PRTchar
 
 # Halt the system nicely after ending kernel
 ASM {
@@ -18,4 +36,6 @@ ASM {
 ASM {
     INCLUDE hardware_config.stacks
     INCLUDE keyboard_routines.stacks
+    INCLUDE screen_routines.stacks
+    INCLUDE syscalls.stacks
 }
