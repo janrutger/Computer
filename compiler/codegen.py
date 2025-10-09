@@ -1,3 +1,4 @@
+# compiler/codegen.py
 import os
 import json
 
@@ -20,6 +21,7 @@ from parser import (
     DereferenceNode,
     IONode,
     UseNode,
+    IncludeNode,
     AsmNode,
     # The following nodes will be used in upcoming steps
     # AssignmentNode,
@@ -329,7 +331,7 @@ class CodeGenerator:
             code += f"    ldi A {channel}\n    call @push_A\n    ldi A {command_code}\n    call @push_A\n    call @rt_udc_control\n"
             return code
 
-        elif isinstance(node, UseNode):
+        elif isinstance(node, IncludeNode):
             module_name = node.module_name
             # Assuming modules are in a 'lib' directory relative to the compiler's execution path
             # A more robust solution might search multiple paths.
@@ -356,7 +358,8 @@ class CodeGenerator:
                 raise Exception(f"Symbol file not found for module '{module_name}': {sym_path}")
             except json.JSONDecodeError:
                 raise Exception(f"Could not parse symbol file for module '{module_name}': {sym_path}")
-
+            
+       
             # 2. Load code from .smod file
             try:
                 with open(smod_path, 'r') as f:
@@ -371,6 +374,32 @@ class CodeGenerator:
                 raise Exception(f"Module file not found for module '{module_name}': {smod_path}")
 
             return "" # The USE statement itself produces no inline code
+        
+        elif isinstance(node, UseNode): 
+            module_name = node.module_name
+            # Assuming modules are in a 'lib' directory relative to the compiler's execution path
+            # A more robust solution might search multiple paths.
+            module_dir = "compiler/lib"
+            sym_path = os.path.join(module_dir, f"{module_name}.sym")
+            smod_path = os.path.join(module_dir, f"{module_name}.smod")
+
+            # 1. Load symbols from .sym file
+            try:
+                with open(sym_path, 'r') as f:
+                    symbols_data = json.load(f)
+                
+                # Add symbols to the current compilation context
+                for func in symbols_data.get("functions", []):
+                    self.function_symbols.add(func)
+                
+                lib_vars = symbols_data.get("variables", [])
+                for var in lib_vars:
+                    self.symbols.add(var)
+
+            except FileNotFoundError:
+                raise Exception(f"Symbol file not found for module '{module_name}': {sym_path}")
+            except json.JSONDecodeError:
+                raise Exception(f"Could not parse symbol file for module '{module_name}': {sym_path}")
 
         elif isinstance(node, AsmNode):
             # For an ASM block, just return the raw code it contains.

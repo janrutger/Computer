@@ -1,4 +1,4 @@
-USE std_stern_io
+# INCLUDE std_stern_io
 
 
 ASM {
@@ -18,9 +18,7 @@ ASM {
 
 # Init the standard IO library by passing it the addresses of the
 # kernel variables it needs to communicate.
-&SYSCALL_RETURN_STATUS
-&SYSCALL_RETURN_VALUE
-io_lib_init
+INCLUDE std_stern_io &SYSCALL_RETURN_STATUS &SYSCALL_RETURN_VALUE io_lib_init
 
 
 12 30 + PRINT
@@ -33,6 +31,7 @@ ASM {
     halt
 }
 
+# Include other Assemblycode parts
 ASM {
     INCLUDE hardware_config.stacks
     INCLUDE keyboard_routines.stacks

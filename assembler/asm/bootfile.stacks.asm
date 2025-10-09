@@ -1,6 +1,6 @@
 # .HEADER
-. $p_syscall_status 1
 . $p_syscall_value 1
+. $p_syscall_status 1
 . $str_0 13
 
 # .CODE
@@ -9,7 +9,8 @@
     call @init_interrupt_vector_table
     call @init_kernel_syscalls
     call @KBD_INIT
-:break
+
+    ei
     ldi A $SYSCALL_RETURN_STATUS
     call @push_A
     ldi A $SYSCALL_RETURN_VALUE

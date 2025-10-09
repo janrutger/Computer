@@ -1,14 +1,14 @@
 {
   "functions": [
-    "KEYpressed",
-    "PRTchar",
     "PRTcls",
-    "KEYchar",
     "io_lib_init",
-    "PRTstring"
+    "PRTchar",
+    "KEYchar",
+    "PRTstring",
+    "KEYpressed"
   ],
   "variables": [
-    "p_syscall_status",
-    "p_syscall_value"
+    "p_syscall_value",
+    "p_syscall_status"
   ]
 }

@@ -1,5 +1,5 @@
 # Use the standard Stacks libray to run Stacks
-USE std_stacks_rt 
+INCLUDE std_stacks_rt 
 
 
 ASM {

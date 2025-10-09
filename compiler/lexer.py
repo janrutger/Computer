@@ -25,6 +25,7 @@ class TokenType(Enum):
     RND = "RND"
     IO = "IO"
     USE = "USE"
+    INCLUDE = "INCLUDE"
     ASM = "ASM"
     PRINT = "PRINT"
     ASM_BLOCK = "ASM_BLOCK" # A special token for the raw assembly code
@@ -77,6 +78,7 @@ KEYWORDS = {
     "RND": TokenType.RND,
     "IO": TokenType.IO,
     "USE": TokenType.USE,
+    "INCLUDE": TokenType.INCLUDE,
     "ASM": TokenType.ASM,
     "PRINT": TokenType.PRINT,
     "AS": TokenType.AS,

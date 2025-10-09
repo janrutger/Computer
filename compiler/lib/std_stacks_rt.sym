@@ -1,23 +1,23 @@
 {
   "functions": [
-    "rt_gt",
     "pop_B",
-    "rt_lt",
     "rt_mul",
-    "rt_sub",
-    "rt_swap",
-    "rt_dup",
-    "push_A",
-    "rt_mod",
-    "rt_print_tos",
     "rt_div",
     "rt_eq",
-    "rt_add",
     "rt_neq",
+    "rt_dup",
+    "rt_add",
+    "rt_drop",
     "pop_A",
-    "rt_over",
+    "rt_sub",
     "push_B",
-    "rt_drop"
+    "rt_mod",
+    "rt_lt",
+    "rt_gt",
+    "push_A",
+    "rt_swap",
+    "rt_print_tos",
+    "rt_over"
   ],
   "variables": []
 }

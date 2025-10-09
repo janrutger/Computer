@@ -167,6 +167,15 @@ class UseNode(ASTNode):
     def __repr__(self):
         return f"UseNode(module='{self.module_name}')"
 
+
+class IncludeNode(ASTNode):
+    def __init__(self, module_name_token):
+        self.module_name_token = module_name_token
+        self.module_name = module_name_token.value
+
+    def __repr__(self):
+        return f"IncludeNode(module='{self.module_name}')"
+
 class AsmNode(ASTNode):
     def __init__(self, asm_code_token):
         self.asm_code_token = asm_code_token
@@ -248,11 +257,13 @@ class Parser:
         
         # Any other token at this level is unexpected. 
         # ELSE, END, OPEN_BRACE, CLOSE_BRACE should be handled by their parent structures.
-        if token.type not in (TokenType.EOF, TokenType.ELSE, TokenType.END, TokenType.OPEN_BRACE, TokenType.CLOSE_BRACE, TokenType.DO, TokenType.DONE, TokenType.USE):
+        if token.type not in (TokenType.EOF, TokenType.ELSE, TokenType.END, TokenType.OPEN_BRACE, TokenType.CLOSE_BRACE, TokenType.DO, TokenType.DONE, TokenType.USE, TokenType.INCLUDE):
             # Special case for USE, which we now handle properly
             self.errors.append(f"Parser error: Unexpected token '{token.value}'.")
         elif token.type == TokenType.USE:
             return self.parse_use_statement()
+        elif token.type == TokenType.INCLUDE:
+            return self.parse_include_statement()
         return None
 
     def parse_if_statement(self):
@@ -410,6 +421,16 @@ class Parser:
         
         module_name_token = self.current_token
         return UseNode(module_name_token)
+
+    def parse_include_statement(self):
+        self.advance() # Consume 'INCLUDE'
+
+        if self.current_token.type != TokenType.IDENTIFIER:
+            self.errors.append(f"Parser error: Expected module name (identifier) after 'INCLUDE', but got {self.current_token.type}.")
+            return None
+        
+        module_name_token = self.current_token
+        return IncludeNode(module_name_token)
 
 
     def parse_declaration(self):
