@@ -41,7 +41,7 @@ class CodeGenerator:
         self.while_loop_count = 0
         self.if_label_count = 0
         
-        self.symbols = set()
+        self.symbols = {}
         self.constants = {}
         self.current_context = "_main" # To scope labels for if/while
         self.function_symbols = set()
@@ -67,7 +67,7 @@ class CodeGenerator:
         self.next_string_label = 0
         self.while_loop_count = 0
         self.if_label_count = 0
-        self.symbols = set()
+        self.symbols = {}
         self.constants = {}
         self.function_symbols = set()
         self.current_context = "_main"
@@ -97,7 +97,7 @@ class CodeGenerator:
                 # i keep this lines for later refference (and use)
                 # self.header_section += ". $_start_memory_ 1\n"
                 # self.data_section += "% $_start_memory_ 0\n"
-                # self.symbols.add("$_start_memory_")
+                # self.symbols["$_start_memory_"] = {'type': 'VAR', 'size': 1}
 
 
             # For a normal program, assemble all sections.
@@ -150,7 +150,7 @@ class CodeGenerator:
         elif isinstance(node, AsNode):
             var_name = node.var_name
             if var_name not in self.symbols:
-                self.symbols.add(var_name)
+                self.symbols[var_name] = {'type': 'VAR', 'size': 1}
                 self.header_section += f". ${var_name} 1\n"
             
             if node.dereference:
@@ -167,13 +167,13 @@ class CodeGenerator:
         elif isinstance(node, VarDeclarationNode):
             var_name = node.var_name
             if var_name in self.symbols:
-                # Optionally, raise an error for duplicate variable declarations
-                return ""
-            self.symbols.add(var_name)
+                raise Exception(f"Duplicate variable declaration: '{var_name}' is already defined.")
+            
+            symbol_info = {'name': var_name, 'type': node.decl_type, 'size': 1}
 
             if node.decl_type == 'LIST':
+                symbol_info['size'] = node.size
                 self.header_section += f". ${var_name} {node.size}\n"
-                return ""
             
             elif node.decl_type == 'STRING':
                 string_value = node.initial_value
@@ -213,18 +213,21 @@ class CodeGenerator:
                 size = len(asm_chars) + 1
                 char_list_str = " ".join(asm_chars)
                 
+                symbol_info['size'] = size
                 self.header_section += f". ${var_name} {size}\n"
                 self.data_section += f"% ${var_name} {char_list_str} \\null\n"
-                return ""
 
             elif node.decl_type == 'VAR':
+                symbol_info['size'] = node.initial_value # Or 1, depending on MALLOC's meaning
                 self.header_section += f"MALLOC ${node.var_name} {node.initial_value}\n"
-                return ""
 
             elif node.decl_type == 'VALUE':
+                symbol_info['size'] = 1
                 self.header_section += f". ${var_name} 1\n"
                 self.data_section += f"% ${var_name} {node.initial_value}\n"
-                return ""
+
+            self.symbols[var_name] = symbol_info
+            return ""
 
         elif isinstance(node, ConstDeclarationNode):
             const_name = node.const_name
@@ -349,10 +352,12 @@ class CodeGenerator:
                     self.function_symbols.add(func)
                 
                 lib_vars = symbols_data.get("variables", [])
-                for var in lib_vars:
-                    self.symbols.add(var)
-                    # This is the fix: Add variable declarations to the header
-                    self.header_section += f". ${var} 1\n"
+                for var_info in lib_vars:
+                    var_name = var_info.get("name")
+                    var_size = var_info.get("size", 1)
+                    if var_name:
+                        self.symbols[var_name] = {'type': 'LIB_VAR', 'size': var_size}
+                        self.header_section += f". ${var_name} {var_size}\n"
 
             except FileNotFoundError:
                 raise Exception(f"Symbol file not found for module '{module_name}': {sym_path}")
@@ -393,8 +398,11 @@ class CodeGenerator:
                     self.function_symbols.add(func)
                 
                 lib_vars = symbols_data.get("variables", [])
-                for var in lib_vars:
-                    self.symbols.add(var)
+                for var_info in lib_vars:
+                    var_name = var_info.get("name")
+                    var_size = var_info.get("size", 1)
+                    if var_name:
+                        self.symbols[var_name] = {'type': 'LIB_VAR', 'size': var_size}
 
             except FileNotFoundError:
                 raise Exception(f"Symbol file not found for module '{module_name}': {sym_path}")

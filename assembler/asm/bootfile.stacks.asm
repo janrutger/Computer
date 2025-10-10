@@ -1,8 +1,8 @@
 # .HEADER
-. $p_input_buffer 1
-. $p_syscall_value 1
 . $p_syscall_status 1
-. $input_buffer 1
+. $p_syscall_value 1
+. $input_buffer 16
+. $p_input_buffer 1
 . $input_buffer_index 1
 . $str_0 15
 

@@ -84,7 +84,7 @@ def main():
             # Write the .sym file
             symbols_to_export = {
                 "functions": list(codegen.function_symbols),
-                "variables": list(codegen.symbols)
+                "variables": list(codegen.symbols.values())
             }
             with open(sym_output, 'w') as f:
                 json.dump(symbols_to_export, f, indent=2)

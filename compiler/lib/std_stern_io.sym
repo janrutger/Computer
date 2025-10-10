@@ -1,17 +1,37 @@
 {
   "functions": [
-    "READline",
-    "PRTstring",
     "io_lib_init",
     "PRTchar",
-    "KEYchar",
-    "PRTcls"
+    "PRTcls",
+    "PRTstring",
+    "READline",
+    "KEYchar"
   ],
   "variables": [
-    "p_input_buffer",
-    "p_syscall_value",
-    "p_syscall_status",
-    "input_buffer",
-    "input_buffer_index"
+    {
+      "name": "p_syscall_status",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "p_syscall_value",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "input_buffer",
+      "type": "LIST",
+      "size": 16
+    },
+    {
+      "name": "p_input_buffer",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "input_buffer_index",
+      "type": "VALUE",
+      "size": 1
+    }
   ]
 }

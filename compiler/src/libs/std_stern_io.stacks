@@ -90,7 +90,6 @@ CONST newline 10
 CONST null 0
 
 
-
 DEF READline {
     :readline_loop
         KEYchar          ; keyvalue on stack
