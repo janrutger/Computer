@@ -1,14 +1,17 @@
 {
   "functions": [
-    "PRTcls",
+    "READline",
+    "PRTstring",
     "io_lib_init",
     "PRTchar",
     "KEYchar",
-    "PRTstring",
-    "KEYpressed"
+    "PRTcls"
   ],
   "variables": [
+    "p_input_buffer",
     "p_syscall_value",
-    "p_syscall_status"
+    "p_syscall_status",
+    "input_buffer",
+    "input_buffer_index"
   ]
 }

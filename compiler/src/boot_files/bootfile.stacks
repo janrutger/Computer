@@ -22,8 +22,11 @@ INCLUDE std_stern_io &SYSCALL_RETURN_STATUS &SYSCALL_RETURN_VALUE io_lib_init
 
 
 12 30 + PRINT
-"Hello World!" PRTstring
+"Hello World! \n" PRTstring
 KEYchar PRTchar
+READline PRTstring
+
+
 
 # Halt the system nicely after ending kernel
 ASM {

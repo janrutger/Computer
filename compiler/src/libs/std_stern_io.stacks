@@ -6,7 +6,6 @@
 # PRT.cls     to clear the console screen
 #
 # KEY.char      to reads keyboard waiting, input char to TOS
-# KEY.pressed   if an key is pressed, input char to TOS-1, successtatus to TOS
 #
 # Just PRINT, to print TOS as numer is part of the STACKS runtime libary
 #
@@ -14,8 +13,8 @@
 #
 
 # Pointers to kernel variables. These must be initialized by the main program.
-VAR p_syscall_status 0
-VAR p_syscall_value 0
+VALUE p_syscall_status 0
+VALUE p_syscall_value 0
 
 # Initialization function for this library.
 # Call this once at startup to link the library to kernel variables.
@@ -80,15 +79,50 @@ DEF KEYchar {
     :key_end_loop
 }
 
-# Checks if a key has been pressed (non-blocking).
-# Pushes the character value, then the status (1 for success, 0 for none).
-# Status will be on the Top of Stack.
-DEF KEYpressed {
-    ASM {
-        ldi I ~SYS_GET_CHAR
-        int $INT_VECTORS
-    }
-    # Push value first, then status, by dereferencing the pointers
-    *p_syscall_value
-    *p_syscall_status
-}
+#### READline method
+LIST input_buffer 16
+VALUE p_input_buffer 0
+VALUE input_buffer_index 0
+CONST space 32
+CONST backspace 8
+CONST return 13
+CONST newline 10
+CONST null 0
+
+
+
+DEF READline {
+    :readline_loop
+        KEYchar          ; keyvalue on stack
+        # check for end of line \Return
+        DUP return == IF
+            PRTchar
+            GOTO finish_readline
+        END
+        # ckeck for backspace \Backspace
+        DUP backspace == IF
+            input_buffer_index 0 != IF
+                PRTchar
+                input_buffer_index 1 - AS input_buffer_index
+                GOTO readline_loop
+            ELSE
+                DROP
+                GOTO readline_loop
+            END
+        END
+        # handle regular char
+        DUP PRTchar         ; Print the char on screen
+        &input_buffer input_buffer_index + AS p_input_buffer
+        AS *p_input_buffer  ; store the char in buffer
+
+        input_buffer_index 1 + AS input_buffer_index
+
+    GOTO readline_loop
+
+
+    :finish_readline
+        &input_buffer input_buffer_index + AS p_input_buffer
+        null AS *p_input_buffer
+
+        &input_buffer
+}   

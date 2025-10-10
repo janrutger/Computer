@@ -1,7 +1,10 @@
 # .HEADER
+. $p_input_buffer 1
 . $p_syscall_value 1
 . $p_syscall_status 1
-. $str_0 13
+. $input_buffer 1
+. $input_buffer_index 1
+. $str_0 15
 
 # .CODE
 
@@ -27,6 +30,8 @@
     call @PRTstring
     call @KEYchar
     call @PRTchar
+    call @READline
+    call @PRTstring
 
     :HALT    ; Breakpointg before halt
     halt
@@ -82,17 +87,91 @@
     jmp :key_loop
 :key_end_loop
     ret
-@KEYpressed
-
-        ldi I ~SYS_GET_CHAR
-        int $INT_VECTORS
-        ldm I $p_syscall_value
-    ldx A $_start_memory_
+@READline
+:readline_loop
+    call @KEYchar
+    call @rt_dup
+    ldi A 13
     call @push_A
-    ldm I $p_syscall_status
-    ldx A $_start_memory_
+    call @rt_eq
+    call @pop_A
+    tst A 0
+    jmpt :READline_if_end_1
+    call @PRTchar
+    jmp :finish_readline
+:READline_if_end_1
+    call @rt_dup
+    ldi A 8
+    call @push_A
+    call @rt_eq
+    call @pop_A
+    tst A 0
+    jmpt :READline_if_end_2
+    ldm A $input_buffer_index
+    call @push_A
+    ldi A 0
+    call @push_A
+    call @rt_neq
+    call @pop_A
+    tst A 0
+    jmpt :READline_if_else_3
+    call @PRTchar
+    ldm A $input_buffer_index
+    call @push_A
+    ldi A 1
+    call @push_A
+    call @rt_sub
+    call @pop_A
+    sto A $input_buffer_index
+    jmp :readline_loop
+    jmp :READline_if_end_3
+:READline_if_else_3
+    call @rt_drop
+    jmp :readline_loop
+:READline_if_end_3
+:READline_if_end_2
+    call @rt_dup
+    call @PRTchar
+    ldi A $input_buffer
+    call @push_A
+    ldm A $input_buffer_index
+    call @push_A
+    call @rt_add
+    call @pop_A
+    sto A $p_input_buffer
+    call @pop_B
+    ldm I $p_input_buffer
+    stx B $_start_memory_
+    ldm A $input_buffer_index
+    call @push_A
+    ldi A 1
+    call @push_A
+    call @rt_add
+    call @pop_A
+    sto A $input_buffer_index
+    jmp :readline_loop
+:finish_readline
+    ldi A $input_buffer
+    call @push_A
+    ldm A $input_buffer_index
+    call @push_A
+    call @rt_add
+    call @pop_A
+    sto A $p_input_buffer
+    ldi A 0
+    call @push_A
+    call @pop_B
+    ldm I $p_input_buffer
+    stx B $_start_memory_
+    ldi A $input_buffer
     call @push_A
     ret
 
+
 # .DATA
-% $str_0 \H \e \l \l \o \space \W \o \r \l \d \! \null
+
+% $p_syscall_status 0
+% $p_syscall_value 0
+% $p_input_buffer 0
+% $input_buffer_index 0
+% $str_0 \H \e \l \l \o \space \W \o \r \l \d \! \space \Return \null
