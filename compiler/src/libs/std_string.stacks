@@ -1,0 +1,48 @@
+# Standard String Manipulation Library for the Stacks Language
+
+# Temporary variables for the STRCMP function.
+# Using VALUE for temporary storage is a pattern in this project.
+VALUE _strcmp_p1 0
+VALUE _strcmp_p2 0
+VALUE _strcmp_c1 0
+VALUE _strcmp_c2 0
+
+# --- STRCMP ---
+# Compares two null-terminated strings for equality.
+#
+# Usage:
+#   &string1 &string2 STRcmp
+#
+# Returns:
+#   1 on the stack if the strings are equal.
+#   0 on the stack if the strings are not equal.
+DEF STRcmp {
+    # Pop pointers from stack into our temporary variables
+    AS _strcmp_p2
+    AS _strcmp_p1
+
+    :strcmp_loop
+        # Dereference pointers to get the characters
+        *_strcmp_p1 AS _strcmp_c1
+        *_strcmp_p2 AS _strcmp_c2
+
+        # Compare the characters
+        _strcmp_c1 _strcmp_c2 != IF
+            0  # Not equal, push 0 and finish
+            GOTO strcmp_end
+        END
+
+        # Characters were equal. Check if it was the null terminator.
+        _strcmp_c1 0 == IF
+            1  # It was null, so strings are equal. Push 1 and finish.
+            GOTO strcmp_end
+        END
+
+        # Chars were equal, but not null. Increment pointers and loop.
+        _strcmp_p1 1 + AS _strcmp_p1
+        _strcmp_p2 1 + AS _strcmp_p2
+        GOTO strcmp_loop
+
+    :strcmp_end
+        # The result (0 or 1) is now on top of the stack.
+}

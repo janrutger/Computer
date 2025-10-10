@@ -1,0 +1,69 @@
+# .HEADER
+. $_strcmp_p1 1
+. $_strcmp_p2 1
+. $_strcmp_c1 1
+. $_strcmp_c2 1
+# .FUNCTIONS
+@STRcmp
+    call @pop_A
+    sto A $_strcmp_p2
+    call @pop_A
+    sto A $_strcmp_p1
+:strcmp_loop
+    ldm I $_strcmp_p1
+    ldx A $_start_memory_
+    call @push_A
+    call @pop_A
+    sto A $_strcmp_c1
+    ldm I $_strcmp_p2
+    ldx A $_start_memory_
+    call @push_A
+    call @pop_A
+    sto A $_strcmp_c2
+    ldm A $_strcmp_c1
+    call @push_A
+    ldm A $_strcmp_c2
+    call @push_A
+    call @rt_neq
+    call @pop_A
+    tst A 0
+    jmpt :STRcmp_if_end_0
+    ldi A 0
+    call @push_A
+    jmp :strcmp_end
+:STRcmp_if_end_0
+    ldm A $_strcmp_c1
+    call @push_A
+    ldi A 0
+    call @push_A
+    call @rt_eq
+    call @pop_A
+    tst A 0
+    jmpt :STRcmp_if_end_1
+    ldi A 1
+    call @push_A
+    jmp :strcmp_end
+:STRcmp_if_end_1
+    ldm A $_strcmp_p1
+    call @push_A
+    ldi A 1
+    call @push_A
+    call @rt_add
+    call @pop_A
+    sto A $_strcmp_p1
+    ldm A $_strcmp_p2
+    call @push_A
+    ldi A 1
+    call @push_A
+    call @rt_add
+    call @pop_A
+    sto A $_strcmp_p2
+    jmp :strcmp_loop
+:strcmp_end
+    ret
+
+# .DATA
+% $_strcmp_p1 0
+% $_strcmp_p2 0
+% $_strcmp_c1 0
+% $_strcmp_c2 0

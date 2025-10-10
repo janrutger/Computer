@@ -124,6 +124,10 @@
     call @pop_B
     ldm I $p_input_buffer
     stx B $_start_memory_
+    ldi A 0
+    call @push_A
+    call @pop_A
+    sto A $input_buffer_index
     ldi A $input_buffer
     call @push_A
     ret

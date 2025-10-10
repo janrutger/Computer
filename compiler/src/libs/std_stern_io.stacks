@@ -80,7 +80,7 @@ DEF KEYchar {
 }
 
 #### READline method
-LIST input_buffer 16
+LIST input_buffer 80
 VALUE p_input_buffer 0
 VALUE input_buffer_index 0
 CONST space 32
@@ -121,7 +121,8 @@ DEF READline {
 
     :finish_readline
         &input_buffer input_buffer_index + AS p_input_buffer
-        null AS *p_input_buffer
+        null AS *p_input_buffer     ; Terminate the input
 
-        &input_buffer
+        0 AS input_buffer_index     ; Reset the index
+        &input_buffer               ; Result (index) to the stack 
 }   

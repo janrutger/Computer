@@ -1,0 +1,27 @@
+{
+  "functions": [
+    "STRcmp"
+  ],
+  "variables": [
+    {
+      "name": "_strcmp_p1",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strcmp_p2",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strcmp_c1",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strcmp_c2",
+      "type": "VALUE",
+      "size": 1
+    }
+  ]
+}

@@ -1,11 +1,11 @@
 {
   "functions": [
     "io_lib_init",
-    "PRTchar",
-    "PRTcls",
+    "KEYchar",
     "PRTstring",
-    "READline",
-    "KEYchar"
+    "PRTcls",
+    "PRTchar",
+    "READline"
   ],
   "variables": [
     {

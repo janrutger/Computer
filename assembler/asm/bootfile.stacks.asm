@@ -4,7 +4,15 @@
 . $input_buffer 16
 . $p_input_buffer 1
 . $input_buffer_index 1
+. $_strcmp_p1 1
+. $_strcmp_p2 1
+. $_strcmp_c1 1
+. $_strcmp_c2 1
 . $str_0 15
+. $str_1 4
+. $str_2 4
+. $str_3 6
+. $str_4 5
 
 # .CODE
 
@@ -32,6 +40,23 @@
     call @PRTchar
     call @READline
     call @PRTstring
+    ldi A $str_1
+    call @push_A
+    ldi A $str_1
+    call @push_A
+    call @STRcmp
+    call @rt_print_tos
+    ldi A $str_2
+    call @push_A
+    ldi A $str_3
+    call @push_A
+    call @STRcmp
+    call @rt_print_tos
+    call @READline
+    ldi A $str_4
+    call @push_A
+    call @STRcmp
+    call @rt_print_tos
 
     :HALT    ; Breakpointg before halt
     halt
@@ -163,8 +188,71 @@
     call @pop_B
     ldm I $p_input_buffer
     stx B $_start_memory_
+    ldi A 0
+    call @push_A
+    call @pop_A
+    sto A $input_buffer_index
     ldi A $input_buffer
     call @push_A
+    ret
+
+
+@STRcmp
+    call @pop_A
+    sto A $_strcmp_p2
+    call @pop_A
+    sto A $_strcmp_p1
+:strcmp_loop
+    ldm I $_strcmp_p1
+    ldx A $_start_memory_
+    call @push_A
+    call @pop_A
+    sto A $_strcmp_c1
+    ldm I $_strcmp_p2
+    ldx A $_start_memory_
+    call @push_A
+    call @pop_A
+    sto A $_strcmp_c2
+    ldm A $_strcmp_c1
+    call @push_A
+    ldm A $_strcmp_c2
+    call @push_A
+    call @rt_neq
+    call @pop_A
+    tst A 0
+    jmpt :STRcmp_if_end_0
+    ldi A 0
+    call @push_A
+    jmp :strcmp_end
+:STRcmp_if_end_0
+    ldm A $_strcmp_c1
+    call @push_A
+    ldi A 0
+    call @push_A
+    call @rt_eq
+    call @pop_A
+    tst A 0
+    jmpt :STRcmp_if_end_1
+    ldi A 1
+    call @push_A
+    jmp :strcmp_end
+:STRcmp_if_end_1
+    ldm A $_strcmp_p1
+    call @push_A
+    ldi A 1
+    call @push_A
+    call @rt_add
+    call @pop_A
+    sto A $_strcmp_p1
+    ldm A $_strcmp_p2
+    call @push_A
+    ldi A 1
+    call @push_A
+    call @rt_add
+    call @pop_A
+    sto A $_strcmp_p2
+    jmp :strcmp_loop
+:strcmp_end
     ret
 
 
@@ -174,4 +262,13 @@
 % $p_syscall_value 0
 % $p_input_buffer 0
 % $input_buffer_index 0
+
+% $_strcmp_p1 0
+% $_strcmp_p2 0
+% $_strcmp_c1 0
+% $_strcmp_c2 0
 % $str_0 \H \e \l \l \o \space \W \o \r \l \d \! \space \Return \null
+% $str_1 \t \s \t \null
+% $str_2 \a \a \p \null
+% $str_3 \a \a \a \a \p \null
+% $str_4 \n \o \o \t \null
