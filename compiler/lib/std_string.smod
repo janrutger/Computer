@@ -3,6 +3,10 @@
 . $_strcmp_p2 1
 . $_strcmp_c1 1
 . $_strcmp_c2 1
+. $_atoi_s_ptr 1
+. $_atoi_p 1
+. $_atoi_c 1
+. $_atoi_result 1
 # .FUNCTIONS
 @STRcmp
     call @pop_A
@@ -61,9 +65,93 @@
     jmp :strcmp_loop
 :strcmp_end
     ret
+@STRatoi
+    call @pop_A
+    sto A $_atoi_s_ptr
+    ldi A 0
+    call @push_A
+    call @pop_A
+    sto A $_atoi_result
+    ldm A $_atoi_s_ptr
+    call @push_A
+    call @pop_A
+    sto A $_atoi_p
+:atoi_loop
+    ldm I $_atoi_p
+    ldx A $_start_memory_
+    call @push_A
+    call @pop_A
+    sto A $_atoi_c
+    ldm A $_atoi_c
+    call @push_A
+    ldi A 0
+    call @push_A
+    call @rt_eq
+    call @pop_A
+    tst A 0
+    jmpt :STRatoi_if_end_2
+    ldm A $_atoi_result
+    call @push_A
+    ldi A 1
+    call @push_A
+    jmp :atoi_end
+:STRatoi_if_end_2
+    ldm A $_atoi_c
+    call @push_A
+    ldi A 48
+    call @push_A
+    call @rt_lt
+    call @pop_A
+    tst A 0
+    jmpt :STRatoi_if_end_3
+    jmp :atoi_fail
+:STRatoi_if_end_3
+    ldm A $_atoi_c
+    call @push_A
+    ldi A 57
+    call @push_A
+    call @rt_gt
+    call @pop_A
+    tst A 0
+    jmpt :STRatoi_if_end_4
+    jmp :atoi_fail
+:STRatoi_if_end_4
+    ldm A $_atoi_c
+    call @push_A
+    ldi A 48
+    call @push_A
+    call @rt_sub
+    ldm A $_atoi_result
+    call @push_A
+    ldi A 10
+    call @push_A
+    call @rt_mul
+    call @rt_add
+    call @pop_A
+    sto A $_atoi_result
+    ldm A $_atoi_p
+    call @push_A
+    ldi A 1
+    call @push_A
+    call @rt_add
+    call @pop_A
+    sto A $_atoi_p
+    jmp :atoi_loop
+:atoi_fail
+    ldm A $_atoi_s_ptr
+    call @push_A
+    ldi A 0
+    call @push_A
+    jmp :atoi_end
+:atoi_end
+    ret
 
 # .DATA
 % $_strcmp_p1 0
 % $_strcmp_p2 0
 % $_strcmp_c1 0
 % $_strcmp_c2 0
+% $_atoi_s_ptr 0
+% $_atoi_p 0
+% $_atoi_c 0
+% $_atoi_result 0

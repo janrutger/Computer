@@ -1,0 +1,73 @@
+# .HEADER
+. $_strtok_s 1
+. $_strtok_d 1
+. $_strtok_p 1
+. $_strtok_c 1
+# .FUNCTIONS
+@TOKENIZE
+    call @pop_A
+    sto A $_strtok_d
+    call @pop_A
+    sto A $_strtok_s
+    ldm A $_strtok_s
+    call @push_A
+    call @pop_A
+    sto A $_strtok_p
+:strtok_loop
+    ldm I $_strtok_p
+    ldx A $_start_memory_
+    call @push_A
+    call @pop_A
+    sto A $_strtok_c
+    ldm A $_strtok_c
+    call @push_A
+    ldi A 0
+    call @push_A
+    call @rt_eq
+    call @pop_A
+    tst A 0
+    jmpt :TOKENIZE_if_end_0
+    ldm A $_strtok_s
+    call @push_A
+    ldi A 0
+    call @push_A
+    jmp :strtok_end
+:TOKENIZE_if_end_0
+    ldm A $_strtok_c
+    call @push_A
+    ldm A $_strtok_d
+    call @push_A
+    call @rt_eq
+    call @pop_A
+    tst A 0
+    jmpt :TOKENIZE_if_end_1
+    ldi A 0
+    call @push_A
+    call @pop_B
+    ldm I $_strtok_p
+    stx B $_start_memory_
+    ldm A $_strtok_s
+    call @push_A
+    ldm A $_strtok_p
+    call @push_A
+    ldi A 1
+    call @push_A
+    call @rt_add
+    jmp :strtok_end
+:TOKENIZE_if_end_1
+    ldm A $_strtok_p
+    call @push_A
+    ldi A 1
+    call @push_A
+    call @rt_add
+    call @pop_A
+    sto A $_strtok_p
+    jmp :strtok_loop
+:strtok_end
+    ret
+
+# .DATA
+% $_strtok_s 0
+% $_strtok_d 0
+% $_strtok_p 0
+% $_strtok_c 0

@@ -1,11 +1,13 @@
 {
   "functions": [
-    "io_lib_init",
-    "KEYchar",
-    "PRTstring",
     "PRTcls",
     "PRTchar",
-    "READline"
+    "CURSORon",
+    "CURSORoff",
+    "READline",
+    "io_lib_init",
+    "KEYchar",
+    "PRTstring"
   ],
   "variables": [
     {
@@ -21,7 +23,7 @@
     {
       "name": "input_buffer",
       "type": "LIST",
-      "size": 16
+      "size": 80
     },
     {
       "name": "p_input_buffer",

@@ -1,0 +1,71 @@
+# --- RPN Calculator Kernel ---
+USE std_stern_io 
+USE std_string
+INCLUDE std_parser
+
+CONST space 32 # Workaround for lexer bug with char literals
+
+# Variable to keep track of the part of the string we are parsing
+VALUE rpn_input_ptr 0
+
+DEF start_kernel {
+    "RPN Calculator. Enter expression or 'q' to quit.\n" PRTstring
+
+    :main_loop
+        ">> " PRTstring
+        READline DUP "q" STRcmp IF
+            DROP GOTO end_app
+        END
+
+        AS rpn_input_ptr # Store the pointer to the input string
+
+    :parser_loop
+        # If the pointer is 0, we are done with this line
+        rpn_input_ptr 0 == IF
+            GOTO main_loop
+        END
+
+        # Call STRTOK to get the next token
+        rpn_input_ptr space TOKENIZE
+
+        # Stack now has [&token, &rest]. Update our state for the next loop.
+        AS rpn_input_ptr  # Save the &rest pointer
+        
+        # The &token pointer is now on top of the stack. Decide what to do with it.
+
+        # Check for '+' operator
+        DUP "+" STRcmp IF
+            "Found ADD operator\n" PRTstring
+            DROP # Drop the original token pointer
+            GOTO parser_loop # Finished with this token, continue loop
+        END
+
+        # Check for 'PRINT' command
+        DUP "PRINT" STRcmp IF
+            "Found PRINT command\n" PRTstring
+            DROP # Drop the original token pointer
+            GOTO parser_loop # Finished with this token, continue loop
+        END
+
+        # If not a known command, try to convert it to a number.
+        STRatoi
+        
+        # ATOI returns [result, flag]. Check the flag.
+        IF
+            # Success! The result is a number.
+            # For now, we'll just print it. Later, we'll push it to the RPN stack.
+            "Number: " PRTstring
+            PRINT # PRINT consumes the number from the stack
+            "\n" PRTstring
+        ELSE
+            # Failure! It was not a valid number.
+            # ATOI returned [&token, 0]. We need to drop the pointer.
+            DROP 
+            "Syntax Error: Invalid token\n" PRTstring
+        END
+        
+        GOTO parser_loop
+
+    :end_app
+        "Exiting.\n" PRTstring
+}

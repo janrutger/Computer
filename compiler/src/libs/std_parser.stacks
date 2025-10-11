@@ -1,0 +1,57 @@
+# Standard Parser and Tokenizer Library
+
+# --- Private variables for STRTOK ---
+# These act as private, static variables for the STRTOK function,
+# ensuring its internal state does not interfere with the main Data Stack.
+VALUE _strtok_s 0 # Holds the pointer to the start of the string
+VALUE _strtok_d 0 # Holds the delimiter character
+VALUE _strtok_p 0 # Holds the current pointer during the loop
+VALUE _strtok_c 0 # Holds the current character for comparison
+
+# --- STRTOK ---
+# Splits a string by a delimiter. Modifies the string in-place.
+# This is a simple and self-contained implementation.
+#
+# Usage:
+#   &string ' ' STRTOK
+#
+# Stack before: &string, delimiter_char
+# Stack after:  &token, &rest_of_string
+#
+# If delimiter is not found, &rest_of_string will be 0.
+DEF TOKENIZE {
+    # Pop inputs from the Data Stack and store them in our private variables
+    AS _strtok_d
+    AS _strtok_s
+    _strtok_s AS _strtok_p # Initialize the loop pointer to the start of the string
+
+    :strtok_loop
+        # Get the current character into a private variable. No stack usage.
+        *_strtok_p AS _strtok_c
+        
+        # Check for the end of the string (null terminator).
+        # This expression uses the stack temporarily but is balanced.
+        _strtok_c 0 == IF
+            _strtok_s # Push the token pointer (the original string)
+            0         # Push a null pointer for the rest_of_string
+            GOTO strtok_end
+        END
+
+        # Check if the current character is the delimiter.
+        _strtok_c _strtok_d == IF
+            # Found the delimiter. Replace it with a null terminator in memory.
+            0 AS *_strtok_p
+            
+            # Push the results to the Data Stack.
+            _strtok_s       # 1. The pointer to the token (the original start)
+            _strtok_p 1 +   # 2. The pointer to the rest of the string
+            GOTO strtok_end
+        END
+        
+        # Not the delimiter, so increment the loop pointer and continue.
+        _strtok_p 1 + AS _strtok_p
+        GOTO strtok_loop
+
+    :strtok_end
+        # The two result pointers (&token, &rest_of_string) are now on the Data Stack.
+}

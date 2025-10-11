@@ -46,3 +46,69 @@ DEF STRcmp {
     :strcmp_end
         # The result (0 or 1) is now on top of the stack.
 }
+
+# --- ATOI (ASCII to Integer) ---
+# Converts a string of digits to an integer.
+
+# Private variables for ATOI
+VALUE _atoi_s_ptr 0   # To hold the original input string pointer
+VALUE _atoi_p 0       # The current pointer for the loop
+VALUE _atoi_c 0       # The current character
+VALUE _atoi_result 0  # The accumulated result
+
+# Constants for character checking
+CONST _ASCII_0 48
+CONST _ASCII_9 57
+
+# Converts a string to an integer.
+#
+# Usage:
+#   &"123" ATOI
+#
+# On Success:
+#   Returns: [number, 1] (e.g., [123, 1])
+# On Failure (if string contains non-digits):
+#   Returns: [original_pointer, 0]
+DEF STRatoi {
+    # Pop the input string pointer and save it
+    AS _atoi_s_ptr
+    
+    # Initialize state
+    0 AS _atoi_result
+    _atoi_s_ptr AS _atoi_p
+
+    :atoi_loop
+        # Get the current character
+        *_atoi_p AS _atoi_c
+
+        # Check for end of string (success condition)
+        _atoi_c 0 == IF
+            _atoi_result # Push the final number
+            1            # Push the success flag
+            GOTO atoi_end
+        END
+
+        # Check if the character is a valid digit
+        _atoi_c _ASCII_0 < IF GOTO atoi_fail END
+        _atoi_c _ASCII_9 > IF GOTO atoi_fail END
+
+        # It's a digit. Process it.
+        # digit_value = char - '0'
+        _atoi_c _ASCII_0 - 
+        
+        # result = (result * 10) + digit_value
+        _atoi_result 10 * + AS _atoi_result
+
+        # Increment pointer and continue
+        _atoi_p 1 + AS _atoi_p
+        GOTO atoi_loop
+
+    :atoi_fail
+        # A non-digit character was found. Return original pointer and failure flag.
+        _atoi_s_ptr
+        0
+        GOTO atoi_end
+
+    :atoi_end
+        # Result is on the Data Stack
+}

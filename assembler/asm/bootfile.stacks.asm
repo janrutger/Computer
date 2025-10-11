@@ -1,18 +1,17 @@
 # .HEADER
 . $p_syscall_status 1
 . $p_syscall_value 1
-. $input_buffer 16
+. $input_buffer 80
 . $p_input_buffer 1
 . $input_buffer_index 1
 . $_strcmp_p1 1
 . $_strcmp_p2 1
 . $_strcmp_c1 1
 . $_strcmp_c2 1
-. $str_0 15
-. $str_1 4
-. $str_2 4
-. $str_3 6
-. $str_4 5
+. $_atoi_s_ptr 1
+. $_atoi_p 1
+. $_atoi_c 1
+. $_atoi_result 1
 
 # .CODE
 
@@ -27,36 +26,7 @@
     ldi A $SYSCALL_RETURN_VALUE
     call @push_A
     call @io_lib_init
-    ldi A 12
-    call @push_A
-    ldi A 30
-    call @push_A
-    call @rt_add
-    call @rt_print_tos
-    ldi A $str_0
-    call @push_A
-    call @PRTstring
-    call @KEYchar
-    call @PRTchar
-    call @READline
-    call @PRTstring
-    ldi A $str_1
-    call @push_A
-    ldi A $str_1
-    call @push_A
-    call @STRcmp
-    call @rt_print_tos
-    ldi A $str_2
-    call @push_A
-    ldi A $str_3
-    call @push_A
-    call @STRcmp
-    call @rt_print_tos
-    call @READline
-    ldi A $str_4
-    call @push_A
-    call @STRcmp
-    call @rt_print_tos
+    call @start_kernel
 
     :HALT    ; Breakpointg before halt
     halt
@@ -65,6 +35,7 @@
     INCLUDE keyboard_routines.stacks
     INCLUDE screen_routines.stacks
     INCLUDE syscalls.stacks
+    INCLUDE stern_kernel.stacks
     ret
 
 # .FUNCTIONS
@@ -91,6 +62,16 @@
 @PRTcls
 
         ldi I ~SYS_CLEAR_SCREEN
+        int $INT_VECTORS
+        ret
+@CURSORon
+
+        ldi I ~SYS_PRINT_CURSOR
+        int $INT_VECTORS
+        ret
+@CURSORoff
+
+        ldi I ~SYS_DEL_CURSOR
         int $INT_VECTORS
         ret
 @KEYchar
@@ -254,6 +235,86 @@
     jmp :strcmp_loop
 :strcmp_end
     ret
+@STRatoi
+    call @pop_A
+    sto A $_atoi_s_ptr
+    ldi A 0
+    call @push_A
+    call @pop_A
+    sto A $_atoi_result
+    ldm A $_atoi_s_ptr
+    call @push_A
+    call @pop_A
+    sto A $_atoi_p
+:atoi_loop
+    ldm I $_atoi_p
+    ldx A $_start_memory_
+    call @push_A
+    call @pop_A
+    sto A $_atoi_c
+    ldm A $_atoi_c
+    call @push_A
+    ldi A 0
+    call @push_A
+    call @rt_eq
+    call @pop_A
+    tst A 0
+    jmpt :STRatoi_if_end_2
+    ldm A $_atoi_result
+    call @push_A
+    ldi A 1
+    call @push_A
+    jmp :atoi_end
+:STRatoi_if_end_2
+    ldm A $_atoi_c
+    call @push_A
+    ldi A 48
+    call @push_A
+    call @rt_lt
+    call @pop_A
+    tst A 0
+    jmpt :STRatoi_if_end_3
+    jmp :atoi_fail
+:STRatoi_if_end_3
+    ldm A $_atoi_c
+    call @push_A
+    ldi A 57
+    call @push_A
+    call @rt_gt
+    call @pop_A
+    tst A 0
+    jmpt :STRatoi_if_end_4
+    jmp :atoi_fail
+:STRatoi_if_end_4
+    ldm A $_atoi_c
+    call @push_A
+    ldi A 48
+    call @push_A
+    call @rt_sub
+    ldm A $_atoi_result
+    call @push_A
+    ldi A 10
+    call @push_A
+    call @rt_mul
+    call @rt_add
+    call @pop_A
+    sto A $_atoi_result
+    ldm A $_atoi_p
+    call @push_A
+    ldi A 1
+    call @push_A
+    call @rt_add
+    call @pop_A
+    sto A $_atoi_p
+    jmp :atoi_loop
+:atoi_fail
+    ldm A $_atoi_s_ptr
+    call @push_A
+    ldi A 0
+    call @push_A
+    jmp :atoi_end
+:atoi_end
+    ret
 
 
 # .DATA
@@ -267,8 +328,7 @@
 % $_strcmp_p2 0
 % $_strcmp_c1 0
 % $_strcmp_c2 0
-% $str_0 \H \e \l \l \o \space \W \o \r \l \d \! \space \Return \null
-% $str_1 \t \s \t \null
-% $str_2 \a \a \p \null
-% $str_3 \a \a \a \a \p \null
-% $str_4 \n \o \o \t \null
+% $_atoi_s_ptr 0
+% $_atoi_p 0
+% $_atoi_c 0
+% $_atoi_result 0

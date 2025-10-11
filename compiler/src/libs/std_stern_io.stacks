@@ -30,6 +30,8 @@ DEF io_lib_init {
 #     EQU ~SYS_CLEAR_SCREEN 22
 #     EQU ~SYS_GET_CHAR 23
 #     EQU ~SYS_PRINT_STRING 24
+#     EQU ~SYS_PRINT_CURSOR 25
+#     EQU ~SYS_DEL_CURSOR 26
 
 
 # Prints the character on the Top of Stack
@@ -55,6 +57,22 @@ DEF PRTstring {
 DEF PRTcls {
     ASM {
         ldi I ~SYS_CLEAR_SCREEN
+        int $INT_VECTORS
+    }
+}
+
+# Shows the cursor
+DEF CURSORon {
+    ASM {
+        ldi I ~SYS_PRINT_CURSOR
+        int $INT_VECTORS
+    }
+}
+
+# Hides the cursor
+DEF CURSORoff {
+    ASM {
+        ldi I ~SYS_DEL_CURSOR
         int $INT_VECTORS
     }
 }

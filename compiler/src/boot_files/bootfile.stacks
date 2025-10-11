@@ -22,15 +22,7 @@ INCLUDE std_stern_io &SYSCALL_RETURN_STATUS &SYSCALL_RETURN_VALUE io_lib_init
 INCLUDE std_string
 
 
-12 30 + PRINT
-"Hello World! \n" PRTstring
-KEYchar PRTchar
-READline PRTstring
-"tst" "tst" STRcmp PRINT
-"aap" "aaaap" STRcmp PRINT
-READline "noot" STRcmp PRINT
-
-
+`start_kernel
 
 
 
@@ -46,4 +38,5 @@ ASM {
     INCLUDE keyboard_routines.stacks
     INCLUDE screen_routines.stacks
     INCLUDE syscalls.stacks
+    INCLUDE stern_kernel.stacks
 }

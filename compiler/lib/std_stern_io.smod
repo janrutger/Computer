@@ -1,7 +1,7 @@
 # .HEADER
 . $p_syscall_status 1
 . $p_syscall_value 1
-. $input_buffer 16
+. $input_buffer 80
 . $p_input_buffer 1
 . $input_buffer_index 1
 # .FUNCTIONS
@@ -27,6 +27,16 @@
 @PRTcls
 
         ldi I ~SYS_CLEAR_SCREEN
+        int $INT_VECTORS
+        ret
+@CURSORon
+
+        ldi I ~SYS_PRINT_CURSOR
+        int $INT_VECTORS
+        ret
+@CURSORoff
+
+        ldi I ~SYS_DEL_CURSOR
         int $INT_VECTORS
         ret
 @KEYchar

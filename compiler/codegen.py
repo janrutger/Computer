@@ -408,6 +408,8 @@ class CodeGenerator:
                 raise Exception(f"Symbol file not found for module '{module_name}': {sym_path}")
             except json.JSONDecodeError:
                 raise Exception(f"Could not parse symbol file for module '{module_name}': {sym_path}")
+            
+            return ""
 
         elif isinstance(node, AsmNode):
             # For an ASM block, just return the raw code it contains.
