@@ -1,7 +1,8 @@
 # --- RPN Calculator Kernel ---
+INCLUDE parser_tools
 USE std_stern_io 
 USE std_string
-INCLUDE std_parser
+
 
 
 # Variable to keep track of the part of the string we are parsing
@@ -35,14 +36,14 @@ DEF start_kernel {
         # Check for '+' operator
         DUP "+" STRcmp IF
             "Found ADD operator\n" PRTstring
-            DROP # Drop the original token pointer
+            DROP OPC_ADD WRITE_TO_BYTECODE  # Drop the original token pointer
             GOTO parser_loop # Finished with this token, continue loop
         END
 
         # Check for 'PRINT' command
         DUP "PRINT" STRcmp IF
             "Found PRINT command\n" PRTstring
-            DROP # Drop the original token pointer
+            DROP OPC_PRINT WRITE_TO_BYTECODE # Drop the original token pointer
             GOTO parser_loop # Finished with this token, continue loop
         END
 
@@ -54,13 +55,15 @@ DEF start_kernel {
             # Success! The result is a number.
             # For now, we'll just print it. Later, we'll push it to the RPN stack.
             "Number: " PRTstring
-            PRINT # PRINT consumes the number from the stack
+            DUP PRINT # PRINT consumes the number from the stack
             "\n" PRTstring
+            OPC_PUSH WRITE_TO_BYTECODE
         ELSE
             # Failure! It was not a valid number.
             # ATOI returned [&token, 0]. We need to drop the pointer.
-            DROP 
+             
             "Syntax Error: Invalid token\n" PRTstring
+            OPC_UNKOWN WRITE_TO_BYTECODE
         END
         
         GOTO parser_loop

@@ -364,10 +364,15 @@ class CodeGenerator:
                 lib_vars = symbols_data.get("variables", [])
                 for var_info in lib_vars:
                     var_name = var_info.get("name")
+                    var_type = var_info.get("type")
                     var_size = var_info.get("size", 1)
                     if var_name:
                         self.symbols[var_name] = {'name': var_name, 'type': 'LIB_VAR', 'size': var_size}
-                        self.header_section += f". ${var_name} {var_size}\n"
+                        if var_type == 'VAR':
+                            self.header_section += f"MALLOC ${var_name} {var_size}\n"
+                        else:
+                            self.header_section += f". ${var_name} {var_size}\n"
+
 
             except FileNotFoundError:
                 raise Exception(f"Symbol file not found for module '{module_name}': {sym_path}")

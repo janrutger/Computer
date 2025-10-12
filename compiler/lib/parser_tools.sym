@@ -1,0 +1,55 @@
+{
+  "functions": [
+    "TOKENIZE",
+    "WRITE_TO_BYTECODE"
+  ],
+  "variables": [
+    {
+      "name": "_strtok_s",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strtok_d",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strtok_p",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strtok_c",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "bytecode_buffer",
+      "type": "VAR",
+      "size": 4096
+    },
+    {
+      "name": "bytecode_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "current_opcode",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "current_value",
+      "type": "VALUE",
+      "size": 1
+    }
+  ],
+  "constants": {
+    "OPC_PUSH": 1,
+    "OPC_ADD": 2,
+    "OPC_PRINT": 3,
+    "OPC_UNKOWN": 4,
+    "null": 0
+  }
+}

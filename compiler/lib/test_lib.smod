@@ -1,6 +1,7 @@
 # .HEADER
 . $test1 1
 . $test 9
+MALLOC $testvar 8000
 # .FUNCTIONS
 @testing
     ret

@@ -1,0 +1,133 @@
+# Standard Parser and Tokenizer Library
+# --- Private variables for TOKENIZE ---
+# These act as private, static variables for the TOKENIZE function,
+# ensuring its internal state does not interfere with the main Data Stack.
+VALUE _strtok_s 0 # Holds the pointer to the start of the string
+VALUE _strtok_d 0 # Holds the delimiter character
+VALUE _strtok_p 0 # Holds the current pointer during the loop
+VALUE _strtok_c 0 # Holds the current character for comparison
+
+# --- TOKENIZE ---
+# Splits a string by a delimiter. Modifies the string in-place.
+# This is a simple and self-contained implementation.
+#
+# Usage:
+#   &string delimiter TOKENIZE
+#
+# Stack before: &string, delimiter_char
+# Stack after:  &token, &rest_of_string
+#
+# If delimiter is not found, &rest_of_string will be 0.
+DEF TOKENIZE {
+    # Pop inputs from the Data Stack and store them in our private variables
+    AS _strtok_d
+    AS _strtok_s
+    _strtok_s AS _strtok_p # Initialize the loop pointer to the start of the string
+
+    :strtok_loop
+        # Get the current character into a private variable. No stack usage.
+        *_strtok_p AS _strtok_c
+        
+        # Check for the end of the string (null terminator).
+        # This expression uses the stack temporarily but is balanced.
+        _strtok_c 0 == IF
+            _strtok_s # Push the token pointer (the original string)
+            0         # Push a null pointer for the rest_of_string
+            GOTO strtok_end
+        END
+
+        # Check if the current character is the delimiter.
+        _strtok_c _strtok_d == IF
+            # Found the delimiter. Replace it with a null terminator in memory.
+            0 AS *_strtok_p
+            
+            # Push the results to the Data Stack.
+            _strtok_s       # 1. The pointer to the token (the original start)
+            _strtok_p 1 +   # 2. The pointer to the rest of the string
+            GOTO strtok_end
+        END
+        
+        # Not the delimiter, so increment the loop pointer and continue.
+        _strtok_p 1 + AS _strtok_p
+        GOTO strtok_loop
+
+    :strtok_end
+        # The two result pointers (&token, &rest_of_string) are now on the Data Stack.
+}
+
+
+# =============================================================================
+# Bytecode Resources
+# =============================================================================
+
+# --- Bytecode Buffer ---
+VAR bytecode_buffer 4096    # create buffer at adres 4096
+VALUE bytecode_ptr 4096     # Pointer points to the start adres
+VALUE current_opcode 1
+VALUE current_value 1
+
+# --- Opcodes ---
+CONST OPC_PUSH  1
+CONST OPC_ADD   2
+CONST OPC_PRINT 3
+CONST OPC_UNKOWN 4
+# ... more opcodes will be added here
+
+CONST null 0
+
+## Uses
+# value opcode WRITE_TO_BYTECODE
+# or
+# opcode WRITE_TO_BYTECODE
+#
+# 
+
+# --- WRITE_TO_BYTECODE ---
+DEF WRITE_TO_BYTECODE {
+    AS current_opcode
+    DUP current_opcode OPC_PUSH == IF
+        DROP                                # drop the current opcode from the stack
+        AS current_value                    # and reads the value from the stack to push
+        current_opcode AS *bytecode_ptr
+        bytecode_ptr 1 + AS bytecode_ptr
+        current_value AS *bytecode_ptr
+        bytecode_ptr 1 + AS bytecode_ptr
+        GOTO write_to_bytecode_end
+    END
+    DUP current_opcode OPC_UNKOWN == IF
+        DROP                                # drop the current opcode from the stack
+        AS current_value
+        current_opcode AS *bytecode_ptr
+        bytecode_ptr 1 + AS bytecode_ptr
+        current_value AS *bytecode_ptr
+        bytecode_ptr 1 + AS bytecode_ptr
+        GOTO write_to_bytecode_end
+    END
+
+    current_opcode AS *bytecode_ptr
+    bytecode_ptr 1 + AS bytecode_ptr
+    GOTO write_to_bytecode_end
+
+
+    # DUP current_opcode OPC_ADD == IF
+    #     DROP                                # drop the current opcode from the stack, no extra argument    
+    #     current_opcode AS *bytecode_ptr
+    #     bytecode_ptr 1 + AS bytecode_ptr
+    #     GOTO write_to_bytecode_end
+    # END
+    # DUP current_opcode OPC_PRINT == IF
+    #     DROP                                # drop the current opcode from the stack, no extra argument
+    #     current_opcode AS *bytecode_ptr
+    #     bytecode_ptr 1 + AS bytecode_ptr
+    #     GOTO write_to_bytecode_end
+    # END
+
+    # DROP OPC_UNKOWN AS *bytecode_ptr        # else write unknown opcode and proceed
+    # bytecode_ptr 1 + AS bytecode_ptr
+    # GOTO write_to_bytecode_end                                
+
+    :write_to_bytecode_end
+}
+
+
+

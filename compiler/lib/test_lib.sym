@@ -12,6 +12,11 @@
       "name": "test",
       "type": "STRING",
       "size": 9
+    },
+    {
+      "name": "testvar",
+      "type": "VAR",
+      "size": 8000
     }
   ],
   "constants": {
