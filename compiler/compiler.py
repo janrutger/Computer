@@ -82,9 +82,14 @@ def main():
             print(f"Successfully compiled module to '{smod_output}'.")
 
             # Write the .sym file
+            constants_to_export = {
+                const_name: node.value
+                for const_name, node in codegen.constants.items()
+            }
             symbols_to_export = {
                 "functions": list(codegen.function_symbols),
-                "variables": list(codegen.symbols.values())
+                "variables": list(codegen.symbols.values()),
+                "constants": constants_to_export
             }
             with open(sym_output, 'w') as f:
                 json.dump(symbols_to_export, f, indent=2)

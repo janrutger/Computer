@@ -1,8 +1,19 @@
 {
   "functions": [
+    "testing",
     "TOKENIZE"
   ],
   "variables": [
+    {
+      "name": "test1",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "test",
+      "type": "LIB_VAR",
+      "size": 9
+    },
     {
       "name": "_strtok_s",
       "type": "VALUE",
@@ -23,5 +34,8 @@
       "type": "VALUE",
       "size": 1
     }
-  ]
+  ],
+  "constants": {
+    "abc": 999
+  }
 }

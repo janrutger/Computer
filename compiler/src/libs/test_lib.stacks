@@ -1,0 +1,6 @@
+VALUE test1 10
+STRING test "MyString"
+CONST abc 999
+
+DEF testing {
+    }

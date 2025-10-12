@@ -1,13 +1,13 @@
 {
   "functions": [
     "PRTcls",
-    "PRTchar",
-    "CURSORon",
-    "CURSORoff",
-    "READline",
-    "io_lib_init",
     "KEYchar",
-    "PRTstring"
+    "PRTchar",
+    "CURSORoff",
+    "io_lib_init",
+    "PRTstring",
+    "CURSORon",
+    "READline"
   ],
   "variables": [
     {
@@ -35,5 +35,12 @@
       "type": "VALUE",
       "size": 1
     }
-  ]
+  ],
+  "constants": {
+    "space": 32,
+    "backspace": 8,
+    "return": 13,
+    "newline": 10,
+    "null": 0
+  }
 }

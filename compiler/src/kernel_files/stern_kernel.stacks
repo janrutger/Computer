@@ -3,7 +3,6 @@ USE std_stern_io
 USE std_string
 INCLUDE std_parser
 
-CONST space 32 # Workaround for lexer bug with char literals
 
 # Variable to keep track of the part of the string we are parsing
 VALUE rpn_input_ptr 0

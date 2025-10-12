@@ -1,5 +1,5 @@
 # Standard Parser and Tokenizer Library
-
+INCLUDE test_lib 
 # --- Private variables for STRTOK ---
 # These act as private, static variables for the STRTOK function,
 # ensuring its internal state does not interfere with the main Data Stack.

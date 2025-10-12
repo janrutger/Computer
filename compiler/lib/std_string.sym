@@ -1,7 +1,7 @@
 {
   "functions": [
-    "STRatoi",
-    "STRcmp"
+    "STRcmp",
+    "STRatoi"
   ],
   "variables": [
     {
@@ -44,5 +44,9 @@
       "type": "VALUE",
       "size": 1
     }
-  ]
+  ],
+  "constants": {
+    "_ASCII_0": 48,
+    "_ASCII_9": 57
+  }
 }

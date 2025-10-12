@@ -1,4 +1,6 @@
 # .HEADER
+. $test1 1
+. $test 9
 . $_strtok_s 1
 . $_strtok_d 1
 . $_strtok_p 1
@@ -19,6 +21,10 @@
 # .CODE
 
 # .FUNCTIONS
+
+
+@testing
+    ret
 
 @TOKENIZE
     call @pop_A
@@ -174,6 +180,9 @@
 
 # .DATA
 
+
+% $test1 10
+% $test \M \y \S \t \r \i \n \g \null
 % $_strtok_s 0
 % $_strtok_d 0
 % $_strtok_p 0

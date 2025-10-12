@@ -122,6 +122,10 @@ $(LIB_OUT_DIR)/%.smod: $(LIB_SRC_DIR)/%.stacks
 	@echo "====== Compiling Stacks Library: $< ======"
 	$(COMPILER) $< --module
 
+# --- 5a. Explicit Library Dependencies ---
+# Make needs to be told when one library includes another.
+$(LIB_OUT_DIR)/std_parser.smod: $(LIB_OUT_DIR)/test_lib.smod
+
 # --- 6. Stacks Kernel Module Compilation ---
 $(INCL_DIR)/%.stacks.asm: $(KERNEL_STACKS_SRC_DIR)/%.stacks $(COMPILED_LIBS)
 	@echo "====== Compiling Stacks Kernel Module: $< ======"

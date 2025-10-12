@@ -27,7 +27,7 @@ from parser import (
     # AssignmentNode,
     # VariableNode,
 )
-from lexer import TokenType
+from lexer import Token, TokenType
 
 class CodeGenerator:
     def __init__(self):
@@ -119,7 +119,7 @@ class CodeGenerator:
         for statement in node.statements:
             # When compiling a module, only process declarations and function definitions.
             # Ignore all other "mainline" code.
-            if is_module_compilation and not isinstance(statement, (VarDeclarationNode, ConstDeclarationNode, FunctionDefinitionNode, UseNode)):
+            if is_module_compilation and not isinstance(statement, (VarDeclarationNode, ConstDeclarationNode, FunctionDefinitionNode, UseNode, IncludeNode)):
                 continue
 
             code += self.generate_statement(statement)
@@ -347,6 +347,16 @@ class CodeGenerator:
                 with open(sym_path, 'r') as f:
                     symbols_data = json.load(f)
                 
+                # Add constants to the current compilation context
+                for const_name, const_value in symbols_data.get("constants", {}).items():
+                    # This is a simplified way to handle different node types
+                    # For now, we assume constants are numbers.
+                    if isinstance(const_value, int) or isinstance(const_value, float):
+                        self.constants[const_name] = NumberNode(Token(TokenType.NUMBER, const_value))
+                    elif isinstance(const_value, str):
+                        self.constants[const_name] = StringNode(Token(TokenType.STRING, const_value))
+                    # Add more types if needed
+
                 # Add symbols to the current compilation context
                 for func in symbols_data.get("functions", []):
                     self.function_symbols.add(func)
@@ -356,7 +366,7 @@ class CodeGenerator:
                     var_name = var_info.get("name")
                     var_size = var_info.get("size", 1)
                     if var_name:
-                        self.symbols[var_name] = {'type': 'LIB_VAR', 'size': var_size}
+                        self.symbols[var_name] = {'name': var_name, 'type': 'LIB_VAR', 'size': var_size}
                         self.header_section += f". ${var_name} {var_size}\n"
 
             except FileNotFoundError:
@@ -393,6 +403,16 @@ class CodeGenerator:
                 with open(sym_path, 'r') as f:
                     symbols_data = json.load(f)
                 
+                # Add constants to the current compilation context
+                for const_name, const_value in symbols_data.get("constants", {}).items():
+                    # This is a simplified way to handle different node types
+                    # For now, we assume constants are numbers.
+                    if isinstance(const_value, int) or isinstance(const_value, float):
+                        self.constants[const_name] = NumberNode(Token(TokenType.NUMBER, const_value))
+                    elif isinstance(const_value, str):
+                        self.constants[const_name] = StringNode(Token(TokenType.STRING, const_value))
+                    # Add more types if needed
+
                 # Add symbols to the current compilation context
                 for func in symbols_data.get("functions", []):
                     self.function_symbols.add(func)
@@ -402,7 +422,7 @@ class CodeGenerator:
                     var_name = var_info.get("name")
                     var_size = var_info.get("size", 1)
                     if var_name:
-                        self.symbols[var_name] = {'type': 'LIB_VAR', 'size': var_size}
+                        self.symbols[var_name] = {'name': var_name, 'type': 'LIB_VAR', 'size': var_size}
 
             except FileNotFoundError:
                 raise Exception(f"Symbol file not found for module '{module_name}': {sym_path}")
