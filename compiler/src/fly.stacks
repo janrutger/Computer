@@ -1,4 +1,4 @@
-USE math_lib
+INCLUDE math_lib
 
 # Init the plotter
 IO 1 ONLINE    ; set plotter online

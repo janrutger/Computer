@@ -10,6 +10,7 @@
     EQU ~SYS_PRINT_CURSOR 25
     EQU ~SYS_DEL_CURSOR 26
     EQU ~SYS_PRINT_NUMBER 27    
+    EQU ~SYS_UDC_CONTROL 33
 
 
     . $SYSCALL_RETURN_STATUS 1
@@ -64,6 +65,27 @@
         call @print_number
         rti
 
+    @sys_udc_control        ; Syscall 33
+        ; IN: A = channel, B = command, C = data
+        ; OUT: C = return value (for GET commands)
+        call @_send_udc_command
+
+        ; For GET commands, the return value is in the data register.
+        ; We must check if the command was a GET command.
+        tst B ~UDC_DEVICE_GET
+        jmpf :skip_get_logic
+
+        ; If it was, load the returned value into C and store it
+        ; in the official syscall return value location.
+        ldm C $udc_data_register
+        sto C $SYSCALL_RETURN_VALUE
+
+    :skip_get_logic
+        ; Set status to success and return.
+        ldi A 1
+        sto A $SYSCALL_RETURN_STATUS
+        rti
+
 # .FUNCTIONS
 @init_kernel_syscalls
 
@@ -106,5 +128,10 @@
         ldi I ~SYS_PRINT_NUMBER ; syscall 27 @sys_print_number
         ldi M @sys_print_number ; Start of the ISR
         stx M $INT_VECTORS      ; Store ISR
+
+        # EQU ~SYS_UDC_CONTROL 33
+        ldi I ~SYS_UDC_CONTROL    ; syscall 33 @sys_udc_control
+        ldi M @sys_udc_control    ; Start of the ISR
+        stx M $INT_VECTORS        ; Store ISR
 
         ret

@@ -13,6 +13,7 @@ MALLOC $bytecode_buffer 4096
 . $start_kernel_str_0 59
 . $start_kernel_str_1 4
 . $start_kernel_str_2 2
+. $char_pointer 1
 . $start_kernel_str_3 2
 . $start_kernel_str_4 20
 . $start_kernel_str_5 6
@@ -279,7 +280,10 @@ MALLOC $bytecode_buffer 4096
     ldi A $start_kernel_str_0
     call @push_A
     call @PRTstring
-:main_loop
+
+        ldi I 6144
+        callx $_start_memory_
+    :main_loop
     ldi A $start_kernel_str_1
     call @push_A
     call @PRTstring
@@ -294,6 +298,21 @@ MALLOC $bytecode_buffer 4096
     call @rt_drop
     jmp :end_kernel
 :start_kernel_if_end_0
+    call @rt_dup
+    call @pop_A
+    sto A $char_pointer
+    ldm I $char_pointer
+    ldx A $_start_memory_
+    call @push_A
+    ldi A 0
+    call @push_A
+    call @rt_eq
+    call @pop_A
+    tst A 0
+    jmpt :start_kernel_if_end_1
+    call @rt_drop
+    jmp :main_loop
+:start_kernel_if_end_1
     ldi A $bytecode_buffer
     call @push_A
     call @pop_A
@@ -308,7 +327,7 @@ MALLOC $bytecode_buffer 4096
     call @rt_eq
     call @pop_A
     tst A 0
-    jmpt :start_kernel_if_end_1
+    jmpt :start_kernel_if_end_2
     ldi A 0
     call @push_A
     call @WRITE_TO_BYTECODE
@@ -316,7 +335,7 @@ MALLOC $bytecode_buffer 4096
     call @push_A
     call @EXECUTE_BYTECODE
     jmp :main_loop
-:start_kernel_if_end_1
+:start_kernel_if_end_2
     ldm A $rpn_input_ptr
     call @push_A
     ldi A 32
@@ -330,7 +349,7 @@ MALLOC $bytecode_buffer 4096
     call @STRcmp
     call @pop_A
     tst A 0
-    jmpt :start_kernel_if_end_2
+    jmpt :start_kernel_if_end_3
     ldi A $start_kernel_str_4
     call @push_A
     call @PRTstring
@@ -339,14 +358,14 @@ MALLOC $bytecode_buffer 4096
     call @push_A
     call @WRITE_TO_BYTECODE
     jmp :parser_loop
-:start_kernel_if_end_2
+:start_kernel_if_end_3
     call @rt_dup
     ldi A $start_kernel_str_5
     call @push_A
     call @STRcmp
     call @pop_A
     tst A 0
-    jmpt :start_kernel_if_end_3
+    jmpt :start_kernel_if_end_4
     ldi A $start_kernel_str_6
     call @push_A
     call @PRTstring
@@ -355,11 +374,11 @@ MALLOC $bytecode_buffer 4096
     call @push_A
     call @WRITE_TO_BYTECODE
     jmp :parser_loop
-:start_kernel_if_end_3
+:start_kernel_if_end_4
     call @STRatoi
     call @pop_A
     tst A 0
-    jmpt :start_kernel_if_else_4
+    jmpt :start_kernel_if_else_5
     ldi A $start_kernel_str_7
     call @push_A
     call @PRTstring
@@ -371,15 +390,15 @@ MALLOC $bytecode_buffer 4096
     ldi A 1
     call @push_A
     call @WRITE_TO_BYTECODE
-    jmp :start_kernel_if_end_4
-:start_kernel_if_else_4
+    jmp :start_kernel_if_end_5
+:start_kernel_if_else_5
     ldi A $start_kernel_str_9
     call @push_A
     call @PRTstring
     ldi A 4
     call @push_A
     call @WRITE_TO_BYTECODE
-:start_kernel_if_end_4
+:start_kernel_if_end_5
     jmp :parser_loop
 :end_kernel
     ldi A $start_kernel_str_10

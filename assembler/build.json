@@ -6,6 +6,11 @@
       "file": "asm/bootfile.stacks.asm",
       "base_address": 0,
       "restore_symbols": false
+    },
+    {
+      "file": "asm/main_stacks.asm",
+      "base_address": 6144,
+      "restore_symbols": false
     }
   ]
 }

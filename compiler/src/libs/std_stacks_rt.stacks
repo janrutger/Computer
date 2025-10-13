@@ -186,34 +186,51 @@ DEF rt_print_tos {
 
 
 
-# DEF rt_udc_control {
-#     ASM {
-#         call @pop_B     ; Pop command code into B
-#         call @pop_A     
-#         ld M A          ; Save the Channel number
-#         call @pop_A
-#         ld C A          ; load data/arugumnet in C
-#         ld A M          ; load channel number in A
+DEF rt_udc_control {
+    ASM {
+        call @pop_B     ; Pop command code into B
+        call @pop_A     
+        ld M A          ; Save the Channel number
+        call @pop_A
+        ld C A          ; load data/arugumnet in C
+        ld A M          ; load channel number in A
 
-#         ldi I ~SYS_UDC_CONTROL      ; Load the syscall number
-#         int $INT_VECTORS            ; call the kernel
+        ldi I ~SYS_UDC_CONTROL      ; Load the syscall number
+        int $INT_VECTORS            ; call the kernel
 
-#         ; Check status and push return value for GET commands
-#         ldm A $SYSCALL_RETURN_STATUS
-#         tste A Z
-#         jmpf :rt_udc_ok
-#         ; Error handeling here, for now, just continue
+        ; Check status and push return value for GET commands
+        ldm A $SYSCALL_RETURN_STATUS
+        tste A Z
+        jmpf :rt_udc_ok
+        ; Error handeling here, for now, just continue
 
-#     :rt_udc_ok  
-#         ; if command was GET, push the return value
-#         tst B ~UDC_DEVICE_GET
-#         jmpf :rt_udc_end        ; goto end if no return value
+    :rt_udc_ok  
+        ; if command was GET, push the return value
+        tst B ~UDC_DEVICE_GET
+        jmpf :rt_udc_end        ; goto end if no return value
 
-#         ldm A $SYSCALL_RETURN_VALUE
-#         call @push_A            ; Push the return value on the datastack
+        ldm A $SYSCALL_RETURN_VALUE
+        call @push_A            ; Push the return value on the datastack
 
-#     :rt_udc_end 
-#     }
-# }
+    :rt_udc_end 
+    }
+}
+
+
+# --- Pseudo-Random Number Generator (LCG) ---
+# Inspired by simple generators like ZX81's.
+# Formula: seed = (a * seed + c) % m
+
+DEF rt_rnd {
+
+    CONST rand_a 134775813
+    CONST rand_c 1
+    CONST rand_m 65536
+
+    VALUE random_seed 54321
+    
+    random_seed rand_a * rand_c + rand_m % AS random_seed
+    random_seed 1000 % 
+}
 
 

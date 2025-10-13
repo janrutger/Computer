@@ -18,7 +18,9 @@
     ldi Z 0                 ; init Z register to 0
     call @init_interrupt_vector_table
     call @init_kernel_syscalls
+    call @init_udc
     call @KBD_INIT
+:WAIT
 
     ei
     ldi A $SYSCALL_RETURN_STATUS
@@ -34,6 +36,7 @@
     INCLUDE hardware_config.stacks
     INCLUDE keyboard_routines.stacks
     INCLUDE screen_routines.stacks
+    INCLUDE udc_routines.stacks
     INCLUDE syscalls.stacks
     INCLUDE stern_kernel.stacks
     ret

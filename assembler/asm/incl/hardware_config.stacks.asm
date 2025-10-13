@@ -1,4 +1,5 @@
 # .HEADER
+. $random_seed 1
 . $INT_VECTORS 1
 . $VIDEO_MEM 1
 
@@ -173,6 +174,55 @@
         ldi I ~SYS_PRINT_CHAR
         int $INT_VECTORS
         ret
+@rt_udc_control
+
+        call @pop_B     ; Pop command code into B
+        call @pop_A     
+        ld M A          ; Save the Channel number
+        call @pop_A
+        ld C A          ; load data/arugumnet in C
+        ld A M          ; load channel number in A
+
+        ldi I ~SYS_UDC_CONTROL      ; Load the syscall number
+        int $INT_VECTORS            ; call the kernel
+
+        ; Check status and push return value for GET commands
+        ldm A $SYSCALL_RETURN_STATUS
+        tste A Z
+        jmpf :rt_udc_ok
+        ; Error handeling here, for now, just continue
+
+    :rt_udc_ok  
+        ; if command was GET, push the return value
+        tst B ~UDC_DEVICE_GET
+        jmpf :rt_udc_end        ; goto end if no return value
+
+        ldm A $SYSCALL_RETURN_VALUE
+        call @push_A            ; Push the return value on the datastack
+
+    :rt_udc_end 
+        ret
+@rt_rnd
+    ldm A $random_seed
+    call @push_A
+    ldi A 134775813
+    call @push_A
+    call @rt_mul
+    ldi A 1
+    call @push_A
+    call @rt_add
+    ldi A 65536
+    call @push_A
+    call @rt_mod
+    call @pop_A
+    sto A $random_seed
+    ldm A $random_seed
+    call @push_A
+    ldi A 1000
+    call @push_A
+    call @rt_mod
+    ret
+
 @init_interrupt_vector_table
 
         ldi I 0             ; Interrupt vector (0 is keyboard)
@@ -183,5 +233,7 @@
         ret
 
 # .DATA
+
+% $random_seed 54321
 % $INT_VECTORS 3072
 % $VIDEO_MEM 14336

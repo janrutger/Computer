@@ -1,24 +1,36 @@
 {
   "functions": [
-    "rt_mod",
-    "rt_lt",
-    "push_A",
-    "rt_eq",
-    "rt_add",
-    "rt_sub",
-    "rt_mul",
-    "rt_div",
-    "rt_dup",
-    "rt_over",
-    "rt_print_tos",
+    "rt_drop",
     "rt_gt",
-    "rt_neq",
-    "push_B",
+    "rt_div",
+    "rt_eq",
     "rt_swap",
+    "rt_sub",
+    "rt_lt",
+    "rt_mod",
+    "rt_rnd",
+    "rt_mul",
     "pop_A",
+    "push_B",
+    "rt_dup",
+    "rt_print_tos",
+    "push_A",
     "pop_B",
-    "rt_drop"
+    "rt_over",
+    "rt_udc_control",
+    "rt_neq",
+    "rt_add"
   ],
-  "variables": [],
-  "constants": {}
+  "variables": [
+    {
+      "name": "random_seed",
+      "type": "VALUE",
+      "size": 1
+    }
+  ],
+  "constants": {
+    "rand_a": 134775813,
+    "rand_c": 1,
+    "rand_m": 65536
+  }
 }

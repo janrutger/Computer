@@ -9,8 +9,9 @@ ASM {
 # Init a few things
 `init_interrupt_vector_table 
 `init_kernel_syscalls
+`init_udc
 `KBD_INIT
-
+:WAIT
 ASM {
     ei
 }
@@ -37,6 +38,7 @@ ASM {
     INCLUDE hardware_config.stacks
     INCLUDE keyboard_routines.stacks
     INCLUDE screen_routines.stacks
+    INCLUDE udc_routines.stacks
     INCLUDE syscalls.stacks
     INCLUDE stern_kernel.stacks
 }

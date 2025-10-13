@@ -1,4 +1,5 @@
-# --- RPN Calculator Kernel ---
+# --- RPN  Kernel Command Line ---
+#
 INCLUDE parser_tools
 USE std_stern_io 
 USE std_string
@@ -10,11 +11,22 @@ VALUE rpn_input_ptr 0
 DEF start_kernel {
     "New Kernel Command Line: Enter expression or 'q' to quit.\n" PRTstring
 
+    ASM {
+        ldi I 6144
+        callx $_start_memory_
+    }
+
     :main_loop
         ">> " PRTstring
-        READline DUP "q" STRcmp IF
+        READline
+        DUP "q" STRcmp IF
             DROP GOTO end_kernel
         END
+        DUP AS char_pointer
+        *char_pointer 0 == IF
+            DROP GOTO main_loop
+        END
+        
 
         &bytecode_buffer AS bytecode_ptr
         AS rpn_input_ptr # Store the pointer to the input string
