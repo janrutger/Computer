@@ -368,9 +368,11 @@ class CodeGenerator:
                     var_size = var_info.get("size", 1)
                     if var_name:
                         self.symbols[var_name] = {'name': var_name, 'type': 'LIB_VAR', 'size': var_size}
-                        if var_type == 'VAR':
+                        if var_type == 'VAR':       # MALLOC reservation
                             self.header_section += f"MALLOC ${var_name} {var_size}\n"
-                        else:
+                        elif var_type == 'LIB_VAR': # No headerline here
+                            continue
+                        else:                       # default . (dot) directive
                             self.header_section += f". ${var_name} {var_size}\n"
 
 
@@ -485,7 +487,8 @@ class CodeGenerator:
 
     def add_string_literal(self, string_value):
         if string_value not in self.string_literals:
-            label = f"str_{self.next_string_label}"
+            label = f"{self.current_context}_str_{self.next_string_label}"
+            # label = f"str_{self.next_string_label}"
             self.next_string_label += 1
             self.string_literals[string_value] = label
             

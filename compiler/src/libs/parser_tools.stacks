@@ -1,3 +1,4 @@
+USE std_stern_io 
 # Standard Parser and Tokenizer Library
 # --- Private variables for TOKENIZE ---
 # These act as private, static variables for the TOKENIZE function,
@@ -67,13 +68,13 @@ VALUE current_opcode 1
 VALUE current_value 1
 
 # --- Opcodes ---
+CONST OPC_END 0
 CONST OPC_PUSH  1
 CONST OPC_ADD   2
 CONST OPC_PRINT 3
 CONST OPC_UNKOWN 4
 # ... more opcodes will be added here
 
-CONST null 0
 
 ## Uses
 # value opcode WRITE_TO_BYTECODE
@@ -83,20 +84,15 @@ CONST null 0
 # 
 
 # --- WRITE_TO_BYTECODE ---
+# Handles opcodes with and without arguments.
+# Expects [opcode] on stack for simple opcodes.
+# Expects [value, opcode] on stack for opcodes with arguments.
 DEF WRITE_TO_BYTECODE {
-    AS current_opcode
-    DUP current_opcode OPC_PUSH == IF
-        DROP                                # drop the current opcode from the stack
-        AS current_value                    # and reads the value from the stack to push
-        current_opcode AS *bytecode_ptr
-        bytecode_ptr 1 + AS bytecode_ptr
-        current_value AS *bytecode_ptr
-        bytecode_ptr 1 + AS bytecode_ptr
-        GOTO write_to_bytecode_end
-    END
-    DUP current_opcode OPC_UNKOWN == IF
-        DROP                                # drop the current opcode from the stack
-        AS current_value
+    AS current_opcode # Pop opcode, leave value (if any)
+
+    # Check if the opcode is one that takes an argument
+    current_opcode OPC_PUSH == IF
+        AS current_value # Pop the value from the stack
         current_opcode AS *bytecode_ptr
         bytecode_ptr 1 + AS bytecode_ptr
         current_value AS *bytecode_ptr
@@ -104,29 +100,83 @@ DEF WRITE_TO_BYTECODE {
         GOTO write_to_bytecode_end
     END
 
+    current_opcode OPC_UNKOWN == IF
+        AS current_value # Pop the value from the stack
+        current_opcode AS *bytecode_ptr
+        bytecode_ptr 1 + AS bytecode_ptr
+        current_value AS *bytecode_ptr
+        bytecode_ptr 1 + AS bytecode_ptr
+        GOTO write_to_bytecode_end
+    END
+
+    # If not PUSH or UNKOWN, it's a simple opcode with no argument.
+    # The stack should be empty now.
     current_opcode AS *bytecode_ptr
     bytecode_ptr 1 + AS bytecode_ptr
-    GOTO write_to_bytecode_end
-
-
-    # DUP current_opcode OPC_ADD == IF
-    #     DROP                                # drop the current opcode from the stack, no extra argument    
-    #     current_opcode AS *bytecode_ptr
-    #     bytecode_ptr 1 + AS bytecode_ptr
-    #     GOTO write_to_bytecode_end
-    # END
-    # DUP current_opcode OPC_PRINT == IF
-    #     DROP                                # drop the current opcode from the stack, no extra argument
-    #     current_opcode AS *bytecode_ptr
-    #     bytecode_ptr 1 + AS bytecode_ptr
-    #     GOTO write_to_bytecode_end
-    # END
-
-    # DROP OPC_UNKOWN AS *bytecode_ptr        # else write unknown opcode and proceed
-    # bytecode_ptr 1 + AS bytecode_ptr
-    # GOTO write_to_bytecode_end                                
-
+    
     :write_to_bytecode_end
+}
+
+# =============================================================================
+# Bytecode Executor
+# =============================================================================
+
+##
+# Start : &buffer_pointer EXECUTE_BYTECODE
+# Program stops at OPC_END (null) termination
+# No return values
+
+VALUE bytecode_execution_ptr 4096
+STRING ErrorMessage "Fatal error: for now,an invalid token \n"
+
+DEF EXECUTE_BYTECODE {
+    AS bytecode_execution_ptr
+
+    :execution_loop
+        # check for OPC_END, read the current opcode
+        # bytecode_ptr bytecode_execution_ptr < IF
+        #     GOTO execution_end
+        # END
+
+        *bytecode_execution_ptr AS current_opcode
+        bytecode_execution_ptr 1 + AS bytecode_execution_ptr
+
+        current_opcode OPC_END == IF
+            GOTO execution_end
+        END
+
+
+        current_opcode OPC_PUSH == IF
+            *bytecode_execution_ptr AS current_value
+            bytecode_execution_ptr 1 + AS bytecode_execution_ptr
+            current_value
+            GOTO execution_loop
+        END
+
+        current_opcode OPC_ADD == IF
+            +
+            GOTO execution_loop
+        END
+
+        current_opcode OPC_PRINT == IF
+            PRINT
+            #"\n" PRTstring
+            return PRTchar
+            GOTO execution_loop
+        END
+
+        current_opcode OPC_UNKOWN == IF
+            # An OPC_UNKOWN has a value, so we need to skip it
+            bytecode_execution_ptr 1 + AS bytecode_execution_ptr
+            GOTO execution_loop
+        END
+
+        &ErrorMessage PRTstring
+        GOTO execution_end # Stop execution on error
+
+    :execution_end
+        # Reset bytecode pointer for the next line of input
+        # 4096 AS bytecode_ptr
 }
 
 

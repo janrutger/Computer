@@ -4,28 +4,30 @@ USE std_stern_io
 USE std_string
 
 
-
 # Variable to keep track of the part of the string we are parsing
 VALUE rpn_input_ptr 0
 
 DEF start_kernel {
-    "RPN Calculator. Enter expression or 'q' to quit.\n" PRTstring
+    "New Kernel Command Line: Enter expression or 'q' to quit.\n" PRTstring
 
     :main_loop
         ">> " PRTstring
         READline DUP "q" STRcmp IF
-            DROP GOTO end_app
+            DROP GOTO end_kernel
         END
 
+        &bytecode_buffer AS bytecode_ptr
         AS rpn_input_ptr # Store the pointer to the input string
 
     :parser_loop
         # If the pointer is 0, we are done with this line
         rpn_input_ptr 0 == IF
+            OPC_END WRITE_TO_BYTECODE       # write end of program token
+            &bytecode_buffer EXECUTE_BYTECODE
             GOTO main_loop
         END
 
-        # Call STRTOK to get the next token
+        # Call TOKENIZE to get the next token
         rpn_input_ptr space TOKENIZE
 
         # Stack now has [&token, &rest]. Update our state for the next loop.
@@ -68,6 +70,9 @@ DEF start_kernel {
         
         GOTO parser_loop
 
-    :end_app
+        
+
+    :end_kernel
         "Exiting.\n" PRTstring
 }
+
