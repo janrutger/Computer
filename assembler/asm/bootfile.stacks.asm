@@ -20,7 +20,6 @@
     call @init_kernel_syscalls
     call @init_udc
     call @KBD_INIT
-:WAIT
 
     ei
     ldi A $SYSCALL_RETURN_STATUS
@@ -98,7 +97,9 @@
     ret
 @READline
 :readline_loop
+    call @CURSORon
     call @KEYchar
+    call @CURSORon
     call @rt_dup
     ldi A 13
     call @push_A
@@ -106,6 +107,7 @@
     call @pop_A
     tst A 0
     jmpt :READline_if_end_1
+    call @CURSORoff
     call @PRTchar
     jmp :finish_readline
 :READline_if_end_1
@@ -124,6 +126,7 @@
     call @pop_A
     tst A 0
     jmpt :READline_if_else_3
+    call @CURSORoff
     call @PRTchar
     ldm A $input_buffer_index
     call @push_A

@@ -1,16 +1,16 @@
 {
   "functions": [
-    "CURSORoff",
-    "KEYchar",
-    "PRTstring",
-    "PRTcls",
-    "WRITE_TO_BYTECODE",
-    "PRTchar",
-    "TOKENIZE",
     "CURSORon",
-    "EXECUTE_BYTECODE",
+    "CURSORoff",
+    "PRTcls",
     "READline",
-    "io_lib_init"
+    "PRTchar",
+    "io_lib_init",
+    "TOKENIZE",
+    "KEYchar",
+    "WRITE_TO_BYTECODE",
+    "EXECUTE_BYTECODE",
+    "PRTstring"
   ],
   "variables": [
     {
@@ -99,6 +99,7 @@
     "OPC_PUSH": 1,
     "OPC_ADD": 2,
     "OPC_PRINT": 3,
-    "OPC_UNKOWN": 4
+    "OPC_UNKOWN": 4,
+    "OPC_USR": 5
   }
 }

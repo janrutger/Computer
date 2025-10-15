@@ -11,10 +11,10 @@ VALUE rpn_input_ptr 0
 DEF start_kernel {
     "New Kernel Command Line: Enter expression or 'q' to quit.\n" PRTstring
 
-    ASM {
-        ldi I 6144
-        callx $_start_memory_
-    }
+    # ASM {
+    #     ldi I 6144
+    #     callx $_start_memory_
+    # }
 
     :main_loop
         ">> " PRTstring
@@ -60,6 +60,14 @@ DEF start_kernel {
             DROP OPC_PRINT WRITE_TO_BYTECODE # Drop the original token pointer
             GOTO parser_loop # Finished with this token, continue loop
         END
+
+        # Check fot 'USR' command
+        DUP "USR" STRcmp IF
+            "Found USR command\n" PRTstring
+            DROP OPC_USR WRITE_TO_BYTECODE
+            GOTO parser_loop
+        END
+
 
         # If not a known command, try to convert it to a number.
         STRatoi

@@ -212,15 +212,29 @@ MALLOC $bytecode_buffer 4096
 :EXECUTE_BYTECODE_if_end_5
     ldm A $current_opcode
     call @push_A
-    ldi A 2
+    ldi A 5
     call @push_A
     call @rt_eq
     call @pop_A
     tst A 0
     jmpt :EXECUTE_BYTECODE_if_end_6
+
+                call @pop_A
+                ld I A
+                callx $_start_memory_
+                jmp :execution_loop
+:EXECUTE_BYTECODE_if_end_6
+    ldm A $current_opcode
+    call @push_A
+    ldi A 2
+    call @push_A
+    call @rt_eq
+    call @pop_A
+    tst A 0
+    jmpt :EXECUTE_BYTECODE_if_end_7
     call @rt_add
     jmp :execution_loop
-:EXECUTE_BYTECODE_if_end_6
+:EXECUTE_BYTECODE_if_end_7
     ldm A $current_opcode
     call @push_A
     ldi A 3
@@ -228,13 +242,13 @@ MALLOC $bytecode_buffer 4096
     call @rt_eq
     call @pop_A
     tst A 0
-    jmpt :EXECUTE_BYTECODE_if_end_7
+    jmpt :EXECUTE_BYTECODE_if_end_8
     call @rt_print_tos
     ldi A 13
     call @push_A
     call @PRTchar
     jmp :execution_loop
-:EXECUTE_BYTECODE_if_end_7
+:EXECUTE_BYTECODE_if_end_8
     ldm A $current_opcode
     call @push_A
     ldi A 4
@@ -242,7 +256,10 @@ MALLOC $bytecode_buffer 4096
     call @rt_eq
     call @pop_A
     tst A 0
-    jmpt :EXECUTE_BYTECODE_if_end_8
+    jmpt :EXECUTE_BYTECODE_if_end_9
+    ldi A $ErrorMessage
+    call @push_A
+    call @PRTstring
     ldm A $bytecode_execution_ptr
     call @push_A
     ldi A 1
@@ -251,7 +268,7 @@ MALLOC $bytecode_buffer 4096
     call @pop_A
     sto A $bytecode_execution_ptr
     jmp :execution_loop
-:EXECUTE_BYTECODE_if_end_8
+:EXECUTE_BYTECODE_if_end_9
     ldi A $ErrorMessage
     call @push_A
     call @PRTstring

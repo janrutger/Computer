@@ -73,6 +73,7 @@ CONST OPC_PUSH  1
 CONST OPC_ADD   2
 CONST OPC_PRINT 3
 CONST OPC_UNKOWN 4
+CONST OPC_USR 5
 # ... more opcodes will be added here
 
 
@@ -99,6 +100,7 @@ DEF WRITE_TO_BYTECODE {
         bytecode_ptr 1 + AS bytecode_ptr
         GOTO write_to_bytecode_end
     END
+
 
     current_opcode OPC_UNKOWN == IF
         AS current_value # Pop the value from the stack
@@ -133,14 +135,9 @@ DEF EXECUTE_BYTECODE {
     AS bytecode_execution_ptr
 
     :execution_loop
-        # check for OPC_END, read the current opcode
-        # bytecode_ptr bytecode_execution_ptr < IF
-        #     GOTO execution_end
-        # END
-
+        # check for OPC_END, read the current opcode first
         *bytecode_execution_ptr AS current_opcode
         bytecode_execution_ptr 1 + AS bytecode_execution_ptr
-
         current_opcode OPC_END == IF
             GOTO execution_end
         END
@@ -153,6 +150,16 @@ DEF EXECUTE_BYTECODE {
             GOTO execution_loop
         END
 
+        current_opcode OPC_USR == IF
+            ASM {
+                call @pop_A
+                ld I A
+                callx $_start_memory_
+            }
+            GOTO execution_loop
+        END
+
+
         current_opcode OPC_ADD == IF
             +
             GOTO execution_loop
@@ -160,13 +167,13 @@ DEF EXECUTE_BYTECODE {
 
         current_opcode OPC_PRINT == IF
             PRINT
-            #"\n" PRTstring
-            return PRTchar
+            return PRTchar      # print an newline
             GOTO execution_loop
         END
 
         current_opcode OPC_UNKOWN == IF
             # An OPC_UNKOWN has a value, so we need to skip it
+            &ErrorMessage PRTstring
             bytecode_execution_ptr 1 + AS bytecode_execution_ptr
             GOTO execution_loop
         END

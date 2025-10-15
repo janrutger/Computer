@@ -110,15 +110,19 @@ CONST null 0
 
 DEF READline {
     :readline_loop
+        CURSORon
         KEYchar          ; keyvalue on stack
+        CURSORon
         # check for end of line \Return
         DUP return == IF
+            CURSORoff
             PRTchar
             GOTO finish_readline
         END
         # ckeck for backspace \Backspace
         DUP backspace == IF
             input_buffer_index 0 != IF
+                CURSORoff
                 PRTchar
                 input_buffer_index 1 - AS input_buffer_index
                 GOTO readline_loop

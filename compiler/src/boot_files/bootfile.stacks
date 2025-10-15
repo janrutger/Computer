@@ -11,7 +11,7 @@ ASM {
 `init_kernel_syscalls
 `init_udc
 `KBD_INIT
-:WAIT
+
 ASM {
     ei
 }
