@@ -47,6 +47,13 @@ DEF start_kernel {
         
         # The &token pointer is now on top of the stack. Decide what to do with it.
 
+        # If the token pointer is null, it means we've parsed an empty part of the
+        # string (e.g., multiple spaces). We should ignore it and continue parsing.
+        DUP 0 == IF
+            DROP
+            GOTO parser_loop
+        END
+
         # Check for '+' operator
         DUP "+" STRcmp IF
             "Found ADD operator\n" PRTstring

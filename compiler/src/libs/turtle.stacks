@@ -1,0 +1,191 @@
+CONST channel 2     ; Screen device
+CONST mode 1        # 0: Pixel, 1: Sprite, 2: Pixel (DB), 3: Sprite (DB)
+CONST DBmode 3      # double buffer mode
+
+CONST black 0
+CONST white 1
+CONST red 2
+CONST cyan 3
+CONST purple 4
+CONST green 5
+CONST blue 6
+CONST yellow 7
+CONST orange 8
+CONST brown 9
+CONST lightRed 10
+CONST darkGray 11
+CONST gray 12
+CONST lightGreen 13
+CONST lightBlue 14
+CONST lightGray 15
+
+CONST char 203      # inverse blank
+
+## ALL UDC device instructions
+# # Generic Commands
+# 'INIT':    0, 
+# 'ONLINE':  1, 
+# 'OFFLINE': 2, 
+# 'RESET':   3,
+# # Device-Specific Commands
+# 'NEW':    10, 
+# 'SEND':   11, 
+# 'GET':    12, 
+# 'COLOR':  13, 
+# 'MODE':   14,
+# 'X':      15, 
+# 'Y':      16, 
+# 'DRAW':   17, 
+# 'FLIP':   18,
+
+VALUE WIDTH  80
+VALUE HEIGHT 60
+VALUE Xax 0
+VALUE Yax 0
+VALUE degrees 0
+VALUE TURTLE_HEADING_DEG 0
+VALUE TURTLE_HEADING 0
+VALUE degrees_to_turn 0
+# VALUE current_degrees 0
+
+VALUE dx 0                    # Variable for x change
+VALUE dy 0                    # Variable for y change
+VALUE distance 0              # Variable for forward distance
+VALUE temp_ptr 0              # A temporary pointer for reading from memory
+
+
+# --- Movement Lookup Tables ---
+# Store the change in X and Y for each of the 8 directions.
+# LIST TURTLE_DX 8 
+# LIST TURTLE_DY 8
+# ASM {
+#     . $TURTLE_DX 8
+#     % $TURTLE_DX  1  1  0 -1 -1 -1  0  1
+#     . $TURTLE_DY 8
+#     % $TURTLE_DY  0  1  1  1  0 -1 -1 -1
+# }
+
+
+
+
+#Draws on X-Axis, Y-Axis
+DEF _drawTurtle {
+    char IO 2 DRAW
+}
+
+DEF _headingTurtle {
+    AS degrees
+    # Ensure angle is within 0-359
+    degrees 360 % AS degrees
+    # Convert the degree angle to an 8-way heading (0-7)
+    degrees 22 + 45 // AS TURTLE_HEADING
+}
+
+
+# Turns the turtle right by a given number of degrees.
+# Note: This will snap to the nearest 45-degree direction.
+DEF TURTLE_right {
+    AS degrees_to_turn
+    
+    # Add to the precise degree heading, and wrap around 360
+    TURTLE_HEADING_DEG degrees_to_turn + 360 % AS TURTLE_HEADING_DEG
+}
+
+# Turns the turtle left by a given number of degrees.
+DEF TURTLE_left {
+    AS degrees_to_turn
+
+    # Subtract from the precise degree heading, with safe wrapping
+    360 TURTLE_HEADING_DEG + degrees_to_turn - 360 % AS TURTLE_HEADING_DEG
+}
+
+# Expects color code on the stack
+DEF TURTLE_color {
+    IO 2 COLOR
+}
+
+# expects X,Y on the stack
+DEF TURTLE_goto {
+    HEIGHT % DUP AS Yax IO 2 Y           # Read Y (TOS) from stack
+    WIDTH  % DUP AS Xax IO 2 X           # Read X (TOS-1) from stack
+    _drawTurtle
+}  
+
+# Moves the turtle forward by a given distance
+# Usage: distance TURTLE_forward
+DEF TURTLE_forward {
+    AS distance
+
+    # 1. Convert the precise degree heading to an 8-way heading for this move
+    TURTLE_HEADING_DEG 22 + 45 // AS TURTLE_HEADING
+
+    # 2. Get dx/dy for the calculated 8-way heading
+    &TURTLE_DX TURTLE_HEADING + AS temp_ptr
+    *temp_ptr AS dx
+    &TURTLE_DY TURTLE_HEADING + AS temp_ptr
+    *temp_ptr AS dy
+
+    # 3. Loop `distance` times, moving one step at a time
+    :move_loop
+        distance 0 == IF GOTO move_end END
+
+        # Update turtle's position
+        Xax dx + AS Xax
+        Yax dy + AS Yax
+
+        # Draw a character at the new position
+        Xax Yax TURTLE_goto
+
+        distance 1 - AS distance
+        GOTO move_loop
+    :move_end
+}
+
+
+
+
+DEF TURTLE_welcome {
+    32 IO 2 X             # Default start point
+    1  IO 2 Y
+
+    DBmode IO 2 MODE
+
+    87  IO 2 DRAW 33 IO 2 X
+    101 IO 2 DRAW 34 IO 2 X
+    108 IO 2 DRAW 35 IO 2 X
+    107 IO 2 DRAW 36 IO 2 X
+    111 IO 2 DRAW 37 IO 2 X
+    109 IO 2 DRAW 38 IO 2 X 
+    32  IO 2 DRAW 39 IO 2 X
+    116 IO 2 DRAW 40 IO 2 X
+    111 IO 2 DRAW 41 IO 2 X
+    32  IO 2 DRAW 42 IO 2 X
+    84  IO 2 DRAW 43 IO 2 X
+    85  IO 2 DRAW 44 IO 2 X
+    82  IO 2 DRAW 45 IO 2 X
+    84  IO 2 DRAW 46 IO 2 X
+    76  IO 2 DRAW 47 IO 2 X
+    69  IO 2 DRAW 48 IO 2 X
+    42  IO 2 DRAW 49 IO 2 X
+    IO 2 FLIP
+    mode IO 2 MODE
+
+    0 IO 2 X
+    1 IO 2 Y
+
+
+}
+
+DEF TURTLE_init {
+    IO 2 ONLINE           # Set screen online
+    mode IO 2 MODE        # Set Device in Sprite mode
+    green IO 2 COLOR      # set an default color     
+
+    
+    TURTLE_welcome
+
+}
+    
+
+
+

@@ -11,70 +11,7 @@
 . $dy 1
 . $distance 1
 . $temp_ptr 1
-. $start 1
-. $stop 1
-
-# .CODE
-
-    . $TURTLE_DX 8
-    % $TURTLE_DX  1  1  0 -1 -1 -1  0  1
-    . $TURTLE_DY 8
-    % $TURTLE_DY  0  1  1  1  0 -1 -1 -1
-    call @TURTLE_init
-    ldi A 7
-    call @push_A
-    call @TURTLE_color
-    ldi A 30
-    call @push_A
-    ldi A 45
-    call @push_A
-    call @TURTLE_goto
-    ldi A 3
-    call @push_A
-    call @TURTLE_color
-    ldi A 50
-    call @push_A
-    ldi A 50
-    call @push_A
-    call @TURTLE_goto
-    ldm A $stop
-    call @push_A
-    ldi A 20
-    call @push_A
-    call @rt_add
-    call @pop_A
-    sto A $stop
-:_main_while_start_0
-    ldm A $start
-    call @push_A
-    ldm A $stop
-    call @push_A
-    call @rt_lt
-    call @pop_A
-    tst A 0
-    jmpt :_main_while_end_0
-    ldm A $start
-    call @push_A
-    call @rt_print_tos
-    ldi A 2
-    call @push_A
-    call @TURTLE_forward
-    ldm A $start
-    call @push_A
-    ldi A 10
-    call @push_A
-    call @rt_add
-    call @pop_A
-    sto A $start
-    ldi A 10
-    call @push_A
-    call @TURTLE_left
-    jmp :_main_while_start_0
-:_main_while_end_0
-    ret
-
 # .FUNCTIONS
-
 @_drawTurtle
     ldi A 203
     call @push_A
@@ -559,9 +496,7 @@
     call @TURTLE_welcome
     ret
 
-
 # .DATA
-
 % $WIDTH 80
 % $HEIGHT 60
 % $Xax 0
@@ -574,5 +509,3 @@
 % $dy 0
 % $distance 0
 % $temp_ptr 0
-% $start 0
-% $stop 360

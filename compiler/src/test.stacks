@@ -1,1 +1,41 @@
 ## for testing stacks code
+ASM {
+    . $TURTLE_DX 8
+    % $TURTLE_DX  1  1  0 -1 -1 -1  0  1
+    . $TURTLE_DY 8
+    % $TURTLE_DY  0  1  1  1  0 -1 -1 -1
+}
+INCLUDE turtle
+
+
+
+TURTLE_init
+
+
+yellow TURTLE_color
+30 45 TURTLE_goto
+
+cyan TURTLE_color
+50 50 TURTLE_goto
+
+# 10 TURTLE_forward
+# 45 TURTLE_right
+# 10 TURTLE_forward
+# 30 TURTLE_left
+# 10 TURTLE_forward
+
+
+
+
+VALUE start 0
+VALUE stop 360
+stop 20 + AS stop
+
+# 45 TURTLE_left
+
+WHILE start stop  <  DO
+    start PRINT
+    2 TURTLE_forward
+    start 10 + AS start
+    10 TURTLE_left
+DONE

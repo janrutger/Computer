@@ -1,0 +1,97 @@
+{
+  "functions": [
+    "TURTLE_right",
+    "TURTLE_left",
+    "TURTLE_init",
+    "TURTLE_forward",
+    "TURTLE_welcome",
+    "_drawTurtle",
+    "TURTLE_goto",
+    "TURTLE_color",
+    "_headingTurtle"
+  ],
+  "variables": [
+    {
+      "name": "WIDTH",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "HEIGHT",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "Xax",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "Yax",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "degrees",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "TURTLE_HEADING_DEG",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "TURTLE_HEADING",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "degrees_to_turn",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "dx",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "dy",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "distance",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "temp_ptr",
+      "type": "VALUE",
+      "size": 1
+    }
+  ],
+  "constants": {
+    "channel": 2,
+    "mode": 1,
+    "DBmode": 3,
+    "black": 0,
+    "white": 1,
+    "red": 2,
+    "cyan": 3,
+    "purple": 4,
+    "green": 5,
+    "blue": 6,
+    "yellow": 7,
+    "orange": 8,
+    "brown": 9,
+    "lightRed": 10,
+    "darkGray": 11,
+    "gray": 12,
+    "lightGreen": 13,
+    "lightBlue": 14,
+    "lightGray": 15,
+    "char": 203
+  }
+}

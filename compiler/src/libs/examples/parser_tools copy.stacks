@@ -23,44 +23,34 @@ DEF TOKENIZE {
     # Pop inputs from the Data Stack and store them in our private variables
     AS _strtok_d
     AS _strtok_s
+    _strtok_s AS _strtok_p # Initialize the loop pointer to the start of the string
 
-    # Advance _strtok_s past any leading delimiters
-    :skip_delimiters_loop
-        *_strtok_s AS _strtok_c
-        _strtok_c 0 == IF
-            # End of string, so no token
-            0 # Push a null pointer for the token
-            0 # Push a null pointer for the rest_of_string
-            GOTO strtok_end
-        END
-        _strtok_c _strtok_d != IF
-            # Found start of token
-            GOTO find_end_of_token
-        END
-        _strtok_s 1 + AS _strtok_s
-        GOTO skip_delimiters_loop
-
-    :find_end_of_token
-        # _strtok_s now points to the start of the token
-        _strtok_s AS _strtok_p # Use _strtok_p to scan for the end
-
-    :scan_loop
+    :strtok_loop
+        # Get the current character into a private variable. No stack usage.
         *_strtok_p AS _strtok_c
+        
+        # Check for the end of the string (null terminator).
+        # This expression uses the stack temporarily but is balanced.
         _strtok_c 0 == IF
-            # End of string is end of token
-            _strtok_s # Push the token pointer
+            _strtok_s # Push the token pointer (the original string)
             0         # Push a null pointer for the rest_of_string
             GOTO strtok_end
         END
+
+        # Check if the current character is the delimiter.
         _strtok_c _strtok_d == IF
-            # Found end of token
+            # Found the delimiter. Replace it with a null terminator in memory.
             0 AS *_strtok_p
-            _strtok_s       # 1. The pointer to the token
+            
+            # Push the results to the Data Stack.
+            _strtok_s       # 1. The pointer to the token (the original start)
             _strtok_p 1 +   # 2. The pointer to the rest of the string
             GOTO strtok_end
         END
+        
+        # Not the delimiter, so increment the loop pointer and continue.
         _strtok_p 1 + AS _strtok_p
-        GOTO scan_loop
+        GOTO strtok_loop
 
     :strtok_end
         # The two result pointers (&token, &rest_of_string) are now on the Data Stack.

@@ -42,7 +42,7 @@
     EQU ~UDC_DEVICE_OFFLINE 2
     EQU ~UDC_DEVICE_RESET   3
 
-    # UDC device commands
+    # # # UDC device commands
     EQU ~UDC_DEVICE_NEW     10
     EQU ~UDC_DEVICE_SEND    11      
     EQU ~UDC_DEVICE_GET     12
