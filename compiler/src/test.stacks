@@ -1,19 +1,17 @@
 ## for testing stacks code
-ASM {
-    . $TURTLE_DX 8
-    % $TURTLE_DX  1  1  0 -1 -1 -1  0  1
-    . $TURTLE_DY 8
-    % $TURTLE_DY  0  1  1  1  0 -1 -1 -1
-}
+
 INCLUDE turtle
 
 
 
-TURTLE_init
+TURTLE_start
 
 
-yellow TURTLE_color
-30 45 TURTLE_goto
+# Set a color
+cyan TURTLE_color
+
+# Draw a circle at (40, 30) with a radius of 20
+40 30 20 TURTLE_circle
 
 cyan TURTLE_color
 50 50 TURTLE_goto
@@ -28,7 +26,7 @@ cyan TURTLE_color
 
 
 VALUE start 0
-VALUE stop 360
+VALUE stop 370
 stop 20 + AS stop
 
 # 45 TURTLE_left
@@ -39,3 +37,15 @@ WHILE start stop  <  DO
     start 10 + AS start
     10 TURTLE_left
 DONE
+
+
+yellow TURTLE_color
+
+
+
+10 55 70 50 TURTLE_line
+10 55 70 40 TURTLE_line
+10 55 70 30 TURTLE_line
+10 55 70 20 TURTLE_line
+10 55 70 10 TURTLE_line
+

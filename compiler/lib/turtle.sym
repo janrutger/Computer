@@ -1,14 +1,16 @@
 {
   "functions": [
+    "_plot_circle_points",
+    "_welcome_at_turtle",
     "TURTLE_right",
-    "TURTLE_left",
-    "TURTLE_init",
-    "TURTLE_forward",
-    "TURTLE_welcome",
     "_drawTurtle",
-    "TURTLE_goto",
+    "TURTLE_forward",
+    "TURTLE_circle",
     "TURTLE_color",
-    "_headingTurtle"
+    "TURTLE_left",
+    "TURTLE_line",
+    "TURTLE_start",
+    "TURTLE_goto"
   ],
   "variables": [
     {
@@ -68,6 +70,71 @@
     },
     {
       "name": "temp_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "x1",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "y1",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "x2",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "y2",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "sx",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "sy",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "err",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "e2",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "circ_xc",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "circ_yc",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "circ_x",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "circ_y",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "circ_p",
       "type": "VALUE",
       "size": 1
     }

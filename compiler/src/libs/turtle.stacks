@@ -54,18 +54,6 @@ VALUE distance 0              # Variable for forward distance
 VALUE temp_ptr 0              # A temporary pointer for reading from memory
 
 
-# --- Movement Lookup Tables ---
-# Store the change in X and Y for each of the 8 directions.
-# LIST TURTLE_DX 8 
-# LIST TURTLE_DY 8
-# ASM {
-#     . $TURTLE_DX 8
-#     % $TURTLE_DX  1  1  0 -1 -1 -1  0  1
-#     . $TURTLE_DY 8
-#     % $TURTLE_DY  0  1  1  1  0 -1 -1 -1
-# }
-
-
 
 
 #Draws on X-Axis, Y-Axis
@@ -73,13 +61,13 @@ DEF _drawTurtle {
     char IO 2 DRAW
 }
 
-DEF _headingTurtle {
-    AS degrees
-    # Ensure angle is within 0-359
-    degrees 360 % AS degrees
-    # Convert the degree angle to an 8-way heading (0-7)
-    degrees 22 + 45 // AS TURTLE_HEADING
-}
+# DEF _headingTurtle {
+#     AS degrees
+#     # Ensure angle is within 0-359
+#     degrees 360 % AS degrees
+#     # Convert the degree angle to an 8-way heading (0-7)
+#     degrees 22 + 45 // AS TURTLE_HEADING
+# }
 
 
 # Turns the turtle right by a given number of degrees.
@@ -116,6 +104,9 @@ DEF TURTLE_goto {
 DEF TURTLE_forward {
     AS distance
 
+    # Prevent infinite loop on negative distance
+    distance 0 < IF GOTO move_end END
+
     # 1. Convert the precise degree heading to an 8-way heading for this move
     TURTLE_HEADING_DEG 22 + 45 // AS TURTLE_HEADING
 
@@ -144,7 +135,7 @@ DEF TURTLE_forward {
 
 
 
-DEF TURTLE_welcome {
+DEF _welcome_at_turtle {
     32 IO 2 X             # Default start point
     1  IO 2 Y
 
@@ -176,15 +167,162 @@ DEF TURTLE_welcome {
 
 }
 
-DEF TURTLE_init {
+DEF TURTLE_start {
+    ASM {
+    . $TURTLE_DX 8
+    % $TURTLE_DX  1  1  0 -1 -1 -1  0  1
+    . $TURTLE_DY 8
+    % $TURTLE_DY  0  1  1  1  0 -1 -1 -1
+}
     IO 2 ONLINE           # Set screen online
     mode IO 2 MODE        # Set Device in Sprite mode
     green IO 2 COLOR      # set an default color     
 
     
-    TURTLE_welcome
+    _welcome_at_turtle
 
 }
+
+
+
+VALUE x1 0
+VALUE y1 0
+VALUE x2 0
+VALUE y2 0
+VALUE sx 0
+VALUE sy 0
+VALUE err 0
+VALUE e2 0
+
+
+# Draw a straight (as possible) line from (x1,y1) to (x2,y2).
+# This version avoids using <= or >=; it uses only <, >, == and !=.
+# Usage: x1 y1 x2 y2 TURTLE_line
+DEF TURTLE_line {
+    # pop all four coordinates from the stack.
+    # Stack order: ... x1 y1 x2 y2
+    AS y2
+    AS x2
+    AS y1
+    AS x1
+
+    # dx = abs(x2 - x1)
+    x2 x1 - AS dx
+    dx 0 < IF 0 1 - dx * AS dx END
+
+    # dy = abs(y2 - y1)
+    y2 y1 - AS dy
+    dy 0 < IF 0 1 - dy * AS dy END
+
+    # compute step directions: default -1, set to 1 if start < end
+    0 1 - AS sx
+    x1 x2 < IF 1 AS sx END
+
+    0 1 - AS sy
+    y1 y2 < IF 1 AS sy END
+
+    # convert dy to negative for the algorithm (err = dx + dy where dy is negative)
+    0 1 - dy * AS dy
+
+    # err = dx + dy
+    dx dy + AS err
+
+    :line_loop
+        # draw current point
+        x1 y1 TURTLE_goto
+
+        # if we've reached the end, break out
+        x1 x2 == IF
+            y1 y2 == IF GOTO line_end END
+        END
+
+        # e2 = 2*err
+        err 2 * AS e2
+
+        # if e2 >= dy then move in x
+        # translate "e2 >= dy" into "NOT (e2 < dy)" using a conditional skip
+        e2 dy < IF GOTO skip_x_move END
+            err dy + AS err
+            x1 sx + AS x1
+        :skip_x_move
+
+        # if e2 <= dx then move in y
+        # translate "e2 <= dx" into "NOT (e2 > dx)" using a conditional skip
+        e2 dx > IF GOTO skip_y_move END
+            err dx + AS err
+            y1 sy + AS y1
+        :skip_y_move
+
+        GOTO line_loop
+    :line_end
+
+    # set global turtle position to endpoint
+    x2 AS Xax
+    y2 AS Yax
+}
+
+
+
+VALUE circ_xc 0
+VALUE circ_yc 0
+VALUE circ_x 0
+VALUE circ_y 0
+VALUE circ_p 0
+
+# Helper function to plot a point in all 8 octants of a circle
+DEF _plot_circle_points {
+    # Expects x, y on the stack (relative to center)
+    AS circ_y
+    AS circ_x
+
+    circ_xc circ_x + circ_yc circ_y + TURTLE_goto
+    circ_xc circ_x - circ_yc circ_y + TURTLE_goto
+    circ_xc circ_x + circ_yc circ_y - TURTLE_goto
+    circ_xc circ_x - circ_yc circ_y - TURTLE_goto
+    circ_xc circ_y + circ_yc circ_x + TURTLE_goto
+    circ_xc circ_y - circ_yc circ_x + TURTLE_goto
+    circ_xc circ_y + circ_yc circ_x - TURTLE_goto
+    circ_xc circ_y - circ_yc circ_x - TURTLE_goto
+}
+
+# Draws a circle using the Midpoint Algorithm.
+# Usage: xc yc radius TURTLE_circle
+DEF TURTLE_circle {
+    # Pop arguments from stack
+    AS circ_p # Re-using circ_p for radius temporarily
+    AS circ_yc
+    AS circ_xc
+
+    # Initialize variables
+    circ_p AS circ_x  # x = radius
+    0 AS circ_y
+    1 circ_p - AS circ_p # P = 1 - radius
+
+    :circle_loop
+        # Plot current points for all 8 octants
+        circ_x circ_y _plot_circle_points
+
+        circ_y 1 + AS circ_y
+
+        # Update decision parameter P
+        #circ_p 0 <= IF
+        0 circ_p > IF
+            # P = P + 2*y + 1
+            circ_p circ_y 2 * + 1 + AS circ_p
+        ELSE
+            # x is decremented
+            circ_x 1 - AS circ_x
+            # P = P + 2*y - 2*x + 1
+            circ_p circ_y 2 * + circ_x 2 * - 1 + AS circ_p
+        END
+
+        # Loop while x > y
+        circ_x circ_y > IF GOTO circle_loop END
+
+    # The final point where x == y
+    circ_x circ_y _plot_circle_points
+}
+
     
 
 
