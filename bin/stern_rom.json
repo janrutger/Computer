@@ -132,13 +132,6 @@
                         "RESTORE"
                     ],
                     "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_interrupt_flag",
-                        "TRUE"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -362,17 +355,17 @@
             "code": [
                 {
                     "instruction": [
-                        "set_interrupt_flag",
-                        "FALSE"
-                    ],
-                    "comment": "Disable interrupts"
-                },
-                {
-                    "instruction": [
                         "shadow",
                         "SAVE"
                     ],
                     "comment": "Save registers, including PC"
+                },
+                {
+                    "instruction": [
+                        "set_interrupt_flag",
+                        "FALSE"
+                    ],
+                    "comment": "Disable interrupts"
                 },
                 {
                     "instruction": [

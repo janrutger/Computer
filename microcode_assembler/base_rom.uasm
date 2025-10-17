@@ -37,7 +37,6 @@ def 14=DI {
 def 15=RTI {
     .format zero
     shadow(RESTORE)
-    set_interrupt_flag(TRUE)
 }
 
 def 20=JMPF {
@@ -92,8 +91,8 @@ def 25=CALLX {
 
 def 26=INT {
     .format one_addr
-    set_interrupt_flag(FALSE)   ; Disable interrupts
     shadow(SAVE)                ; Save registers, including PC
+    set_interrupt_flag(FALSE)   ; Disable interrupts
     read_mem_adres($1, Ra)      ; Ra = value at address from argument (syscall table base address)
     move_reg(Rb, R0)            ; Rb = syscall ID (from register I/R0)
     alu(ADD)                    ; Ra = Ra + Rb (address of the handler pointer)

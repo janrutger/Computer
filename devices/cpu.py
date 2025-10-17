@@ -26,11 +26,13 @@ class CPU:
         
         self.MIR = "0"  # Memory Instruction Register
 
-        # Flags
+        # Flags & Shadow flags for interrupts
         self.flags = {"Z": False, "N": False, "E": False, "S": False}
-        # Shadow flags for interrupts
         self.shadow_flags = self.flags.copy()
+
         self.interrupts_enabled = False  # Master Interrupt Enable Flag
+        self.shadow_interrupts_enabled = False
+
 
         # Internal CPU registers for ALU operations
         self.registers["Ra"] = 0
@@ -128,13 +130,20 @@ class CPU:
     def _save_to_shadow(self):
         self.shadow_registers = self.registers.copy()
         self.shadow_flags = self.flags.copy()
+        self.shadow_interrupts_enabled = self.interrupts_enabled
+
 
     def _restore_from_shadow(self):
         self.registers = self.shadow_registers.copy()
         self.flags = self.shadow_flags.copy()
+        self.interrupts_enabled = self.shadow_interrupts_enabled
+
 
     def _handle_interrupt(self):
         """The CPU's interrupt acknowledge sequence."""
+        # saving the shadow is the very first step
+        self._save_to_shadow()
+
         # 1. Disable further interrupts temporarily
         self.interrupts_enabled = False
 
@@ -151,7 +160,8 @@ class CPU:
             print(f"CPU responding to interrupt vector {vector}")
 
         # 4. Save the current context to shadow registers
-        self._save_to_shadow()
+        # moved to the start of this sequens
+        # self._save_to_shadow()
 
         # 5. Look up the ISR address in the Interrupt Vector Table
         vector_address = MEM_INT_VECTORS_START + vector
