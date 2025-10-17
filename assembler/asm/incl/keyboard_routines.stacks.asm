@@ -76,7 +76,7 @@
         sto M $KBD_READ_PNTR    ; Store new read pointer
 
         tste A A                ; Set status-bit to 1 (char read)
-        ei                      ; enable interrupts
+        #ei                      ; enable interrupts
         ret
 
     :no_char

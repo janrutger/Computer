@@ -1,0 +1,152 @@
+## for testing stacks code
+
+INCLUDE turtle_lib
+
+
+
+TURTLE_start
+
+
+# Set a color
+cyan TURTLE_color
+
+def circle {
+    # Draw a circle at (40, 30) with a radius of 20
+    40 30 25 TURTLE_circle IO 2 FLIP
+    red TURTLE_color
+    40 30 20 TURTLE_circle IO 2 FLIP
+    lightRed TURTLE_color
+    40 30 15 TURTLE_circle IO 2 FLIP
+    green TURTLE_color
+    40 30 10 TURTLE_circle IO 2 FLIP
+    purple TURTLE_color
+    40 30 5 TURTLE_circle IO 2 FLIP
+    blue TURTLE_color
+    40 30 2 TURTLE_circle IO 2 FLIP
+}
+
+def lines {
+    black TURTLE_color
+    20 30 60 30 TURTLE_line
+    IO 2 FLIP
+    # Loop for drawing lines outwards from the center
+    1 AS i
+    :line_loop1
+        i 16 == IF GOTO end_loop1 END # Loop from 1 to 15
+
+        # Set color (colors 1 to 15)
+        i TURTLE_color
+
+        # Draw line below center
+        # y = 30 + i
+        20 30 i + 59 30 i + TURTLE_line
+
+        # Draw line above center
+        # y = 30 - i
+        20 30 i - 59 30 i - TURTLE_line
+
+        i 1 + AS i
+        IO 2 FLIP
+        GOTO line_loop1
+
+    :end_loop1
+}
+
+
+
+DEF star {
+    # Center of the screen
+    VALUE center_x 40
+    VALUE center_y 30
+
+    # Draw 12 lines in a star burst pattern with different colors
+    red TURTLE_color
+    center_x center_y 70 30 TURTLE_line IO 2 FLIP
+
+    orange TURTLE_color
+    center_x center_y 66 45 TURTLE_line IO 2 FLIP
+
+    yellow TURTLE_color
+    center_x center_y 55 56 TURTLE_line IO 2 FLIP
+
+    lightGreen TURTLE_color
+    center_x center_y 40 58 TURTLE_line IO 2 FLIP# Adjusted to 59 to be on screen
+
+    green TURTLE_color
+    center_x center_y 25 56 TURTLE_line IO 2 FLIP
+
+    cyan TURTLE_color
+    center_x center_y 14 45 TURTLE_line IO 2 FLIP
+
+    lightBlue TURTLE_color
+    center_x center_y 10 30 TURTLE_line IO 2 FLIP
+
+    blue TURTLE_color
+    center_x center_y 14 15 TURTLE_line IO 2 FLIP
+
+    purple TURTLE_color
+    center_x center_y 25 4 TURTLE_line IO 2 FLIP
+
+    lightRed TURTLE_color
+    center_x center_y 40 2 TURTLE_line IO 2 FLIP
+
+    brown TURTLE_color
+    center_x center_y 55 4 TURTLE_line IO 2 FLIP
+
+    white TURTLE_color
+    center_x center_y 66 15 TURTLE_line IO 2 FLIP
+}
+
+# Draws a fan pattern filling a 60x60 square.
+DEF draw_fan_pattern {
+    DBmode IO 2 MODE
+
+    VALUE color 1
+    VALUE y 10
+    VALUE x 20
+
+    #0 0 TURTLE_goto
+
+    :alternate_loop
+        x 60 == IF GOTO end_loop END
+
+        # Set the color for the current frame's lines
+        color TURTLE_color
+
+        # Draw horizontal line to the bottom edge
+        20 10 x 49 TURTLE_line
+
+        # Draw vertical line to the right edge
+        20 10 59 y TURTLE_line
+
+        # Flip buffer to show the new lines
+        IO 2 FLIP
+
+        # Increment counters for next iteration
+        x 1 + AS x
+        y 1 + AS y
+
+        # Update color for the NEXT frame
+        color 1 + 15 % 1 + AS color
+
+        GOTO alternate_loop
+    :end_loop
+}
+
+
+DBmode IO 2 MODE
+star
+IO 2 FLIP
+IO 2 NEW
+circle
+IO 2 FLIP
+IO 2 NEW
+lines
+IO 2 FLIP
+io 2 NEW
+draw_fan_pattern
+
+
+
+
+

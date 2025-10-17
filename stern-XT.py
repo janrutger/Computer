@@ -158,6 +158,7 @@ def main():
     print("Starting GUI... Press keys in the window to generate interrupts.")
     running = True
     
+    TARGET_SIM_FPS = 1000
     TARGET_FPS = 30
     draw_interval = 1.0 / TARGET_FPS
     last_draw_time = time.time()
@@ -213,7 +214,10 @@ def main():
                 pygame.display.flip()
 
         # Yield a tiny amount of time to the OS to prevent 100% CPU usage
-        time.sleep(0.0001) # 10 microseconds sleep
+        # time.sleep(0.0001) # 10 microseconds sleep
+
+        # --- Master Clock (controls the entire loop to 1000 FPS) ---
+        clock.tick(TARGET_SIM_FPS)
 
     # 6. Shutdown
     print("GUI loop exited. Halting system...")

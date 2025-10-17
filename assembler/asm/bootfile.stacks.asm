@@ -21,7 +21,7 @@
     call @init_udc
     call @KBD_INIT
 
-    ei
+    # ei
     ldi A $SYSCALL_RETURN_STATUS
     call @push_A
     ldi A $SYSCALL_RETURN_VALUE
