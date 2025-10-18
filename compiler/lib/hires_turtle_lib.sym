@@ -1,15 +1,13 @@
 {
   "functions": [
-    "TURTLE_circle",
-    "_drawTurtle",
-    "TURTLE_line",
-    "TURTLE_goto",
-    "TURTLE_start",
-    "TURTLE_color",
-    "_welcome_at_turtle",
-    "TURTLE_left",
     "_plot_circle_points",
+    "TURTLE_color",
+    "TURTLE_line",
+    "TURTLE_start",
+    "TURTLE_left",
+    "TURTLE_goto",
     "TURTLE_right",
+    "TURTLE_circle",
     "TURTLE_forward"
   ],
   "variables": [
@@ -24,17 +22,17 @@
       "size": 1
     },
     {
+      "name": "TURTLE_CURRENT_COLOR",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
       "name": "Xax",
       "type": "VALUE",
       "size": 1
     },
     {
       "name": "Yax",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "degrees",
       "type": "VALUE",
       "size": 1
     },
@@ -141,8 +139,8 @@
   ],
   "constants": {
     "channel": 2,
-    "mode": 1,
-    "DBmode": 3,
+    "mode": 0,
+    "DBmode": 2,
     "black": 0,
     "white": 1,
     "red": 2,
@@ -158,7 +156,6 @@
     "gray": 12,
     "lightGreen": 13,
     "lightBlue": 14,
-    "lightGray": 15,
-    "char": 203
+    "lightGray": 15
   }
 }

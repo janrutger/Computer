@@ -1,6 +1,7 @@
 ## for testing stacks code
 
 INCLUDE turtle_lib
+USE std_stern_io
 
 
 
@@ -28,7 +29,6 @@ def circle {
 def lines {
     black TURTLE_color
     20 30 60 30 TURTLE_line
-    IO 2 FLIP
     # Loop for drawing lines outwards from the center
     1 AS i
     :line_loop1
@@ -132,6 +132,8 @@ DEF draw_fan_pattern {
         GOTO alternate_loop
     :end_loop
 }
+
+
 
 
 DBmode IO 2 MODE

@@ -59,7 +59,7 @@ DEF draw {
 # --- Main Program ---
 screen
 
-WHILE 30000 N > DO
+WHILE 50000 N > DO
   RND 3 * 999 // AS R
 
   R 0 == IF select1 END
@@ -72,7 +72,7 @@ WHILE 30000 N > DO
   X Y draw
 
   N 1 + AS N
-  N 500 % 0 == IF
+  N 250 % 0 == IF
     N PRINT
     IO 2 FLIP  # Flip buffer to show new points
   END
