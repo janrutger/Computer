@@ -1,235 +1,120 @@
 # .HEADER
-. $WIDTH 1
-. $HEIGHT 1
-. $TURTLE_CURRENT_COLOR 1
-. $Xax 1
-. $Yax 1
-. $TURTLE_HEADING_DEG 1
-. $TURTLE_HEADING 1
-. $degrees_to_turn 1
-. $dx 1
-. $dy 1
-. $distance 1
-. $temp_ptr 1
-. $x1 1
-. $y1 1
-. $x2 1
-. $y2 1
-. $sx 1
-. $sy 1
-. $err 1
-. $e2 1
-. $circ_xc 1
-. $circ_yc 1
-. $circ_x 1
-. $circ_y 1
-. $circ_p 1
-. $level_stack 16
-. $stack_ptr 1
+. $X 1
+. $Y 1
 
 # .CODE
-    ldi A $level_stack
+    call @screen
+:_main_while_start_0
+    ldm A $Y
     call @push_A
+    ldi A 60
+    call @push_A
+    call @rt_lt
     call @pop_A
-    sto A $stack_ptr
-    call @TURTLE_start
+    tst A 0
+    jmpt :_main_while_end_0
+:_main_while_start_1
+    ldm A $X
+    call @push_A
+    ldi A 80
+    call @push_A
+    call @rt_lt
+    call @pop_A
+    tst A 0
+    jmpt :_main_while_end_1
+    call @rt_rnd
     ldi A 2
     call @push_A
-    ldi A 2
+    call @rt_mul
+    ldi A 999
     call @push_A
-    ldi A 14
-    call @push_A
-    call @rt_udc_control
+    call @rt_div
     ldi A 0
     call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 10
-    call @push_A
-    call @rt_udc_control
-    ldi A 2
-    call @push_A
-    call @TURTLE_color
-    ldi A 10
-    call @push_A
-    ldi A 10
-    call @push_A
-    call @TURTLE_goto
-    ldi A 5
-    call @push_A
-    call @stack_push
-    call @draw_koch
-    ldi A 0
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 18
-    call @push_A
-    call @rt_udc_control
-    ret
-
-# .FUNCTIONS
-
-@TURTLE_right
+    call @rt_eq
     call @pop_A
-    sto A $degrees_to_turn
-    ldm A $TURTLE_HEADING_DEG
-    call @push_A
-    ldm A $degrees_to_turn
-    call @push_A
-    call @rt_add
-    ldi A 360
-    call @push_A
-    call @rt_mod
-    call @pop_A
-    sto A $TURTLE_HEADING_DEG
-    ret
-@TURTLE_left
-    call @pop_A
-    sto A $degrees_to_turn
-    ldi A 360
-    call @push_A
-    ldm A $TURTLE_HEADING_DEG
-    call @push_A
-    call @rt_add
-    ldm A $degrees_to_turn
-    call @push_A
-    call @rt_sub
-    ldi A 360
-    call @push_A
-    call @rt_mod
-    call @pop_A
-    sto A $TURTLE_HEADING_DEG
-    ret
-@TURTLE_color
-    call @pop_A
-    sto A $TURTLE_CURRENT_COLOR
-    ret
-@TURTLE_goto
-    ldm A $HEIGHT
-    call @push_A
-    call @rt_mod
-    call @rt_dup
-    call @pop_A
-    sto A $Yax
-    ldi A 2
-    call @push_A
-    ldi A 16
-    call @push_A
-    call @rt_udc_control
-    ldm A $WIDTH
-    call @push_A
-    call @rt_mod
-    call @rt_dup
-    call @pop_A
-    sto A $Xax
-    ldi A 2
-    call @push_A
-    ldi A 15
-    call @push_A
-    call @rt_udc_control
-    ldm A $TURTLE_CURRENT_COLOR
+    tst A 0
+    jmpt :_main_if_else_0
+    ldi A 129
     call @push_A
     ldi A 2
     call @push_A
     ldi A 17
     call @push_A
     call @rt_udc_control
-    ret
-@TURTLE_forward
-    call @pop_A
-    sto A $distance
-    ldm A $distance
+    jmp :_main_if_end_0
+:_main_if_else_0
+    ldi A 130
     call @push_A
-    ldi A 0
+    ldi A 2
     call @push_A
-    call @rt_lt
-    call @pop_A
-    tst A 0
-    jmpt :TURTLE_forward_if_end_0
-    jmp :move_end
-:TURTLE_forward_if_end_0
-    ldm A $TURTLE_HEADING_DEG
+    ldi A 17
     call @push_A
-    ldi A 22
-    call @push_A
-    call @rt_add
-    ldi A 45
-    call @push_A
-    call @rt_div
-    call @pop_A
-    sto A $TURTLE_HEADING
-    ldi A $TURTLE_DX
-    call @push_A
-    ldm A $TURTLE_HEADING
-    call @push_A
-    call @rt_add
-    call @pop_A
-    sto A $temp_ptr
-    ldm I $temp_ptr
-    ldx A $_start_memory_
-    call @push_A
-    call @pop_A
-    sto A $dx
-    ldi A $TURTLE_DY
-    call @push_A
-    ldm A $TURTLE_HEADING
-    call @push_A
-    call @rt_add
-    call @pop_A
-    sto A $temp_ptr
-    ldm I $temp_ptr
-    ldx A $_start_memory_
-    call @push_A
-    call @pop_A
-    sto A $dy
-:move_loop
-    ldm A $distance
-    call @push_A
-    ldi A 0
-    call @push_A
-    call @rt_eq
-    call @pop_A
-    tst A 0
-    jmpt :TURTLE_forward_if_end_1
-    jmp :move_end
-:TURTLE_forward_if_end_1
-    ldm A $Xax
-    call @push_A
-    ldm A $dx
-    call @push_A
-    call @rt_add
-    call @pop_A
-    sto A $Xax
-    ldm A $Yax
-    call @push_A
-    ldm A $dy
-    call @push_A
-    call @rt_add
-    call @pop_A
-    sto A $Yax
-    ldm A $Xax
-    call @push_A
-    ldm A $Yax
-    call @push_A
-    call @TURTLE_goto
-    ldm A $distance
+    call @rt_udc_control
+:_main_if_end_0
+    ldm A $X
     call @push_A
     ldi A 1
     call @push_A
-    call @rt_sub
+    call @rt_add
     call @pop_A
-    sto A $distance
-    jmp :move_loop
-:move_end
+    sto A $X
+    ldm A $X
+    call @push_A
+    ldi A 2
+    call @push_A
+    ldi A 15
+    call @push_A
+    call @rt_udc_control
+    jmp :_main_while_start_1
+:_main_while_end_1
+    ldi A 0
+    call @push_A
+    ldi A 2
+    call @push_A
+    ldi A 18
+    call @push_A
+    call @rt_udc_control
+    ldi A 0
+    call @push_A
+    call @pop_A
+    sto A $X
+    ldm A $X
+    call @push_A
+    ldi A 2
+    call @push_A
+    ldi A 15
+    call @push_A
+    call @rt_udc_control
+    ldm A $Y
+    call @push_A
+    ldi A 1
+    call @push_A
+    call @rt_add
+    call @pop_A
+    sto A $Y
+    ldm A $Y
+    call @push_A
+    ldi A 2
+    call @push_A
+    ldi A 16
+    call @push_A
+    call @rt_udc_control
+    jmp :_main_while_start_0
+:_main_while_end_0
     ret
-@TURTLE_start
 
-        . $TURTLE_DX 8
-        % $TURTLE_DX  1  1  0 -1 -1 -1  0  1
-        . $TURTLE_DY 8
-        % $TURTLE_DY  0  1  1  1  0 -1 -1 -1
-        ldi A 0
+# .FUNCTIONS
+@screen
+    ldi A 0
+    call @push_A
+    call @pop_A
+    sto A $X
+    ldi A 0
+    call @push_A
+    call @pop_A
+    sto A $Y
+    ldi A 0
     call @push_A
     ldi A 2
     call @push_A
@@ -237,6 +122,20 @@
     call @push_A
     call @rt_udc_control
     ldi A 0
+    call @push_A
+    ldi A 2
+    call @push_A
+    ldi A 10
+    call @push_A
+    call @rt_udc_control
+    ldi A 3
+    call @push_A
+    ldi A 2
+    call @push_A
+    ldi A 13
+    call @push_A
+    call @rt_udc_control
+    ldi A 3
     call @push_A
     ldi A 2
     call @push_A
@@ -244,536 +143,7 @@
     call @push_A
     call @rt_udc_control
     ret
-@TURTLE_line
-    call @pop_A
-    sto A $y2
-    call @pop_A
-    sto A $x2
-    call @pop_A
-    sto A $y1
-    call @pop_A
-    sto A $x1
-    ldm A $x2
-    call @push_A
-    ldm A $x1
-    call @push_A
-    call @rt_sub
-    call @pop_A
-    sto A $dx
-    ldm A $dx
-    call @push_A
-    ldi A 0
-    call @push_A
-    call @rt_lt
-    call @pop_A
-    tst A 0
-    jmpt :TURTLE_line_if_end_2
-    ldi A 0
-    call @push_A
-    ldi A 1
-    call @push_A
-    call @rt_sub
-    ldm A $dx
-    call @push_A
-    call @rt_mul
-    call @pop_A
-    sto A $dx
-:TURTLE_line_if_end_2
-    ldm A $y2
-    call @push_A
-    ldm A $y1
-    call @push_A
-    call @rt_sub
-    call @pop_A
-    sto A $dy
-    ldm A $dy
-    call @push_A
-    ldi A 0
-    call @push_A
-    call @rt_lt
-    call @pop_A
-    tst A 0
-    jmpt :TURTLE_line_if_end_3
-    ldi A 0
-    call @push_A
-    ldi A 1
-    call @push_A
-    call @rt_sub
-    ldm A $dy
-    call @push_A
-    call @rt_mul
-    call @pop_A
-    sto A $dy
-:TURTLE_line_if_end_3
-    ldi A 0
-    call @push_A
-    ldi A 1
-    call @push_A
-    call @rt_sub
-    call @pop_A
-    sto A $sx
-    ldm A $x1
-    call @push_A
-    ldm A $x2
-    call @push_A
-    call @rt_lt
-    call @pop_A
-    tst A 0
-    jmpt :TURTLE_line_if_end_4
-    ldi A 1
-    call @push_A
-    call @pop_A
-    sto A $sx
-:TURTLE_line_if_end_4
-    ldi A 0
-    call @push_A
-    ldi A 1
-    call @push_A
-    call @rt_sub
-    call @pop_A
-    sto A $sy
-    ldm A $y1
-    call @push_A
-    ldm A $y2
-    call @push_A
-    call @rt_lt
-    call @pop_A
-    tst A 0
-    jmpt :TURTLE_line_if_end_5
-    ldi A 1
-    call @push_A
-    call @pop_A
-    sto A $sy
-:TURTLE_line_if_end_5
-    ldi A 0
-    call @push_A
-    ldi A 1
-    call @push_A
-    call @rt_sub
-    ldm A $dy
-    call @push_A
-    call @rt_mul
-    call @pop_A
-    sto A $dy
-    ldm A $dx
-    call @push_A
-    ldm A $dy
-    call @push_A
-    call @rt_add
-    call @pop_A
-    sto A $err
-:line_loop
-    ldm A $x1
-    call @push_A
-    ldm A $y1
-    call @push_A
-    call @TURTLE_goto
-    ldm A $x1
-    call @push_A
-    ldm A $x2
-    call @push_A
-    call @rt_eq
-    call @pop_A
-    tst A 0
-    jmpt :TURTLE_line_if_end_6
-    ldm A $y1
-    call @push_A
-    ldm A $y2
-    call @push_A
-    call @rt_eq
-    call @pop_A
-    tst A 0
-    jmpt :TURTLE_line_if_end_7
-    jmp :line_end
-:TURTLE_line_if_end_7
-:TURTLE_line_if_end_6
-    ldm A $err
-    call @push_A
-    ldi A 2
-    call @push_A
-    call @rt_mul
-    call @pop_A
-    sto A $e2
-    ldm A $e2
-    call @push_A
-    ldm A $dy
-    call @push_A
-    call @rt_lt
-    call @pop_A
-    tst A 0
-    jmpt :TURTLE_line_if_end_8
-    jmp :skip_x_move
-:TURTLE_line_if_end_8
-    ldm A $err
-    call @push_A
-    ldm A $dy
-    call @push_A
-    call @rt_add
-    call @pop_A
-    sto A $err
-    ldm A $x1
-    call @push_A
-    ldm A $sx
-    call @push_A
-    call @rt_add
-    call @pop_A
-    sto A $x1
-:skip_x_move
-    ldm A $e2
-    call @push_A
-    ldm A $dx
-    call @push_A
-    call @rt_gt
-    call @pop_A
-    tst A 0
-    jmpt :TURTLE_line_if_end_9
-    jmp :skip_y_move
-:TURTLE_line_if_end_9
-    ldm A $err
-    call @push_A
-    ldm A $dx
-    call @push_A
-    call @rt_add
-    call @pop_A
-    sto A $err
-    ldm A $y1
-    call @push_A
-    ldm A $sy
-    call @push_A
-    call @rt_add
-    call @pop_A
-    sto A $y1
-:skip_y_move
-    jmp :line_loop
-:line_end
-    ldm A $x2
-    call @push_A
-    call @pop_A
-    sto A $Xax
-    ldm A $y2
-    call @push_A
-    call @pop_A
-    sto A $Yax
-    ret
-@_plot_circle_points
-    call @pop_A
-    sto A $circ_y
-    call @pop_A
-    sto A $circ_x
-    ldm A $circ_xc
-    call @push_A
-    ldm A $circ_x
-    call @push_A
-    call @rt_add
-    ldm A $circ_yc
-    call @push_A
-    ldm A $circ_y
-    call @push_A
-    call @rt_add
-    call @TURTLE_goto
-    ldm A $circ_xc
-    call @push_A
-    ldm A $circ_x
-    call @push_A
-    call @rt_sub
-    ldm A $circ_yc
-    call @push_A
-    ldm A $circ_y
-    call @push_A
-    call @rt_add
-    call @TURTLE_goto
-    ldm A $circ_xc
-    call @push_A
-    ldm A $circ_x
-    call @push_A
-    call @rt_add
-    ldm A $circ_yc
-    call @push_A
-    ldm A $circ_y
-    call @push_A
-    call @rt_sub
-    call @TURTLE_goto
-    ldm A $circ_xc
-    call @push_A
-    ldm A $circ_x
-    call @push_A
-    call @rt_sub
-    ldm A $circ_yc
-    call @push_A
-    ldm A $circ_y
-    call @push_A
-    call @rt_sub
-    call @TURTLE_goto
-    ldm A $circ_xc
-    call @push_A
-    ldm A $circ_y
-    call @push_A
-    call @rt_add
-    ldm A $circ_yc
-    call @push_A
-    ldm A $circ_x
-    call @push_A
-    call @rt_add
-    call @TURTLE_goto
-    ldm A $circ_xc
-    call @push_A
-    ldm A $circ_y
-    call @push_A
-    call @rt_sub
-    ldm A $circ_yc
-    call @push_A
-    ldm A $circ_x
-    call @push_A
-    call @rt_add
-    call @TURTLE_goto
-    ldm A $circ_xc
-    call @push_A
-    ldm A $circ_y
-    call @push_A
-    call @rt_add
-    ldm A $circ_yc
-    call @push_A
-    ldm A $circ_x
-    call @push_A
-    call @rt_sub
-    call @TURTLE_goto
-    ldm A $circ_xc
-    call @push_A
-    ldm A $circ_y
-    call @push_A
-    call @rt_sub
-    ldm A $circ_yc
-    call @push_A
-    ldm A $circ_x
-    call @push_A
-    call @rt_sub
-    call @TURTLE_goto
-    ret
-@TURTLE_circle
-    call @pop_A
-    sto A $circ_p
-    call @pop_A
-    sto A $circ_yc
-    call @pop_A
-    sto A $circ_xc
-    ldm A $circ_p
-    call @push_A
-    call @pop_A
-    sto A $circ_x
-    ldi A 0
-    call @push_A
-    call @pop_A
-    sto A $circ_y
-    ldi A 1
-    call @push_A
-    ldm A $circ_p
-    call @push_A
-    call @rt_sub
-    call @pop_A
-    sto A $circ_p
-:circle_loop
-    ldm A $circ_x
-    call @push_A
-    ldm A $circ_y
-    call @push_A
-    call @_plot_circle_points
-    ldm A $circ_y
-    call @push_A
-    ldi A 1
-    call @push_A
-    call @rt_add
-    call @pop_A
-    sto A $circ_y
-    ldi A 0
-    call @push_A
-    ldm A $circ_p
-    call @push_A
-    call @rt_gt
-    call @pop_A
-    tst A 0
-    jmpt :TURTLE_circle_if_else_10
-    ldm A $circ_p
-    call @push_A
-    ldm A $circ_y
-    call @push_A
-    ldi A 2
-    call @push_A
-    call @rt_mul
-    call @rt_add
-    ldi A 1
-    call @push_A
-    call @rt_add
-    call @pop_A
-    sto A $circ_p
-    jmp :TURTLE_circle_if_end_10
-:TURTLE_circle_if_else_10
-    ldm A $circ_x
-    call @push_A
-    ldi A 1
-    call @push_A
-    call @rt_sub
-    call @pop_A
-    sto A $circ_x
-    ldm A $circ_p
-    call @push_A
-    ldm A $circ_y
-    call @push_A
-    ldi A 2
-    call @push_A
-    call @rt_mul
-    call @rt_add
-    ldm A $circ_x
-    call @push_A
-    ldi A 2
-    call @push_A
-    call @rt_mul
-    call @rt_sub
-    ldi A 1
-    call @push_A
-    call @rt_add
-    call @pop_A
-    sto A $circ_p
-:TURTLE_circle_if_end_10
-    ldm A $circ_x
-    call @push_A
-    ldm A $circ_y
-    call @push_A
-    call @rt_gt
-    call @pop_A
-    tst A 0
-    jmpt :TURTLE_circle_if_end_11
-    jmp :circle_loop
-:TURTLE_circle_if_end_11
-    ldm A $circ_x
-    call @push_A
-    ldm A $circ_y
-    call @push_A
-    call @_plot_circle_points
-    ret
-
-@stack_push
-    call @pop_B
-    ldm I $stack_ptr
-    stx B $_start_memory_
-    ldm A $stack_ptr
-    call @push_A
-    ldi A 1
-    call @push_A
-    call @rt_add
-    call @pop_A
-    sto A $stack_ptr
-    ret
-@stack_pop
-    ldm A $stack_ptr
-    call @push_A
-    ldi A 1
-    call @push_A
-    call @rt_sub
-    call @pop_A
-    sto A $stack_ptr
-    ldm I $stack_ptr
-    ldx A $_start_memory_
-    call @push_A
-    ret
-@draw_koch
-    call @stack_pop
-    call @rt_dup
-    ldi A 0
-    call @push_A
-    call @rt_eq
-    call @pop_A
-    tst A 0
-    jmpt :draw_koch_if_end_0
-    call @rt_drop
-    ldi A 2
-    call @push_A
-    call @TURTLE_forward
-    jmp :draw_koch_end
-:draw_koch_if_end_0
-    ldi A 1
-    call @push_A
-    call @rt_sub
-    call @rt_dup
-    call @stack_push
-    call @draw_koch
-    ldi A 0
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 18
-    call @push_A
-    call @rt_udc_control
-    ldi A 90
-    call @push_A
-    call @TURTLE_right
-    call @rt_dup
-    call @stack_push
-    call @draw_koch
-    ldi A 0
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 18
-    call @push_A
-    call @rt_udc_control
-    ldi A 270
-    call @push_A
-    call @TURTLE_right
-    call @rt_dup
-    call @stack_push
-    call @draw_koch
-    ldi A 0
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 18
-    call @push_A
-    call @rt_udc_control
-    ldi A 270
-    call @push_A
-    call @TURTLE_right
-    call @rt_dup
-    call @stack_push
-    call @draw_koch
-    ldi A 0
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 18
-    call @push_A
-    call @rt_udc_control
-    ldi A 90
-    call @push_A
-    call @TURTLE_right
-    call @stack_push
-    call @draw_koch
-:draw_koch_end
-    ret
 
 # .DATA
-
-% $WIDTH 640
-% $HEIGHT 480
-% $TURTLE_CURRENT_COLOR 5
-% $Xax 0
-% $Yax 0
-% $TURTLE_HEADING_DEG 0
-% $TURTLE_HEADING 0
-% $degrees_to_turn 0
-% $dx 0
-% $dy 0
-% $distance 0
-% $temp_ptr 0
-% $x1 0
-% $y1 0
-% $x2 0
-% $y2 0
-% $sx 0
-% $sy 0
-% $err 0
-% $e2 0
-% $circ_xc 0
-% $circ_yc 0
-% $circ_x 0
-% $circ_y 0
-% $circ_p 0
+% $X 0
+% $Y 0
