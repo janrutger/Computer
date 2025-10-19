@@ -2,7 +2,7 @@
 # This version uses a purely stack-based approach inside the recursive
 # function to avoid issues with global variables.
 
-INCLUDE hires_turtle_lib
+INCLUDE turtle_lib
 USE std_stern_io
 
 # -----------------------------------------------------------------------------
@@ -38,7 +38,7 @@ DEF draw_koch {
     # Check if level is 0 (the base case).
     DUP 0 == IF 
         DROP # Get rid of the level value (0)
-        2 TURTLE_forward # Increased distance for high-res screen
+        4 TURTLE_forward # Increased distance for high-res screen
         GOTO draw_koch_end # Finished
     END
 
@@ -85,15 +85,17 @@ DEF draw_koch {
 
 # 1. Initialize turtle
 TURTLE_start
-DBmode IO 2 MODE
+#DBmode IO 2 MODE
+
+db_pixel TURTLE_mode
 
 # 2. Prepare for drawing
-IO 2 NEW
+
 red TURTLE_color
 10 10 TURTLE_goto       # Adjusted starting position for better visibility
 
 # 3. Push the starting level onto our manual stack and start the recursion
-5 stack_push draw_koch
+3 stack_push draw_koch
 
 # 4. Finalize drawing
 IO 2 FLIP

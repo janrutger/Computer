@@ -1,6 +1,23 @@
 CONST channel 2     ; Screen device
-CONST mode 1        # 0: Pixel, 1: Sprite, 2: Pixel (DB), 3: Sprite (DB)
-CONST DBmode 3      # double buffer mode
+# CONST mode 1        # 0: Pixel, 1: Sprite, 2: Pixel (DB), 3: Sprite (DB)
+# CONST DBmode 3      # double buffer mode
+
+CONST pixel 0
+CONST sprite 1
+CONST db_pixel 2
+CONST db_sprite 3
+
+CONST sprite_width  80
+CONST sprite_height 60
+
+CONST pixel_width  640
+CONST pixel_height 480
+
+
+
+# --- Color Palette ---
+
+
 
 CONST black 0
 CONST white 1
@@ -20,7 +37,14 @@ CONST lightBlue 14
 CONST lightGray 15
 
 
-CONST char 203      # inverse blank
+VALUE current_char 203      # inverse blank
+VALUE current_mode 3
+VALUE current_color 5
+VALUE current_width 80
+VALUE current_height 60
+VALUE current_flip 1
+
+
 
 ## ALL UDC device instructions
 # # Generic Commands
@@ -39,8 +63,8 @@ CONST char 203      # inverse blank
 # 'DRAW':   17, 
 # 'FLIP':   18,
 
-VALUE WIDTH  80
-VALUE HEIGHT 60
+# VALUE WIDTH  80
+# VALUE HEIGHT 60
 VALUE Xax 0
 VALUE Yax 0
 VALUE degrees 0
@@ -59,16 +83,32 @@ VALUE temp_ptr 0              # A temporary pointer for reading from memory
 
 #Draws on X-Axis, Y-Axis
 DEF _drawTurtle {
-    char IO 2 DRAW
+    current_mode pixel == IF 
+        current_color IO 2 DRAW
+    ELSE
+        current_char IO 2 DRAW
+    END
 }
 
-# DEF _headingTurtle {
-#     AS degrees
-#     # Ensure angle is within 0-359
-#     degrees 360 % AS degrees
-#     # Convert the degree angle to an 8-way heading (0-7)
-#     degrees 22 + 45 // AS TURTLE_HEADING
-# }
+DEF TURTLE_mode {
+    DUP AS current_mode IO 2 MODE
+    current_mode pixel  == IF 0 AS current_flip END
+    current_mode sprite == IF 0 AS current_flip END
+    current_mode db_pixel  == IF 
+        pixel AS  current_mode 
+        1  AS current_flip
+    END
+    current_mode db_sprite == IF 
+        sprite AS current_mode 
+        1  AS current_flip
+    END
+    current_mode pixel  == IF pixel_height  AS current_height   pixel_width  AS current_width END
+    current_mode sprite == IF sprite_height AS current_height   sprite_width AS current_width END
+}
+
+DEF TURTLE_flip {
+    current_flip IF io 2 flip END
+}
 
 
 # Turns the turtle right by a given number of degrees.
@@ -90,13 +130,13 @@ DEF TURTLE_left {
 
 # Expects color code on the stack
 DEF TURTLE_color {
-    IO 2 COLOR
+    DUP AS current_color IO 2 COLOR
 }
 
 # expects X,Y on the stack
 DEF TURTLE_goto {
-    HEIGHT % DUP AS Yax IO 2 Y           # Read Y (TOS) from stack
-    WIDTH  % DUP AS Xax IO 2 X           # Read X (TOS-1) from stack
+    current_height % DUP AS Yax IO 2 Y           # Read Y (TOS) from stack
+    current_width  % DUP AS Xax IO 2 X           # Read X (TOS-1) from stack
     _drawTurtle
 }  
 
@@ -140,7 +180,7 @@ DEF _welcome_at_turtle {
     32 IO 2 X             # Default start point
     1  IO 2 Y
 
-    DBmode IO 2 MODE
+    db_sprite IO 2 MODE
 
     87  IO 2 DRAW 33 IO 2 X
     101 IO 2 DRAW 34 IO 2 X
@@ -160,7 +200,7 @@ DEF _welcome_at_turtle {
     69  IO 2 DRAW 48 IO 2 X
     42  IO 2 DRAW 49 IO 2 X
     IO 2 FLIP
-    mode IO 2 MODE
+    sprite IO 2 MODE
 
     0 IO 2 X
     1 IO 2 Y
@@ -176,12 +216,10 @@ DEF TURTLE_start {
     % $TURTLE_DY  0  1  1  1  0 -1 -1 -1
 }
     IO 2 ONLINE           # Set screen online
-    mode IO 2 MODE        # Set Device in Sprite mode
-    green IO 2 COLOR      # set an default color     
+    current_mode  IO 2 MODE        # Set Device in Sprite mode
+    current_color IO 2 COLOR      # set an default color     
 
-    
     _welcome_at_turtle
-
 }
 
 

@@ -1,25 +1,47 @@
 {
   "functions": [
-    "TURTLE_circle",
-    "_drawTurtle",
     "TURTLE_line",
-    "TURTLE_goto",
-    "TURTLE_start",
-    "TURTLE_color",
-    "_welcome_at_turtle",
+    "TURTLE_forward",
+    "TURTLE_flip",
+    "TURTLE_circle",
     "TURTLE_left",
+    "TURTLE_mode",
+    "TURTLE_color",
+    "TURTLE_goto",
     "_plot_circle_points",
+    "_welcome_at_turtle",
+    "TURTLE_start",
     "TURTLE_right",
-    "TURTLE_forward"
+    "_drawTurtle"
   ],
   "variables": [
     {
-      "name": "WIDTH",
+      "name": "current_char",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "HEIGHT",
+      "name": "current_mode",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "current_color",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "current_width",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "current_height",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "current_flip",
       "type": "VALUE",
       "size": 1
     },
@@ -141,8 +163,14 @@
   ],
   "constants": {
     "channel": 2,
-    "mode": 1,
-    "DBmode": 3,
+    "pixel": 0,
+    "sprite": 1,
+    "db_pixel": 2,
+    "db_sprite": 3,
+    "sprite_width": 80,
+    "sprite_height": 60,
+    "pixel_width": 640,
+    "pixel_height": 480,
     "black": 0,
     "white": 1,
     "red": 2,
@@ -158,7 +186,6 @@
     "gray": 12,
     "lightGreen": 13,
     "lightBlue": 14,
-    "lightGray": 15,
-    "char": 203
+    "lightGray": 15
   }
 }

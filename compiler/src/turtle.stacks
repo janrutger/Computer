@@ -5,11 +5,7 @@ USE std_stern_io
 
 
 
-TURTLE_start
 
-
-# Set a color
-cyan TURTLE_color
 
 def circle {
     # Draw a circle at (40, 30) with a radius of 20
@@ -99,7 +95,7 @@ DEF star {
 
 # Draws a fan pattern filling a 60x60 square.
 DEF draw_fan_pattern {
-    DBmode IO 2 MODE
+    #DBmode IO 2 MODE
 
     VALUE color 1
     VALUE y 10
@@ -134,9 +130,14 @@ DEF draw_fan_pattern {
 }
 
 
+TURTLE_start
 
 
-DBmode IO 2 MODE
+# Set a color
+cyan TURTLE_color
+
+# #DBmode IO 2 MODE
+db_sprite IO 2 MODE
 star
 IO 2 FLIP
 IO 2 NEW
