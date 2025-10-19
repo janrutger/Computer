@@ -15,6 +15,10 @@
 . $dy 1
 . $distance 1
 . $temp_ptr 1
+. $msg 22
+. $i 1
+. $char 1
+. $p_char 1
 . $x1 1
 . $y1 1
 . $x2 1
@@ -132,7 +136,7 @@
     call @rt_eq
     call @pop_A
     tst A 0
-    jmpt :TURTLE_mode_if_end_5
+    jmpt :TURTLE_mode_if_else_5
     ldi A 480
     call @push_A
     call @pop_A
@@ -141,15 +145,8 @@
     call @push_A
     call @pop_A
     sto A $current_width
-:TURTLE_mode_if_end_5
-    ldm A $current_mode
-    call @push_A
-    ldi A 1
-    call @push_A
-    call @rt_eq
-    call @pop_A
-    tst A 0
-    jmpt :TURTLE_mode_if_end_6
+    jmp :TURTLE_mode_if_end_5
+:TURTLE_mode_if_else_5
     ldi A 60
     call @push_A
     call @pop_A
@@ -158,14 +155,14 @@
     call @push_A
     call @pop_A
     sto A $current_width
-:TURTLE_mode_if_end_6
+:TURTLE_mode_if_end_5
     ret
 @TURTLE_flip
     ldm A $current_flip
     call @push_A
     call @pop_A
     tst A 0
-    jmpt :TURTLE_flip_if_end_7
+    jmpt :TURTLE_flip_if_end_6
     ldi A 0
     call @push_A
     ldi A 2
@@ -173,7 +170,7 @@
     ldi A 18
     call @push_A
     call @rt_udc_control
-:TURTLE_flip_if_end_7
+:TURTLE_flip_if_end_6
     ret
 @TURTLE_right
     call @pop_A
@@ -251,9 +248,9 @@
     call @rt_lt
     call @pop_A
     tst A 0
-    jmpt :TURTLE_forward_if_end_8
+    jmpt :TURTLE_forward_if_end_7
     jmp :move_end
-:TURTLE_forward_if_end_8
+:TURTLE_forward_if_end_7
     ldm A $TURTLE_HEADING_DEG
     call @push_A
     ldi A 22
@@ -296,9 +293,9 @@
     call @rt_eq
     call @pop_A
     tst A 0
-    jmpt :TURTLE_forward_if_end_9
+    jmpt :TURTLE_forward_if_end_8
     jmp :move_end
-:TURTLE_forward_if_end_9
+:TURTLE_forward_if_end_8
     ldm A $Xax
     call @push_A
     ldm A $dx
@@ -329,7 +326,7 @@
 :move_end
     ret
 @_welcome_at_turtle
-    ldi A 32
+    ldi A 30
     call @push_A
     ldi A 2
     call @push_A
@@ -343,279 +340,58 @@
     ldi A 16
     call @push_A
     call @rt_udc_control
-    ldi A 3
+:welcome_loop
+    ldi A $msg
     call @push_A
-    ldi A 2
+    ldm A $i
     call @push_A
-    ldi A 14
+    call @rt_add
+    call @pop_A
+    sto A $p_char
+    ldm I $p_char
+    ldx A $_start_memory_
     call @push_A
-    call @rt_udc_control
-    ldi A 87
+    call @pop_A
+    sto A $char
+    ldm A $char
     call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 17
-    call @push_A
-    call @rt_udc_control
-    ldi A 33
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 15
-    call @push_A
-    call @rt_udc_control
-    ldi A 101
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 17
-    call @push_A
-    call @rt_udc_control
-    ldi A 34
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 15
-    call @push_A
-    call @rt_udc_control
-    ldi A 108
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 17
-    call @push_A
-    call @rt_udc_control
-    ldi A 35
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 15
-    call @push_A
-    call @rt_udc_control
-    ldi A 107
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 17
-    call @push_A
-    call @rt_udc_control
-    ldi A 36
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 15
-    call @push_A
-    call @rt_udc_control
-    ldi A 111
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 17
-    call @push_A
-    call @rt_udc_control
-    ldi A 37
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 15
-    call @push_A
-    call @rt_udc_control
-    ldi A 109
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 17
-    call @push_A
-    call @rt_udc_control
-    ldi A 38
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 15
-    call @push_A
-    call @rt_udc_control
-    ldi A 32
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 17
-    call @push_A
-    call @rt_udc_control
-    ldi A 39
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 15
-    call @push_A
-    call @rt_udc_control
-    ldi A 116
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 17
-    call @push_A
-    call @rt_udc_control
-    ldi A 40
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 15
-    call @push_A
-    call @rt_udc_control
-    ldi A 111
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 17
-    call @push_A
-    call @rt_udc_control
-    ldi A 41
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 15
-    call @push_A
-    call @rt_udc_control
-    ldi A 32
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 17
-    call @push_A
-    call @rt_udc_control
-    ldi A 42
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 15
-    call @push_A
-    call @rt_udc_control
-    ldi A 84
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 17
-    call @push_A
-    call @rt_udc_control
-    ldi A 43
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 15
-    call @push_A
-    call @rt_udc_control
-    ldi A 85
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 17
-    call @push_A
-    call @rt_udc_control
-    ldi A 44
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 15
-    call @push_A
-    call @rt_udc_control
-    ldi A 82
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 17
-    call @push_A
-    call @rt_udc_control
-    ldi A 45
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 15
-    call @push_A
-    call @rt_udc_control
-    ldi A 84
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 17
-    call @push_A
-    call @rt_udc_control
-    ldi A 46
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 15
-    call @push_A
-    call @rt_udc_control
-    ldi A 76
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 17
-    call @push_A
-    call @rt_udc_control
-    ldi A 47
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 15
-    call @push_A
-    call @rt_udc_control
-    ldi A 69
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 17
-    call @push_A
-    call @rt_udc_control
-    ldi A 48
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 15
-    call @push_A
-    call @rt_udc_control
-    ldi A 42
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 17
-    call @push_A
-    call @rt_udc_control
-    ldi A 49
-    call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 15
-    call @push_A
-    call @rt_udc_control
     ldi A 0
     call @push_A
+    call @rt_eq
+    call @pop_A
+    tst A 0
+    jmpt :_welcome_at_turtle_if_end_9
+    jmp :welcome_end
+:_welcome_at_turtle_if_end_9
+    ldm A $char
+    call @push_A
     ldi A 2
     call @push_A
-    ldi A 18
+    ldi A 17
     call @push_A
     call @rt_udc_control
+    ldi A 30
+    call @push_A
+    ldm A $i
+    call @push_A
+    call @rt_add
     ldi A 1
     call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 14
-    call @push_A
-    call @rt_udc_control
-    ldi A 0
-    call @push_A
+    call @rt_add
     ldi A 2
     call @push_A
     ldi A 15
     call @push_A
     call @rt_udc_control
+    ldm A $i
+    call @push_A
     ldi A 1
     call @push_A
-    ldi A 2
-    call @push_A
-    ldi A 16
-    call @push_A
-    call @rt_udc_control
+    call @rt_add
+    call @pop_A
+    sto A $i
+    jmp :welcome_loop
+:welcome_end
     ret
 @TURTLE_start
 
@@ -1070,6 +846,10 @@
 % $dy 0
 % $distance 0
 % $temp_ptr 0
+% $msg \* \space \W \e \l \c \o \m \e \space \a \t \space \T \U \R \T \L \E \space \* \null
+% $i 0
+% $char 0
+% $p_char 0
 % $x1 0
 % $y1 0
 % $x2 0

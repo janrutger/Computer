@@ -9,17 +9,17 @@ USE std_stern_io
 
 def circle {
     # Draw a circle at (40, 30) with a radius of 20
-    40 30 25 TURTLE_circle IO 2 FLIP
+    40 30 25 TURTLE_circle TURTLE_flip
     red TURTLE_color
-    40 30 20 TURTLE_circle IO 2 FLIP
+    40 30 20 TURTLE_circle TURTLE_flip
     lightRed TURTLE_color
-    40 30 15 TURTLE_circle IO 2 FLIP
+    40 30 15 TURTLE_circle TURTLE_flip
     green TURTLE_color
-    40 30 10 TURTLE_circle IO 2 FLIP
+    40 30 10 TURTLE_circle TURTLE_flip
     purple TURTLE_color
-    40 30 5 TURTLE_circle IO 2 FLIP
+    40 30 5 TURTLE_circle TURTLE_flip
     blue TURTLE_color
-    40 30 2 TURTLE_circle IO 2 FLIP
+    40 30 2 TURTLE_circle TURTLE_flip
 }
 
 def lines {
@@ -42,7 +42,7 @@ def lines {
         20 30 i - 59 30 i - TURTLE_line
 
         i 1 + AS i
-        IO 2 FLIP
+        TURTLE_flip
         GOTO line_loop1
 
     :end_loop1
@@ -57,40 +57,40 @@ DEF star {
 
     # Draw 12 lines in a star burst pattern with different colors
     red TURTLE_color
-    center_x center_y 70 30 TURTLE_line IO 2 FLIP
+    center_x center_y 70 30 TURTLE_line TURTLE_flip
 
     orange TURTLE_color
-    center_x center_y 66 45 TURTLE_line IO 2 FLIP
+    center_x center_y 66 45 TURTLE_line TURTLE_flip
 
     yellow TURTLE_color
-    center_x center_y 55 56 TURTLE_line IO 2 FLIP
+    center_x center_y 55 56 TURTLE_line TURTLE_flip
 
     lightGreen TURTLE_color
-    center_x center_y 40 58 TURTLE_line IO 2 FLIP# Adjusted to 59 to be on screen
+    center_x center_y 40 58 TURTLE_line TURTLE_flip# Adjusted to 59 to be on screen
 
     green TURTLE_color
-    center_x center_y 25 56 TURTLE_line IO 2 FLIP
+    center_x center_y 25 56 TURTLE_line TURTLE_flip
 
     cyan TURTLE_color
-    center_x center_y 14 45 TURTLE_line IO 2 FLIP
+    center_x center_y 14 45 TURTLE_line TURTLE_flip
 
     lightBlue TURTLE_color
-    center_x center_y 10 30 TURTLE_line IO 2 FLIP
+    center_x center_y 10 30 TURTLE_line TURTLE_flip
 
     blue TURTLE_color
-    center_x center_y 14 15 TURTLE_line IO 2 FLIP
+    center_x center_y 14 15 TURTLE_line TURTLE_flip
 
     purple TURTLE_color
-    center_x center_y 25 4 TURTLE_line IO 2 FLIP
+    center_x center_y 25 4 TURTLE_line TURTLE_flip
 
     lightRed TURTLE_color
-    center_x center_y 40 2 TURTLE_line IO 2 FLIP
+    center_x center_y 40 2 TURTLE_line TURTLE_flip
 
     brown TURTLE_color
-    center_x center_y 55 4 TURTLE_line IO 2 FLIP
+    center_x center_y 55 4 TURTLE_line TURTLE_flip
 
     white TURTLE_color
-    center_x center_y 66 15 TURTLE_line IO 2 FLIP
+    center_x center_y 66 15 TURTLE_line TURTLE_flip
 }
 
 # Draws a fan pattern filling a 60x60 square.
@@ -116,7 +116,7 @@ DEF draw_fan_pattern {
         20 10 59 y TURTLE_line
 
         # Flip buffer to show the new lines
-        IO 2 FLIP
+        TURTLE_flip
 
         # Increment counters for next iteration
         x 1 + AS x
@@ -136,16 +136,19 @@ TURTLE_start
 # Set a color
 cyan TURTLE_color
 
-# #DBmode IO 2 MODE
-db_sprite IO 2 MODE
-star
-IO 2 FLIP
+db_sprite TURTLE_mode
+# sprite TURTLE_mode
+# db_pixel TURTLE_mode
+
+
+star TURTLE_flip
+
 IO 2 NEW
-circle
-IO 2 FLIP
+circle TURTLE_flip
+
 IO 2 NEW
-lines
-IO 2 FLIP
+lines TURTLE_flip
+
 io 2 NEW
 draw_fan_pattern
 

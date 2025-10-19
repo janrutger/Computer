@@ -1,18 +1,18 @@
 {
   "functions": [
-    "TURTLE_line",
-    "TURTLE_forward",
-    "TURTLE_flip",
-    "TURTLE_circle",
-    "TURTLE_left",
-    "TURTLE_mode",
-    "TURTLE_color",
     "TURTLE_goto",
+    "TURTLE_mode",
     "_plot_circle_points",
+    "TURTLE_flip",
     "_welcome_at_turtle",
+    "_drawTurtle",
+    "TURTLE_forward",
+    "TURTLE_line",
+    "TURTLE_circle",
     "TURTLE_start",
+    "TURTLE_left",
     "TURTLE_right",
-    "_drawTurtle"
+    "TURTLE_color"
   ],
   "variables": [
     {
@@ -92,6 +92,26 @@
     },
     {
       "name": "temp_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "msg",
+      "type": "STRING",
+      "size": 22
+    },
+    {
+      "name": "i",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "char",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "p_char",
       "type": "VALUE",
       "size": 1
     },

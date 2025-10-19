@@ -1,13 +1,13 @@
 {
   "functions": [
     "io_lib_init",
-    "CURSORon",
-    "PRTchar",
-    "READline",
     "KEYchar",
-    "PRTcls",
+    "READline",
+    "PRTstring",
+    "PRTchar",
     "CURSORoff",
-    "PRTstring"
+    "CURSORon",
+    "PRTcls"
   ],
   "variables": [
     {
