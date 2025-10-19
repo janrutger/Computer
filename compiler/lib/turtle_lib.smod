@@ -60,7 +60,7 @@
     call @rt_udc_control
 :_drawTurtle_if_end_0
     ret
-@TURTLE_mode
+@TURTLE.mode
     call @rt_dup
     call @pop_A
     sto A $current_mode
@@ -76,12 +76,12 @@
     call @rt_eq
     call @pop_A
     tst A 0
-    jmpt :TURTLE_mode_if_end_1
+    jmpt :TURTLE.mode_if_end_1
     ldi A 0
     call @push_A
     call @pop_A
     sto A $current_flip
-:TURTLE_mode_if_end_1
+:TURTLE.mode_if_end_1
     ldm A $current_mode
     call @push_A
     ldi A 1
@@ -89,12 +89,12 @@
     call @rt_eq
     call @pop_A
     tst A 0
-    jmpt :TURTLE_mode_if_end_2
+    jmpt :TURTLE.mode_if_end_2
     ldi A 0
     call @push_A
     call @pop_A
     sto A $current_flip
-:TURTLE_mode_if_end_2
+:TURTLE.mode_if_end_2
     ldm A $current_mode
     call @push_A
     ldi A 2
@@ -102,7 +102,7 @@
     call @rt_eq
     call @pop_A
     tst A 0
-    jmpt :TURTLE_mode_if_end_3
+    jmpt :TURTLE.mode_if_end_3
     ldi A 0
     call @push_A
     call @pop_A
@@ -111,7 +111,7 @@
     call @push_A
     call @pop_A
     sto A $current_flip
-:TURTLE_mode_if_end_3
+:TURTLE.mode_if_end_3
     ldm A $current_mode
     call @push_A
     ldi A 3
@@ -119,7 +119,7 @@
     call @rt_eq
     call @pop_A
     tst A 0
-    jmpt :TURTLE_mode_if_end_4
+    jmpt :TURTLE.mode_if_end_4
     ldi A 1
     call @push_A
     call @pop_A
@@ -128,7 +128,7 @@
     call @push_A
     call @pop_A
     sto A $current_flip
-:TURTLE_mode_if_end_4
+:TURTLE.mode_if_end_4
     ldm A $current_mode
     call @push_A
     ldi A 0
@@ -136,7 +136,7 @@
     call @rt_eq
     call @pop_A
     tst A 0
-    jmpt :TURTLE_mode_if_else_5
+    jmpt :TURTLE.mode_if_else_5
     ldi A 480
     call @push_A
     call @pop_A
@@ -145,8 +145,8 @@
     call @push_A
     call @pop_A
     sto A $current_width
-    jmp :TURTLE_mode_if_end_5
-:TURTLE_mode_if_else_5
+    jmp :TURTLE.mode_if_end_5
+:TURTLE.mode_if_else_5
     ldi A 60
     call @push_A
     call @pop_A
@@ -155,14 +155,14 @@
     call @push_A
     call @pop_A
     sto A $current_width
-:TURTLE_mode_if_end_5
+:TURTLE.mode_if_end_5
     ret
-@TURTLE_flip
+@TURTLE.flip
     ldm A $current_flip
     call @push_A
     call @pop_A
     tst A 0
-    jmpt :TURTLE_flip_if_end_6
+    jmpt :TURTLE.flip_if_end_6
     ldi A 0
     call @push_A
     ldi A 2
@@ -170,9 +170,9 @@
     ldi A 18
     call @push_A
     call @rt_udc_control
-:TURTLE_flip_if_end_6
+:TURTLE.flip_if_end_6
     ret
-@TURTLE_right
+@TURTLE.right
     call @pop_A
     sto A $degrees_to_turn
     ldm A $TURTLE_HEADING_DEG
@@ -186,7 +186,7 @@
     call @pop_A
     sto A $TURTLE_HEADING_DEG
     ret
-@TURTLE_left
+@TURTLE.left
     call @pop_A
     sto A $degrees_to_turn
     ldi A 360
@@ -203,7 +203,7 @@
     call @pop_A
     sto A $TURTLE_HEADING_DEG
     ret
-@TURTLE_color
+@TURTLE.color
     call @rt_dup
     call @pop_A
     sto A $current_color
@@ -213,7 +213,7 @@
     call @push_A
     call @rt_udc_control
     ret
-@TURTLE_goto
+@TURTLE.goto
     ldm A $current_height
     call @push_A
     call @rt_mod
@@ -238,7 +238,7 @@
     call @rt_udc_control
     call @_drawTurtle
     ret
-@TURTLE_forward
+@TURTLE.forward
     call @pop_A
     sto A $distance
     ldm A $distance
@@ -248,9 +248,9 @@
     call @rt_lt
     call @pop_A
     tst A 0
-    jmpt :TURTLE_forward_if_end_7
+    jmpt :TURTLE.forward_if_end_7
     jmp :move_end
-:TURTLE_forward_if_end_7
+:TURTLE.forward_if_end_7
     ldm A $TURTLE_HEADING_DEG
     call @push_A
     ldi A 22
@@ -293,9 +293,9 @@
     call @rt_eq
     call @pop_A
     tst A 0
-    jmpt :TURTLE_forward_if_end_8
+    jmpt :TURTLE.forward_if_end_8
     jmp :move_end
-:TURTLE_forward_if_end_8
+:TURTLE.forward_if_end_8
     ldm A $Xax
     call @push_A
     ldm A $dx
@@ -314,7 +314,7 @@
     call @push_A
     ldm A $Yax
     call @push_A
-    call @TURTLE_goto
+    call @TURTLE.goto
     ldm A $distance
     call @push_A
     ldi A 1
@@ -393,7 +393,7 @@
     jmp :welcome_loop
 :welcome_end
     ret
-@TURTLE_start
+@TURTLE.start
 
     . $TURTLE_DX 8
     % $TURTLE_DX  1  1  0 -1 -1 -1  0  1
@@ -422,7 +422,7 @@
     call @rt_udc_control
     call @_welcome_at_turtle
     ret
-@TURTLE_line
+@TURTLE.line
     call @pop_A
     sto A $y2
     call @pop_A
@@ -445,7 +445,7 @@
     call @rt_lt
     call @pop_A
     tst A 0
-    jmpt :TURTLE_line_if_end_10
+    jmpt :TURTLE.line_if_end_10
     ldi A 0
     call @push_A
     ldi A 1
@@ -456,7 +456,7 @@
     call @rt_mul
     call @pop_A
     sto A $dx
-:TURTLE_line_if_end_10
+:TURTLE.line_if_end_10
     ldm A $y2
     call @push_A
     ldm A $y1
@@ -471,7 +471,7 @@
     call @rt_lt
     call @pop_A
     tst A 0
-    jmpt :TURTLE_line_if_end_11
+    jmpt :TURTLE.line_if_end_11
     ldi A 0
     call @push_A
     ldi A 1
@@ -482,7 +482,7 @@
     call @rt_mul
     call @pop_A
     sto A $dy
-:TURTLE_line_if_end_11
+:TURTLE.line_if_end_11
     ldi A 0
     call @push_A
     ldi A 1
@@ -497,12 +497,12 @@
     call @rt_lt
     call @pop_A
     tst A 0
-    jmpt :TURTLE_line_if_end_12
+    jmpt :TURTLE.line_if_end_12
     ldi A 1
     call @push_A
     call @pop_A
     sto A $sx
-:TURTLE_line_if_end_12
+:TURTLE.line_if_end_12
     ldi A 0
     call @push_A
     ldi A 1
@@ -517,12 +517,12 @@
     call @rt_lt
     call @pop_A
     tst A 0
-    jmpt :TURTLE_line_if_end_13
+    jmpt :TURTLE.line_if_end_13
     ldi A 1
     call @push_A
     call @pop_A
     sto A $sy
-:TURTLE_line_if_end_13
+:TURTLE.line_if_end_13
     ldi A 0
     call @push_A
     ldi A 1
@@ -545,7 +545,7 @@
     call @push_A
     ldm A $y1
     call @push_A
-    call @TURTLE_goto
+    call @TURTLE.goto
     ldm A $x1
     call @push_A
     ldm A $x2
@@ -553,7 +553,7 @@
     call @rt_eq
     call @pop_A
     tst A 0
-    jmpt :TURTLE_line_if_end_14
+    jmpt :TURTLE.line_if_end_14
     ldm A $y1
     call @push_A
     ldm A $y2
@@ -561,10 +561,10 @@
     call @rt_eq
     call @pop_A
     tst A 0
-    jmpt :TURTLE_line_if_end_15
+    jmpt :TURTLE.line_if_end_15
     jmp :line_end
-:TURTLE_line_if_end_15
-:TURTLE_line_if_end_14
+:TURTLE.line_if_end_15
+:TURTLE.line_if_end_14
     ldm A $err
     call @push_A
     ldi A 2
@@ -579,9 +579,9 @@
     call @rt_lt
     call @pop_A
     tst A 0
-    jmpt :TURTLE_line_if_end_16
+    jmpt :TURTLE.line_if_end_16
     jmp :skip_x_move
-:TURTLE_line_if_end_16
+:TURTLE.line_if_end_16
     ldm A $err
     call @push_A
     ldm A $dy
@@ -604,9 +604,9 @@
     call @rt_gt
     call @pop_A
     tst A 0
-    jmpt :TURTLE_line_if_end_17
+    jmpt :TURTLE.line_if_end_17
     jmp :skip_y_move
-:TURTLE_line_if_end_17
+:TURTLE.line_if_end_17
     ldm A $err
     call @push_A
     ldm A $dx
@@ -648,7 +648,7 @@
     ldm A $circ_y
     call @push_A
     call @rt_add
-    call @TURTLE_goto
+    call @TURTLE.goto
     ldm A $circ_xc
     call @push_A
     ldm A $circ_x
@@ -659,7 +659,7 @@
     ldm A $circ_y
     call @push_A
     call @rt_add
-    call @TURTLE_goto
+    call @TURTLE.goto
     ldm A $circ_xc
     call @push_A
     ldm A $circ_x
@@ -670,7 +670,7 @@
     ldm A $circ_y
     call @push_A
     call @rt_sub
-    call @TURTLE_goto
+    call @TURTLE.goto
     ldm A $circ_xc
     call @push_A
     ldm A $circ_x
@@ -681,29 +681,7 @@
     ldm A $circ_y
     call @push_A
     call @rt_sub
-    call @TURTLE_goto
-    ldm A $circ_xc
-    call @push_A
-    ldm A $circ_y
-    call @push_A
-    call @rt_add
-    ldm A $circ_yc
-    call @push_A
-    ldm A $circ_x
-    call @push_A
-    call @rt_add
-    call @TURTLE_goto
-    ldm A $circ_xc
-    call @push_A
-    ldm A $circ_y
-    call @push_A
-    call @rt_sub
-    ldm A $circ_yc
-    call @push_A
-    ldm A $circ_x
-    call @push_A
-    call @rt_add
-    call @TURTLE_goto
+    call @TURTLE.goto
     ldm A $circ_xc
     call @push_A
     ldm A $circ_y
@@ -713,8 +691,30 @@
     call @push_A
     ldm A $circ_x
     call @push_A
+    call @rt_add
+    call @TURTLE.goto
+    ldm A $circ_xc
+    call @push_A
+    ldm A $circ_y
+    call @push_A
     call @rt_sub
-    call @TURTLE_goto
+    ldm A $circ_yc
+    call @push_A
+    ldm A $circ_x
+    call @push_A
+    call @rt_add
+    call @TURTLE.goto
+    ldm A $circ_xc
+    call @push_A
+    ldm A $circ_y
+    call @push_A
+    call @rt_add
+    ldm A $circ_yc
+    call @push_A
+    ldm A $circ_x
+    call @push_A
+    call @rt_sub
+    call @TURTLE.goto
     ldm A $circ_xc
     call @push_A
     ldm A $circ_y
@@ -725,9 +725,9 @@
     ldm A $circ_x
     call @push_A
     call @rt_sub
-    call @TURTLE_goto
+    call @TURTLE.goto
     ret
-@TURTLE_circle
+@TURTLE.circle
     call @pop_A
     sto A $circ_p
     call @pop_A
@@ -769,7 +769,7 @@
     call @rt_gt
     call @pop_A
     tst A 0
-    jmpt :TURTLE_circle_if_else_18
+    jmpt :TURTLE.circle_if_else_18
     ldm A $circ_p
     call @push_A
     ldm A $circ_y
@@ -783,8 +783,8 @@
     call @rt_add
     call @pop_A
     sto A $circ_p
-    jmp :TURTLE_circle_if_end_18
-:TURTLE_circle_if_else_18
+    jmp :TURTLE.circle_if_end_18
+:TURTLE.circle_if_else_18
     ldm A $circ_x
     call @push_A
     ldi A 1
@@ -811,7 +811,7 @@
     call @rt_add
     call @pop_A
     sto A $circ_p
-:TURTLE_circle_if_end_18
+:TURTLE.circle_if_end_18
     ldm A $circ_x
     call @push_A
     ldm A $circ_y
@@ -819,9 +819,9 @@
     call @rt_gt
     call @pop_A
     tst A 0
-    jmpt :TURTLE_circle_if_end_19
+    jmpt :TURTLE.circle_if_end_19
     jmp :circle_loop
-:TURTLE_circle_if_end_19
+:TURTLE.circle_if_end_19
     ldm A $circ_x
     call @push_A
     ldm A $circ_y

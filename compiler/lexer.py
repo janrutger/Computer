@@ -176,7 +176,7 @@ class Lexer:
     def get_identifier(self):
         result = ''
         start_column = self.column
-        while self.current_char is not None and (self.current_char.isalnum() or self.current_char == '_'):
+        while self.current_char is not None and (self.current_char.isalnum() or self.current_char == '_') or self.current_char == '.':
             result += self.current_char
             self.advance()
         

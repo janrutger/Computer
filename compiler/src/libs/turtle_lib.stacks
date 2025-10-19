@@ -88,7 +88,7 @@ DEF _drawTurtle {
     END
 }
 
-# DEF TURTLE_mode {
+# DEF TURTLE.mode {
 #     DUP AS current_mode IO 2 MODE
 #     current_mode pixel  == IF 0 AS current_flip END
 #     current_mode sprite == IF 0 AS current_flip END
@@ -104,7 +104,7 @@ DEF _drawTurtle {
 #     current_mode sprite == IF sprite_height AS current_height   sprite_width AS current_width END
 # }
 
-DEF TURTLE_mode {
+DEF TURTLE.mode {
     DUP AS current_mode IO 2 MODE
     current_mode pixel  == IF 0 AS current_flip END
     current_mode sprite == IF 0 AS current_flip END
@@ -128,14 +128,14 @@ DEF TURTLE_mode {
     END
 }
 
-DEF TURTLE_flip {
+DEF TURTLE.flip {
     current_flip IF IO 2 flip END
 }
 
 
 # Turns the turtle right by a given number of degrees.
 # Note: This will snap to the nearest 45-degree direction.
-DEF TURTLE_right {
+DEF TURTLE.right {
     AS degrees_to_turn
     
     # Add to the precise degree heading, and wrap around 360
@@ -143,7 +143,7 @@ DEF TURTLE_right {
 }
 
 # Turns the turtle left by a given number of degrees.
-DEF TURTLE_left {
+DEF TURTLE.left {
     AS degrees_to_turn
 
     # Subtract from the precise degree heading, with safe wrapping
@@ -151,12 +151,12 @@ DEF TURTLE_left {
 }
 
 # Expects color code on the stack
-DEF TURTLE_color {
+DEF TURTLE.color {
     DUP AS current_color IO 2 COLOR
 }
 
 # expects X,Y on the stack
-DEF TURTLE_goto {
+DEF TURTLE.goto {
     current_height % DUP AS Yax IO 2 Y           # Read Y (TOS) from stack
     current_width  % DUP AS Xax IO 2 X           # Read X (TOS-1) from stack
     _drawTurtle
@@ -164,7 +164,7 @@ DEF TURTLE_goto {
 
 # Moves the turtle forward by a given distance
 # Usage: distance TURTLE_forward
-DEF TURTLE_forward {
+DEF TURTLE.forward {
     AS distance
 
     # Prevent infinite loop on negative distance
@@ -188,7 +188,7 @@ DEF TURTLE_forward {
         Yax dy + AS Yax
 
         # Draw a character at the new position
-        Xax Yax TURTLE_goto
+        Xax Yax TURTLE.goto
 
         distance 1 - AS distance
         GOTO move_loop
@@ -259,7 +259,7 @@ DEF _welcome_at_turtle {
 }
 
 
-DEF TURTLE_start {
+DEF TURTLE.start {
     ASM {
     . $TURTLE_DX 8
     % $TURTLE_DX  1  1  0 -1 -1 -1  0  1
@@ -288,7 +288,7 @@ VALUE e2 0
 # Draw a straight (as possible) line from (x1,y1) to (x2,y2).
 # This version avoids using <= or >=; it uses only <, >, == and !=.
 # Usage: x1 y1 x2 y2 TURTLE_line
-DEF TURTLE_line {
+DEF TURTLE.line {
     # pop all four coordinates from the stack.
     # Stack order: ... x1 y1 x2 y2
     AS y2
@@ -319,7 +319,7 @@ DEF TURTLE_line {
 
     :line_loop
         # draw current point
-        x1 y1 TURTLE_goto
+        x1 y1 TURTLE.goto
 
         # if we've reached the end, break out
         x1 x2 == IF
@@ -365,19 +365,19 @@ DEF _plot_circle_points {
     AS circ_y
     AS circ_x
 
-    circ_xc circ_x + circ_yc circ_y + TURTLE_goto
-    circ_xc circ_x - circ_yc circ_y + TURTLE_goto
-    circ_xc circ_x + circ_yc circ_y - TURTLE_goto
-    circ_xc circ_x - circ_yc circ_y - TURTLE_goto
-    circ_xc circ_y + circ_yc circ_x + TURTLE_goto
-    circ_xc circ_y - circ_yc circ_x + TURTLE_goto
-    circ_xc circ_y + circ_yc circ_x - TURTLE_goto
-    circ_xc circ_y - circ_yc circ_x - TURTLE_goto
+    circ_xc circ_x + circ_yc circ_y + TURTLE.goto
+    circ_xc circ_x - circ_yc circ_y + TURTLE.goto
+    circ_xc circ_x + circ_yc circ_y - TURTLE.goto
+    circ_xc circ_x - circ_yc circ_y - TURTLE.goto
+    circ_xc circ_y + circ_yc circ_x + TURTLE.goto
+    circ_xc circ_y - circ_yc circ_x + TURTLE.goto
+    circ_xc circ_y + circ_yc circ_x - TURTLE.goto
+    circ_xc circ_y - circ_yc circ_x - TURTLE.goto
 }
 
 # Draws a circle using the Midpoint Algorithm.
 # Usage: xc yc radius TURTLE_circle
-DEF TURTLE_circle {
+DEF TURTLE.circle {
     # Pop arguments from stack
     AS circ_p # Re-using circ_p for radius temporarily
     AS circ_yc

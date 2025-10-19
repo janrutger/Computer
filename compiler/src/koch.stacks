@@ -38,7 +38,7 @@ DEF draw_koch {
     # Check if level is 0 (the base case).
     DUP 0 == IF 
         DROP # Get rid of the level value (0)
-        12 TURTLE_forward # Increased distance for high-res screen
+        12 TURTLE.forward # Increased distance for high-res screen
         GOTO draw_koch_end # Finished
     END
 
@@ -50,27 +50,27 @@ DEF draw_koch {
     
     # Call 1
     DUP stack_push # Duplicate (n-1) and push it to the manual stack
-    draw_koch TURTLE_flip
+    draw_koch TURTLE.flip
 
-    90 TURTLE_right
+    90 TURTLE.right
 
     # Call 2
     DUP stack_push
-    draw_koch TURTLE_flip
+    draw_koch TURTLE.flip
 
-    270 TURTLE_right
+    270 TURTLE.right
 
     # Call 3
     DUP stack_push
-    draw_koch TURTLE_flip
+    draw_koch TURTLE.flip
 
-    270 TURTLE_right
+    270 TURTLE.right
 
     # Call 4
     DUP stack_push
-    draw_koch TURTLE_flip
+    draw_koch TURTLE.flip
 
-    90 TURTLE_right
+    90 TURTLE.right
 
     # Call 5 (no DUP needed as we consume the last copy)
     stack_push
@@ -84,20 +84,20 @@ DEF draw_koch {
 # -----------------------------------------------------------------------------
 
 # 1. Initialize turtle
-TURTLE_start
+TURTLE.start
 #DBmode IO 2 MODE
 
-db_pixel TURTLE_mode
-# pixel TURTLE_mode
+db_pixel TURTLE.mode
+# pixel TURTLE.mode
 
 
 # 2. Prepare for drawing
 
-red TURTLE_color
-150 200 TURTLE_goto       # Adjusted starting position for better visibility
+red TURTLE.color
+150 200 TURTLE.goto       # Adjusted starting position for better visibility
 
 # 3. Push the starting level onto our manual stack and start the recursion
 3 stack_push draw_koch
 
 # 4. Finalize drawing
-TURTLE_flip
+TURTLE.flip
