@@ -38,7 +38,7 @@ DEF draw_koch {
     # Check if level is 0 (the base case).
     DUP 0 == IF 
         DROP # Get rid of the level value (0)
-        12 TURTLE.forward # Increased distance for high-res screen
+        16 TURTLE.forward # Increased distance for high-res screen
         GOTO draw_koch_end # Finished
     END
 
@@ -85,16 +85,14 @@ DEF draw_koch {
 
 # 1. Initialize turtle
 TURTLE.start
-#DBmode IO 2 MODE
 
 db_pixel TURTLE.mode
 # pixel TURTLE.mode
 
 
 # 2. Prepare for drawing
-
 red TURTLE.color
-150 200 TURTLE.goto       # Adjusted starting position for better visibility
+100 200 TURTLE.goto       # Adjusted starting position for better visibility
 
 # 3. Push the starting level onto our manual stack and start the recursion
 3 stack_push draw_koch

@@ -126,12 +126,8 @@
         "@READline": 893,
         "@STRcmp": 973,
         "@STRatoi": 1025,
-        "$P": 12715,
-        "$N": 12716,
-        "$C": 12717,
-        "$R": 12718,
-        "@gcd": 6221,
-        "@plot": 6234
+        "$hello_msg": 12715,
+        "@hello_from_asm": 6146
     },
     "labels": [
         {
@@ -226,13 +222,6 @@
             ":atoi_fail": 1092,
             ":atoi_end": 1097
         },
-        {
-            ":_main_while_start_0": 6164,
-            ":_main_if_else_0": 6198,
-            ":_main_if_end_0": 6205,
-            ":_main_while_end_0": 6220,
-            ":gcd_while_start_0": 6221,
-            ":gcd_while_end_0": 6232
-        }
+        {}
     ]
 }

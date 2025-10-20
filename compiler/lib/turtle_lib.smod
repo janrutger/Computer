@@ -392,6 +392,13 @@
     sto A $i
     jmp :welcome_loop
 :welcome_end
+    ldi A 0
+    call @push_A
+    ldi A 2
+    call @push_A
+    ldi A 18
+    call @push_A
+    call @rt_udc_control
     ret
 @TURTLE.start
 

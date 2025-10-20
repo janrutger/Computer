@@ -88,21 +88,6 @@ DEF _drawTurtle {
     END
 }
 
-# DEF TURTLE.mode {
-#     DUP AS current_mode IO 2 MODE
-#     current_mode pixel  == IF 0 AS current_flip END
-#     current_mode sprite == IF 0 AS current_flip END
-#     current_mode db_pixel  == IF 
-#         pixel AS  current_mode 
-#         1  AS current_flip
-#     END
-#     current_mode db_sprite == IF 
-#         sprite AS current_mode 
-#         1  AS current_flip
-#     END
-#     current_mode pixel  == IF pixel_height  AS current_height   pixel_width  AS current_width END
-#     current_mode sprite == IF sprite_height AS current_height   sprite_width AS current_width END
-# }
 
 DEF TURTLE.mode {
     DUP AS current_mode IO 2 MODE
@@ -198,36 +183,6 @@ DEF TURTLE.forward {
 
 
 
-# DEF _welcome_at_turtle {
-#     32 IO 2 X             # Default start point
-#     1  IO 2 Y
-
-#     db_sprite IO 2 MODE
-
-#     87  IO 2 DRAW 33 IO 2 X
-#     101 IO 2 DRAW 34 IO 2 X
-#     108 IO 2 DRAW 35 IO 2 X
-#     107 IO 2 DRAW 36 IO 2 X
-#     111 IO 2 DRAW 37 IO 2 X
-#     109 IO 2 DRAW 38 IO 2 X 
-#     32  IO 2 DRAW 39 IO 2 X
-#     116 IO 2 DRAW 40 IO 2 X
-#     111 IO 2 DRAW 41 IO 2 X
-#     32  IO 2 DRAW 42 IO 2 X
-#     84  IO 2 DRAW 43 IO 2 X
-#     85  IO 2 DRAW 44 IO 2 X
-#     82  IO 2 DRAW 45 IO 2 X
-#     84  IO 2 DRAW 46 IO 2 X
-#     76  IO 2 DRAW 47 IO 2 X
-#     69  IO 2 DRAW 48 IO 2 X
-#     42  IO 2 DRAW 49 IO 2 X
-#     IO 2 FLIP
-#     sprite IO 2 MODE
-
-#     0 IO 2 X
-#     1 IO 2 Y
-# }
-
 DEF _welcome_at_turtle {
     STRING msg "* Welcome at TURTLE *"
     VALUE i 0
@@ -238,6 +193,7 @@ DEF _welcome_at_turtle {
     30 IO 2 X
     1 IO 2 Y
     
+
     :welcome_loop
         # Calculate character address and store it in p_char
         &msg i + AS p_char
@@ -256,6 +212,7 @@ DEF _welcome_at_turtle {
         GOTO welcome_loop
 
     :welcome_end
+    IO 2 FLIP
 }
 
 

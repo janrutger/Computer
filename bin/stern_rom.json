@@ -1364,6 +1364,110 @@
                     "comment": null
                 }
             ]
+        },
+        "92": {
+            "name": "DPUSH",
+            "format": "two_reg_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "read_mem_adres",
+                        "arg2",
+                        "Ra"
+                    ],
+                    "comment": "Ra = current stack pointer value (SP)"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "INC"
+                    ],
+                    "comment": "Ra = new stack pointer value (SP + 1)"
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": "Rb = address of the stack pointer variable"
+                },
+                {
+                    "instruction": [
+                        "store_mem_reg",
+                        "Rb",
+                        "Ra"
+                    ],
+                    "comment": "Store the new SP value back."
+                },
+                {
+                    "instruction": [
+                        "store_mem_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "set_cpu_state",
+                        "FETCH"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "93": {
+            "name": "DPOP",
+            "format": "two_reg_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "read_mem_adres",
+                        "arg2",
+                        "Ra"
+                    ],
+                    "comment": "Ra = current stack pointer value (SP)"
+                },
+                {
+                    "instruction": [
+                        "read_mem_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": "Read the value from the top of the stack into the destination register $1."
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "DEC"
+                    ],
+                    "comment": "Ra = new stack pointer value (SP - 1)"
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": "Rb = address of the stack pointer variable"
+                },
+                {
+                    "instruction": [
+                        "store_mem_reg",
+                        "Rb",
+                        "Ra"
+                    ],
+                    "comment": "Store the new SP value back."
+                },
+                {
+                    "instruction": [
+                        "set_cpu_state",
+                        "FETCH"
+                    ],
+                    "comment": null
+                }
+            ]
         }
     }
 }
