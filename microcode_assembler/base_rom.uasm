@@ -5,7 +5,8 @@
 
 def 10=NOP {
     .format zero
-    set_cpu_state(FETCH)
+    set_cpu_state(SLEEP)
+    ;set_cpu_state(FETCH)
 }
 
 def 11=HALT {

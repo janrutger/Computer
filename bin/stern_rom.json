@@ -19,7 +19,7 @@
                 {
                     "instruction": [
                         "set_cpu_state",
-                        "FETCH"
+                        "SLEEP"
                     ],
                     "comment": null
                 }

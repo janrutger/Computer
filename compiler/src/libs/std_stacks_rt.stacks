@@ -4,82 +4,82 @@
 ## ##
 
 
-DEF push_A {
-    ASM {
-        # inc I $DATASTACK_INDEX  ; Load current stack pointer into I 
-        # stx A $DATASTACK_PTR    ; Store value from A at index I
-        stack A $DATASTACK_PTR
-    }
-}
+# DEF push_A {
+#     ASM {
+#         # inc I $DATASTACK_INDEX  ; Load current stack pointer into I 
+#         # stx A $DATASTACK_PTR    ; Store value from A at index I
+#         stack A $DATASTACK_PTR
+#     }
+# }
 
-DEF pop_A {
-    ASM {
-        # dec I $DATASTACK_INDEX  ; Load current stack pointer into I
-        # ldx A $DATASTACK_PTR    ; Load value from index I into A
-        ustack A $DATASTACK_PTR
-    }
-}
+# DEF pop_A {
+#     ASM {
+#         # dec I $DATASTACK_INDEX  ; Load current stack pointer into I
+#         # ldx A $DATASTACK_PTR    ; Load value from index I into A
+#         ustack A $DATASTACK_PTR
+#     }
+# }
 
-DEF push_B {
-    ASM {
-        # inc I $DATASTACK_INDEX  ; Load current stack pointer into I 
-        # stx B $DATASTACK_PTR    ; Store value from B at index I
-        stack B $DATASTACK_PTR
-    }
-}
+# DEF push_B {
+#     ASM {
+#         # inc I $DATASTACK_INDEX  ; Load current stack pointer into I 
+#         # stx B $DATASTACK_PTR    ; Store value from B at index I
+#         stack B $DATASTACK_PTR
+#     }
+# }
 
-DEF pop_B {
-    ASM {
-        # dec I $DATASTACK_INDEX  ; Load current stack pointer into I
-        # ldx B $DATASTACK_PTR    ; Load value from index I into B
-        ustack B $DATASTACK_PTR
-    }
-}
+# DEF pop_B {
+#     ASM {
+#         # dec I $DATASTACK_INDEX  ; Load current stack pointer into I
+#         # ldx B $DATASTACK_PTR    ; Load value from index I into B
+#         ustack B $DATASTACK_PTR
+#     }
+# }
 
-DEF rt_add {
-    ASM {
-        ustack A $DATASTACK_PTR
-        ustack B $DATASTACK_PTR
-        add A B
-        stack A $DATASTACK_PTR
-    }
-}
+# DEF rt_add {
+#     ASM {
+#         ustack A $DATASTACK_PTR
+#         ustack B $DATASTACK_PTR
+#         add A B
+#         stack A $DATASTACK_PTR
+#     }
+# }
 
-DEF rt_sub {
-    ASM {
-        ustack A $DATASTACK_PTR
-        ustack B $DATASTACK_PTR
-        sub B A
-        stack B $DATASTACK_PTR
-    }
-}
+# DEF rt_sub {
+#     ASM {
+#         ustack A $DATASTACK_PTR
+#         ustack B $DATASTACK_PTR
+#         sub B A
+#         stack B $DATASTACK_PTR
+#     }
+# }
 
-DEF rt_mul {
-    ASM {
-        ustack A $DATASTACK_PTR
-        ustack B $DATASTACK_PTR
-        mul A B
-        stack A $DATASTACK_PTR
-    }
-}
+# DEF rt_mul {
+#     ASM {
+#         ustack A $DATASTACK_PTR
+#         ustack B $DATASTACK_PTR
+#         mul A B
+#         stack A $DATASTACK_PTR
+#     }
+# }
 
-DEF rt_div {
-    ASM {
-        ustack A $DATASTACK_PTR
-        ustack B $DATASTACK_PTR
-        dmod B A
-        stack B $DATASTACK_PTR
-    }
-}
+# DEF rt_div {
+#     ASM {
+#         ustack A $DATASTACK_PTR
+#         ustack B $DATASTACK_PTR
+#         dmod B A
+#         stack B $DATASTACK_PTR
+#     }
+# }
 
-DEF rt_mod {
-    ASM {
-        ustack A $DATASTACK_PTR
-        ustack B $DATASTACK_PTR
-        dmod B A
-        stack A $DATASTACK_PTR
-    }
-}
+# DEF rt_mod {
+#     ASM {
+#         ustack A $DATASTACK_PTR
+#         ustack B $DATASTACK_PTR
+#         dmod B A
+#         stack A $DATASTACK_PTR
+#     }
+# }
 
 DEF rt_eq {
     ASM {

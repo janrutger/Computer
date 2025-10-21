@@ -1,158 +1,53 @@
 # .HEADER
-. $A 1
-. $B 1
-. $C 1
-. $D 1
-. $E 1
-. $F 1
-. $X 1
-. $Y 1
-. $K 1
-. $L 1
-. $N 1
-. $R 1
+. $current_char 1
+. $current_mode 1
+. $current_color 1
+. $current_width 1
+. $current_height 1
+. $current_flip 1
+. $Xax 1
+. $Yax 1
+. $degrees 1
+. $TURTLE_HEADING_DEG 1
+. $TURTLE_HEADING 1
+. $degrees_to_turn 1
+. $dx 1
+. $dy 1
+. $distance 1
+. $temp_ptr 1
+. $msg 22
+. $i 1
+. $char 1
+. $p_char 1
+. $x1 1
+. $y1 1
+. $x2 1
+. $y2 1
+. $sx 1
+. $sy 1
+. $err 1
+. $e2 1
+. $circ_xc 1
+. $circ_yc 1
+. $circ_x 1
+. $circ_y 1
+. $circ_p 1
+. $center_x 1
+. $center_y 1
+. $color 1
+. $y 1
+. $x 1
 
 # .CODE
-    call @screen
-:_main_while_start_0
-    ldi A 50000
-    stack A $DATASTACK_PTR
-    ldm A $N
-    stack A $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_while_end_0
-    call @rt_rnd
+    call @TURTLE.start
     ldi A 3
     stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    mul B A
-    stack B $DATASTACK_PTR
-    ldi A 999
+    call @TURTLE.color
+    ldi A 3
     stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    dmod B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    sto A $R
-    ldm A $R
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_if_end_0
-    call @select1
-:_main_if_end_0
-    ldm A $R
-    stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_if_end_1
-    call @select2
-:_main_if_end_1
-    ldm A $R
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_if_end_2
-    call @select3
-:_main_if_end_2
-    ldm A $X
-    stack A $DATASTACK_PTR
-    ldm A $K
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    dmod B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    sto A $X
-    ldm A $Y
-    stack A $DATASTACK_PTR
-    ldm A $L
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    dmod B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    sto A $Y
-    ldm A $X
-    stack A $DATASTACK_PTR
-    ldm A $Y
-    stack A $DATASTACK_PTR
-    call @draw
-    ldm A $N
-    stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    sto A $N
-    ldm A $N
-    stack A $DATASTACK_PTR
-    ldi A 500
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    dmod B A
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_if_end_3
-    ldm A $N
-    stack A $DATASTACK_PTR
-    call @rt_print_tos
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 18
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-:_main_if_end_3
-    jmp :_main_while_start_0
-:_main_while_end_0
-    ret
-
-# .FUNCTIONS
-@screen
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
+    call @TURTLE.mode
+    call @star
+    call @TURTLE.flip
     ldi A 0
     stack A $DATASTACK_PTR
     ldi A 2
@@ -160,80 +55,418 @@
     ldi A 10
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldi A 1
+    call @circle
+    call @TURTLE.flip
+    ldi A 0
     stack A $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
-    ldi A 13
+    ldi A 10
     stack A $DATASTACK_PTR
     call @rt_udc_control
+    call @lines
+    call @TURTLE.flip
+    ldi A 0
+    stack A $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    call @draw_fan_pattern
+    ret
+
+# .FUNCTIONS
+
+@_drawTurtle
+    ldm A $current_mode
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_drawTurtle_if_else_0
+    ldm A $current_color
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    jmp :_drawTurtle_if_end_0
+:_drawTurtle_if_else_0
+    ldm A $current_char
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+:_drawTurtle_if_end_0
+    ret
+@TURTLE.mode
+    call @rt_dup
+    ustack A $DATASTACK_PTR
+    sto A $current_mode
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 14
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ret
-@setX
+    ldm A $current_mode
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.mode_if_end_1
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $current_flip
+:TURTLE.mode_if_end_1
+    ldm A $current_mode
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.mode_if_end_2
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $current_flip
+:TURTLE.mode_if_end_2
+    ldm A $current_mode
+    stack A $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
-    ldi A 15
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.mode_if_end_3
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $current_mode
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $current_flip
+:TURTLE.mode_if_end_3
+    ldm A $current_mode
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.mode_if_end_4
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $current_mode
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $current_flip
+:TURTLE.mode_if_end_4
+    ldm A $current_mode
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.mode_if_else_5
+    ldi A 480
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $current_height
+    ldi A 640
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $current_width
+    jmp :TURTLE.mode_if_end_5
+:TURTLE.mode_if_else_5
+    ldi A 60
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $current_height
+    ldi A 80
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $current_width
+:TURTLE.mode_if_end_5
+    ret
+@TURTLE.flip
+    ldm A $current_flip
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.flip_if_end_6
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 18
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+:TURTLE.flip_if_end_6
+    ret
+@TURTLE.right
+    ustack A $DATASTACK_PTR
+    sto A $degrees_to_turn
+    ldm A $TURTLE_HEADING_DEG
+    stack A $DATASTACK_PTR
+    ldm A $degrees_to_turn
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 360
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $TURTLE_HEADING_DEG
+    ret
+@TURTLE.left
+    ustack A $DATASTACK_PTR
+    sto A $degrees_to_turn
+    ldi A 360
+    stack A $DATASTACK_PTR
+    ldm A $TURTLE_HEADING_DEG
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $degrees_to_turn
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldi A 360
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $TURTLE_HEADING_DEG
+    ret
+@TURTLE.color
+    call @rt_dup
+    ustack A $DATASTACK_PTR
+    sto A $current_color
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
     stack A $DATASTACK_PTR
     call @rt_udc_control
     ret
-@setY
+@TURTLE.goto
+    ldm A $current_height
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
+    call @rt_dup
+    ustack A $DATASTACK_PTR
+    sto A $Yax
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 16
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ret
-@select1
-    ldm A $A
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    sto A $K
-    ldm A $B
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    sto A $L
-    ret
-@select2
-    ldm A $C
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    sto A $K
-    ldm A $D
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    sto A $L
-    ret
-@select3
-    ldm A $E
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    sto A $K
-    ldm A $F
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    sto A $L
-    ret
-@draw
-    call @setY
-    call @setX
-    call @rt_rnd
-    ldi A 15
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    mul B A
-    stack B $DATASTACK_PTR
-    ldi A 999
+    ldm A $current_width
     stack A $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     dmod B A
+    stack A $DATASTACK_PTR
+    call @rt_dup
+    ustack A $DATASTACK_PTR
+    sto A $Xax
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    call @_drawTurtle
+    ret
+@TURTLE.forward
+    ustack A $DATASTACK_PTR
+    sto A $distance
+    ldm A $distance
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.forward_if_end_7
+    jmp :move_end
+:TURTLE.forward_if_end_7
+    ldm A $TURTLE_HEADING_DEG
+    stack A $DATASTACK_PTR
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 45
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $TURTLE_HEADING
+    ldi A $TURTLE_DX
+    stack A $DATASTACK_PTR
+    ldm A $TURTLE_HEADING
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $temp_ptr
+    ldm I $temp_ptr
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $dx
+    ldi A $TURTLE_DY
+    stack A $DATASTACK_PTR
+    ldm A $TURTLE_HEADING
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $temp_ptr
+    ldm I $temp_ptr
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $dy
+:move_loop
+    ldm A $distance
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.forward_if_end_8
+    jmp :move_end
+:TURTLE.forward_if_end_8
+    ldm A $Xax
+    stack A $DATASTACK_PTR
+    ldm A $dx
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $Xax
+    ldm A $Yax
+    stack A $DATASTACK_PTR
+    ldm A $dy
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $Yax
+    ldm A $Xax
+    stack A $DATASTACK_PTR
+    ldm A $Yax
+    stack A $DATASTACK_PTR
+    call @TURTLE.goto
+    ldm A $distance
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $distance
+    jmp :move_loop
+:move_end
+    ret
+@_welcome_at_turtle
+    ldi A 30
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 16
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+:welcome_loop
+    ldi A $msg
+    stack A $DATASTACK_PTR
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $p_char
+    ldm I $p_char
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $char
+    ldm A $char
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_welcome_at_turtle_if_end_9
+    jmp :welcome_end
+:_welcome_at_turtle_if_end_9
+    ldm A $char
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 30
+    stack A $DATASTACK_PTR
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
     stack B $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
@@ -243,21 +476,1021 @@
     stack B $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
-    ldi A 17
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $i
+    jmp :welcome_loop
+:welcome_end
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 18
     stack A $DATASTACK_PTR
     call @rt_udc_control
     ret
+@TURTLE.start
+
+    . $TURTLE_DX 8
+    % $TURTLE_DX  1  1  0 -1 -1 -1  0  1
+    . $TURTLE_DY 8
+    % $TURTLE_DY  0  1  1  1  0 -1 -1 -1
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $current_mode
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 14
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $current_color
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    call @_welcome_at_turtle
+    ret
+@TURTLE.line
+    ustack A $DATASTACK_PTR
+    sto A $y2
+    ustack A $DATASTACK_PTR
+    sto A $x2
+    ustack A $DATASTACK_PTR
+    sto A $y1
+    ustack A $DATASTACK_PTR
+    sto A $x1
+    ldm A $x2
+    stack A $DATASTACK_PTR
+    ldm A $x1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $dx
+    ldm A $dx
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.line_if_end_10
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $dx
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $dx
+:TURTLE.line_if_end_10
+    ldm A $y2
+    stack A $DATASTACK_PTR
+    ldm A $y1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $dy
+    ldm A $dy
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.line_if_end_11
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $dy
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $dy
+:TURTLE.line_if_end_11
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $sx
+    ldm A $x1
+    stack A $DATASTACK_PTR
+    ldm A $x2
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.line_if_end_12
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $sx
+:TURTLE.line_if_end_12
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $sy
+    ldm A $y1
+    stack A $DATASTACK_PTR
+    ldm A $y2
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.line_if_end_13
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $sy
+:TURTLE.line_if_end_13
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $dy
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $dy
+    ldm A $dx
+    stack A $DATASTACK_PTR
+    ldm A $dy
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $err
+:line_loop
+    ldm A $x1
+    stack A $DATASTACK_PTR
+    ldm A $y1
+    stack A $DATASTACK_PTR
+    call @TURTLE.goto
+    ldm A $x1
+    stack A $DATASTACK_PTR
+    ldm A $x2
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.line_if_end_14
+    ldm A $y1
+    stack A $DATASTACK_PTR
+    ldm A $y2
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.line_if_end_15
+    jmp :line_end
+:TURTLE.line_if_end_15
+:TURTLE.line_if_end_14
+    ldm A $err
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $e2
+    ldm A $e2
+    stack A $DATASTACK_PTR
+    ldm A $dy
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.line_if_end_16
+    jmp :skip_x_move
+:TURTLE.line_if_end_16
+    ldm A $err
+    stack A $DATASTACK_PTR
+    ldm A $dy
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $err
+    ldm A $x1
+    stack A $DATASTACK_PTR
+    ldm A $sx
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $x1
+:skip_x_move
+    ldm A $e2
+    stack A $DATASTACK_PTR
+    ldm A $dx
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.line_if_end_17
+    jmp :skip_y_move
+:TURTLE.line_if_end_17
+    ldm A $err
+    stack A $DATASTACK_PTR
+    ldm A $dx
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $err
+    ldm A $y1
+    stack A $DATASTACK_PTR
+    ldm A $sy
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $y1
+:skip_y_move
+    jmp :line_loop
+:line_end
+    ldm A $x2
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $Xax
+    ldm A $y2
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $Yax
+    ret
+@_plot_circle_points
+    ustack A $DATASTACK_PTR
+    sto A $circ_y
+    ustack A $DATASTACK_PTR
+    sto A $circ_x
+    ldm A $circ_xc
+    stack A $DATASTACK_PTR
+    ldm A $circ_x
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $circ_yc
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.goto
+    ldm A $circ_xc
+    stack A $DATASTACK_PTR
+    ldm A $circ_x
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $circ_yc
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.goto
+    ldm A $circ_xc
+    stack A $DATASTACK_PTR
+    ldm A $circ_x
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $circ_yc
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.goto
+    ldm A $circ_xc
+    stack A $DATASTACK_PTR
+    ldm A $circ_x
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $circ_yc
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.goto
+    ldm A $circ_xc
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $circ_yc
+    stack A $DATASTACK_PTR
+    ldm A $circ_x
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.goto
+    ldm A $circ_xc
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $circ_yc
+    stack A $DATASTACK_PTR
+    ldm A $circ_x
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.goto
+    ldm A $circ_xc
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $circ_yc
+    stack A $DATASTACK_PTR
+    ldm A $circ_x
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.goto
+    ldm A $circ_xc
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $circ_yc
+    stack A $DATASTACK_PTR
+    ldm A $circ_x
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.goto
+    ret
+@TURTLE.circle
+    ustack A $DATASTACK_PTR
+    sto A $circ_p
+    ustack A $DATASTACK_PTR
+    sto A $circ_yc
+    ustack A $DATASTACK_PTR
+    sto A $circ_xc
+    ldm A $circ_p
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $circ_x
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $circ_y
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $circ_p
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $circ_p
+:circle_loop
+    ldm A $circ_x
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    call @_plot_circle_points
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $circ_y
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $circ_p
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.circle_if_else_18
+    ldm A $circ_p
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $circ_p
+    jmp :TURTLE.circle_if_end_18
+:TURTLE.circle_if_else_18
+    ldm A $circ_x
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $circ_x
+    ldm A $circ_p
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $circ_x
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $circ_p
+:TURTLE.circle_if_end_18
+    ldm A $circ_x
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.circle_if_end_19
+    jmp :circle_loop
+:TURTLE.circle_if_end_19
+    ldm A $circ_x
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    call @_plot_circle_points
+    ret
+
+@circle
+    ldi A 40
+    stack A $DATASTACK_PTR
+    ldi A 30
+    stack A $DATASTACK_PTR
+    ldi A 25
+    stack A $DATASTACK_PTR
+    call @TURTLE.circle
+    call @TURTLE.flip
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldi A 40
+    stack A $DATASTACK_PTR
+    ldi A 30
+    stack A $DATASTACK_PTR
+    ldi A 20
+    stack A $DATASTACK_PTR
+    call @TURTLE.circle
+    call @TURTLE.flip
+    ldi A 10
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldi A 40
+    stack A $DATASTACK_PTR
+    ldi A 30
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @TURTLE.circle
+    call @TURTLE.flip
+    ldi A 5
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldi A 40
+    stack A $DATASTACK_PTR
+    ldi A 30
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    call @TURTLE.circle
+    call @TURTLE.flip
+    ldi A 4
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldi A 40
+    stack A $DATASTACK_PTR
+    ldi A 30
+    stack A $DATASTACK_PTR
+    ldi A 5
+    stack A $DATASTACK_PTR
+    call @TURTLE.circle
+    call @TURTLE.flip
+    ldi A 6
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldi A 40
+    stack A $DATASTACK_PTR
+    ldi A 30
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @TURTLE.circle
+    call @TURTLE.flip
+    ret
+@lines
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldi A 30
+    stack A $DATASTACK_PTR
+    ldi A 60
+    stack A $DATASTACK_PTR
+    ldi A 30
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $i
+:line_loop1
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldi A 16
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :lines_if_end_0
+    jmp :end_loop1
+:lines_if_end_0
+    ldm A $i
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldi A 30
+    stack A $DATASTACK_PTR
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 59
+    stack A $DATASTACK_PTR
+    ldi A 30
+    stack A $DATASTACK_PTR
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.line
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldi A 30
+    stack A $DATASTACK_PTR
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldi A 59
+    stack A $DATASTACK_PTR
+    ldi A 30
+    stack A $DATASTACK_PTR
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.line
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $i
+    call @TURTLE.flip
+    jmp :line_loop1
+:end_loop1
+    ret
+@star
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldm A $center_x
+    stack A $DATASTACK_PTR
+    ldm A $center_y
+    stack A $DATASTACK_PTR
+    ldi A 70
+    stack A $DATASTACK_PTR
+    ldi A 30
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    call @TURTLE.flip
+    ldi A 8
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldm A $center_x
+    stack A $DATASTACK_PTR
+    ldm A $center_y
+    stack A $DATASTACK_PTR
+    ldi A 66
+    stack A $DATASTACK_PTR
+    ldi A 45
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    call @TURTLE.flip
+    ldi A 7
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldm A $center_x
+    stack A $DATASTACK_PTR
+    ldm A $center_y
+    stack A $DATASTACK_PTR
+    ldi A 55
+    stack A $DATASTACK_PTR
+    ldi A 56
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    call @TURTLE.flip
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldm A $center_x
+    stack A $DATASTACK_PTR
+    ldm A $center_y
+    stack A $DATASTACK_PTR
+    ldi A 40
+    stack A $DATASTACK_PTR
+    ldi A 58
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    call @TURTLE.flip
+    ldi A 5
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldm A $center_x
+    stack A $DATASTACK_PTR
+    ldm A $center_y
+    stack A $DATASTACK_PTR
+    ldi A 25
+    stack A $DATASTACK_PTR
+    ldi A 56
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    call @TURTLE.flip
+    ldi A 3
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldm A $center_x
+    stack A $DATASTACK_PTR
+    ldm A $center_y
+    stack A $DATASTACK_PTR
+    ldi A 14
+    stack A $DATASTACK_PTR
+    ldi A 45
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    call @TURTLE.flip
+    ldi A 14
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldm A $center_x
+    stack A $DATASTACK_PTR
+    ldm A $center_y
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldi A 30
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    call @TURTLE.flip
+    ldi A 6
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldm A $center_x
+    stack A $DATASTACK_PTR
+    ldm A $center_y
+    stack A $DATASTACK_PTR
+    ldi A 14
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    call @TURTLE.flip
+    ldi A 4
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldm A $center_x
+    stack A $DATASTACK_PTR
+    ldm A $center_y
+    stack A $DATASTACK_PTR
+    ldi A 25
+    stack A $DATASTACK_PTR
+    ldi A 4
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    call @TURTLE.flip
+    ldi A 10
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldm A $center_x
+    stack A $DATASTACK_PTR
+    ldm A $center_y
+    stack A $DATASTACK_PTR
+    ldi A 40
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    call @TURTLE.flip
+    ldi A 9
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldm A $center_x
+    stack A $DATASTACK_PTR
+    ldm A $center_y
+    stack A $DATASTACK_PTR
+    ldi A 55
+    stack A $DATASTACK_PTR
+    ldi A 4
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    call @TURTLE.flip
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldm A $center_x
+    stack A $DATASTACK_PTR
+    ldm A $center_y
+    stack A $DATASTACK_PTR
+    ldi A 66
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    call @TURTLE.flip
+    ret
+@draw_fan_pattern
+:alternate_loop
+    ldm A $x
+    stack A $DATASTACK_PTR
+    ldi A 60
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_fan_pattern_if_end_1
+    jmp :end_loop
+:draw_fan_pattern_if_end_1
+    ldm A $color
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldm A $x
+    stack A $DATASTACK_PTR
+    ldi A 49
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldi A 59
+    stack A $DATASTACK_PTR
+    ldm A $y
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    call @TURTLE.flip
+    ldm A $x
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $x
+    ldm A $y
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $y
+    ldm A $color
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    sto A $color
+    jmp :alternate_loop
+:end_loop
+    ret
 
 # .DATA
-% $A 10
-% $B 10
-% $C 630
-% $D 10
-% $E 320
-% $F 470
-% $X 10
-% $Y 10
-% $K 0
-% $L 0
-% $N 0
-% $R 0
+
+% $current_char 203
+% $current_mode 3
+% $current_color 5
+% $current_width 80
+% $current_height 60
+% $current_flip 1
+% $Xax 0
+% $Yax 0
+% $degrees 0
+% $TURTLE_HEADING_DEG 0
+% $TURTLE_HEADING 0
+% $degrees_to_turn 0
+% $dx 0
+% $dy 0
+% $distance 0
+% $temp_ptr 0
+% $msg \* \space \W \e \l \c \o \m \e \space \a \t \space \T \U \R \T \L \E \space \* \null
+% $i 0
+% $char 0
+% $p_char 0
+% $x1 0
+% $y1 0
+% $x2 0
+% $y2 0
+% $sx 0
+% $sy 0
+% $err 0
+% $e2 0
+% $circ_xc 0
+% $circ_yc 0
+% $circ_x 0
+% $circ_y 0
+% $circ_p 0
+% $center_x 40
+% $center_y 30
+% $color 1
+% $y 10
+% $x 20

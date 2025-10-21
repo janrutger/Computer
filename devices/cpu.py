@@ -1,5 +1,6 @@
 from devices.memory import Memory
 import json
+import time
 
 # --- Constants ---
 MEM_INT_VECTORS_START = 3072
@@ -112,6 +113,10 @@ class CPU:
                 else:
                     print(f"Invalid opcode: {opcode}")
                     self.state = "HALT"
+
+            elif self.state == "SLEEP":
+                self.state = "FETCH"
+                time.sleep(0)
 
             elif self.state == "EXECUTE":
                 #print("Executing instruction")
@@ -345,4 +350,3 @@ class CPU:
             print(f"    R{i}: {self.registers[str(i)]:<5} R{i+1}: {self.registers[str(i+1)]}")
         print(f"  Internal Registers: Ra={self.registers['Ra']} Rb={self.registers['Rb']}")
         print(f"  Interrupts Enabled: {self.interrupts_enabled}")
-        
