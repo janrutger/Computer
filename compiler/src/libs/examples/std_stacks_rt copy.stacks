@@ -8,6 +8,7 @@ DEF push_A {
     ASM {
         # inc I $DATASTACK_INDEX  ; Load current stack pointer into I 
         # stx A $DATASTACK_PTR    ; Store value from A at index I
+:BREAK
         stack A $DATASTACK_PTR
     }
 }
@@ -38,53 +39,53 @@ DEF pop_B {
 
 DEF rt_add {
     ASM {
-        ustack A $DATASTACK_PTR
-        ustack B $DATASTACK_PTR
+        call @pop_A
+        call @pop_B
         add A B
-        stack A $DATASTACK_PTR
+        call @push_A
     }
 }
 
 DEF rt_sub {
     ASM {
-        ustack A $DATASTACK_PTR
-        ustack B $DATASTACK_PTR
+        call @pop_A
+        call @pop_B
         sub B A
-        stack B $DATASTACK_PTR
+        call @push_B
     }
 }
 
 DEF rt_mul {
     ASM {
-        ustack A $DATASTACK_PTR
-        ustack B $DATASTACK_PTR
+        call @pop_A
+        call @pop_B
         mul A B
-        stack A $DATASTACK_PTR
+        call @push_A
     }
 }
 
 DEF rt_div {
     ASM {
-        ustack A $DATASTACK_PTR
-        ustack B $DATASTACK_PTR
+        call @pop_A
+        call @pop_B
         dmod B A
-        stack B $DATASTACK_PTR
+        call @push_B
     }
 }
 
 DEF rt_mod {
     ASM {
-        ustack A $DATASTACK_PTR
-        ustack B $DATASTACK_PTR
+        call @pop_A
+        call @pop_B
         dmod B A
-        stack A $DATASTACK_PTR
+        call @push_A
     }
 }
 
 DEF rt_eq {
     ASM {
-        ustack A $DATASTACK_PTR
-        ustack B $DATASTACK_PTR
+        call @pop_A
+        call @pop_B
         tste A B
         jmpt :eq_true
         ldi A 0
@@ -92,14 +93,14 @@ DEF rt_eq {
     :eq_true
         ldi A 1
     :eq_end
-        stack A $DATASTACK_PTR
+        call @push_A
     }
 }
 
 DEF rt_neq {
     ASM {
-        ustack A $DATASTACK_PTR
-        ustack B $DATASTACK_PTR
+        call @pop_A
+        call @pop_B
         tste A B
         jmpf :neq_true
         ldi A 0
@@ -107,14 +108,14 @@ DEF rt_neq {
     :neq_true
         ldi A 1
     :neq_end
-        stack A $DATASTACK_PTR
+        call @push_A
     }
 }
 
 DEF rt_gt {
     ASM {
-        ustack A $DATASTACK_PTR
-        ustack B $DATASTACK_PTR
+        call @pop_A
+        call @pop_B
         tstg B A
         jmpt :gt_true
         ldi A 0
@@ -122,14 +123,14 @@ DEF rt_gt {
     :gt_true
         ldi A 1
     :gt_end
-        stack A $DATASTACK_PTR
+        call @push_A
     }
 }
 
 DEF rt_lt {
     ASM {
-        ustack A $DATASTACK_PTR
-        ustack B $DATASTACK_PTR
+        call @pop_A
+        call @pop_B
         tstg A B
         jmpt :lt_true
         ldi A 0
@@ -137,46 +138,46 @@ DEF rt_lt {
     :lt_true
         ldi A 1
     :lt_end
-        stack A $DATASTACK_PTR
+        call @push_A
     }
 }
 
 DEF rt_dup {
     ASM {
-        ustack A $DATASTACK_PTR
-        stack A $DATASTACK_PTR
-        stack A $DATASTACK_PTR
+        call @pop_A
+        call @push_A
+        call @push_A
     }
 }
 
 DEF rt_swap {
     ASM {
-        ustack A $DATASTACK_PTR
-        ustack B $DATASTACK_PTR
-        stack A $DATASTACK_PTR
-        stack B $DATASTACK_PTR
+        call @pop_A
+        call @pop_B
+        call @push_A
+        call @push_B
     }
 }
 
 DEF rt_drop {
     ASM {
-        ustack A $DATASTACK_PTR
+        call @pop_A
     }
 }
 
 DEF rt_over {
     ASM {
-        ustack A $DATASTACK_PTR
-        ustack B $DATASTACK_PTR
-        stack B $DATASTACK_PTR
-        stack A $DATASTACK_PTR
-        stack B $DATASTACK_PTR
+        call @pop_A
+        call @pop_B
+        call @push_B
+        call @push_A
+        call @push_B
     }
 }
 
 DEF rt_print_tos {
     ASM {
-        ustack A $DATASTACK_PTR
+        call @pop_A
         ld C A
 
         ldi I ~SYS_PRINT_NUMBER
@@ -192,10 +193,10 @@ DEF rt_print_tos {
 
 DEF rt_udc_control {
     ASM {
-        ustack B $DATASTACK_PTR     ; Pop command code into B
-        ustack A $DATASTACK_PTR     
+        call @pop_B     ; Pop command code into B
+        call @pop_A     
         ld M A          ; Save the Channel number
-        ustack A $DATASTACK_PTR
+        call @pop_A
         ld C A          ; load data/arugumnet in C
         ld A M          ; load channel number in A
 
@@ -214,7 +215,7 @@ DEF rt_udc_control {
         jmpf :rt_udc_end        ; goto end if no return value
 
         ldm A $SYSCALL_RETURN_VALUE
-        stack A $DATASTACK_PTR            ; Push the return value on the datastack
+        call @push_A            ; Push the return value on the datastack
 
     :rt_udc_end 
     }
@@ -236,3 +237,5 @@ DEF rt_rnd {
     random_seed rand_a * rand_c + rand_m % AS random_seed
     random_seed 1000 % 
 }
+
+

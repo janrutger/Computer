@@ -6,21 +6,21 @@
 . $input_buffer_index 1
 # .FUNCTIONS
 @io_lib_init
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $p_syscall_value
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $p_syscall_status
     ret
 @PRTchar
 
-        call @pop_A            ; Pop character from stack into C register for the syscall
+        ustack A $DATASTACK_PTR ; Pop character from stack into C register for the syscall
         ld C A
         ldi I ~SYS_PRINT_CHAR
-        int $INT_VECTORS       ; Interrupt to trigger the syscall
+        int $INT_VECTORS        ; Interrupt to trigger the syscall
         ret
 @PRTstring
 
-        call @pop_A              ; Pop pointer from stack into A register for the syscall
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
         ret
@@ -46,13 +46,13 @@
             int $INT_VECTORS
             ldm I $p_syscall_status
     ldx A $_start_memory_
-    call @push_A
-    call @pop_A
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :KEYchar_if_end_0
     ldm I $p_syscall_value
     ldx A $_start_memory_
-    call @push_A
+    stack A $DATASTACK_PTR
     jmp :key_end_loop
 :KEYchar_if_end_0
     jmp :key_loop
@@ -65,9 +65,9 @@
     call @CURSORon
     call @rt_dup
     ldi A 13
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_eq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :READline_if_end_1
     call @CURSORoff
@@ -76,27 +76,27 @@
 :READline_if_end_1
     call @rt_dup
     ldi A 8
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_eq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :READline_if_end_2
     ldm A $input_buffer_index
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 0
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_neq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :READline_if_else_3
     call @CURSORoff
     call @PRTchar
     ldm A $input_buffer_index
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_sub
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $input_buffer_index
     jmp :readline_loop
     jmp :READline_if_end_3
@@ -108,42 +108,42 @@
     call @rt_dup
     call @PRTchar
     ldi A $input_buffer
-    call @push_A
+    stack A $DATASTACK_PTR
     ldm A $input_buffer_index
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_add
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $p_input_buffer
-    call @pop_B
+    ustack B $DATASTACK_PTR
     ldm I $p_input_buffer
     stx B $_start_memory_
     ldm A $input_buffer_index
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_add
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $input_buffer_index
     jmp :readline_loop
 :finish_readline
     ldi A $input_buffer
-    call @push_A
+    stack A $DATASTACK_PTR
     ldm A $input_buffer_index
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_add
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $p_input_buffer
     ldi A 0
-    call @push_A
-    call @pop_B
+    stack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
     ldm I $p_input_buffer
     stx B $_start_memory_
     ldi A 0
-    call @push_A
-    call @pop_A
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
     sto A $input_buffer_index
     ldi A $input_buffer
-    call @push_A
+    stack A $DATASTACK_PTR
     ret
 
 # .DATA

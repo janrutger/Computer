@@ -1366,7 +1366,7 @@
             ]
         },
         "92": {
-            "name": "DPUSH",
+            "name": "STACK",
             "format": "two_reg_addr",
             "code": [
                 {
@@ -1376,6 +1376,14 @@
                         "Ra"
                     ],
                     "comment": "Ra = current stack pointer value (SP)"
+                },
+                {
+                    "instruction": [
+                        "store_mem_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
                 },
                 {
                     "instruction": [
@@ -1402,14 +1410,6 @@
                 },
                 {
                     "instruction": [
-                        "store_mem_reg",
-                        "Ra",
-                        "arg1"
-                    ],
-                    "comment": null
-                },
-                {
-                    "instruction": [
                         "set_cpu_state",
                         "FETCH"
                     ],
@@ -1418,7 +1418,7 @@
             ]
         },
         "93": {
-            "name": "DPOP",
+            "name": "USTACK",
             "format": "two_reg_addr",
             "code": [
                 {
@@ -1428,14 +1428,6 @@
                         "Ra"
                     ],
                     "comment": "Ra = current stack pointer value (SP)"
-                },
-                {
-                    "instruction": [
-                        "read_mem_reg",
-                        "Ra",
-                        "arg1"
-                    ],
-                    "comment": "Read the value from the top of the stack into the destination register $1."
                 },
                 {
                     "instruction": [
@@ -1459,6 +1451,14 @@
                         "Ra"
                     ],
                     "comment": "Store the new SP value back."
+                },
+                {
+                    "instruction": [
+                        "read_mem_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": "Read the value from the top of the stack into the destination register $1."
                 },
                 {
                     "instruction": [

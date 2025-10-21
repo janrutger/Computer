@@ -127,11 +127,11 @@ class CodeGenerator:
 
     def generate_statement(self, node):
         if isinstance(node, NumberNode):
-            return f"    ldi A {node.value}\n    call @push_A\n"
+            return f"    ldi A {node.value}\n    stack A $DATASTACK_PTR\n"
         
         elif isinstance(node, StringNode):
             label = self.add_string_literal(node.value)
-            return f"    ldi A ${label}\n    call @push_A\n"
+            return f"    ldi A ${label}\n    stack A $DATASTACK_PTR\n"
         
         elif isinstance(node, BacktickNode):
             return f"    call @{node.routine_name}\n"
@@ -154,15 +154,15 @@ class CodeGenerator:
                 self.header_section += f". ${var_name} 1\n"
             
             if node.dereference:
-                return f"    call @pop_B\n    ldm I ${var_name}\n    stx B $_start_memory_\n"
+                return f"    ustack B $DATASTACK_PTR\n    ldm I ${var_name}\n    stx B $_start_memory_\n"
             else:
-                return f"    call @pop_A\n    sto A ${var_name}\n"
+                return f"    ustack A $DATASTACK_PTR\n    sto A ${var_name}\n"
 
         elif isinstance(node, AddressOfNode):
-            return f"    ldi A ${node.var_name}\n    call @push_A\n"
+            return f"    ldi A ${node.var_name}\n    stack A $DATASTACK_PTR\n"
 
         elif isinstance(node, DereferenceNode):
-            return f"    ldm I ${node.var_name}\n    ldx A $_start_memory_\n    call @push_A\n"
+            return f"    ldm I ${node.var_name}\n    ldx A $_start_memory_\n    stack A $DATASTACK_PTR\n"
 
         elif isinstance(node, VarDeclarationNode):
             var_name = node.var_name
@@ -274,7 +274,7 @@ class CodeGenerator:
                 end_label = f"{self.current_context}_if_end_{if_id}"
                 
                 return (
-                    f"    call @pop_A\n"
+                    f"    ustack A $DATASTACK_PTR\n"
                     f"    tst A 0\n"
                     f"    jmpt :{else_label}\n"  # Jump if false (zero)
                     f"{true_code}"
@@ -286,7 +286,7 @@ class CodeGenerator:
             else:
                 end_label = f"{self.current_context}_if_end_{if_id}"
                 return (
-                    f"    call @pop_A\n"
+                    f"    ustack A $DATASTACK_PTR\n"
                     f"    tst A 0\n"
                     f"    jmpt :{end_label}\n"  # Jump if false (zero)
                     f"{true_code}"
@@ -305,7 +305,7 @@ class CodeGenerator:
             return (
                 f":{start_label}\n"
                 f"{condition_code}"
-                f"    call @pop_A\n"
+                f"    ustack A $DATASTACK_PTR\n"
                 f"    tst A 0\n"
                 f"    jmpt :{end_label}\n"
                 f"{body_code}"
@@ -327,11 +327,11 @@ class CodeGenerator:
             if command_upper in ['ONLINE', 'OFFLINE', 'RESET', 'NEW', 'GET', 'FLIP', 'INIT']:
                 code += (
                     f"    ldi A 0\n"              # Push dummy value 0
-                    f"    call @push_A\n"
+                    f"    stack A $DATASTACK_PTR\n"
                 )
             
             # This part is now generated for ALL IO commands.
-            code += f"    ldi A {channel}\n    call @push_A\n    ldi A {command_code}\n    call @push_A\n    call @rt_udc_control\n"
+            code += f"    ldi A {channel}\n    stack A $DATASTACK_PTR\n    ldi A {command_code}\n    stack A $DATASTACK_PTR\n    call @rt_udc_control\n"
             return code
 
         elif isinstance(node, IncludeNode):
@@ -458,7 +458,7 @@ class CodeGenerator:
             return f"    call @{op}\n"
 
         if op in self.symbols:
-            return f"    ldm A ${op}\n    call @push_A\n"
+            return f"    ldm A ${op}\n    stack A $DATASTACK_PTR\n"
 
         op_map = {
             '+':    '@rt_add',

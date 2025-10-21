@@ -33,9 +33,10 @@ VALUE VIDEO_MEM 14336     ; Start of the video memory
 ASM {
     . $DATASTACK 32             ; Create the datastack
     . $DATASTACK_PTR 1
-    . $DATASTACK_INDEX 1
-    % $DATASTACK_INDEX 0
+    # . $DATASTACK_INDEX 1
+    # % $DATASTACK_INDEX 0
     % $DATASTACK_PTR $DATASTACK
+
 }
 
 

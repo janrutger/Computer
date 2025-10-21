@@ -316,41 +316,43 @@ def 91=POP {
 # The instruction's address argument points to this pointer.
 # Convention: mem[addr] = absolute_address_of_stack_top
 
-def 92=DPUSH {
+def 92=STACK {
     .format two_reg_addr
     # Pushes register $1 onto a data stack. $2 is the address of the stack pointer.
     # The stack pointer at mem[$2] holds the absolute address of the top of the stack.
-    # This is a full-ascending stack (pre-increment push).
+    # This is a post-increment push.  (to stack the value)
 
-    # Step 1: Read SP and increment it.
+    # Step 1: Read SP.
     read_mem_adres($2, Ra)      ; Ra = current stack pointer value (SP)
-    alu(INC)                    ; Ra = new stack pointer value (SP + 1)
 
-    # Step 2: Store the new SP back into mem[$2].
+    # Step 2: Store the value from the source register ($1) at the current SP address.
+    store_mem_reg(Ra, $1)
+
+    # Step 3: Increment SP and store it back.
+    alu(INC)                    ; Ra = new stack pointer value (SP + 1)
     load_immediate(Rb, $2)      ; Rb = address of the stack pointer variable
     store_mem_reg(Rb, Ra)       ; Store the new SP value back.
-
-    # Step 3: Store the value from the source register ($1) at the new SP address.
-    # Ra still holds the new SP.
-    store_mem_reg(Ra, $1)
 
     set_cpu_state(FETCH)
 }
 
-def 93=DPOP {
+def 93=USTACK {
     .format two_reg_addr
     # Pops a value into register $1 from a data stack. $2 is the address of the stack pointer.
     # The stack pointer at mem[$2] holds the absolute address of the top of the stack.
-    # This is a full-ascending stack (post-decrement pop).
+    # This is a pre-decrement pop.  (to unstack the value)
 
-    # Step 1: Read the value from the top of the stack.
+    # Step 1: Read SP and decrement it.
     read_mem_adres($2, Ra)      ; Ra = current stack pointer value (SP)
-    read_mem_reg(Ra, $1)        ; Read the value from the top of the stack into the destination register $1.
-
-    # Step 2: Decrement SP and write it back.
     alu(DEC)                    ; Ra = new stack pointer value (SP - 1)
+
+    # Step 2: Store the new SP back.
     load_immediate(Rb, $2)      ; Rb = address of the stack pointer variable
     store_mem_reg(Rb, Ra)       ; Store the new SP value back.
+
+    # Step 3: Read the value from the new top of the stack.
+    # Ra still holds the new SP.
+    read_mem_reg(Ra, $1)        ; Read the value from the top of the stack into the destination register $1.
 
     set_cpu_state(FETCH)
 }

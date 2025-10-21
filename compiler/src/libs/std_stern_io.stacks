@@ -37,17 +37,17 @@ DEF io_lib_init {
 # Prints the character on the Top of Stack
 DEF PRTchar {
     ASM {
-        call @pop_A            ; Pop character from stack into C register for the syscall
+        ustack A $DATASTACK_PTR ; Pop character from stack into C register for the syscall
         ld C A
         ldi I ~SYS_PRINT_CHAR
-        int $INT_VECTORS       ; Interrupt to trigger the syscall
+        int $INT_VECTORS        ; Interrupt to trigger the syscall
     }
 }
 
 # Prints a null-terminated string. Pointer should be on Top of Stack.
 DEF PRTstring {
     ASM {
-        call @pop_A              ; Pop pointer from stack into A register for the syscall
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
     }

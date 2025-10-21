@@ -72,7 +72,7 @@ WHILE 50000 N > DO
   X Y draw
 
   N 1 + AS N
-  N 250 % 0 == IF
+  N 500 % 0 == IF
     N PRINT
     IO 2 FLIP  # Flip buffer to show new points
   END

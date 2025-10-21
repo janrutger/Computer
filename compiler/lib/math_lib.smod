@@ -3,9 +3,9 @@
 :gcd_while_start_0
     call @rt_dup
     ldi A 0
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_neq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :gcd_while_end_0
     call @rt_swap

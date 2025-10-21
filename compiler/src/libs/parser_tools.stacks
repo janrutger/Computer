@@ -162,7 +162,7 @@ DEF EXECUTE_BYTECODE {
 
         current_opcode OPC_USR == IF
             ASM {
-                call @pop_A
+                ustack A $DATASTACK_PTR
                 ld I A
                 callx $_start_memory_
             }

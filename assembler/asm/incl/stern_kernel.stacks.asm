@@ -30,305 +30,305 @@ MALLOC $bytecode_buffer 4096
 # .FUNCTIONS
 
 @TOKENIZE
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $_strtok_d
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $_strtok_s
 :skip_delimiters_loop
     ldm I $_strtok_s
     ldx A $_start_memory_
-    call @push_A
-    call @pop_A
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
     sto A $_strtok_c
     ldm A $_strtok_c
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 0
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_eq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :TOKENIZE_if_end_0
     ldi A 0
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 0
-    call @push_A
+    stack A $DATASTACK_PTR
     jmp :strtok_end
 :TOKENIZE_if_end_0
     ldm A $_strtok_c
-    call @push_A
+    stack A $DATASTACK_PTR
     ldm A $_strtok_d
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_neq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :TOKENIZE_if_end_1
     jmp :find_end_of_token
 :TOKENIZE_if_end_1
     ldm A $_strtok_s
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_add
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $_strtok_s
     jmp :skip_delimiters_loop
 :find_end_of_token
     ldm A $_strtok_s
-    call @push_A
-    call @pop_A
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
     sto A $_strtok_p
 :scan_loop
     ldm I $_strtok_p
     ldx A $_start_memory_
-    call @push_A
-    call @pop_A
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
     sto A $_strtok_c
     ldm A $_strtok_c
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 0
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_eq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :TOKENIZE_if_end_2
     ldm A $_strtok_s
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 0
-    call @push_A
+    stack A $DATASTACK_PTR
     jmp :strtok_end
 :TOKENIZE_if_end_2
     ldm A $_strtok_c
-    call @push_A
+    stack A $DATASTACK_PTR
     ldm A $_strtok_d
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_eq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :TOKENIZE_if_end_3
     ldi A 0
-    call @push_A
-    call @pop_B
+    stack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
     ldm I $_strtok_p
     stx B $_start_memory_
     ldm A $_strtok_s
-    call @push_A
+    stack A $DATASTACK_PTR
     ldm A $_strtok_p
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_add
     jmp :strtok_end
 :TOKENIZE_if_end_3
     ldm A $_strtok_p
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_add
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $_strtok_p
     jmp :scan_loop
 :strtok_end
     ret
 @WRITE_TO_BYTECODE
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $current_opcode
     ldm A $current_opcode
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_eq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :WRITE_TO_BYTECODE_if_end_4
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $current_value
     ldm A $current_opcode
-    call @push_A
-    call @pop_B
+    stack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
     ldm I $bytecode_ptr
     stx B $_start_memory_
     ldm A $bytecode_ptr
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_add
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $bytecode_ptr
     ldm A $current_value
-    call @push_A
-    call @pop_B
+    stack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
     ldm I $bytecode_ptr
     stx B $_start_memory_
     ldm A $bytecode_ptr
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_add
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $bytecode_ptr
     jmp :write_to_bytecode_end
 :WRITE_TO_BYTECODE_if_end_4
     ldm A $current_opcode
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 4
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_eq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :WRITE_TO_BYTECODE_if_end_5
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $current_value
     ldm A $current_opcode
-    call @push_A
-    call @pop_B
+    stack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
     ldm I $bytecode_ptr
     stx B $_start_memory_
     ldm A $bytecode_ptr
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_add
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $bytecode_ptr
     ldm A $current_value
-    call @push_A
-    call @pop_B
+    stack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
     ldm I $bytecode_ptr
     stx B $_start_memory_
     ldm A $bytecode_ptr
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_add
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $bytecode_ptr
     jmp :write_to_bytecode_end
 :WRITE_TO_BYTECODE_if_end_5
     ldm A $current_opcode
-    call @push_A
-    call @pop_B
+    stack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
     ldm I $bytecode_ptr
     stx B $_start_memory_
     ldm A $bytecode_ptr
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_add
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $bytecode_ptr
 :write_to_bytecode_end
     ret
 @EXECUTE_BYTECODE
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $bytecode_execution_ptr
 :execution_loop
     ldm I $bytecode_execution_ptr
     ldx A $_start_memory_
-    call @push_A
-    call @pop_A
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
     sto A $current_opcode
     ldm A $bytecode_execution_ptr
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_add
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $bytecode_execution_ptr
     ldm A $current_opcode
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 0
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_eq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :EXECUTE_BYTECODE_if_end_6
     jmp :execution_end
 :EXECUTE_BYTECODE_if_end_6
     ldm A $current_opcode
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_eq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :EXECUTE_BYTECODE_if_end_7
     ldm I $bytecode_execution_ptr
     ldx A $_start_memory_
-    call @push_A
-    call @pop_A
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
     sto A $current_value
     ldm A $bytecode_execution_ptr
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_add
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $bytecode_execution_ptr
     ldm A $current_value
-    call @push_A
+    stack A $DATASTACK_PTR
     jmp :execution_loop
 :EXECUTE_BYTECODE_if_end_7
     ldm A $current_opcode
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 5
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_eq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :EXECUTE_BYTECODE_if_end_8
 
-                call @pop_A
+                ustack A $DATASTACK_PTR
                 ld I A
                 callx $_start_memory_
                 jmp :execution_loop
 :EXECUTE_BYTECODE_if_end_8
     ldm A $current_opcode
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 2
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_eq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :EXECUTE_BYTECODE_if_end_9
     call @rt_add
     jmp :execution_loop
 :EXECUTE_BYTECODE_if_end_9
     ldm A $current_opcode
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 3
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_eq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :EXECUTE_BYTECODE_if_end_10
     call @rt_print_tos
     ldi A 13
-    call @push_A
+    stack A $DATASTACK_PTR
     call @PRTchar
     jmp :execution_loop
 :EXECUTE_BYTECODE_if_end_10
     ldm A $current_opcode
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 4
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_eq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :EXECUTE_BYTECODE_if_end_11
     ldi A $ErrorMessage
-    call @push_A
+    stack A $DATASTACK_PTR
     call @PRTstring
     ldm A $bytecode_execution_ptr
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_add
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $bytecode_execution_ptr
     jmp :execution_loop
 :EXECUTE_BYTECODE_if_end_11
     ldi A $ErrorMessage
-    call @push_A
+    stack A $DATASTACK_PTR
     call @PRTstring
     jmp :execution_end
 :execution_end
@@ -336,73 +336,73 @@ MALLOC $bytecode_buffer 4096
 
 @start_kernel
     ldi A $start_kernel_str_0
-    call @push_A
+    stack A $DATASTACK_PTR
     call @PRTstring
 :main_loop
     ldi A $start_kernel_str_1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @PRTstring
     call @READline
     call @rt_dup
     ldi A $start_kernel_str_2
-    call @push_A
+    stack A $DATASTACK_PTR
     call @STRcmp
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :start_kernel_if_end_0
     call @rt_drop
     jmp :end_kernel
 :start_kernel_if_end_0
     call @rt_dup
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $char_pointer
     ldm I $char_pointer
     ldx A $_start_memory_
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 0
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_eq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :start_kernel_if_end_1
     call @rt_drop
     jmp :main_loop
 :start_kernel_if_end_1
     ldi A $bytecode_buffer
-    call @push_A
-    call @pop_A
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
     sto A $bytecode_ptr
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $rpn_input_ptr
 :parser_loop
     ldm A $rpn_input_ptr
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 0
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_eq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :start_kernel_if_end_2
     ldi A 0
-    call @push_A
+    stack A $DATASTACK_PTR
     call @WRITE_TO_BYTECODE
     ldi A $bytecode_buffer
-    call @push_A
+    stack A $DATASTACK_PTR
     call @EXECUTE_BYTECODE
     jmp :main_loop
 :start_kernel_if_end_2
     ldm A $rpn_input_ptr
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 32
-    call @push_A
+    stack A $DATASTACK_PTR
     call @TOKENIZE
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $rpn_input_ptr
     call @rt_dup
     ldi A 0
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_eq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :start_kernel_if_end_3
     call @rt_drop
@@ -410,80 +410,80 @@ MALLOC $bytecode_buffer 4096
 :start_kernel_if_end_3
     call @rt_dup
     ldi A $start_kernel_str_3
-    call @push_A
+    stack A $DATASTACK_PTR
     call @STRcmp
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :start_kernel_if_end_4
     ldi A $start_kernel_str_4
-    call @push_A
+    stack A $DATASTACK_PTR
     call @PRTstring
     call @rt_drop
     ldi A 2
-    call @push_A
+    stack A $DATASTACK_PTR
     call @WRITE_TO_BYTECODE
     jmp :parser_loop
 :start_kernel_if_end_4
     call @rt_dup
     ldi A $start_kernel_str_5
-    call @push_A
+    stack A $DATASTACK_PTR
     call @STRcmp
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :start_kernel_if_end_5
     ldi A $start_kernel_str_6
-    call @push_A
+    stack A $DATASTACK_PTR
     call @PRTstring
     call @rt_drop
     ldi A 3
-    call @push_A
+    stack A $DATASTACK_PTR
     call @WRITE_TO_BYTECODE
     jmp :parser_loop
 :start_kernel_if_end_5
     call @rt_dup
     ldi A $start_kernel_str_7
-    call @push_A
+    stack A $DATASTACK_PTR
     call @STRcmp
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :start_kernel_if_end_6
     ldi A $start_kernel_str_8
-    call @push_A
+    stack A $DATASTACK_PTR
     call @PRTstring
     call @rt_drop
     ldi A 5
-    call @push_A
+    stack A $DATASTACK_PTR
     call @WRITE_TO_BYTECODE
     jmp :parser_loop
 :start_kernel_if_end_6
     call @STRatoi
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :start_kernel_if_else_7
     ldi A $start_kernel_str_9
-    call @push_A
+    stack A $DATASTACK_PTR
     call @PRTstring
     call @rt_dup
     call @rt_print_tos
     ldi A $start_kernel_str_10
-    call @push_A
+    stack A $DATASTACK_PTR
     call @PRTstring
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @WRITE_TO_BYTECODE
     jmp :start_kernel_if_end_7
 :start_kernel_if_else_7
     ldi A $start_kernel_str_11
-    call @push_A
+    stack A $DATASTACK_PTR
     call @PRTstring
     ldi A 4
-    call @push_A
+    stack A $DATASTACK_PTR
     call @WRITE_TO_BYTECODE
 :start_kernel_if_end_7
     jmp :parser_loop
 :end_kernel
     ldi A $start_kernel_str_12
-    call @push_A
+    stack A $DATASTACK_PTR
     call @PRTstring
     ret
 

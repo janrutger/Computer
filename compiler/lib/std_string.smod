@@ -9,139 +9,139 @@
 . $_atoi_result 1
 # .FUNCTIONS
 @STRcmp
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $_strcmp_p2
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $_strcmp_p1
 :strcmp_loop
     ldm I $_strcmp_p1
     ldx A $_start_memory_
-    call @push_A
-    call @pop_A
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
     sto A $_strcmp_c1
     ldm I $_strcmp_p2
     ldx A $_start_memory_
-    call @push_A
-    call @pop_A
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
     sto A $_strcmp_c2
     ldm A $_strcmp_c1
-    call @push_A
+    stack A $DATASTACK_PTR
     ldm A $_strcmp_c2
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_neq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :STRcmp_if_end_0
     ldi A 0
-    call @push_A
+    stack A $DATASTACK_PTR
     jmp :strcmp_end
 :STRcmp_if_end_0
     ldm A $_strcmp_c1
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 0
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_eq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :STRcmp_if_end_1
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     jmp :strcmp_end
 :STRcmp_if_end_1
     ldm A $_strcmp_p1
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_add
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $_strcmp_p1
     ldm A $_strcmp_p2
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_add
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $_strcmp_p2
     jmp :strcmp_loop
 :strcmp_end
     ret
 @STRatoi
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $_atoi_s_ptr
     ldi A 0
-    call @push_A
-    call @pop_A
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
     sto A $_atoi_result
     ldm A $_atoi_s_ptr
-    call @push_A
-    call @pop_A
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
     sto A $_atoi_p
 :atoi_loop
     ldm I $_atoi_p
     ldx A $_start_memory_
-    call @push_A
-    call @pop_A
+    stack A $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
     sto A $_atoi_c
     ldm A $_atoi_c
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 0
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_eq
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :STRatoi_if_end_2
     ldm A $_atoi_result
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     jmp :atoi_end
 :STRatoi_if_end_2
     ldm A $_atoi_c
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 48
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_lt
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :STRatoi_if_end_3
     jmp :atoi_fail
 :STRatoi_if_end_3
     ldm A $_atoi_c
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 57
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_gt
-    call @pop_A
+    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :STRatoi_if_end_4
     jmp :atoi_fail
 :STRatoi_if_end_4
     ldm A $_atoi_c
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 48
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_sub
     ldm A $_atoi_result
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 10
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_mul
     call @rt_add
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $_atoi_result
     ldm A $_atoi_p
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 1
-    call @push_A
+    stack A $DATASTACK_PTR
     call @rt_add
-    call @pop_A
+    ustack A $DATASTACK_PTR
     sto A $_atoi_p
     jmp :atoi_loop
 :atoi_fail
     ldm A $_atoi_s_ptr
-    call @push_A
+    stack A $DATASTACK_PTR
     ldi A 0
-    call @push_A
+    stack A $DATASTACK_PTR
     jmp :atoi_end
 :atoi_end
     ret

@@ -136,8 +136,8 @@ TURTLE.start
 # Set a color
 cyan TURTLE.color
 
-# db_sprite TURTLE.mode
-sprite TURTLE.mode
+db_sprite TURTLE.mode
+# sprite TURTLE.mode
 # db_pixel TURTLE.mode
 
 
