@@ -132,7 +132,10 @@
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_sub
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $input_buffer_index
     jmp :readline_loop
@@ -148,7 +151,10 @@
     stack A $DATASTACK_PTR
     ldm A $input_buffer_index
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $p_input_buffer
     ustack B $DATASTACK_PTR
@@ -158,7 +164,10 @@
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $input_buffer_index
     jmp :readline_loop
@@ -167,7 +176,10 @@
     stack A $DATASTACK_PTR
     ldm A $input_buffer_index
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $p_input_buffer
     ldi A 0
@@ -228,14 +240,20 @@
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $_strcmp_p1
     ldm A $_strcmp_p2
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $_strcmp_p2
     jmp :strcmp_loop
@@ -296,20 +314,32 @@
     stack A $DATASTACK_PTR
     ldi A 48
     stack A $DATASTACK_PTR
-    call @rt_sub
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
     ldm A $_atoi_result
     stack A $DATASTACK_PTR
     ldi A 10
     stack A $DATASTACK_PTR
-    call @rt_mul
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $_atoi_result
     ldm A $_atoi_p
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $_atoi_p
     jmp :atoi_loop

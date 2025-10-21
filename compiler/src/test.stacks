@@ -1,15 +1,15 @@
 # Starting point for something new
-INCLUDE turtle_lib
+
+
+
 USE std_stern_io
-
-TURTLE.start
-
-
-db_pixel TURTLE.mode
+USE std_string
 
 
-640 2 // 480 2 // 100 TURTLE.circle TURTLE.flip
-red TURTLE.color
-640 2 // 480 2 // 150 TURTLE.circle TURTLE.flip
-blue TURTLE.color
-640 2 // 480 2 // 200 TURTLE.circle TURTLE.flip
+2 4 + PRINT
+2 3 * PRINT
+
+12 2 // PRINT
+12 6 - PRINT
+
+6 18 % PRINT

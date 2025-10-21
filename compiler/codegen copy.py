@@ -460,22 +460,12 @@ class CodeGenerator:
         if op in self.symbols:
             return f"    ldm A ${op}\n    stack A $DATASTACK_PTR\n"
 
-        # Inline basic arithmetic based on RPN evaluation
-        if op == '+':
-            return "    ustack A $DATASTACK_PTR\n    ustack B $DATASTACK_PTR\n    add B A\n    stack B $DATASTACK_PTR\n"
-        if op == '-':
-            return "    ustack A $DATASTACK_PTR\n    ustack B $DATASTACK_PTR\n    sub B A\n    stack B $DATASTACK_PTR\n"
-        if op == '*':
-            return "    ustack A $DATASTACK_PTR\n    ustack B $DATASTACK_PTR\n    mul B A\n    stack B $DATASTACK_PTR\n"
-        
-        # Special handling for division and modulo based on dmod B A
-        if op == '//': # Integer division
-            return "    ustack A $DATASTACK_PTR\n    ustack B $DATASTACK_PTR\n    dmod B A\n    stack B $DATASTACK_PTR\n" # Quotient is in B
-        if op == '%': # Modulo
-            return "    ustack A $DATASTACK_PTR\n    ustack B $DATASTACK_PTR\n    dmod B A\n    stack A $DATASTACK_PTR\n" # Remainder is in A
-
-        # Fallback to runtime calls for other operations
-        rt_call_map = {
+        op_map = {
+            '+':    '@rt_add',
+            '-':    '@rt_sub',
+            '*':    '@rt_mul',
+            '//':   '@rt_div',
+            '%' :   '@rt_mod',
             '==':   '@rt_eq',
             '!=':   '@rt_neq',
             '>':    '@rt_gt',
@@ -488,8 +478,10 @@ class CodeGenerator:
             'RND': '@rt_rnd',
         }
 
-        if op.upper() in rt_call_map:
-            return f"    call {rt_call_map[op.upper()]}\n"
+        if op.upper() in op_map:
+            return f"    call {op_map[op.upper()]}\n"
+        elif op in op_map: # for operators like '+'
+            return f"    call {op_map[op]}\n"
         else:
             raise Exception(f"Undefined word '{op}'. It is not a built-in operator, a defined variable, or a function.")
 

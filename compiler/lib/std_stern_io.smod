@@ -95,7 +95,10 @@
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_sub
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $input_buffer_index
     jmp :readline_loop
@@ -111,7 +114,10 @@
     stack A $DATASTACK_PTR
     ldm A $input_buffer_index
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $p_input_buffer
     ustack B $DATASTACK_PTR
@@ -121,7 +127,10 @@
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $input_buffer_index
     jmp :readline_loop
@@ -130,7 +139,10 @@
     stack A $DATASTACK_PTR
     ldm A $input_buffer_index
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $p_input_buffer
     ldi A 0

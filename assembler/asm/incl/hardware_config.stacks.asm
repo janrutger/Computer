@@ -212,20 +212,32 @@
     stack A $DATASTACK_PTR
     ldi A 134775813
     stack A $DATASTACK_PTR
-    call @rt_mul
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ldi A 65536
     stack A $DATASTACK_PTR
-    call @rt_mod
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $random_seed
     ldm A $random_seed
     stack A $DATASTACK_PTR
     ldi A 1000
     stack A $DATASTACK_PTR
-    call @rt_mod
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
     ret
 
 @init_interrupt_vector_table

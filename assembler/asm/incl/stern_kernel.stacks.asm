@@ -68,7 +68,10 @@ MALLOC $bytecode_buffer 4096
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $_strtok_s
     jmp :skip_delimiters_loop
@@ -116,14 +119,20 @@ MALLOC $bytecode_buffer 4096
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     jmp :strtok_end
 :TOKENIZE_if_end_3
     ldm A $_strtok_p
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $_strtok_p
     jmp :scan_loop
@@ -151,7 +160,10 @@ MALLOC $bytecode_buffer 4096
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $bytecode_ptr
     ldm A $current_value
@@ -163,7 +175,10 @@ MALLOC $bytecode_buffer 4096
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $bytecode_ptr
     jmp :write_to_bytecode_end
@@ -187,7 +202,10 @@ MALLOC $bytecode_buffer 4096
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $bytecode_ptr
     ldm A $current_value
@@ -199,7 +217,10 @@ MALLOC $bytecode_buffer 4096
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $bytecode_ptr
     jmp :write_to_bytecode_end
@@ -213,7 +234,10 @@ MALLOC $bytecode_buffer 4096
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $bytecode_ptr
 :write_to_bytecode_end
@@ -231,7 +255,10 @@ MALLOC $bytecode_buffer 4096
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $bytecode_execution_ptr
     ldm A $current_opcode
@@ -261,7 +288,10 @@ MALLOC $bytecode_buffer 4096
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $bytecode_execution_ptr
     ldm A $current_value
@@ -290,7 +320,10 @@ MALLOC $bytecode_buffer 4096
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :EXECUTE_BYTECODE_if_end_9
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     jmp :execution_loop
 :EXECUTE_BYTECODE_if_end_9
     ldm A $current_opcode
@@ -322,7 +355,10 @@ MALLOC $bytecode_buffer 4096
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $bytecode_execution_ptr
     jmp :execution_loop

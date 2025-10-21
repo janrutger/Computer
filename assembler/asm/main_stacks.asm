@@ -26,10 +26,16 @@
     call @rt_rnd
     ldi A 3
     stack A $DATASTACK_PTR
-    call @rt_mul
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
     ldi A 999
     stack A $DATASTACK_PTR
-    call @rt_div
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $R
     ldm A $R
@@ -66,20 +72,32 @@
     stack A $DATASTACK_PTR
     ldm A $K
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
-    call @rt_div
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $X
     ldm A $Y
     stack A $DATASTACK_PTR
     ldm A $L
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
-    call @rt_div
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $Y
     ldm A $X
@@ -91,14 +109,20 @@
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ustack A $DATASTACK_PTR
     sto A $N
     ldm A $N
     stack A $DATASTACK_PTR
     ldi A 500
     stack A $DATASTACK_PTR
-    call @rt_mod
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
     ldi A 0
     stack A $DATASTACK_PTR
     call @rt_eq
@@ -201,13 +225,22 @@
     call @rt_rnd
     ldi A 15
     stack A $DATASTACK_PTR
-    call @rt_mul
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
     ldi A 999
     stack A $DATASTACK_PTR
-    call @rt_div
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack B $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_add
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 17

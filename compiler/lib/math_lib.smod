@@ -10,7 +10,10 @@
     jmpt :gcd_while_end_0
     call @rt_swap
     call @rt_over
-    call @rt_mod
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
     jmp :gcd_while_start_0
 :gcd_while_end_0
     call @rt_drop
