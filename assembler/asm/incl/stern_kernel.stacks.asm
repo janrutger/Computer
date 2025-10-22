@@ -37,10 +37,7 @@ MALLOC $bytecode_buffer 4096
 :skip_delimiters_loop
     ldm I $_strtok_s
     ldx A $_start_memory_
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     sto A $_strtok_c
-    ldm A $_strtok_c
     stack A $DATASTACK_PTR
     ldi A 0
     stack A $DATASTACK_PTR
@@ -67,8 +64,6 @@ MALLOC $bytecode_buffer 4096
     ldm A $_strtok_s
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
@@ -77,16 +72,11 @@ MALLOC $bytecode_buffer 4096
     jmp :skip_delimiters_loop
 :find_end_of_token
     ldm A $_strtok_s
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     sto A $_strtok_p
 :scan_loop
     ldm I $_strtok_p
     ldx A $_start_memory_
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     sto A $_strtok_c
-    ldm A $_strtok_c
     stack A $DATASTACK_PTR
     ldi A 0
     stack A $DATASTACK_PTR
@@ -118,8 +108,6 @@ MALLOC $bytecode_buffer 4096
     ldm A $_strtok_p
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
@@ -128,8 +116,6 @@ MALLOC $bytecode_buffer 4096
     ldm A $_strtok_p
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
@@ -141,7 +127,6 @@ MALLOC $bytecode_buffer 4096
 @WRITE_TO_BYTECODE
     ustack A $DATASTACK_PTR
     sto A $current_opcode
-    ldm A $current_opcode
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
@@ -159,8 +144,6 @@ MALLOC $bytecode_buffer 4096
     ldm A $bytecode_ptr
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
@@ -174,8 +157,6 @@ MALLOC $bytecode_buffer 4096
     ldm A $bytecode_ptr
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
@@ -201,8 +182,6 @@ MALLOC $bytecode_buffer 4096
     ldm A $bytecode_ptr
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
@@ -216,8 +195,6 @@ MALLOC $bytecode_buffer 4096
     ldm A $bytecode_ptr
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
@@ -233,8 +210,6 @@ MALLOC $bytecode_buffer 4096
     ldm A $bytecode_ptr
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
@@ -248,14 +223,10 @@ MALLOC $bytecode_buffer 4096
 :execution_loop
     ldm I $bytecode_execution_ptr
     ldx A $_start_memory_
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     sto A $current_opcode
     ldm A $bytecode_execution_ptr
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
@@ -281,14 +252,10 @@ MALLOC $bytecode_buffer 4096
     jmpt :EXECUTE_BYTECODE_if_end_7
     ldm I $bytecode_execution_ptr
     ldx A $_start_memory_
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     sto A $current_value
     ldm A $bytecode_execution_ptr
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
@@ -354,8 +321,6 @@ MALLOC $bytecode_buffer 4096
     ldm A $bytecode_execution_ptr
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
@@ -405,8 +370,6 @@ MALLOC $bytecode_buffer 4096
     jmp :main_loop
 :start_kernel_if_end_1
     ldi A $bytecode_buffer
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     sto A $bytecode_ptr
     ustack A $DATASTACK_PTR
     sto A $rpn_input_ptr

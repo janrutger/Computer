@@ -76,6 +76,10 @@ class CodeGenerator:
         # Main code generation
         self.code_section = self.generate_program(ast, is_module_compilation=setModule)
 
+        # Peephole optimization
+        self.code_section = self.peephole_optimize(self.code_section, "CODE")
+        self.functions_section = self.peephole_optimize(self.functions_section, "FUNCTIONS")
+
         # Assemble the final code from sections
         final_assembly = ""
 
@@ -543,6 +547,52 @@ class CodeGenerator:
             self.data_section += f"% ${label} {char_list_str} \\null\n"
         
         return self.string_literals[string_value]
+
+    def peephole_optimize(self, assembly_code, section_name="Unknown"):
+        lines_removed_count = 0
+        optimized_code = assembly_code
+        while True:
+            original_code = optimized_code
+            lines = original_code.split('\n')
+            optimized_lines = []
+            
+            i = 0
+            while i < len(lines):
+                if i + 1 < len(lines):
+                    line1 = lines[i].strip()
+                    line2 = lines[i+1].strip()
+                    parts1 = line1.split()
+                    parts2 = line2.split()
+
+                    # Pattern 1: stack/ustack
+                    if len(parts1) > 1 and len(parts1) == len(parts2) and \
+                       parts1[0] == 'stack' and parts2[0] == 'ustack' and \
+                       parts1[1:] == parts2[1:]:
+                        i += 2 # Skip both lines
+                        lines_removed_count += 2
+                        continue
+
+                    # Pattern 2: sto/ldm
+                    if len(parts1) == 3 and len(parts1) == len(parts2) and \
+                       parts1[0] == 'sto' and parts2[0] == 'ldm' and \
+                       parts1[1:] == parts2[1:]:
+                        optimized_lines.append(lines[i]) # Keep the 'sto' line
+                        i += 2 # Skip the 'ldm' line
+                        lines_removed_count += 1
+                        continue
+
+                optimized_lines.append(lines[i])
+                i += 1
+
+            optimized_code = '\n'.join(optimized_lines)
+
+            if optimized_code == original_code:
+                break
+        
+        if lines_removed_count > 0:
+            print(f"Peephole optimization removed {lines_removed_count} lines from {section_name} section.")
+            
+        return optimized_code
 
 # --- Main (for testing) ----------------------------------------------------
 if __name__ == '__main__':

@@ -46,8 +46,6 @@
             int $INT_VECTORS
             ldm I $p_syscall_status
     ldx A $_start_memory_
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     tst A 0
     jmpt :KEYchar_if_end_0
     ldm I $p_syscall_value
@@ -94,8 +92,6 @@
     ldm A $input_buffer_index
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
@@ -113,8 +109,6 @@
     ldi A $input_buffer
     stack A $DATASTACK_PTR
     ldm A $input_buffer_index
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
@@ -126,8 +120,6 @@
     ldm A $input_buffer_index
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
@@ -138,8 +130,6 @@
     ldi A $input_buffer
     stack A $DATASTACK_PTR
     ldm A $input_buffer_index
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
@@ -151,8 +141,6 @@
     ldm I $p_input_buffer
     stx B $_start_memory_
     ldi A 0
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     sto A $input_buffer_index
     ldi A $input_buffer
     stack A $DATASTACK_PTR

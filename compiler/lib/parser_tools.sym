@@ -1,16 +1,16 @@
 {
   "functions": [
-    "PRTcls",
-    "CURSORon",
-    "READline",
-    "TOKENIZE",
-    "CURSORoff",
     "WRITE_TO_BYTECODE",
+    "PRTstring",
+    "READline",
+    "CURSORon",
+    "PRTcls",
     "EXECUTE_BYTECODE",
     "PRTchar",
     "KEYchar",
-    "PRTstring",
-    "io_lib_init"
+    "CURSORoff",
+    "io_lib_init",
+    "TOKENIZE"
   ],
   "variables": [
     {

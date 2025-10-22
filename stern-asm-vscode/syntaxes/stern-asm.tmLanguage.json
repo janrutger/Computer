@@ -13,7 +13,7 @@
             "patterns": [
                 {
                     "name": "keyword.control.instruction.assembly",
-                    "match": "(?i)^\\s*\\b(ADD|ADDI|ANDI|CALL|CALLX|DEC|DI|DIVI|DMOD|EI|HALT|INC|INT|JMP|JMPF|JMPT|LD|LDI|LDM|LDX|MUL|MULI|NOP|POP|PUSH|RET|RTI|STO|STX|SUB|SUBI|TST|TSTE|TSTG)\\b"
+                    "match": "(?i)^\\s*\\b(ADD|ADDI|ANDI|CALL|CALLX|DEC|DI|DIVI|DMOD|EI|HALT|INC|INT|JMP|JMPF|JMPT|LD|LDI|LDM|LDX|MUL|MULI|NOP|POP|PUSH|RET|RTI|STACK|STO|STX|SUB|SUBI|TST|TSTE|TSTG|USTACK)\\b"
                 }
             ]
         },

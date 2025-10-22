@@ -16,13 +16,9 @@
 :strcmp_loop
     ldm I $_strcmp_p1
     ldx A $_start_memory_
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     sto A $_strcmp_c1
     ldm I $_strcmp_p2
     ldx A $_start_memory_
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     sto A $_strcmp_c2
     ldm A $_strcmp_c1
     stack A $DATASTACK_PTR
@@ -51,8 +47,6 @@
     ldm A $_strcmp_p1
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
@@ -61,8 +55,6 @@
     ldm A $_strcmp_p2
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
@@ -75,20 +67,13 @@
     ustack A $DATASTACK_PTR
     sto A $_atoi_s_ptr
     ldi A 0
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     sto A $_atoi_result
     ldm A $_atoi_s_ptr
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     sto A $_atoi_p
 :atoi_loop
     ldm I $_atoi_p
     ldx A $_start_memory_
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     sto A $_atoi_c
-    ldm A $_atoi_c
     stack A $DATASTACK_PTR
     ldi A 0
     stack A $DATASTACK_PTR
@@ -125,16 +110,12 @@
     ldm A $_atoi_c
     stack A $DATASTACK_PTR
     ldi A 48
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $_atoi_result
     stack A $DATASTACK_PTR
     ldi A 10
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
@@ -147,8 +128,6 @@
     ldm A $_atoi_p
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
