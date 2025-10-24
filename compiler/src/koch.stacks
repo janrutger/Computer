@@ -86,8 +86,8 @@ DEF draw_koch {
 # 1. Initialize turtle
 TURTLE.start
 
-db_pixel TURTLE.mode
-# pixel TURTLE.mode
+# db_pixel TURTLE.mode
+pixel TURTLE.mode
 
 
 # 2. Prepare for drawing

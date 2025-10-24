@@ -22,6 +22,7 @@
     call @KBD_INIT
 
     ei
+    call @INIT_RTC
     ldi A $SYSCALL_RETURN_STATUS
     stack A $DATASTACK_PTR
     ldi A $SYSCALL_RETURN_VALUE
@@ -34,6 +35,7 @@
 
     INCLUDE hardware_config.stacks
     INCLUDE keyboard_routines.stacks
+    INCLUDE rtc_routines.stacks
     INCLUDE screen_routines.stacks
     INCLUDE udc_routines.stacks
     INCLUDE syscalls.stacks
@@ -131,8 +133,7 @@
     ldi A 1
     ustack B $DATASTACK_PTR
     sub B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
+    ld A B
     sto A $input_buffer_index
     jmp :readline_loop
     jmp :READline_if_end_3
@@ -148,8 +149,7 @@
     ldm A $input_buffer_index
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
+    ld A B
     sto A $p_input_buffer
     ustack B $DATASTACK_PTR
     ldm I $p_input_buffer
@@ -159,8 +159,7 @@
     ldi A 1
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
+    ld A B
     sto A $input_buffer_index
     jmp :readline_loop
 :finish_readline
@@ -169,12 +168,10 @@
     ldm A $input_buffer_index
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
+    ld A B
     sto A $p_input_buffer
     ldi A 0
-    stack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
+    ld B A
     ldm I $p_input_buffer
     stx B $_start_memory_
     ldi A 0
@@ -225,16 +222,14 @@
     ldi A 1
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
+    ld A B
     sto A $_strcmp_p1
     ldm A $_strcmp_p2
     stack A $DATASTACK_PTR
     ldi A 1
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
+    ld A B
     sto A $_strcmp_p2
     jmp :strcmp_loop
 :strcmp_end
@@ -294,20 +289,17 @@
     ldi A 10
     ustack B $DATASTACK_PTR
     mul B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
+    ld A B
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
+    ld A B
     sto A $_atoi_result
     ldm A $_atoi_p
     stack A $DATASTACK_PTR
     ldi A 1
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
+    ld A B
     sto A $_atoi_p
     jmp :atoi_loop
 :atoi_fail

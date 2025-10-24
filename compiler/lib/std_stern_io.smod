@@ -94,8 +94,7 @@
     ldi A 1
     ustack B $DATASTACK_PTR
     sub B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
+    ld A B
     sto A $input_buffer_index
     jmp :readline_loop
     jmp :READline_if_end_3
@@ -111,8 +110,7 @@
     ldm A $input_buffer_index
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
+    ld A B
     sto A $p_input_buffer
     ustack B $DATASTACK_PTR
     ldm I $p_input_buffer
@@ -122,8 +120,7 @@
     ldi A 1
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
+    ld A B
     sto A $input_buffer_index
     jmp :readline_loop
 :finish_readline
@@ -132,12 +129,10 @@
     ldm A $input_buffer_index
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
+    ld A B
     sto A $p_input_buffer
     ldi A 0
-    stack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
+    ld B A
     ldm I $p_input_buffer
     stx B $_start_memory_
     ldi A 0

@@ -19,6 +19,7 @@ from devices.UDC import UDC
 from devices.sensor import Sensor
 from devices.plotter import Plotter
 from devices.lcd_screen import VirtualLCD
+from devices.rtc import RTC
 
 
 # --- Constants ---
@@ -45,11 +46,11 @@ BG_COLOR = (0, 0, 20) # Dark Blue
 FG_COLOR = (200, 200, 200) # Light Grey
 
 # Device Memory Locations
-MEM_KBD_I0_BASE   = MEM_VAR_START   - 8        # Keayborad device base adres (max 8 registers)
-MEM_KEYBOARD_DATA = MEM_KBD_I0_BASE + 0     # Keyboard data register at the top of the I/O space
-MEM_VDSK_I0_BASE  = MEM_KBD_I0_BASE - 8     # Virtual Disk registers start here (max 8 registers)
+MEM_KBD_I0_BASE   = MEM_VAR_START    - 8    # Keyboard device base adres (max 8 registers)
+MEM_KEYBOARD_DATA = MEM_KBD_I0_BASE  + 0    # Keyboard data register at the top of the I/O space
+MEM_VDSK_I0_BASE  = MEM_KBD_I0_BASE  - 8    # Virtual Disk registers start here (max 8 registers)
 MEM_UDC_I0_BASE   = MEM_VDSK_I0_BASE - 24   # UDC virtual controler starts here (max 24 registers)
-
+MEM_RTC_IO_ADRES  = MEM_UDC_I0_BASE  - 1    # RTC memory IO adres (just one register)
 
 # --- CPU Thread ---
 class CpuThread(threading.Thread):
@@ -97,8 +98,11 @@ def main():
 
     # Register keyboard data address with the interrupt controller
     # Assuming a default interrupt vector for the keyboard, e.g., 0
-    KEYBOARD_INTERRUPT_VECTOR = 0 # Define a vector for keyboard interrupts
+    KEYBOARD_INTERRUPT_VECTOR = 0   # Define a vector for keyboard interrupts
     interrupt_controller.register_data_address(KEYBOARD_INTERRUPT_VECTOR, MEM_KEYBOARD_DATA)
+    RTC_INTERRUPT_VECTOR = 1        # Define the RTC interrupt
+    interrupt_controller.register_data_address(RTC_INTERRUPT_VECTOR, MEM_RTC_IO_ADRES)
+
 
     # Function to load program.bin into memory
     def load_program_bin(memory, file_path):
@@ -135,6 +139,7 @@ def main():
     cpu = CPU(ram, interrupt_controller, debug_mode=debug_mode)
     cpu.registers["PC"] = MEM_LOADER_START # Set PC to the start of the loaded program
     keyboard = Keyboard(interrupt_controller, vector=KEYBOARD_INTERRUPT_VECTOR)
+    rtc = RTC(interrupt_controller, vector=RTC_INTERRUPT_VECTOR)
 
     vdisk = VirtualDisk(ram, MEM_VDSK_I0_BASE, "Vdisk0")
     udc = UDC(ram, MEM_UDC_I0_BASE)
@@ -173,8 +178,11 @@ def main():
                 keyboard.handle_key_event(event)
 
         # --- Simulation Logic (runs as fast as possible) ---
+        if not debugger.in_debug_mode:
+            rtc.tick()          # let the RTC tick
+            
         # Poll virtual disk
-        vdisk.access()
+        # vdisk.access()    #DISABLED, because the Vdisk is not avalible, yet
 
         # Universal Device Controler
         udc.tick()

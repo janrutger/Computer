@@ -47,6 +47,10 @@ DEF init_interrupt_vector_table{
         ldi M @KBD_ISR      ; ISR start adres
         stx M $INT_VECTORS  ; Store ISR adres as pointer
 
+        ldi I 1             ; Interrupt vector for RTC
+        ldi M @RTC_ISR      ; RTC ISR start adres
+        stx M $INT_VECTORS  ; Store ISR pointer in table
+
         # Next interrupt vector
     }
 } 

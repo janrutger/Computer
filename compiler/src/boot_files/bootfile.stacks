@@ -12,9 +12,13 @@ ASM {
 `init_udc
 `KBD_INIT
 
+# Enable interrupts so the RTC can trigger
 ASM {
     ei
 }
+
+# Now wait for the first RTC tick to set the system time
+`INIT_RTC
 
 
 # Init the standard IO library by passing it the addresses of the
@@ -37,6 +41,7 @@ ASM {
 ASM {
     INCLUDE hardware_config.stacks
     INCLUDE keyboard_routines.stacks
+    INCLUDE rtc_routines.stacks
     INCLUDE screen_routines.stacks
     INCLUDE udc_routines.stacks
     INCLUDE syscalls.stacks

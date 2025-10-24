@@ -49,16 +49,14 @@
     ldi A 1
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
+    ld A B
     sto A $_strcmp_p1
     ldm A $_strcmp_p2
     stack A $DATASTACK_PTR
     ldi A 1
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
+    ld A B
     sto A $_strcmp_p2
     jmp :strcmp_loop
 :strcmp_end
@@ -118,20 +116,17 @@
     ldi A 10
     ustack B $DATASTACK_PTR
     mul B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
+    ld A B
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
+    ld A B
     sto A $_atoi_result
     ldm A $_atoi_p
     stack A $DATASTACK_PTR
     ldi A 1
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
-    ustack A $DATASTACK_PTR
+    ld A B
     sto A $_atoi_p
     jmp :atoi_loop
 :atoi_fail

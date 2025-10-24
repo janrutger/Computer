@@ -581,6 +581,17 @@ class CodeGenerator:
                         lines_removed_count += 1
                         continue
 
+                    # Pattern 3: Register move via stack (e.g. stack B ptr / ustack A ptr)
+                    if parts1 and parts2 and parts1[0] == 'stack' and parts2[0] == 'ustack' and \
+                       len(parts1) > 1 and len(parts1) == len(parts2) and \
+                       parts1[2:] == parts2[2:] and parts1[1] != parts2[1]:
+                        src_reg = parts1[1]
+                        dest_reg = parts2[1]
+                        optimized_lines.append(f"    ld {dest_reg.upper()} {src_reg.upper()}")
+                        i += 2
+                        lines_removed_count += 1
+                        continue
+
                 optimized_lines.append(lines[i])
                 i += 1
 
