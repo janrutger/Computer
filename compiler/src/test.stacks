@@ -1,15 +1,16 @@
 # Starting point for something new
 
-
+USE time_lib
 
 USE std_stern_io
 USE std_string
 
 
-2 4 + PRINT
-2 3 * PRINT
 
-12 2 // PRINT
-12 6 - PRINT
 
-6 18 % PRINT
+
+TIME.uptime TIME.as_string 13 PRTchar
+
+500 TIME.wait 
+
+TIME.uptime TIME.as_string 13 PRTchar

@@ -1,5 +1,5 @@
 ## for testing stacks code
-
+USE time_lib
 INCLUDE turtle_lib
 USE std_stern_io
 
@@ -130,9 +130,9 @@ DEF draw_fan_pattern {
 }
 
 
+0 TIME.start
+
 TURTLE.start
-
-
 # Set a color
 cyan TURTLE.color
 
@@ -151,6 +151,8 @@ lines TURTLE.flip
 
 io 2 NEW
 draw_fan_pattern
+
+"Total run time: " PRTstring 0 TIME.read TIME.as_string "!\n" PRTstring
 
 
 

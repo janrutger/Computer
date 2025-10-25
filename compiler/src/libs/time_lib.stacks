@@ -1,0 +1,114 @@
+#USE std_stern_io
+
+
+# Pointers to kernel variables. These must be initialized by the main program.
+VALUE p_epoc 0
+VALUE p_currentime 0
+VALUE p_watch_list 0
+VALUE current_watch 0
+VALUE wait_end_time 0
+
+LIST watch_list 8
+
+
+
+# Usage  time.init
+DEF TIME.init {
+   &SYSTEM_TIME AS p_currentime
+   &SYSTEM_EPOC AS p_epoc 
+   &watch_list  AS p_watch_list
+}
+
+
+DEF TIME.uptime {
+    *p_currentime *p_epoc -
+}
+
+# expect the watch to watch as number on the stack
+DEF TIME.start {
+    p_watch_list + AS current_watch
+    *p_currentime AS *current_watch
+}
+
+
+DEF TIME.read {
+    p_watch_list + AS current_watch
+    *p_currentime *current_watch -
+}
+
+# DEF TIME.wait
+# Description: Pauses program execution for a given duration of milliseconds.
+# Note: This is a 'busy-wait' loop. It will consume 100% of the CPU
+#       during the wait period, which is normal for this kind of system.
+# Expects: [duration_ms] on the stack.
+DEF TIME.wait {
+    # Create a temporary variable to hold the target end time.
+
+    # Calculate the end time by adding the duration to the current time.
+    *p_currentime + AS wait_end_time
+
+    # This is the busy-wait loop.
+    :wait_loop
+        # If end_time is still greater than the current time, loop again.
+        wait_end_time *p_currentime > IF {
+            ASM { 
+                nop           ; NOP yields by sleep(0) an gives time to the main thread
+            }
+
+            GOTO wait_loop
+        } END
+
+    # Once current_time >= end_time, the loop finishes and the function returns.
+}
+
+
+
+# Expects a number (a valid timestamp) on the stack in milliseconds
+DEF TIME.as_string {
+    ASM {
+        # --- Part 1: Split total_ms into total_seconds and milliseconds ---
+        ldi A 1000
+        ustack B $DATASTACK_PTR     ; Pop total_ms into B
+        dmod B A                    ; B becomes total_seconds, A becomes milliseconds
+
+        # Save milliseconds on the stack so we can reuse register A
+        stack A $DATASTACK_PTR      ; Stack now contains: [milliseconds]
+
+        # --- Part 2: Split total_seconds into minutes and seconds ---
+        # B still holds total_seconds from the first operation
+        ldi A 60
+        dmod B A                    ; B becomes minutes, A becomes seconds
+
+        # --- Part 3: Print all parts ---
+
+        # Print Minutes (from B)
+        ld C B
+        ldi I ~SYS_PRINT_NUMBER
+        int $INT_VECTORS
+
+        # Print separator
+        ldi C \m
+        ldi I ~SYS_PRINT_CHAR
+        int $INT_VECTORS
+
+        # Print Seconds (from A)
+        ld C A
+        ldi I ~SYS_PRINT_NUMBER
+        int $INT_VECTORS
+
+        # Print separator
+        ldi C \s
+        ldi I ~SYS_PRINT_CHAR
+        int $INT_VECTORS
+
+        # Print Milliseconds (from the stack)
+        ustack C $DATASTACK_PTR     ; Pop milliseconds from stack into C
+        ldi I ~SYS_PRINT_NUMBER
+        int $INT_VECTORS
+
+        # # Print trailing space and newline
+        # ldi C \space
+        # ldi I ~SYS_PRINT_CHAR
+        # int $INT_VECTORS
+    }
+}

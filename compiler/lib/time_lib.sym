@@ -1,0 +1,43 @@
+{
+  "functions": [
+    "TIME.wait",
+    "TIME.as_string",
+    "TIME.init",
+    "TIME.uptime",
+    "TIME.start",
+    "TIME.read"
+  ],
+  "variables": [
+    {
+      "name": "p_epoc",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "p_currentime",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "p_watch_list",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "current_watch",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "wait_end_time",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "watch_list",
+      "type": "LIST",
+      "size": 8
+    }
+  ],
+  "constants": {}
+}

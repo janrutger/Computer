@@ -1,0 +1,129 @@
+# .HEADER
+. $p_epoc 1
+. $p_currentime 1
+. $p_watch_list 1
+. $current_watch 1
+. $wait_end_time 1
+. $watch_list 8
+# .FUNCTIONS
+@TIME.init
+    ldi A $SYSTEM_TIME
+    sto A $p_currentime
+    ldi A $SYSTEM_EPOC
+    sto A $p_epoc
+    ldi A $watch_list
+    sto A $p_watch_list
+    ret
+@TIME.uptime
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldm I $p_epoc
+    ldx A $_start_memory_
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ret
+@TIME.start
+    ldm A $p_watch_list
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    ld B A
+    ldm I $current_watch
+    stx B $_start_memory_
+    ret
+@TIME.read
+    ldm A $p_watch_list
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldm I $current_watch
+    ldx A $_start_memory_
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ret
+@TIME.wait
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $wait_end_time
+:wait_loop
+    ldm A $wait_end_time
+    stack A $DATASTACK_PTR
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TIME.wait_if_end_0
+ 
+                nop           ; NOP yields by sleep(0) an gives time to the main thread
+                jmp :wait_loop
+:TIME.wait_if_end_0
+    ret
+@TIME.as_string
+
+        # --- Part 1: Split total_ms into total_seconds and milliseconds ---
+        ldi A 1000
+        ustack B $DATASTACK_PTR     ; Pop total_ms into B
+        dmod B A                    ; B becomes total_seconds, A becomes milliseconds
+
+        # Save milliseconds on the stack so we can reuse register A
+        stack A $DATASTACK_PTR      ; Stack now contains: [milliseconds]
+
+        # --- Part 2: Split total_seconds into minutes and seconds ---
+        # B still holds total_seconds from the first operation
+        ldi A 60
+        dmod B A                    ; B becomes minutes, A becomes seconds
+
+        # --- Part 3: Print all parts ---
+
+        # Print Minutes (from B)
+        ld C B
+        ldi I ~SYS_PRINT_NUMBER
+        int $INT_VECTORS
+
+        # Print separator
+        ldi C \m
+        ldi I ~SYS_PRINT_CHAR
+        int $INT_VECTORS
+
+        # Print Seconds (from A)
+        ld C A
+        ldi I ~SYS_PRINT_NUMBER
+        int $INT_VECTORS
+
+        # Print separator
+        ldi C \s
+        ldi I ~SYS_PRINT_CHAR
+        int $INT_VECTORS
+
+        # Print Milliseconds (from the stack)
+        ustack C $DATASTACK_PTR     ; Pop milliseconds from stack into C
+        ldi I ~SYS_PRINT_NUMBER
+        int $INT_VECTORS
+
+        # # Print trailing space and newline
+        # ldi C \space
+        # ldi I ~SYS_PRINT_CHAR
+        # int $INT_VECTORS
+        ret
+
+# .DATA
+% $p_epoc 0
+% $p_currentime 0
+% $p_watch_list 0
+% $current_watch 0
+% $wait_end_time 0

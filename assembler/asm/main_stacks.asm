@@ -37,9 +37,14 @@
 . $color 1
 . $y 1
 . $x 1
+. $_main_str_0 17
+. $_main_str_1 4
 
 # .CODE
     call @TURTLE.start
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @TIME.start
     ldi A 3
     stack A $DATASTACK_PTR
     call @TURTLE.color
@@ -74,6 +79,16 @@
     stack A $DATASTACK_PTR
     call @rt_udc_control
     call @draw_fan_pattern
+    ldi A $_main_str_0
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @TIME.read
+    call @TIME.as_string
+    ldi A $_main_str_1
+    stack A $DATASTACK_PTR
+    call @PRTstring
     ret
 
 # .FUNCTIONS
@@ -1274,3 +1289,5 @@
 % $color 1
 % $y 10
 % $x 20
+% $_main_str_0 \T \o \t \a \l \space \r \u \n \space \t \i \m \e \: \space \null
+% $_main_str_1 \! \! \Return \null

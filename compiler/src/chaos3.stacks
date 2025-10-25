@@ -2,6 +2,8 @@
 #
 # Generates a Chaos Game fractal (Sierpinski triangle).
 # This is a compiled version of the original chaos3.spc interpreter script.
+USE time_lib
+USE std_stern_io
 
 # --- Variable Declarations ---
 VALUE A 10
@@ -56,6 +58,8 @@ DEF draw {
   IO 2 DRAW
 }
 
+0 TIME.start
+
 # --- Main Program ---
 screen
 
@@ -73,8 +77,13 @@ WHILE 50000 N > DO
 
   N 1 + AS N
   N 500 % 0 == IF
-    N PRINT
+    # N PRINT
     IO 2 FLIP  # Flip buffer to show new points
+    0 TIME.read TIME.as_string N PRINT
   END
   # IO 2 FLIP
+  
+
 DONE
+
+"Total run time: " PRTstring 0 TIME.read TIME.as_string "!!\n" PRTstring
