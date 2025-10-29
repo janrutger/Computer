@@ -185,7 +185,7 @@ DEF TURTLE.forward {
 
 DEF _welcome_at_turtle {
     STRING msg "* Welcome at TURTLE *"
-    VALUE i 0
+    VALUE i_turtle 0
     VALUE char 0
     VALUE p_char 0 # Pointer for character lookup
 
@@ -196,7 +196,7 @@ DEF _welcome_at_turtle {
 
     :welcome_loop
         # Calculate character address and store it in p_char
-        &msg i + AS p_char
+        &msg i_turtle + AS p_char
         # Dereference the pointer to get the character
         *p_char AS char
         
@@ -207,8 +207,8 @@ DEF _welcome_at_turtle {
         char IO 2 DRAW
         
         # Move to next X position and increment character index
-        30 i + 1 + IO 2 X
-        i 1 + AS i
+        30 i_turtle + 1 + IO 2 X
+        i_turtle 1 + AS i_turtle
         GOTO welcome_loop
 
     :welcome_end

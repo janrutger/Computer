@@ -1,4 +1,18 @@
 # .HEADER
+. $WIDTH 1
+. $HEIGHT 1
+. $BOARD_SIZE 1
+. $X_OFFSET 1
+. $Y_OFFSET 1
+. $p_current 1
+. $x 1
+. $y 1
+. $i 1
+. $cx 1
+. $cy 1
+. $new_state 1
+MALLOC $current_board 9216
+MALLOC $next_board 10416
 . $current_char 1
 . $current_mode 1
 . $current_color 1
@@ -16,7 +30,7 @@
 . $distance 1
 . $temp_ptr 1
 . $msg 22
-. $i 1
+. $i_turtle 1
 . $char 1
 . $p_char 1
 . $x1 1
@@ -32,63 +46,42 @@
 . $circ_x 1
 . $circ_y 1
 . $circ_p 1
-. $center_x 1
-. $center_y 1
-. $color 1
-. $y 1
-. $x 1
-. $_main_str_0 17
-. $_main_str_1 4
+. $y_coord 1
+. $x_coord 1
+. $board_ptr 1
+. $value_in 1
+. $_main_str_0 2
 
 # .CODE
-    call @TURTLE.start
     ldi A 0
     stack A $DATASTACK_PTR
     call @TIME.start
-    ldi A 3
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
+    call @TURTLE.start
     ldi A 3
     stack A $DATASTACK_PTR
     call @TURTLE.mode
-    call @star
+    call @init_board
+    call @copy_board2
+:_main_while_start_5
+    ldi A 1
+    tst A 0
+    jmpt :_main_while_end_5
+    call @draw_board
     call @TURTLE.flip
+    call @compute_next_generation
+    call @copy_board2
     ldi A 0
     stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 10
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-    call @circle
-    call @TURTLE.flip
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 10
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-    call @lines
-    call @TURTLE.flip
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 10
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-    call @draw_fan_pattern
+    call @TIME.read
+    call @TIME.as_string
     ldi A $_main_str_0
     stack A $DATASTACK_PTR
     call @PRTstring
     ldi A 0
     stack A $DATASTACK_PTR
-    call @TIME.read
-    call @TIME.as_string
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
+    call @TIME.start
+    jmp :_main_while_start_5
+:_main_while_end_5
     ret
 
 # .FUNCTIONS
@@ -380,7 +373,7 @@
 :welcome_loop
     ldi A $msg
     stack A $DATASTACK_PTR
-    ldm A $i
+    ldm A $i_turtle
     ustack B $DATASTACK_PTR
     add B A
     ld A B
@@ -406,7 +399,7 @@
     call @rt_udc_control
     ldi A 30
     stack A $DATASTACK_PTR
-    ldm A $i
+    ldm A $i_turtle
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
@@ -419,13 +412,13 @@
     ldi A 15
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldm A $i
+    ldm A $i_turtle
     stack A $DATASTACK_PTR
     ldi A 1
     ustack B $DATASTACK_PTR
     add B A
     ld A B
-    sto A $i
+    sto A $i_turtle
     jmp :welcome_loop
 :welcome_end
     ldi A 0
@@ -885,134 +878,308 @@
     call @_plot_circle_points
     ret
 
-@circle
-    ldi A 40
+@ROT
+
+        ustack C $DATASTACK_PTR
+        ustack B $DATASTACK_PTR
+        ustack A $DATASTACK_PTR
+        stack B $DATASTACK_PTR
+        stack C $DATASTACK_PTR
+        stack A $DATASTACK_PTR
+        ret
+@count_neighbors2
+
+        ; Get arguments from the stack into registers X and Y.
+        ustack Y $DATASTACK_PTR  ; Y = y
+        ustack X $DATASTACK_PTR  ; X = x
+
+        ; Initialize total_count in register A to zero.
+        ld A Z ; (Or ldi A 0)
+
+        ; ---- start Neighbors
+        ; --- Neighbor (x-1, y-1) ---
+        ldi K 40
+        ld M X      ; Load X in M
+        subi M 1    
+        addi M 40
+        dmod M K    ; Calc Neighbors X in K
+
+        ldi L 30
+        ld M Y      ; Load Y in M
+        subi M 1  
+        addi M 30  
+        dmod M L    ; Calc Neighbors Y in L
+
+
+        ; read the value and add to total
+        muli L 40
+        ldi I $current_board    ; load the index of the currentboard in I
+        add I L                 ; add y*40
+        add I K                 ; add X, I hold the pointer now
+
+        ldx B $_start_memory_   ; B holds the value at the pointer
+
+        add A B                 ; Update the total counter
+
+        ; --- Neighbor (x, y-1) ---
+        ldi K 40
+        ld M X      ; No subi M 1, because it's just 'x'
+        addi M 40
+        dmod M K    ; K = wrapped x
+
+        ldi L 30
+        ld M Y
+        subi M 1    ; y-1
+        addi M 30
+        dmod M L    ; L = wrapped y
+
+        ; read the value and add to total
+        muli L 40
+        ldi I $current_board    ; load the index of the currentboard in I
+        add I L                 ; add y*40
+        add I K                 ; add X, I hold the pointer now
+
+        ldx B $_start_memory_   ; B holds the value at the pointer
+
+        add A B                 ; Update the total counter
+
+        ; --- Neighbor (x+1, y-1) ---
+        ldi K 40
+        ld M X
+        addi M 1
+        addi M 40
+        dmod M K    ; K = wrapped
+
+        ldi L 30
+        ld M Y
+        subi M 1 
+        addi M 30
+        dmod M L    ; L = wrapped
+
+        ; read the value and add to total
+        muli L 40
+        ldi I $current_board    ; load the index of the currentboard in I
+        add I L                 ; add y*40
+        add I K                 ; add X, I hold the pointer now
+
+        ldx B $_start_memory_   ; B holds the value at the pointer
+
+        add A B                 ; Update the total counter
+
+        ; --- Neighbor (x-1, y) ---
+        ldi K 40
+        ld M X
+        subi M 1
+        addi M 40
+        dmod M K    ; K = wrapped
+
+        ldi L 30
+        ld M Y
+        addi M 30
+        dmod M L    ; L = wrapped
+
+        ; read the value and add to total
+        muli L 40
+        ldi I $current_board    ; load the index of the currentboard in I
+        add I L                 ; add y*40
+        add I K                 ; add X, I hold the pointer now
+
+        ldx B $_start_memory_   ; B holds the value at the pointer
+
+        add A B                 ; Update the total counter
+
+        ; --- Neighbor (x+1, y) ---
+        ldi K 40
+        ld M X
+        addi M 1
+        addi M 40
+        dmod M K    ; K = wrapped
+
+        ldi L 30
+        ld M Y
+        addi M 30
+        dmod M L    ; L = wrapped
+
+        ; read the value and add to total
+        muli L 40
+        ldi I $current_board    ; load the index of the currentboard in I
+        add I L                 ; add y*40
+        add I K                 ; add X, I hold the pointer
+
+        ldx B $_start_memory_
+
+        add A B                 ; Update the total counter
+
+
+        ; --- Neighbor (x-1, y+1) ---
+        ldi K 40
+        ld M X
+        subi M 1
+        addi M 40
+        dmod M K    ; K = wrapped
+
+        ldi L 30
+        ld M Y
+        addi M 1
+        addi M 30
+        dmod M L    ; L = wrapped
+
+        ; read the value and add to total
+        muli L 40
+        ldi I $current_board    ; load the index of the currentboard in I
+        add I L                 ; add y*40
+        add I K                 ; add X, I hold the pointer
+
+        ldx B $_start_memory_
+
+        add A B                 ; Update the total counter
+
+        ; --- Neighbor (x, y+1) ---
+        ldi K 40
+        ld M X
+        addi M 40
+        dmod M K    ; K = wrapped
+
+        ldi L 30
+        ld M Y
+        addi M 1
+        addi M 30
+        dmod M L    ; L = wrapped
+
+        ; read the value and add to total
+        muli L 40
+        ldi I $current_board    ; load the index of the currentboard in I
+        add I L                 ; add y*40
+        add I K                 ; add X, I hold the pointer
+
+        ldx B $_start_memory_
+
+        add A B                 ; Update the total counter
+
+
+        ; --- Neighbor (x+1, y+1) ---
+        ldi K 40
+        ld M X
+        addi M 1
+        addi M 40
+        dmod M K    ; K = wrapped
+
+        ldi L 30
+        ld M Y
+        addi M 1
+        addi M 30
+        dmod M L    ; L = wrapped
+
+        ; read the value and add to total
+        muli L 40
+        ldi I $current_board    ; load the index of the currentboard in I
+        add I L                 ; add y*40
+        add I K                 ; add X, I hold the pointer
+
+        ldx B $_start_memory_
+
+        add A B                 ; Update the total counter
+
+        ; ---- End Neighbors
+
+        ; Push the final result from total_count (A) onto the stack.
+        stack A $DATASTACK_PTR
+        ret
+        ret
+@get_cell_state
+    ustack A $DATASTACK_PTR
+    sto A $y_coord
+    ustack A $DATASTACK_PTR
+    sto A $x_coord
+    ustack A $DATASTACK_PTR
+    sto A $board_ptr
     stack A $DATASTACK_PTR
-    ldi A 30
+    ldm A $y_coord
     stack A $DATASTACK_PTR
-    ldi A 25
+    ldm A $WIDTH
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $x_coord
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $p_current
+    ldm I $p_current
+    ldx A $_start_memory_
     stack A $DATASTACK_PTR
-    call @TURTLE.circle
-    call @TURTLE.flip
-    ldi A 2
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldi A 40
-    stack A $DATASTACK_PTR
-    ldi A 30
-    stack A $DATASTACK_PTR
-    ldi A 20
-    stack A $DATASTACK_PTR
-    call @TURTLE.circle
-    call @TURTLE.flip
-    ldi A 10
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldi A 40
-    stack A $DATASTACK_PTR
-    ldi A 30
-    stack A $DATASTACK_PTR
-    ldi A 15
-    stack A $DATASTACK_PTR
-    call @TURTLE.circle
-    call @TURTLE.flip
-    ldi A 5
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldi A 40
-    stack A $DATASTACK_PTR
-    ldi A 30
-    stack A $DATASTACK_PTR
-    ldi A 10
-    stack A $DATASTACK_PTR
-    call @TURTLE.circle
-    call @TURTLE.flip
-    ldi A 4
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldi A 40
-    stack A $DATASTACK_PTR
-    ldi A 30
-    stack A $DATASTACK_PTR
-    ldi A 5
-    stack A $DATASTACK_PTR
-    call @TURTLE.circle
-    call @TURTLE.flip
-    ldi A 6
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldi A 40
-    stack A $DATASTACK_PTR
-    ldi A 30
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    call @TURTLE.circle
-    call @TURTLE.flip
     ret
-@lines
+@set_cell_state
+    ustack A $DATASTACK_PTR
+    sto A $value_in
+    ustack A $DATASTACK_PTR
+    sto A $y_coord
+    ustack A $DATASTACK_PTR
+    sto A $x_coord
+    ustack A $DATASTACK_PTR
+    sto A $board_ptr
+    stack A $DATASTACK_PTR
+    ldm A $y_coord
+    stack A $DATASTACK_PTR
+    ldm A $WIDTH
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $x_coord
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $p_current
+    ldm A $value_in
+    stack A $DATASTACK_PTR
+    ldm A $p_current
+    sto A $p_current
+    ustack B $DATASTACK_PTR
+    ldm I $p_current
+    stx B $_start_memory_
+    ret
+@init_board
     ldi A 0
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldi A 20
-    stack A $DATASTACK_PTR
-    ldi A 30
-    stack A $DATASTACK_PTR
-    ldi A 60
-    stack A $DATASTACK_PTR
-    ldi A 30
-    stack A $DATASTACK_PTR
-    call @TURTLE.line
-    ldi A 1
     sto A $i
-:line_loop1
+:init_board_while_start_0
     ldm A $i
     stack A $DATASTACK_PTR
-    ldi A 16
+    ldm A $BOARD_SIZE
     stack A $DATASTACK_PTR
-    call @rt_eq
+    call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :lines_if_end_0
-    jmp :end_loop1
-:lines_if_end_0
-    ldm A $i
+    jmpt :init_board_while_end_0
+    call @rt_rnd
+    ldi A 500
     stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldi A 20
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :init_board_if_else_0
+    ldi A 0
     stack A $DATASTACK_PTR
-    ldi A 30
+    jmp :init_board_if_end_0
+:init_board_if_else_0
+    ldi A 1
+    stack A $DATASTACK_PTR
+:init_board_if_end_0
+    ldi A $next_board
     stack A $DATASTACK_PTR
     ldm A $i
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
-    ldi A 59
-    stack A $DATASTACK_PTR
-    ldi A 30
-    stack A $DATASTACK_PTR
-    ldm A $i
+    ld A B
+    sto A $p_current
     ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    call @TURTLE.line
-    ldi A 20
-    stack A $DATASTACK_PTR
-    ldi A 30
-    stack A $DATASTACK_PTR
-    ldm A $i
-    ustack B $DATASTACK_PTR
-    sub B A
-    stack B $DATASTACK_PTR
-    ldi A 59
-    stack A $DATASTACK_PTR
-    ldi A 30
-    stack A $DATASTACK_PTR
-    ldm A $i
-    ustack B $DATASTACK_PTR
-    sub B A
-    stack B $DATASTACK_PTR
-    call @TURTLE.line
+    ldm I $p_current
+    stx B $_start_memory_
     ldm A $i
     stack A $DATASTACK_PTR
     ldi A 1
@@ -1020,202 +1187,64 @@
     add B A
     ld A B
     sto A $i
-    call @TURTLE.flip
-    jmp :line_loop1
-:end_loop1
+    jmp :init_board_while_start_0
+:init_board_while_end_0
     ret
-@star
-    ldi A 2
+@draw_board
+    ldi A 0
+    sto A $y
+:draw_board_while_start_1
+    ldm A $y
     stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldm A $center_x
+    ldm A $HEIGHT
     stack A $DATASTACK_PTR
-    ldm A $center_y
-    stack A $DATASTACK_PTR
-    ldi A 70
-    stack A $DATASTACK_PTR
-    ldi A 30
-    stack A $DATASTACK_PTR
-    call @TURTLE.line
-    call @TURTLE.flip
-    ldi A 8
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldm A $center_x
-    stack A $DATASTACK_PTR
-    ldm A $center_y
-    stack A $DATASTACK_PTR
-    ldi A 66
-    stack A $DATASTACK_PTR
-    ldi A 45
-    stack A $DATASTACK_PTR
-    call @TURTLE.line
-    call @TURTLE.flip
-    ldi A 7
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldm A $center_x
-    stack A $DATASTACK_PTR
-    ldm A $center_y
-    stack A $DATASTACK_PTR
-    ldi A 55
-    stack A $DATASTACK_PTR
-    ldi A 56
-    stack A $DATASTACK_PTR
-    call @TURTLE.line
-    call @TURTLE.flip
-    ldi A 13
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldm A $center_x
-    stack A $DATASTACK_PTR
-    ldm A $center_y
-    stack A $DATASTACK_PTR
-    ldi A 40
-    stack A $DATASTACK_PTR
-    ldi A 58
-    stack A $DATASTACK_PTR
-    call @TURTLE.line
-    call @TURTLE.flip
-    ldi A 5
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldm A $center_x
-    stack A $DATASTACK_PTR
-    ldm A $center_y
-    stack A $DATASTACK_PTR
-    ldi A 25
-    stack A $DATASTACK_PTR
-    ldi A 56
-    stack A $DATASTACK_PTR
-    call @TURTLE.line
-    call @TURTLE.flip
-    ldi A 3
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldm A $center_x
-    stack A $DATASTACK_PTR
-    ldm A $center_y
-    stack A $DATASTACK_PTR
-    ldi A 14
-    stack A $DATASTACK_PTR
-    ldi A 45
-    stack A $DATASTACK_PTR
-    call @TURTLE.line
-    call @TURTLE.flip
-    ldi A 14
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldm A $center_x
-    stack A $DATASTACK_PTR
-    ldm A $center_y
-    stack A $DATASTACK_PTR
-    ldi A 10
-    stack A $DATASTACK_PTR
-    ldi A 30
-    stack A $DATASTACK_PTR
-    call @TURTLE.line
-    call @TURTLE.flip
-    ldi A 6
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldm A $center_x
-    stack A $DATASTACK_PTR
-    ldm A $center_y
-    stack A $DATASTACK_PTR
-    ldi A 14
-    stack A $DATASTACK_PTR
-    ldi A 15
-    stack A $DATASTACK_PTR
-    call @TURTLE.line
-    call @TURTLE.flip
-    ldi A 4
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldm A $center_x
-    stack A $DATASTACK_PTR
-    ldm A $center_y
-    stack A $DATASTACK_PTR
-    ldi A 25
-    stack A $DATASTACK_PTR
-    ldi A 4
-    stack A $DATASTACK_PTR
-    call @TURTLE.line
-    call @TURTLE.flip
-    ldi A 10
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldm A $center_x
-    stack A $DATASTACK_PTR
-    ldm A $center_y
-    stack A $DATASTACK_PTR
-    ldi A 40
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    call @TURTLE.line
-    call @TURTLE.flip
-    ldi A 9
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldm A $center_x
-    stack A $DATASTACK_PTR
-    ldm A $center_y
-    stack A $DATASTACK_PTR
-    ldi A 55
-    stack A $DATASTACK_PTR
-    ldi A 4
-    stack A $DATASTACK_PTR
-    call @TURTLE.line
-    call @TURTLE.flip
-    ldi A 1
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldm A $center_x
-    stack A $DATASTACK_PTR
-    ldm A $center_y
-    stack A $DATASTACK_PTR
-    ldi A 66
-    stack A $DATASTACK_PTR
-    ldi A 15
-    stack A $DATASTACK_PTR
-    call @TURTLE.line
-    call @TURTLE.flip
-    ret
-@draw_fan_pattern
-:alternate_loop
-    ldm A $x
-    stack A $DATASTACK_PTR
-    ldi A 60
-    stack A $DATASTACK_PTR
-    call @rt_eq
+    call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :draw_fan_pattern_if_end_1
-    jmp :end_loop
-:draw_fan_pattern_if_end_1
-    ldm A $color
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldi A 20
-    stack A $DATASTACK_PTR
-    ldi A 10
-    stack A $DATASTACK_PTR
+    jmpt :draw_board_while_end_1
+    ldi A 0
+    sto A $x
+:draw_board_while_start_2
     ldm A $x
     stack A $DATASTACK_PTR
-    ldi A 49
+    ldm A $WIDTH
     stack A $DATASTACK_PTR
-    call @TURTLE.line
-    ldi A 20
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_board_while_end_2
+    ldi A $current_board
     stack A $DATASTACK_PTR
-    ldi A 10
-    stack A $DATASTACK_PTR
-    ldi A 59
+    ldm A $x
     stack A $DATASTACK_PTR
     ldm A $y
     stack A $DATASTACK_PTR
-    call @TURTLE.line
-    call @TURTLE.flip
+    call @get_cell_state
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_board_if_else_1
+    ldi A 5
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    jmp :draw_board_if_end_1
+:draw_board_if_else_1
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+:draw_board_if_end_1
+    ldm A $x
+    stack A $DATASTACK_PTR
+    ldm A $X_OFFSET
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $y
+    stack A $DATASTACK_PTR
+    ldm A $Y_OFFSET
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.goto
     ldm A $x
     stack A $DATASTACK_PTR
     ldi A 1
@@ -1223,6 +1252,8 @@
     add B A
     ld A B
     sto A $x
+    jmp :draw_board_while_start_2
+:draw_board_while_end_2
     ldm A $y
     stack A $DATASTACK_PTR
     ldi A 1
@@ -1230,26 +1261,228 @@
     add B A
     ld A B
     sto A $y
-    ldm A $color
+    jmp :draw_board_while_start_1
+:draw_board_while_end_1
+    ret
+@compute_next_generation
+    ldi A 0
+    sto A $y
+:compute_next_generation_while_start_3
+    ldm A $y
     stack A $DATASTACK_PTR
+    ldm A $HEIGHT
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :compute_next_generation_while_end_3
+    ldi A 0
+    sto A $x
+:compute_next_generation_while_start_4
+    ldm A $x
+    stack A $DATASTACK_PTR
+    ldm A $WIDTH
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :compute_next_generation_while_end_4
+    ldi A $current_board
+    stack A $DATASTACK_PTR
+    ldm A $x
+    stack A $DATASTACK_PTR
+    ldm A $y
+    stack A $DATASTACK_PTR
+    call @get_cell_state
+    ldm A $x
+    stack A $DATASTACK_PTR
+    ldm A $y
+    stack A $DATASTACK_PTR
+    call @count_neighbors2
+    ldi A 0
+    sto A $new_state
+    call @rt_dup
+    ldi A 3
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :compute_next_generation_if_else_2
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ldi A 15
-    ustack B $DATASTACK_PTR
-    dmod B A
+    sto A $new_state
+    jmp :compute_next_generation_if_end_2
+:compute_next_generation_if_else_2
+    call @rt_over
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :compute_next_generation_if_end_3
+    call @rt_dup
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :compute_next_generation_if_end_4
+    ldi A 1
+    sto A $new_state
+:compute_next_generation_if_end_4
+:compute_next_generation_if_end_3
+:compute_next_generation_if_end_2
+    call @rt_drop
+    call @rt_drop
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldm A $x
+    stack A $DATASTACK_PTR
+    ldm A $y
+    stack A $DATASTACK_PTR
+    ldm A $new_state
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldm A $x
     stack A $DATASTACK_PTR
     ldi A 1
     ustack B $DATASTACK_PTR
     add B A
     ld A B
-    sto A $color
-    jmp :alternate_loop
-:end_loop
+    sto A $x
+    jmp :compute_next_generation_while_start_4
+:compute_next_generation_while_end_4
+    ldm A $y
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $y
+    jmp :compute_next_generation_while_start_3
+:compute_next_generation_while_end_3
+    ret
+@copy_board2
+
+        ; 1. Initialize pointers and a counter
+        ldi K $next_board       ; Use K as the source pointer
+        ldi L $current_board    ; Use L as the destination pointer
+        ldi C 0                 ; Use C as the loop counter (1200),
+                                ; start at 0
+
+    :copy_loop
+        ; Check if we are done
+        tst C 1200
+        jmpt :copy_loop_end
+
+        ; --- Main copy operation ---
+        ; Move a single value from source to destination
+        ld I K      ; Move source pointer into the index register I
+        add I C     ; add the current index
+        ldx A $_start_memory_   ; Load the value from source into register A
+
+        ld I L      ; Move destination pointer into the index register I
+        add I C     ; add the current index
+        stx A $_start_memory_  ; Store the value from A to the destination
+
+        ; --- Move to the next memory location ---
+        # addi K 1     ; Increment source pointer
+        # addi L 1     ; Increment destination pointer
+        addi C 1     ; Increment loop counter
+        jmp :copy_loop
+
+    :copy_loop_end
+        ret
+        ret
+@test_blinker_pattern
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 21
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ret
+@test_glider_pattern
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
     ret
 
 # .DATA
+% $WIDTH 40
+% $HEIGHT 30
+% $BOARD_SIZE 1200
+% $X_OFFSET 20
+% $Y_OFFSET 15
+% $p_current 0
+% $x 0
+% $y 0
+% $i 0
+% $cx 0
+% $cy 0
+% $new_state 0
 
 % $current_char 203
 % $current_mode 3
@@ -1268,7 +1501,7 @@
 % $distance 0
 % $temp_ptr 0
 % $msg \* \space \W \e \l \c \o \m \e \space \a \t \space \T \U \R \T \L \E \space \* \null
-% $i 0
+% $i_turtle 0
 % $char 0
 % $p_char 0
 % $x1 0
@@ -1284,10 +1517,4 @@
 % $circ_x 0
 % $circ_y 0
 % $circ_p 0
-% $center_x 40
-% $center_y 30
-% $color 1
-% $y 10
-% $x 20
-% $_main_str_0 \T \o \t \a \l \space \r \u \n \space \t \i \m \e \: \space \null
-% $_main_str_1 \! \! \Return \null
+% $_main_str_0 \Return \null

@@ -1,5 +1,5 @@
 ## for testing stacks code
-USE time_lib
+USE std_time
 INCLUDE turtle_lib
 USE std_stern_io
 

@@ -41,6 +41,8 @@ class CPU:
 
         # CPU State
         self.state = "FETCH"  # FETCH, DECODE, EXECUTE, HALT
+        self.instructions_executed = 0
+        self.cycles_executed = 0
 
         # Microcode execution
         self.current_microcode_sequence = []
@@ -63,6 +65,7 @@ class CPU:
             self.instruction_formats[opcode] = data.get("format", "zero") # Default to zero if format is missing
 
     def tick(self):
+        self.cycles_executed += 1
         if self.state != "HALT":
             # --- INTERRUPT CHECK ---
             if self.state == "FETCH" and self.interrupt_controller and self.interrupts_enabled and self.interrupt_controller.has_pending():
@@ -71,6 +74,7 @@ class CPU:
 
             if self.state == "FETCH":
                 #print("Fetching instruction")
+                self.instructions_executed += 1
                 self.MIR = self.memory.read(self.registers["PC"])
                 self.registers["PC"] += 1
                 if self.debug_mode:

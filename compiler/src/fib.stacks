@@ -1,0 +1,57 @@
+# Fibonacci sequence calculator (Recursive)
+# An excellent CPU-bound benchmark to test raw computational performance.
+
+USE std_stern_io
+
+# -----------------------------------------------------------------------------
+# DEF fib(n)
+# Calculates the nth Fibonacci number.
+# Expects 'n' on the stack. Leaves fib(n) on the stack.
+# -----------------------------------------------------------------------------
+DEF fib {
+    # DUP PRINT # Uncomment for debugging to see the call tree
+
+    # Base case: if n < 2, the result is n itself.
+    DUP 2 < IF 
+        GOTO fib_end
+    END
+
+    # --- Recursive Step: fib(n) = fib(n-1) + fib(n-2) ---
+
+    # Stack at this point: [ n ]
+    
+    # 1. Calculate fib(n-1)
+    DUP 1 -         # Duplicates n, then calculates n-1
+                    # Stack: [ n, n-1 ]
+    fib             # Recursively calls fib(n-1). The result replaces n-1.
+                    # Stack: [ n, fib(n-1) ]
+
+    # 2. Calculate fib(n-2)
+    SWAP            # Swap the two values
+                    # Stack: [ fib(n-1), n ]
+    2 -             # Calculate n-2
+                    # Stack: [ fib(n-1), n-2 ]
+    fib             # Recursively calls fib(n-2). The result replaces n-2.
+                    # Stack: [ fib(n-1), fib(n-2) ]
+
+    # 3. Add the results
+    +               # Add the top two values
+                    # Stack: [ fib(n-1) + fib(n-2) ]
+    
+:fib_end
+    # The final result is left on the stack.
+}
+
+
+# -----------------------------------------------------------------------------
+# Main Program
+# -----------------------------------------------------------------------------
+
+"Calculating fib(24)... This will take some time.\n" PRTstring
+
+24 fib # Put 24 on the stack and call the function.
+
+# Print the final result
+"Result: " PRTstring
+PRINT
+"\n" PRTstring

@@ -16,7 +16,7 @@
 . $distance 1
 . $temp_ptr 1
 . $msg 22
-. $i 1
+. $i_turtle 1
 . $char 1
 . $p_char 1
 . $x1 1
@@ -320,7 +320,7 @@
 :welcome_loop
     ldi A $msg
     stack A $DATASTACK_PTR
-    ldm A $i
+    ldm A $i_turtle
     ustack B $DATASTACK_PTR
     add B A
     ld A B
@@ -346,7 +346,7 @@
     call @rt_udc_control
     ldi A 30
     stack A $DATASTACK_PTR
-    ldm A $i
+    ldm A $i_turtle
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
@@ -359,13 +359,13 @@
     ldi A 15
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldm A $i
+    ldm A $i_turtle
     stack A $DATASTACK_PTR
     ldi A 1
     ustack B $DATASTACK_PTR
     add B A
     ld A B
-    sto A $i
+    sto A $i_turtle
     jmp :welcome_loop
 :welcome_end
     ldi A 0
@@ -843,7 +843,7 @@
 % $distance 0
 % $temp_ptr 0
 % $msg \* \space \W \e \l \c \o \m \e \space \a \t \space \T \U \R \T \L \E \space \* \null
-% $i 0
+% $i_turtle 0
 % $char 0
 % $p_char 0
 % $x1 0

@@ -1,16 +1,495 @@
-# Starting point for something new
+; Conways Game of Life for Stern-XT
 
-USE time_lib
+; --- Constants ---
+VALUE WIDTH 40
+VALUE HEIGHT 30
+VALUE BOARD_SIZE 1200 ; WIDTH * HEIGHT
+VALUE X_OFFSET 20
+VALUE Y_OFFSET 15
+VALUE p_current 0
+VALUE x 0
+VALUE y 0
+VALUE i 0
+VALUE cx 0
+VALUE cy 0
+VALUE new_state 0
 
+; --- Data ---
+; Two boards to store the current and next generation
+VAR current_board 9216
+VAR next_board 10416
+
+
+; --- Functions ---
+
+INCLUDE turtle_lib
 USE std_stern_io
-USE std_string
+USE std_time
+
+DEF ROT {
+    ASM {
+        ustack C $DATASTACK_PTR
+        ustack B $DATASTACK_PTR
+        ustack A $DATASTACK_PTR
+        stack B $DATASTACK_PTR
+        stack C $DATASTACK_PTR
+        stack A $DATASTACK_PTR
+    }
+}
+
+DEF count_neighbors2 {
+    ASM {
+        ; Get arguments from the stack into registers X and Y.
+        ustack Y $DATASTACK_PTR  ; Y = y
+        ustack X $DATASTACK_PTR  ; X = x
+
+        ; Initialize total_count in register A to zero.
+        ld A Z ; (Or ldi A 0)
+
+        ; ---- start Neighbors
+        ; --- Neighbor (x-1, y-1) ---
+        ldi K 40
+        ld M X      ; Load X in M
+        subi M 1    
+        addi M 40
+        dmod M K    ; Calc Neighbors X in K
+
+        ldi L 30
+        ld M Y      ; Load Y in M
+        subi M 1  
+        addi M 30  
+        dmod M L    ; Calc Neighbors Y in L
+
+
+        ; read the value and add to total
+        muli L 40
+        ldi I $current_board    ; load the index of the currentboard in I
+        add I L                 ; add y*40
+        add I K                 ; add X, I hold the pointer now
+
+        ldx B $_start_memory_   ; B holds the value at the pointer
+
+        add A B                 ; Update the total counter
+
+        ; --- Neighbor (x, y-1) ---
+        ldi K 40
+        ld M X      ; No subi M 1, because it's just 'x'
+        addi M 40
+        dmod M K    ; K = wrapped x
+
+        ldi L 30
+        ld M Y
+        subi M 1    ; y-1
+        addi M 30
+        dmod M L    ; L = wrapped y
+
+        ; read the value and add to total
+        muli L 40
+        ldi I $current_board    ; load the index of the currentboard in I
+        add I L                 ; add y*40
+        add I K                 ; add X, I hold the pointer now
+
+        ldx B $_start_memory_   ; B holds the value at the pointer
+
+        add A B                 ; Update the total counter
+
+        ; --- Neighbor (x+1, y-1) ---
+        ldi K 40
+        ld M X
+        addi M 1
+        addi M 40
+        dmod M K    ; K = wrapped
+
+        ldi L 30
+        ld M Y
+        subi M 1 
+        addi M 30
+        dmod M L    ; L = wrapped
+
+        ; read the value and add to total
+        muli L 40
+        ldi I $current_board    ; load the index of the currentboard in I
+        add I L                 ; add y*40
+        add I K                 ; add X, I hold the pointer now
+
+        ldx B $_start_memory_   ; B holds the value at the pointer
+
+        add A B                 ; Update the total counter
+
+        ; --- Neighbor (x-1, y) ---
+        ldi K 40
+        ld M X
+        subi M 1
+        addi M 40
+        dmod M K    ; K = wrapped
+
+        ldi L 30
+        ld M Y
+        addi M 30
+        dmod M L    ; L = wrapped
+
+        ; read the value and add to total
+        muli L 40
+        ldi I $current_board    ; load the index of the currentboard in I
+        add I L                 ; add y*40
+        add I K                 ; add X, I hold the pointer now
+
+        ldx B $_start_memory_   ; B holds the value at the pointer
+
+        add A B                 ; Update the total counter
+
+        ; --- Neighbor (x+1, y) ---
+        ldi K 40
+        ld M X
+        addi M 1
+        addi M 40
+        dmod M K    ; K = wrapped
+
+        ldi L 30
+        ld M Y
+        addi M 30
+        dmod M L    ; L = wrapped
+
+        ; read the value and add to total
+        muli L 40
+        ldi I $current_board    ; load the index of the currentboard in I
+        add I L                 ; add y*40
+        add I K                 ; add X, I hold the pointer
+
+        ldx B $_start_memory_
+
+        add A B                 ; Update the total counter
+
+
+        ; --- Neighbor (x-1, y+1) ---
+        ldi K 40
+        ld M X
+        subi M 1
+        addi M 40
+        dmod M K    ; K = wrapped
+
+        ldi L 30
+        ld M Y
+        addi M 1
+        addi M 30
+        dmod M L    ; L = wrapped
+
+        ; read the value and add to total
+        muli L 40
+        ldi I $current_board    ; load the index of the currentboard in I
+        add I L                 ; add y*40
+        add I K                 ; add X, I hold the pointer
+
+        ldx B $_start_memory_
+
+        add A B                 ; Update the total counter
+
+        ; --- Neighbor (x, y+1) ---
+        ldi K 40
+        ld M X
+        addi M 40
+        dmod M K    ; K = wrapped
+
+        ldi L 30
+        ld M Y
+        addi M 1
+        addi M 30
+        dmod M L    ; L = wrapped
+
+        ; read the value and add to total
+        muli L 40
+        ldi I $current_board    ; load the index of the currentboard in I
+        add I L                 ; add y*40
+        add I K                 ; add X, I hold the pointer
+
+        ldx B $_start_memory_
+
+        add A B                 ; Update the total counter
+
+
+        ; --- Neighbor (x+1, y+1) ---
+        ldi K 40
+        ld M X
+        addi M 1
+        addi M 40
+        dmod M K    ; K = wrapped
+
+        ldi L 30
+        ld M Y
+        addi M 1
+        addi M 30
+        dmod M L    ; L = wrapped
+
+        ; read the value and add to total
+        muli L 40
+        ldi I $current_board    ; load the index of the currentboard in I
+        add I L                 ; add y*40
+        add I K                 ; add X, I hold the pointer
+
+        ldx B $_start_memory_
+
+        add A B                 ; Update the total counter
+
+        ; ---- End Neighbors
+
+        ; Push the final result from total_count (A) onto the stack.
+        stack A $DATASTACK_PTR
+        ret
+    }
+}
+
+
+
+
+; Helper function to get the state of a cell from a board
+; Stack expected: board_ptr, x, y
+; Stack returned: state
+DEF get_cell_state { ; ( board_ptr x y -- state )
+    AS y_coord
+    AS x_coord
+    AS board_ptr
+
+    board_ptr y_coord WIDTH * + x_coord +  ; Calculate address
+    AS p_current
+    *p_current ; Return state
+}
+
+# DEF get_neighbor_state { ; ( x y -- state )
+#     ; wrap y
+#     HEIGHT + HEIGHT %
+#     SWAP
+#     ; wrap x
+#     WIDTH + WIDTH % 
+#     SWAP
+#     ; now x_w, y_w are on stack
+#     &current_board ROT ROT get_cell_state
+# }
+
+; Helper function to set the state of a cell in a board
+; Stack expected: board_ptr, x, y, value
+; Stack returned: --
+DEF set_cell_state { ; ( board_ptr x y value -- )
+    AS value_in
+    AS y_coord
+    AS x_coord
+    AS board_ptr
+
+    ; Calculate address using row-major order
+    board_ptr y_coord WIDTH * + x_coord +
+    AS p_current ; p_current now holds the target address
+    
+    ; Store the value at the target address
+    value_in p_current AS p_current AS *p_current
+}
+
+
+; Initializes the board with a random pattern
+DEF init_board {
+    0 AS i
+    WHILE i BOARD_SIZE < DO
+        RND 500 > IF 
+            0
+        ELSE
+            1
+        END
+        &next_board i + ; value, address
+        ; store value
+        AS p_current      ; p_current = address
+        AS *p_current     ; *p_current = value
+        i 1 + AS i
+    DONE
+}
+
+; Draws the current board to the screen using the turtle library
+DEF draw_board {
+    0 AS y
+    WHILE y HEIGHT < DO
+        0 AS x
+        WHILE x WIDTH < DO
+            &current_board x y get_cell_state
+            IF
+                green TURTLE.color
+            ELSE
+                black TURTLE.color
+            END
+            ; Apply offset to center the board
+            x X_OFFSET + 
+            y Y_OFFSET + 
+            TURTLE.goto
+            x 1 + AS x
+        DONE
+        y 1 + AS y
+    DONE
+}
+
+; Counts live neighbors for a cell at (x, y)
+# DEF count_neighbors { ; ( x y -- count )
+#     AS cy
+#     AS cx
+
+#     cx 1 -  cy 1 - get_neighbor_state
+#     cx      cy 1 - get_neighbor_state +
+#     cx 1 +  cy 1 - get_neighbor_state +
+#     cx 1 -  cy     get_neighbor_state +
+#     cx 1 +  cy     get_neighbor_state +
+#     cx 1 -  cy 1 + get_neighbor_state +
+#     cx      cy 1 + get_neighbor_state +
+#     cx 1 +  cy 1 + get_neighbor_state +
+# }
+
+
+; Computes the next generation of the world
+DEF compute_next_generation {
+    0 AS y
+    WHILE y HEIGHT < DO
+        0 AS x
+        WHILE x WIDTH < DO
+            ; get current state and neighbor count
+            &current_board x y get_cell_state
+            x y count_neighbors2
+
+            ; Game of Life rules:
+            ; stack: state, neighbors
+            0 AS new_state 
+            ; A cell is alive in the next generation if:
+            ; - it's alive and has 2 or 3 neighbors
+            ; - it's dead and has 3 neighbors
+            DUP 3 == IF
+                1 AS new_state ; Rule 2 and part of Rule 1
+            ELSE
+                OVER 0 > IF ; if alive
+                    DUP 2 == IF
+                        1 AS new_state ; Part of Rule 1
+                    END
+                END
+            END
+            DROP DROP ; drop state and neighbors
+
+            ; store new state in next_board
+            &next_board x y new_state set_cell_state
+
+            x 1 + AS x
+        DONE
+        y 1 + AS y
+    DONE
+}
+
+DEF copy_board2 {
+    ASM {
+        ; 1. Initialize pointers and a counter
+        ldi K $next_board       ; Use K as the source pointer
+        ldi L $current_board    ; Use L as the destination pointer
+        ldi C 0                 ; Use C as the loop counter (1200),
+                                ; start at 0
+
+    :copy_loop
+        ; Check if we are done
+        tst C 1200
+        jmpt :copy_loop_end
+
+        ; --- Main copy operation ---
+        ; Move a single value from source to destination
+        ld I K      ; Move source pointer into the index register I
+        add I C     ; add the current index
+        ldx A $_start_memory_   ; Load the value from source into register A
+
+        ld I L      ; Move destination pointer into the index register I
+        add I C     ; add the current index
+        stx A $_start_memory_  ; Store the value from A to the destination
+
+        ; --- Move to the next memory location ---
+        # addi K 1     ; Increment source pointer
+        # addi L 1     ; Increment destination pointer
+        addi C 1     ; Increment loop counter
+        jmp :copy_loop
+
+    :copy_loop_end
+        ret
+    }
+}
 
 
 
 
 
-TIME.uptime TIME.as_string 13 PRTchar
+; Copies the next_board to the current_board
+# DEF copy_board {
+#     0 AS i
+#     WHILE i BOARD_SIZE < DO
+#         ; get value from next_board[i]
+#         &next_board i +
+#         AS p_current
+#         *p_current
+#         ; get address of current_board[i]
+#         &current_board i +
+#         ; stack is now: value, address
+#         AS p_current
+#         AS *p_current
+#         i 1 + AS i
+#     DONE
+# }
 
-500 TIME.wait 
+; --- Test Functions ---
 
-TIME.uptime TIME.as_string 13 PRTchar
+# ; Helper to clear a board to all 0s
+# DEF clear_board { ; ( board_ptr -- )
+#     AS p_current ; board_ptr
+#     0 AS i
+#     WHILE i BOARD_SIZE < DO
+#         0 p_current i +
+#         AS p_current ; value, address, orig_board_ptr
+#         AS *p_current ; orig_board_ptr
+#         i 1 + AS i
+#     DONE
+#     DROP ; drop the original board_ptr
+# }
+
+; Sets up a blinker pattern, runs one generation, and leaves the result in next_board
+DEF test_blinker_pattern {
+    ; Clear both boards
+    # &current_board clear_board
+    # &next_board clear_board
+
+    ; Create a horizontal blinker in the middle of the (next_)board
+    &next_board 20 15 1 set_cell_state
+    &next_board 21 15 1 set_cell_state
+    &next_board 22 15 1 set_cell_state
+}
+
+DEF test_glider_pattern {
+    ; Create a glider in the top-left of the (next_)board
+    ; .X.
+    ; ..X
+    ; XXX
+    &next_board 2 1 1 set_cell_state
+    &next_board 3 2 1 set_cell_state
+    &next_board 1 3 1 set_cell_state
+    &next_board 2 3 1 set_cell_state
+    &next_board 3 3 1 set_cell_state
+}
+
+
+; --- Main Program Loop ---
+
+0 TIME.start
+TURTLE.start
+; Set sprite mode with double buffering
+db_sprite TURTLE.mode
+#db_pixel TURTLE.mode
+
+init_board ; We replace random init with our test
+; test_glider_pattern
+; test_blinker_pattern
+
+copy_board2 ; Copy the result from next_board to current_board to be drawn
+
+WHILE 1 DO
+    draw_board
+    TURTLE.flip
+
+    compute_next_generation
+    copy_board2
+
+    0 TIME.read TIME.as_string "\n" PRTstring
+    0 TIME.start
+DONE

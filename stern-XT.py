@@ -157,11 +157,13 @@ def main():
     # 4. Create and Start Background Threads
     print("Starting background threads (CPU, debugger)...")
     cpu_thread = CpuThread(cpu, debugger)
+    start_time = time.time()
     cpu_thread.start()
 
     # 5. Main GUI Loop
     print("Starting GUI... Press keys in the window to generate interrupts.")
     running = True
+    main_loop_wait_time = 0
     
     TARGET_SIM_FPS = 1000
     TARGET_FPS = 30
@@ -169,6 +171,7 @@ def main():
     last_draw_time = time.time()
 
     while running and cpu_thread.is_alive():
+        loop_start_time = time.time()
         # --- Event Handling (runs as fast as possible) ---
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -226,10 +229,38 @@ def main():
 
         # --- Master Clock (controls the entire loop to 1000 FPS) ---
         clock.tick(TARGET_SIM_FPS)
+        loop_end_time = time.time()
+        main_loop_wait_time += loop_end_time - loop_start_time
 
     # 6. Shutdown
+    end_time = time.time()
     print("GUI loop exited. Halting system...")
     cpu_thread.stop()
+
+    # --- Performance Stats ---
+    print("\n--- Simulation Performance ---")
+    elapsed_time = end_time - start_time
+    total_instructions = cpu.instructions_executed
+    total_cycles = cpu.cycles_executed
+
+    if elapsed_time > 0 and total_instructions > 0 and total_cycles > 0:
+        cpi = total_cycles / total_instructions
+        core_speed = total_cycles / elapsed_time
+        ips = total_instructions / elapsed_time
+
+        # Format Core Speed
+        core_speed_val, core_speed_unit = (core_speed / 1_000_000, "MHz") if core_speed > 1_000_000 else ((core_speed / 1_000, "kHz") if core_speed > 1_000 else (core_speed, "Hz"))
+        
+        # Format IPS
+        ips_val, ips_unit = (ips / 1_000_000, "MIPS") if ips > 1_000_000 else ((ips / 1_000, "kIPS") if ips > 1_000 else (ips, "IPS"))
+
+        print(f"  Total Simulation Time : {elapsed_time:.2f} seconds")
+        print(f"  └─ Main Thread Time   : {main_loop_wait_time:.2f} seconds")
+        print(f"  Total Cycles (ticks)  : {total_cycles:,}")
+        print(f"  Total Instructions    : {total_instructions:,}")        
+        print(f"  Average Core Speed    : {core_speed_val:.2f} {core_speed_unit}")
+        print(f"  Average CPI           : {cpi:.2f} Cycles/Instruction")
+        print(f"  Average Performance   : {ips_val:.2f} {ips_unit} (Instructions/Second)\n")
 
 
     pygame.quit()
@@ -244,7 +275,6 @@ if __name__ == "__main__":
         profiler = cProfile.Profile()
         try:
             profiler.enable()
-            main()
         finally:
             profiler.disable()
             print("\n--- CProfile Results ---")

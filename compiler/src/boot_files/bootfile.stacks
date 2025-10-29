@@ -23,7 +23,7 @@ ASM {
 
 # Init the standard IO library by passing it the addresses of the
 # kernel variables it needs to communicate.
-INCLUDE time_lib TIME.init
+INCLUDE std_time TIME.init
 INCLUDE std_stern_io &SYSCALL_RETURN_STATUS &SYSCALL_RETURN_VALUE io_lib_init
 INCLUDE std_string
 
