@@ -11,6 +11,7 @@
 . $cx 1
 . $cy 1
 . $new_state 1
+. $counter 1
 MALLOC $current_board 9216
 MALLOC $next_board 10416
 . $current_char 1
@@ -50,6 +51,8 @@ MALLOC $next_board 10416
 . $x_coord 1
 . $board_ptr 1
 . $value_in 1
+. $solid_block 1
+. $last_color 1
 . $_main_str_0 2
 
 # .CODE
@@ -60,16 +63,14 @@ MALLOC $next_board 10416
     ldi A 3
     stack A $DATASTACK_PTR
     call @TURTLE.mode
-    call @init_board
+    call @test_glider_pattern
+    call @test_pulsar_pattern
     call @copy_board2
 :_main_while_start_5
     ldi A 1
     tst A 0
     jmpt :_main_while_end_5
-    call @draw_board
-    call @TURTLE.flip
-    call @compute_next_generation
-    call @copy_board2
+    call @fast_draw_board
     ldi A 0
     stack A $DATASTACK_PTR
     call @TIME.read
@@ -77,9 +78,18 @@ MALLOC $next_board 10416
     ldi A $_main_str_0
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 0
+    ldm A $counter
     stack A $DATASTACK_PTR
-    call @TIME.start
+    call @rt_print_tos
+    call @compute_next_generation
+    call @copy_board2
+    ldm A $counter
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $counter
     jmp :_main_while_start_5
 :_main_while_end_5
     ret
@@ -1084,7 +1094,7 @@ MALLOC $next_board 10416
 
         ; Push the final result from total_count (A) onto the stack.
         stack A $DATASTACK_PTR
-        ret
+        ;ret
         ret
 @get_cell_state
     ustack A $DATASTACK_PTR
@@ -1144,56 +1154,10 @@ MALLOC $next_board 10416
     ldm I $p_current
     stx B $_start_memory_
     ret
-@init_board
-    ldi A 0
-    sto A $i
-:init_board_while_start_0
-    ldm A $i
-    stack A $DATASTACK_PTR
-    ldm A $BOARD_SIZE
-    stack A $DATASTACK_PTR
-    call @rt_lt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :init_board_while_end_0
-    call @rt_rnd
-    ldi A 500
-    stack A $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :init_board_if_else_0
-    ldi A 0
-    stack A $DATASTACK_PTR
-    jmp :init_board_if_end_0
-:init_board_if_else_0
-    ldi A 1
-    stack A $DATASTACK_PTR
-:init_board_if_end_0
-    ldi A $next_board
-    stack A $DATASTACK_PTR
-    ldm A $i
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $p_current
-    ustack B $DATASTACK_PTR
-    ldm I $p_current
-    stx B $_start_memory_
-    ldm A $i
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $i
-    jmp :init_board_while_start_0
-:init_board_while_end_0
-    ret
-@draw_board
+@fast_draw_board
     ldi A 0
     sto A $y
-:draw_board_while_start_1
+:fast_draw_board_while_start_0
     ldm A $y
     stack A $DATASTACK_PTR
     ldm A $HEIGHT
@@ -1201,10 +1165,21 @@ MALLOC $next_board 10416
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :draw_board_while_end_1
+    jmpt :fast_draw_board_while_end_0
+    ldm A $y
+    stack A $DATASTACK_PTR
+    ldm A $Y_OFFSET
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 16
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
     ldi A 0
     sto A $x
-:draw_board_while_start_2
+:fast_draw_board_while_start_1
     ldm A $x
     stack A $DATASTACK_PTR
     ldm A $WIDTH
@@ -1212,7 +1187,7 @@ MALLOC $next_board 10416
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :draw_board_while_end_2
+    jmpt :fast_draw_board_while_end_1
     ldi A $current_board
     stack A $DATASTACK_PTR
     ldm A $x
@@ -1222,29 +1197,51 @@ MALLOC $next_board 10416
     call @get_cell_state
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :draw_board_if_else_1
-    ldi A 5
+    jmpt :fast_draw_board_if_else_0
+    ldi A 10
     stack A $DATASTACK_PTR
-    call @TURTLE.color
-    jmp :draw_board_if_end_1
-:draw_board_if_else_1
+    jmp :fast_draw_board_if_end_0
+:fast_draw_board_if_else_0
     ldi A 0
     stack A $DATASTACK_PTR
-    call @TURTLE.color
-:draw_board_if_end_1
+:fast_draw_board_if_end_0
+    ustack A $DATASTACK_PTR
+    sto A $current_color
+    stack A $DATASTACK_PTR
+    ldm A $last_color
+    stack A $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :fast_draw_board_if_end_1
+    ldm A $current_color
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $current_color
+    sto A $last_color
+:fast_draw_board_if_end_1
     ldm A $x
     stack A $DATASTACK_PTR
     ldm A $X_OFFSET
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
-    ldm A $y
+    ldi A 2
     stack A $DATASTACK_PTR
-    ldm A $Y_OFFSET
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    call @TURTLE.goto
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $solid_block
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
     ldm A $x
     stack A $DATASTACK_PTR
     ldi A 1
@@ -1252,8 +1249,8 @@ MALLOC $next_board 10416
     add B A
     ld A B
     sto A $x
-    jmp :draw_board_while_start_2
-:draw_board_while_end_2
+    jmp :fast_draw_board_while_start_1
+:fast_draw_board_while_end_1
     ldm A $y
     stack A $DATASTACK_PTR
     ldi A 1
@@ -1261,13 +1258,14 @@ MALLOC $next_board 10416
     add B A
     ld A B
     sto A $y
-    jmp :draw_board_while_start_1
-:draw_board_while_end_1
+    jmp :fast_draw_board_while_start_0
+:fast_draw_board_while_end_0
+    call @TURTLE.flip
     ret
 @compute_next_generation
     ldi A 0
     sto A $y
-:compute_next_generation_while_start_3
+:compute_next_generation_while_start_2
     ldm A $y
     stack A $DATASTACK_PTR
     ldm A $HEIGHT
@@ -1275,10 +1273,10 @@ MALLOC $next_board 10416
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :compute_next_generation_while_end_3
+    jmpt :compute_next_generation_while_end_2
     ldi A 0
     sto A $x
-:compute_next_generation_while_start_4
+:compute_next_generation_while_start_3
     ldm A $x
     stack A $DATASTACK_PTR
     ldm A $WIDTH
@@ -1286,7 +1284,7 @@ MALLOC $next_board 10416
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :compute_next_generation_while_end_4
+    jmpt :compute_next_generation_while_end_3
     ldi A $current_board
     stack A $DATASTACK_PTR
     ldm A $x
@@ -1349,8 +1347,8 @@ MALLOC $next_board 10416
     add B A
     ld A B
     sto A $x
-    jmp :compute_next_generation_while_start_4
-:compute_next_generation_while_end_4
+    jmp :compute_next_generation_while_start_3
+:compute_next_generation_while_end_3
     ldm A $y
     stack A $DATASTACK_PTR
     ldi A 1
@@ -1358,8 +1356,8 @@ MALLOC $next_board 10416
     add B A
     ld A B
     sto A $y
-    jmp :compute_next_generation_while_start_3
-:compute_next_generation_while_end_3
+    jmp :compute_next_generation_while_start_2
+:compute_next_generation_while_end_2
     ret
 @copy_board2
 
@@ -1391,8 +1389,54 @@ MALLOC $next_board 10416
         jmp :copy_loop
 
     :copy_loop_end
+       ; ret
         ret
-        ret
+@test_random_board
+    ldi A 0
+    sto A $i
+:test_random_board_while_start_4
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldm A $BOARD_SIZE
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :test_random_board_while_end_4
+    call @rt_rnd
+    ldi A 500
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :test_random_board_if_else_5
+    ldi A 0
+    stack A $DATASTACK_PTR
+    jmp :test_random_board_if_end_5
+:test_random_board_if_else_5
+    ldi A 1
+    stack A $DATASTACK_PTR
+:test_random_board_if_end_5
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldm A $i
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $p_current
+    ustack B $DATASTACK_PTR
+    ldm I $p_current
+    stx B $_start_memory_
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $i
+    jmp :test_random_board_while_start_4
+:test_random_board_while_end_4
+    ret
 @test_blinker_pattern
     ldi A $next_board
     stack A $DATASTACK_PTR
@@ -1469,6 +1513,813 @@ MALLOC $next_board 10416
     stack A $DATASTACK_PTR
     call @set_cell_state
     ret
+@test_r_pentomino_pattern
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 21
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldi A 16
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 21
+    stack A $DATASTACK_PTR
+    ldi A 16
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 21
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ret
+@test_gosper_glider_gun_pattern
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 5
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 5
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 6
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 6
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 11
+    stack A $DATASTACK_PTR
+    ldi A 5
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 11
+    stack A $DATASTACK_PTR
+    ldi A 6
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 11
+    stack A $DATASTACK_PTR
+    ldi A 7
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 12
+    stack A $DATASTACK_PTR
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 12
+    stack A $DATASTACK_PTR
+    ldi A 8
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    ldi A 9
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 14
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 14
+    stack A $DATASTACK_PTR
+    ldi A 9
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    ldi A 6
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 16
+    stack A $DATASTACK_PTR
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 16
+    stack A $DATASTACK_PTR
+    ldi A 8
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    ldi A 5
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    ldi A 6
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    ldi A 7
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 18
+    stack A $DATASTACK_PTR
+    ldi A 6
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 21
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 21
+    stack A $DATASTACK_PTR
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 21
+    stack A $DATASTACK_PTR
+    ldi A 5
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ldi A 5
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 23
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 23
+    stack A $DATASTACK_PTR
+    ldi A 6
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 25
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 25
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 25
+    stack A $DATASTACK_PTR
+    ldi A 6
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 25
+    stack A $DATASTACK_PTR
+    ldi A 7
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 35
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 35
+    stack A $DATASTACK_PTR
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 36
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 36
+    stack A $DATASTACK_PTR
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ret
+@test_pulsar_pattern
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 16
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 18
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 23
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 24
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 14
+    stack A $DATASTACK_PTR
+    ldi A 12
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 19
+    stack A $DATASTACK_PTR
+    ldi A 12
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 21
+    stack A $DATASTACK_PTR
+    ldi A 12
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 26
+    stack A $DATASTACK_PTR
+    ldi A 12
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 14
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 19
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 21
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 26
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 14
+    stack A $DATASTACK_PTR
+    ldi A 14
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 19
+    stack A $DATASTACK_PTR
+    ldi A 14
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 21
+    stack A $DATASTACK_PTR
+    ldi A 14
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 26
+    stack A $DATASTACK_PTR
+    ldi A 14
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 16
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 18
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 23
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 24
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 16
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 18
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 23
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 24
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 14
+    stack A $DATASTACK_PTR
+    ldi A 18
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 19
+    stack A $DATASTACK_PTR
+    ldi A 18
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 21
+    stack A $DATASTACK_PTR
+    ldi A 18
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 26
+    stack A $DATASTACK_PTR
+    ldi A 18
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 14
+    stack A $DATASTACK_PTR
+    ldi A 19
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 19
+    stack A $DATASTACK_PTR
+    ldi A 19
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 21
+    stack A $DATASTACK_PTR
+    ldi A 19
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 26
+    stack A $DATASTACK_PTR
+    ldi A 19
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 14
+    stack A $DATASTACK_PTR
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 19
+    stack A $DATASTACK_PTR
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 21
+    stack A $DATASTACK_PTR
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 26
+    stack A $DATASTACK_PTR
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 16
+    stack A $DATASTACK_PTR
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 18
+    stack A $DATASTACK_PTR
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 23
+    stack A $DATASTACK_PTR
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ldi A $next_board
+    stack A $DATASTACK_PTR
+    ldi A 24
+    stack A $DATASTACK_PTR
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @set_cell_state
+    ret
 
 # .DATA
 % $WIDTH 40
@@ -1483,6 +2334,7 @@ MALLOC $next_board 10416
 % $cx 0
 % $cy 0
 % $new_state 0
+% $counter 0
 
 % $current_char 203
 % $current_mode 3
@@ -1517,4 +2369,6 @@ MALLOC $next_board 10416
 % $circ_x 0
 % $circ_y 0
 % $circ_p 0
-% $_main_str_0 \Return \null
+% $solid_block 203
+% $last_color 999
+% $_main_str_0 \space \null
