@@ -1,5 +1,9 @@
 ; Conways Game of Life for Stern-XT
 
+; first written in full stacks code and the Turtle lib
+; for perfomance reasons, implemented Assembly routines
+; its running now 6 seconds per generation, instead of 18 seconds
+
 ; --- Constants ---
 VALUE WIDTH 40
 VALUE HEIGHT 30
@@ -23,7 +27,7 @@ VAR next_board 10416
 
 ; --- Functions ---
 
-INCLUDE turtle_lib
+#INCLUDE turtle_lib
 USE std_stern_io
 USE std_time
 
@@ -320,9 +324,9 @@ DEF fast_draw_board {
             ; Get the state of the current cell
             &current_board x y get_cell_state
             IF
-                lightRed
+                10                  ; lightRed
             ELSE
-                black
+                11                  ; darkGray
             END
             AS current_color
 
@@ -340,7 +344,8 @@ DEF fast_draw_board {
         DONE
         y 1 + AS y
     DONE
-    TURTLE.flip
+    #TURTLE.flip
+    IO 2 FLIP
 }
 
 ; Counts live neighbors for a cell at (x, y)
@@ -452,18 +457,6 @@ DEF copy_board2 {
 
 ; --- Test Functions ---
 
-# ; Helper to clear a board to all 0s
-# DEF clear_board { ; ( board_ptr -- )
-#     AS p_current ; board_ptr
-#     0 AS i
-#     WHILE i BOARD_SIZE < DO
-#         0 p_current i +
-#         AS p_current ; value, address, orig_board_ptr
-#         AS *p_current ; orig_board_ptr
-#         i 1 + AS i
-#     DONE
-#     DROP ; drop the original board_ptr
-# }
 
 ; Initializes the board with a random pattern
 DEF test_random_board {
@@ -631,10 +624,13 @@ DEF test_pulsar_pattern {
 ; --- Main Program Loop ---
 
 0 TIME.start
-TURTLE.start
-; Set sprite mode with double buffering
-db_sprite TURTLE.mode
-#db_pixel TURTLE.mode
+
+# TURTLE.start
+# db_sprite TURTLE.mode
+# Set sprite mode with double buffering
+IO 2 ONLINE     ; set screen online
+3 IO 2 MODE     ; set 3 as doublebuffer sprite mode
+
 
 ; test_random_board ; We replace random init with our test
 test_glider_pattern
@@ -649,6 +645,7 @@ WHILE 1 DO
     fast_draw_board
 
     0 TIME.read TIME.as_string " " PRTstring counter PRINT
+    0 TIME.start
 
     compute_next_generation
     copy_board2

@@ -1,6 +1,8 @@
 {
   "functions": [
+    "STRlen",
     "STRatoi",
+    "STRfind",
     "STRcmp"
   ],
   "variables": [
@@ -41,6 +43,31 @@
     },
     {
       "name": "_atoi_result",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strlen_p",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strlen_len",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strfind_p",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strfind_char",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strfind_idx",
       "type": "VALUE",
       "size": 1
     }

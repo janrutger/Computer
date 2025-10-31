@@ -1,0 +1,226 @@
+USE math_lib
+USE std_stern_io
+USE std_string
+
+
+; A simple 8.8 fixed-point math library for the Stern-XT
+; A fixed-point number is a 16-bit integer where the top 8 bits
+; represent the whole number part and the bottom 8 bits represent
+; the fractional part.
+
+#VALUE SCALE_FACTOR 256 ; 2^8  8.8 fixed-point scale factor
+; VALUE SCALE_FACTOR 10000000 
+VALUE SCALE_FACTOR  1000 ;.4 fixed-point scale factor
+
+CONST FP_DOT 46     ; the assci value for a single .
+STRING FP_DOT_STR "."
+
+# print TOS and no neweline
+DEF TOS_nnl {
+    ASM {
+        ustack A $DATASTACK_PTR
+        ld C A
+
+        ldi I ~SYS_PRINT_NUMBER
+        int $INT_VECTORS
+        
+    }
+}
+
+
+; --- Conversion Functions ---
+
+; Converts an integer to a fixed-point number
+; ( int -- fp )
+DEF FP.from_int {
+    SCALE_FACTOR *
+}
+
+; Converts a fixed-point number back to an integer (truncates)
+; ( fp -- int )
+DEF FP.to_int {
+    SCALE_FACTOR //
+}
+
+; --- Arithmetic Functions ---
+
+; Adds two fixed-point numbers
+; ( fp_a fp_b -- result )
+DEF FP.add {
+    +
+}
+
+; Subtracts two fixed-point numbers
+; ( fp_a fp_b -- result )
+DEF FP.sub {
+    -
+}
+
+; Multiplies two fixed-point numbers
+; ( fp_a fp_b -- result )
+DEF FP.mul {
+    * SCALE_FACTOR //
+}
+
+; Divides two fixed-point numbers
+; ( fp_a fp_b -- result )
+DEF FP.div {
+    SWAP SCALE_FACTOR * SWAP //
+}
+
+; --- Output Functions ---
+
+; Prints a fixed-point number with a few decimal places.
+; ( fp -- )
+VALUE frac 0
+DEF FP.print {
+    ; Print integer part
+    DUP SCALE_FACTOR // TOS_nnl
+    
+    FP_DOT PRTchar
+
+    ; Get fractional part
+    SCALE_FACTOR % AS frac
+
+    ; --- Extract and print decimal digits one by one ---
+
+    ; 1st digit
+    frac 10 * AS frac
+    frac SCALE_FACTOR // TOS_nnl
+    frac SCALE_FACTOR % AS frac
+
+    ; 2nd digit
+    frac 10 * AS frac
+    frac SCALE_FACTOR // TOS_nnl
+    frac SCALE_FACTOR % AS frac
+
+    ; 3rd digit
+    frac 10 * AS frac
+    frac SCALE_FACTOR // TOS_nnl
+
+    return PRTchar
+
+}
+VALUE DIGITS 0
+DEF FP.print2 {
+    ; SCALE_FACTOR 10000000 == IF 6 AS DIGITS END
+    SCALE_FACTOR 1000 == IF 3 AS DIGITS END
+    ;SCALE_FACTOR  16 == IF 2 AS DIGITS END
+
+    ; Print integer part
+    DUP SCALE_FACTOR // TOS_nnl
+    
+    FP_DOT PRTchar
+
+    ; Get fractional part
+    SCALE_FACTOR % AS frac
+
+    ; --- Extract and print decimal digits one by one ---
+
+    DIGITS 3 == IF
+        ; 1st digit
+        frac 10 * AS frac
+        frac SCALE_FACTOR // TOS_nnl
+        frac SCALE_FACTOR % AS frac
+
+        ; 2nd digit
+        frac 10 * AS frac
+        frac SCALE_FACTOR // TOS_nnl
+        frac SCALE_FACTOR % AS frac
+
+        ; 3rd digit
+        frac 10 * AS frac
+        frac SCALE_FACTOR // TOS_nnl
+    END
+    DIGITS 2 == IF
+        ; 1st digit
+        frac 10 * AS frac
+        frac SCALE_FACTOR // TOS_nnl
+        frac SCALE_FACTOR % AS frac
+
+        ; 2nd digit
+        frac 10 * AS frac
+        frac SCALE_FACTOR // TOS_nnl
+    END
+
+
+    return PRTchar
+
+}
+
+
+; --- String to Fixed-Point Conversion Helpers ---
+
+; Private helper to convert a string of a given length to an integer
+; ( &str len -- num )
+VALUE __natoi_p 0
+VALUE __natoi_len 0
+VALUE __natoi_res 0
+DEF _STRNatoi {
+    AS __natoi_len
+    AS __natoi_p
+    0 AS __natoi_res
+    :loop_natoi
+        __natoi_len 0 == IF
+            __natoi_res
+            GOTO _natoi_end
+        END
+
+        *__natoi_p 48 - ; get digit value
+        __natoi_res 10 * + AS __natoi_res
+
+        __natoi_p 1+ AS __natoi_p
+        __natoi_len 1- AS __natoi_len
+        GOTO loop_natoi
+    :_natoi_end
+}
+
+
+; Converts a string like "12.34" to a fixed-point number.
+; ( &str -- fp )
+VALUE str_ptr 0
+VALUE dot_index 0
+VALUE dot_found 0
+VALUE int_part_fp 0
+VALUE frac_ptr 0
+VALUE frac_len 0
+VALUE total_len 0
+VALUE frac_as_int 0
+VALUE divisor 0
+DEF FP.from_string {
+    AS str_ptr
+
+    ; Find the decimal point
+    str_ptr FP_DOT STRfind AS dot_found AS dot_index
+
+    dot_found 0 == IF
+        ; No decimal point, treat as integer
+        str_ptr STRlen AS total_len
+        str_ptr total_len _STRNatoi
+        FP.from_int
+        GOTO _fp_from_string_end
+    END
+
+    ; --- Integer part ---
+    str_ptr dot_index _STRNatoi
+    FP.from_int AS int_part_fp
+
+    ; --- Fractional part ---
+    str_ptr dot_index + 1+ AS frac_ptr
+    
+    str_ptr STRlen AS total_len
+    total_len dot_index - 1- AS frac_len
+    
+    frac_ptr frac_len _STRNatoi AS frac_as_int
+
+    # 10 frac_len _MATHpow AS divisor
+    10 frac_len power AS divisor
+
+    ; frac_fp = (frac_as_int * SCALE_FACTOR) / divisor
+    frac_as_int SCALE_FACTOR * divisor //
+
+    ; result = int_part_fp + frac_part_fp
+    int_part_fp +
+
+    :_fp_from_string_end
+}

@@ -18,6 +18,11 @@
 . $_atoi_p 1
 . $_atoi_c 1
 . $_atoi_result 1
+. $_strlen_p 1
+. $_strlen_len 1
+. $_strfind_p 1
+. $_strfind_char 1
+. $_strfind_idx 1
 
 # .CODE
 
@@ -433,6 +438,96 @@
     jmp :atoi_end
 :atoi_end
     ret
+@STRlen
+    ustack A $DATASTACK_PTR
+    sto A $_strlen_p
+    ldi A 0
+    sto A $_strlen_len
+:strlen_loop
+    ldm I $_strlen_p
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :STRlen_if_end_5
+    jmp :strlen_end
+:STRlen_if_end_5
+    ldm A $_strlen_p
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_strlen_p
+    ldm A $_strlen_len
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_strlen_len
+    jmp :strlen_loop
+:strlen_end
+    ldm A $_strlen_len
+    stack A $DATASTACK_PTR
+    ret
+@STRfind
+    ustack A $DATASTACK_PTR
+    sto A $_strfind_char
+    ustack A $DATASTACK_PTR
+    sto A $_strfind_p
+    ldi A 0
+    sto A $_strfind_idx
+:strfind_loop
+    ldm I $_strfind_p
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    call @rt_dup
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :STRfind_if_end_6
+    call @rt_drop
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    jmp :strfind_end
+:STRfind_if_end_6
+    ldm A $_strfind_char
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :STRfind_if_end_7
+    ldm A $_strfind_idx
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    jmp :strfind_end
+:STRfind_if_end_7
+    ldm A $_strfind_p
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_strfind_p
+    ldm A $_strfind_idx
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_strfind_idx
+    jmp :strfind_loop
+:strfind_end
+    ret
 
 
 # .DATA
@@ -456,3 +551,8 @@
 % $_atoi_p 0
 % $_atoi_c 0
 % $_atoi_result 0
+% $_strlen_p 0
+% $_strlen_len 0
+% $_strfind_p 0
+% $_strfind_char 0
+% $_strfind_idx 0

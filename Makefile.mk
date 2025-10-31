@@ -124,7 +124,10 @@ $(LIB_OUT_DIR)/%.smod: $(LIB_SRC_DIR)/%.stacks
 
 # --- 5a. Explicit Library Dependencies ---
 # Make needs to be told when one library includes another.
-$(LIB_OUT_DIR)/parser_tools.smod: $(LIB_OUT_DIR)/std_stern_io.smod
+$(LIB_OUT_DIR)/parser_tools.smod:    $(LIB_OUT_DIR)/std_stern_io.smod
+$(LIB_OUT_DIR)/fixed_point_lib.smod: $(LIB_OUT_DIR)/std_stern_io.smod
+$(LIB_OUT_DIR)/fixed_point_lib.smod: $(LIB_OUT_DIR)/std_string.smod
+$(LIB_OUT_DIR)/fixed_point_lib.smod: $(LIB_OUT_DIR)/math_lib.smod
 
 # --- 6. Stacks Kernel Module Compilation ---
 $(INCL_DIR)/%.stacks.asm: $(KERNEL_STACKS_SRC_DIR)/%.stacks $(COMPILED_LIBS)

@@ -1,0 +1,226 @@
+{
+  "functions": [
+    "STRatoi",
+    "PRTcls",
+    "FP.div",
+    "FP.print",
+    "TOS_nnl",
+    "FP.add",
+    "READline",
+    "io_lib_init",
+    "STRfind",
+    "FP.sub",
+    "PRTstring",
+    "FP.print2",
+    "CURSORoff",
+    "STRcmp",
+    "FP.from_string",
+    "gcd",
+    "power",
+    "PRTchar",
+    "KEYchar",
+    "CURSORon",
+    "_STRNatoi",
+    "FP.from_int",
+    "FP.mul",
+    "STRlen",
+    "FP.to_int"
+  ],
+  "variables": [
+    {
+      "name": "_power_base",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_power_exp",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_power_res",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "p_syscall_status",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "p_syscall_value",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "input_buffer",
+      "type": "LIB_VAR",
+      "size": 80
+    },
+    {
+      "name": "p_input_buffer",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "input_buffer_index",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_strcmp_p1",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_strcmp_p2",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_strcmp_c1",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_strcmp_c2",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_atoi_s_ptr",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_atoi_p",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_atoi_c",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_atoi_result",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_strlen_p",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_strlen_len",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_strfind_p",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_strfind_char",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_strfind_idx",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "SCALE_FACTOR",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "FP_DOT_STR",
+      "type": "STRING",
+      "size": 2
+    },
+    {
+      "name": "frac",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "DIGITS",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "__natoi_p",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "__natoi_len",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "__natoi_res",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "str_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "dot_index",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "dot_found",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "int_part_fp",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "frac_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "frac_len",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "total_len",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "frac_as_int",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "divisor",
+      "type": "VALUE",
+      "size": 1
+    }
+  ],
+  "constants": {
+    "space": 32,
+    "backspace": 8,
+    "return": 13,
+    "newline": 10,
+    "null": 0,
+    "_ASCII_0": 48,
+    "_ASCII_9": 57,
+    "FP_DOT": 46
+  }
+}

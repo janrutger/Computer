@@ -1,1 +1,65 @@
-# start of an new program
+USE std_stern_io
+INCLUDE math_lib
+INCLUDE fixed_point_lib
+
+
+
+
+
+1 FP.from_int 
+"3" FP.from_string
+
+FP.div DUP PRINT
+
+DUP  FP.print "\n" PRTstring
+DUP  FP.print "\n" PRTstring
+# DUP 3 FP.print "\n" PRTstring
+# 4 FP.print "\n" PRTstring
+"\n" PRTstring
+DUP  FP.print2 "\n" PRTstring
+DUP  FP.print2 "\n" PRTstring
+
+
+3 FP.from_int FP.mul FP.print2 "\n" PRTstring
+
+
+
+
+# "10512" STRlen PRINT
+
+# "10.512" 46 STRfind PRINT PRINT
+# "\n" PRTstring
+
+
+# "Parsing 10 from 10.512: " PRTstring
+# "10.512" 2 _STRNatoi PRINT
+# "\n" PRTstring
+
+
+# "Testing 10^2: " PRTstring
+# 10 2 power PRINT
+# "\n" PRTstring
+
+# "Testing 10^3: " PRTstring
+# 10 3 power PRINT
+# "\n" PRTstring
+
+
+
+# "Testing FP.from_string with 12.75..." PRTstring
+# "\n" PRTstring
+# "Expected output: 12.750" PRTstring
+# "\n" PRTstring
+# "Actual output:   " PRTstring
+# "12.75" FP.from_string 2 FP.print
+# "\n" PRTstring
+
+# "\n" PRTstring
+
+# "Testing with an integer string 15..." PRTstring
+# "\n" PRTstring
+# "Expected output: 15.000" PRTstring
+# "\n" PRTstring
+# "Actual output:   " PRTstring
+# "15" FP.from_string 2 FP.print
+# "\n" PRTstring

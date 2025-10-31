@@ -1,7 +1,4 @@
 # .HEADER
-. $_power_base 1
-. $_power_exp 1
-. $_power_res 1
 . $SCALE_FACTOR 1
 . $FP_DOT_STR 2
 . $frac 1
@@ -18,112 +15,7 @@
 . $total_len 1
 . $frac_as_int 1
 . $divisor 1
-. $_main_str_0 2
-. $_main_str_1 2
-
-# .CODE
-    ldi A 1
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ldi A $_main_str_0
-    stack A $DATASTACK_PTR
-    call @FP.from_string
-    call @FP.div
-    call @rt_dup
-    call @rt_print_tos
-    call @rt_dup
-    call @FP.print
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    call @rt_dup
-    call @FP.print
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    call @rt_dup
-    call @FP.print2
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    call @rt_dup
-    call @FP.print2
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 3
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    call @FP.mul
-    call @FP.print2
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ret
-
 # .FUNCTIONS
-
-@gcd
-:gcd_while_start_0
-    call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_neq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :gcd_while_end_0
-    call @rt_swap
-    call @rt_over
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    dmod B A
-    stack A $DATASTACK_PTR
-    jmp :gcd_while_start_0
-:gcd_while_end_0
-    call @rt_drop
-    ret
-@power
-    ustack A $DATASTACK_PTR
-    sto A $_power_exp
-    ustack A $DATASTACK_PTR
-    sto A $_power_base
-    ldi A 1
-    sto A $_power_res
-:loop_POWER
-    ldm A $_power_exp
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :power_if_end_0
-    ldm A $_power_res
-    stack A $DATASTACK_PTR
-    jmp :_power_end
-:power_if_end_0
-    ldm A $_power_res
-    stack A $DATASTACK_PTR
-    ldm A $_power_base
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
-    sto A $_power_res
-    ldm A $_power_exp
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    sub B A
-    ld A B
-    sto A $_power_exp
-    jmp :loop_POWER
-:_power_end
-    ret
-
-
 @TOS_nnl
 
         ustack A $DATASTACK_PTR
@@ -523,13 +415,7 @@
 :_fp_from_string_end
     ret
 
-
 # .DATA
-
-% $_power_base 0
-% $_power_exp 0
-% $_power_res 0
-
 % $SCALE_FACTOR 10000000
 % $FP_DOT_STR \. \null
 % $frac 0
@@ -546,5 +432,3 @@
 % $total_len 0
 % $frac_as_int 0
 % $divisor 0
-% $_main_str_0 \3 \null
-% $_main_str_1 \Return \null

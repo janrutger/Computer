@@ -1,3 +1,7 @@
+# .HEADER
+. $_power_base 1
+. $_power_exp 1
+. $_power_res 1
 # .FUNCTIONS
 @gcd
 :gcd_while_start_0
@@ -18,3 +22,45 @@
 :gcd_while_end_0
     call @rt_drop
     ret
+@power
+    ustack A $DATASTACK_PTR
+    sto A $_power_exp
+    ustack A $DATASTACK_PTR
+    sto A $_power_base
+    ldi A 1
+    sto A $_power_res
+:loop_POWER
+    ldm A $_power_exp
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :power_if_end_0
+    ldm A $_power_res
+    stack A $DATASTACK_PTR
+    jmp :_power_end
+:power_if_end_0
+    ldm A $_power_res
+    stack A $DATASTACK_PTR
+    ldm A $_power_base
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    sto A $_power_res
+    ldm A $_power_exp
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $_power_exp
+    jmp :loop_POWER
+:_power_end
+    ret
+
+# .DATA
+% $_power_base 0
+% $_power_exp 0
+% $_power_res 0

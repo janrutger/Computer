@@ -112,3 +112,49 @@ DEF STRatoi {
     :atoi_end
         # Result is on the Data Stack
 }
+
+
+; --- STRLEN ---
+; Calculates the length of a null-terminated string.
+; ( &str -- len )
+VALUE _strlen_p 0
+VALUE _strlen_len 0
+DEF STRlen {
+    AS _strlen_p
+    0 AS _strlen_len
+    :strlen_loop
+        *_strlen_p 0 == IF
+            GOTO strlen_end
+        END
+        _strlen_p 1+ AS _strlen_p
+        _strlen_len 1+ AS _strlen_len
+        GOTO strlen_loop
+    :strlen_end
+        _strlen_len
+}
+
+; --- STRFIND ---
+; Finds the first occurrence of a character in a string.
+; ( &str char -- index success_flag )
+VALUE _strfind_p 0
+VALUE _strfind_char 0
+VALUE _strfind_idx 0
+DEF STRfind {
+    AS _strfind_char
+    AS _strfind_p
+    0 AS _strfind_idx
+    :strfind_loop
+        *_strfind_p DUP 0 == IF
+            DROP
+            0 0 ; Not found
+            GOTO strfind_end
+        END
+        _strfind_char == IF
+            _strfind_idx 1 ; Found
+            GOTO strfind_end
+        END
+        _strfind_p 1+ AS _strfind_p
+        _strfind_idx 1+ AS _strfind_idx
+        GOTO strfind_loop
+    :strfind_end
+}

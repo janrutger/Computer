@@ -6,3 +6,23 @@ DEF gcd {
 }
 
 
+; --- POWER ---
+; Calculates integer power.
+; ( base exp -- res )
+VALUE _power_base 0
+VALUE _power_exp 0
+VALUE _power_res 0
+DEF power {
+    AS _power_exp
+    AS _power_base
+    1 AS _power_res
+    :loop_POWER
+        _power_exp 0 == IF
+            _power_res
+            GOTO _power_end
+        END
+        _power_res _power_base * AS _power_res
+        _power_exp 1- AS _power_exp
+        GOTO loop_POWER
+    :_power_end
+}
