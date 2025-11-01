@@ -3,17 +3,21 @@ USE std_stern_io
 USE std_string
 
 
-; A simple 8.8 fixed-point math library for the Stern-XT
-; A fixed-point number is a 16-bit integer where the top 8 bits
-; represent the whole number part and the bottom 8 bits represent
+; A simple fixed-point math library for the Stern-XT
+; A fixed-point number is an integer where the top (left) digits
+; represent the whole number part and the bottom (right) digits  represent
 ; the fractional part.
 
-#VALUE SCALE_FACTOR 256 ; 2^8  8.8 fixed-point scale factor
-; VALUE SCALE_FACTOR 10000000 
-VALUE SCALE_FACTOR  1000 ;.4 fixed-point scale factor
+;VALUE SCALE_FACTOR 10000000 
+VALUE SCALE_FACTOR  1000 ;.default 3 fixed-point scale factor
 
 CONST FP_DOT 46     ; the assci value for a single .
 STRING FP_DOT_STR "."
+
+DEF FP.set_scale {
+    AS SCALE_FACTOR
+}
+
 
 # print TOS and no neweline
 DEF TOS_nnl {
@@ -70,10 +74,10 @@ DEF FP.div {
 
 ; --- Output Functions ---
 
-; Prints a fixed-point number with a few decimal places.
+; Prints a fixed-point number with a few decimal places (3 digits).
 ; ( fp -- )
-VALUE frac 0
 DEF FP.print {
+    VALUE frac 0 ; Local variable
     ; Print integer part
     DUP SCALE_FACTOR // TOS_nnl
     
@@ -98,14 +102,32 @@ DEF FP.print {
     frac 10 * AS frac
     frac SCALE_FACTOR // TOS_nnl
 
-    return PRTchar
-
 }
-VALUE DIGITS 0
-DEF FP.print2 {
-    ; SCALE_FACTOR 10000000 == IF 6 AS DIGITS END
-    SCALE_FACTOR 1000 == IF 3 AS DIGITS END
-    ;SCALE_FACTOR  16 == IF 2 AS DIGITS END
+
+; Prints a fixed-point number with a specified number of decimal places,
+; capped by the maximum meaningful digits for the current SCALE_FACTOR.
+; ( fp num_digits -- )
+VALUE num_digits 0
+VALUE MAX_VALID_DIGITS 0 ; variable for max possible digits
+;VALUE frac 0 
+VALUE temp_scale 1 
+DEF FP.fprint {
+    AS num_digits ; Get desired number of digits from stack
+
+    ; Calculate MAX_VALID_DIGITS dynamically
+    0 AS MAX_VALID_DIGITS
+    1 AS temp_scale
+    :loop_calc_valid_digits
+        temp_scale SCALE_FACTOR < IF
+            temp_scale 10 * AS temp_scale
+            MAX_VALID_DIGITS 1+ AS MAX_VALID_DIGITS
+            GOTO loop_calc_valid_digits
+        END
+
+    ; Cap num_digits to MAX_VALID_DIGITS
+    num_digits MAX_VALID_DIGITS > IF
+        MAX_VALID_DIGITS AS num_digits
+    END
 
     ; Print integer part
     DUP SCALE_FACTOR // TOS_nnl
@@ -116,36 +138,15 @@ DEF FP.print2 {
     SCALE_FACTOR % AS frac
 
     ; --- Extract and print decimal digits one by one ---
+    :loop_print_digits
+        num_digits 0 > IF
+            frac 10 * AS frac
+            frac SCALE_FACTOR // TOS_nnl
+            frac SCALE_FACTOR % AS frac
 
-    DIGITS 3 == IF
-        ; 1st digit
-        frac 10 * AS frac
-        frac SCALE_FACTOR // TOS_nnl
-        frac SCALE_FACTOR % AS frac
-
-        ; 2nd digit
-        frac 10 * AS frac
-        frac SCALE_FACTOR // TOS_nnl
-        frac SCALE_FACTOR % AS frac
-
-        ; 3rd digit
-        frac 10 * AS frac
-        frac SCALE_FACTOR // TOS_nnl
-    END
-    DIGITS 2 == IF
-        ; 1st digit
-        frac 10 * AS frac
-        frac SCALE_FACTOR // TOS_nnl
-        frac SCALE_FACTOR % AS frac
-
-        ; 2nd digit
-        frac 10 * AS frac
-        frac SCALE_FACTOR // TOS_nnl
-    END
-
-
-    return PRTchar
-
+            num_digits 1- AS num_digits
+            GOTO loop_print_digits
+        END
 }
 
 

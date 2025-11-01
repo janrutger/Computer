@@ -5,7 +5,9 @@
 . $SCALE_FACTOR 1
 . $FP_DOT_STR 2
 . $frac 1
-. $DIGITS 1
+. $num_digits 1
+. $MAX_VALID_DIGITS 1
+. $temp_scale 1
 . $__natoi_p 1
 . $__natoi_len 1
 . $__natoi_res 1
@@ -18,8 +20,20 @@
 . $total_len 1
 . $frac_as_int 1
 . $divisor 1
-. $_main_str_0 2
+. $_main_str_0 5
 . $_main_str_1 2
+. $_main_str_2 6
+. $_main_str_3 7
+. $_main_str_4 25
+. $_main_str_5 15
+. $_main_str_6 15
+. $_main_str_7 37
+. $_main_str_8 24
+. $_main_str_9 18
+. $_main_str_10 6
+. $_main_str_11 37
+. $_main_str_12 24
+. $_main_str_13 3
 
 # .CODE
     ldi A 1
@@ -45,20 +59,127 @@
     stack A $DATASTACK_PTR
     call @PRTstring
     call @rt_dup
-    call @FP.print2
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @FP.fprint
     ldi A $_main_str_1
     stack A $DATASTACK_PTR
     call @PRTstring
     call @rt_dup
-    call @FP.print2
+    ldi A 3
+    stack A $DATASTACK_PTR
+    call @FP.fprint
     ldi A $_main_str_1
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 3
+    ldi A 4
     stack A $DATASTACK_PTR
     call @FP.from_int
     call @FP.mul
-    call @FP.print2
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @FP.fprint
+    ldi A $_main_str_1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_2
+    stack A $DATASTACK_PTR
+    call @STRlen
+    call @rt_print_tos
+    ldi A $_main_str_3
+    stack A $DATASTACK_PTR
+    ldi A 46
+    stack A $DATASTACK_PTR
+    call @STRfind
+    call @rt_print_tos
+    call @rt_print_tos
+    ldi A $_main_str_1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_4
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_3
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @_STRNatoi
+    call @rt_print_tos
+    ldi A $_main_str_1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_5
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @power
+    call @rt_print_tos
+    ldi A $_main_str_1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_6
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    call @power
+    call @rt_print_tos
+    ldi A $_main_str_1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_7
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_8
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_9
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_10
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @FP.fprint
+    ldi A $_main_str_1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_11
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_12
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_9
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_13
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @FP.fprint
     ldi A $_main_str_1
     stack A $DATASTACK_PTR
     call @PRTstring
@@ -241,22 +362,50 @@
     dmod B A
     stack B $DATASTACK_PTR
     call @TOS_nnl
-    ldi A 13
-    stack A $DATASTACK_PTR
-    call @PRTchar
     ret
-@FP.print2
+@FP.fprint
+    ustack A $DATASTACK_PTR
+    sto A $num_digits
+    ldi A 0
+    sto A $MAX_VALID_DIGITS
+    ldi A 1
+    sto A $temp_scale
+:loop_calc_valid_digits
+    ldm A $temp_scale
+    stack A $DATASTACK_PTR
     ldm A $SCALE_FACTOR
     stack A $DATASTACK_PTR
-    ldi A 1000
-    stack A $DATASTACK_PTR
-    call @rt_eq
+    call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.print2_if_end_0
-    ldi A 3
-    sto A $DIGITS
-:FP.print2_if_end_0
+    jmpt :FP.fprint_if_end_0
+    ldm A $temp_scale
+    stack A $DATASTACK_PTR
+    ldi A 10
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    sto A $temp_scale
+    ldm A $MAX_VALID_DIGITS
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $MAX_VALID_DIGITS
+    jmp :loop_calc_valid_digits
+:FP.fprint_if_end_0
+    ldm A $num_digits
+    stack A $DATASTACK_PTR
+    ldm A $MAX_VALID_DIGITS
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :FP.fprint_if_end_1
+    ldm A $MAX_VALID_DIGITS
+    sto A $num_digits
+:FP.fprint_if_end_1
     call @rt_dup
     ldm A $SCALE_FACTOR
     ustack B $DATASTACK_PTR
@@ -270,14 +419,15 @@
     ustack B $DATASTACK_PTR
     dmod B A
     sto A $frac
-    ldm A $DIGITS
+:loop_print_digits
+    ldm A $num_digits
     stack A $DATASTACK_PTR
-    ldi A 3
+    ldi A 0
     stack A $DATASTACK_PTR
-    call @rt_eq
+    call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.print2_if_end_1
+    jmpt :FP.fprint_if_end_2
     ldm A $frac
     stack A $DATASTACK_PTR
     ldi A 10
@@ -297,80 +447,15 @@
     ustack B $DATASTACK_PTR
     dmod B A
     sto A $frac
+    ldm A $num_digits
     stack A $DATASTACK_PTR
-    ldi A 10
+    ldi A 1
     ustack B $DATASTACK_PTR
-    mul B A
+    sub B A
     ld A B
-    sto A $frac
-    stack A $DATASTACK_PTR
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    dmod B A
-    stack B $DATASTACK_PTR
-    call @TOS_nnl
-    ldm A $frac
-    stack A $DATASTACK_PTR
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    dmod B A
-    sto A $frac
-    stack A $DATASTACK_PTR
-    ldi A 10
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
-    sto A $frac
-    stack A $DATASTACK_PTR
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    dmod B A
-    stack B $DATASTACK_PTR
-    call @TOS_nnl
-:FP.print2_if_end_1
-    ldm A $DIGITS
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :FP.print2_if_end_2
-    ldm A $frac
-    stack A $DATASTACK_PTR
-    ldi A 10
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
-    sto A $frac
-    stack A $DATASTACK_PTR
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    dmod B A
-    stack B $DATASTACK_PTR
-    call @TOS_nnl
-    ldm A $frac
-    stack A $DATASTACK_PTR
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    dmod B A
-    sto A $frac
-    stack A $DATASTACK_PTR
-    ldi A 10
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
-    sto A $frac
-    stack A $DATASTACK_PTR
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    dmod B A
-    stack B $DATASTACK_PTR
-    call @TOS_nnl
-:FP.print2_if_end_2
-    ldi A 13
-    stack A $DATASTACK_PTR
-    call @PRTchar
+    sto A $num_digits
+    jmp :loop_print_digits
+:FP.fprint_if_end_2
     ret
 @_STRNatoi
     ustack A $DATASTACK_PTR
@@ -533,7 +618,9 @@
 % $SCALE_FACTOR 10000000
 % $FP_DOT_STR \. \null
 % $frac 0
-% $DIGITS 0
+% $num_digits 0
+% $MAX_VALID_DIGITS 0
+% $temp_scale 1
 % $__natoi_p 0
 % $__natoi_len 0
 % $__natoi_res 0
@@ -546,5 +633,17 @@
 % $total_len 0
 % $frac_as_int 0
 % $divisor 0
-% $_main_str_0 \3 \null
+% $_main_str_0 \3 \. \1 \4 \null
 % $_main_str_1 \Return \null
+% $_main_str_2 \1 \0 \5 \1 \2 \null
+% $_main_str_3 \1 \0 \. \5 \1 \2 \null
+% $_main_str_4 \P \a \r \s \i \n \g \space \1 \0 \space \f \r \o \m \space \1 \0 \. \5 \1 \2 \: \space \null
+% $_main_str_5 \T \e \s \t \i \n \g \space \1 \0 \^ \2 \: \space \null
+% $_main_str_6 \T \e \s \t \i \n \g \space \1 \0 \^ \3 \: \space \null
+% $_main_str_7 \T \e \s \t \i \n \g \space \F \P \. \f \r \o \m \_ \s \t \r \i \n \g \space \w \i \t \h \space \1 \2 \. \7 \5 \. \. \. \null
+% $_main_str_8 \E \x \p \e \c \t \e \d \space \o \u \t \p \u \t \: \space \1 \2 \. \7 \5 \0 \null
+% $_main_str_9 \A \c \t \u \a \l \space \o \u \t \p \u \t \: \space \space \space \null
+% $_main_str_10 \1 \2 \. \7 \5 \null
+% $_main_str_11 \T \e \s \t \i \n \g \space \w \i \t \h \space \a \n \space \i \n \t \e \g \e \r \space \s \t \r \i \n \g \space \1 \5 \. \. \. \null
+% $_main_str_12 \E \x \p \e \c \t \e \d \space \o \u \t \p \u \t \: \space \1 \5 \. \0 \0 \0 \null
+% $_main_str_13 \1 \5 \null

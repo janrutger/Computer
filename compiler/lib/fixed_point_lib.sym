@@ -1,30 +1,30 @@
 {
   "functions": [
-    "STRatoi",
-    "PRTcls",
-    "FP.div",
-    "FP.print",
-    "TOS_nnl",
-    "FP.add",
-    "READline",
     "io_lib_init",
+    "STRcmp",
+    "FP.mul",
+    "PRTstring",
+    "TOS_nnl",
+    "PRTcls",
+    "_STRNatoi",
+    "FP.div",
+    "FP.to_int",
+    "PRTchar",
+    "CURSORon",
+    "STRlen",
+    "power",
     "STRfind",
     "FP.sub",
-    "PRTstring",
-    "FP.print2",
-    "CURSORoff",
-    "STRcmp",
-    "FP.from_string",
     "gcd",
-    "power",
-    "PRTchar",
+    "STRatoi",
+    "READline",
     "KEYchar",
-    "CURSORon",
-    "_STRNatoi",
+    "FP.fprint",
+    "FP.from_string",
     "FP.from_int",
-    "FP.mul",
-    "STRlen",
-    "FP.to_int"
+    "FP.print",
+    "FP.add",
+    "CURSORoff"
   ],
   "variables": [
     {
@@ -148,7 +148,17 @@
       "size": 1
     },
     {
-      "name": "DIGITS",
+      "name": "num_digits",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "MAX_VALID_DIGITS",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "temp_scale",
       "type": "VALUE",
       "size": 1
     },
