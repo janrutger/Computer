@@ -99,3 +99,21 @@ red TURTLE.color
 
 # 4. Finalize drawing
 TURTLE.flip
+
+green TURTLE.color
+30 30 TURTLE.goto       # Adjusted starting position for better visibility
+
+# 3. Push the starting level onto our manual stack and start the recursion
+3 stack_push draw_koch
+
+# 4. Finalize drawing
+TURTLE.flip
+
+blue TURTLE.color
+30 30 TURTLE.goto       # Adjusted starting position for better visibility
+
+# 3. Push the starting level onto our manual stack and start the recursion
+2 stack_push draw_koch
+
+# 4. Finalize drawing
+TURTLE.flip

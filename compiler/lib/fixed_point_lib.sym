@@ -1,30 +1,33 @@
 {
   "functions": [
-    "io_lib_init",
-    "STRcmp",
-    "FP.mul",
-    "PRTstring",
     "TOS_nnl",
-    "PRTcls",
-    "_STRNatoi",
-    "FP.div",
-    "FP.to_int",
-    "PRTchar",
-    "CURSORon",
-    "STRlen",
-    "power",
-    "STRfind",
-    "FP.sub",
     "gcd",
-    "STRatoi",
-    "READline",
-    "KEYchar",
-    "FP.fprint",
-    "FP.from_string",
-    "FP.from_int",
-    "FP.print",
+    "FP.to_int",
     "FP.add",
-    "CURSORoff"
+    "READline",
+    "FP.fprint",
+    "io_lib_init",
+    "FP.from_int",
+    "negate",
+    "abs",
+    "STRatoi",
+    "FP.div",
+    "KEYchar",
+    "CURSORoff",
+    "CURSORon",
+    "power",
+    "FP.mul",
+    "_STRNatoi",
+    "STRfind",
+    "PRTcls",
+    "FP.from_string",
+    "PRTchar",
+    "STRlen",
+    "PRTstring",
+    "FP.set_scale",
+    "FP.sub",
+    "FP.print",
+    "STRcmp"
   ],
   "variables": [
     {
@@ -143,6 +146,36 @@
       "size": 2
     },
     {
+      "name": "fp_b",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "fp_a",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "result_sign",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "abs_numerator",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "abs_denominator",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "raw_result",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
       "name": "frac",
       "type": "VALUE",
       "size": 1
@@ -219,6 +252,11 @@
     },
     {
       "name": "divisor",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "sign",
       "type": "VALUE",
       "size": 1
     }

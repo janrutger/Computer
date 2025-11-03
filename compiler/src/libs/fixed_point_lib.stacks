@@ -63,13 +63,48 @@ DEF FP.sub {
 ; Multiplies two fixed-point numbers
 ; ( fp_a fp_b -- result )
 DEF FP.mul {
-    * SCALE_FACTOR //
+    * DUP 0 < IF
+        SCALE_FACTOR 2 // -
+    ELSE
+        SCALE_FACTOR 2 // +
+    END
+    SCALE_FACTOR //
 }
 
 ; Divides two fixed-point numbers
 ; ( fp_a fp_b -- result )
 DEF FP.div {
-    SWAP SCALE_FACTOR * SWAP //
+    # SWAP SCALE_FACTOR * SWAP //
+
+    VALUE fp_b 0
+    VALUE fp_a 0
+    VALUE result_sign 1 ; 1 for positive, -1 for negative
+    VALUE abs_numerator 0
+    VALUE abs_denominator 0
+    VALUE raw_result 0
+
+    1 AS result_sign    ; default positive
+ 
+    AS fp_b ; Stack: [fp_a]
+    AS fp_a ; Stack: []
+
+    ; Determine result sign
+    fp_a 0 < IF result_sign 1 negate * AS result_sign END
+    fp_b 0 < IF result_sign 1 negate * AS result_sign END
+
+    ; Take absolute values
+    fp_a abs AS abs_numerator
+    fp_b abs AS abs_denominator
+
+    # ; Perform division on absolute values
+    # abs_numerator SCALE_FACTOR * AS abs_numerator ; This is the numerator for the division
+    # abs_numerator abs_denominator // AS raw_result
+
+    # ; Apply sign
+    # raw_result result_sign *
+
+    abs_numerator SCALE_FACTOR * abs_denominator // result_sign *
+
 }
 
 ; --- Output Functions ---
@@ -79,6 +114,11 @@ DEF FP.div {
 DEF FP.print {
     VALUE frac 0 ; Local variable
     ; Print integer part
+    DUP 0 < IF
+        45 PRTchar
+        negate
+    END
+
     DUP SCALE_FACTOR // TOS_nnl
     
     FP_DOT PRTchar
@@ -113,6 +153,11 @@ VALUE MAX_VALID_DIGITS 0 ; variable for max possible digits
 VALUE temp_scale 1 
 DEF FP.fprint {
     AS num_digits ; Get desired number of digits from stack
+
+    DUP 0 < IF
+        45 PRTchar
+        negate
+    END
 
     ; Calculate MAX_VALID_DIGITS dynamically
     0 AS MAX_VALID_DIGITS
@@ -191,6 +236,15 @@ VALUE divisor 0
 DEF FP.from_string {
     AS str_ptr
 
+    VALUE sign 1
+    1 AS sign
+
+    ; Handle negative sign
+    *str_ptr 45 == IF
+        1 negate AS sign
+        str_ptr 1+ AS str_ptr
+    END
+
     ; Find the decimal point
     str_ptr FP_DOT STRfind AS dot_found AS dot_index
 
@@ -199,6 +253,7 @@ DEF FP.from_string {
         str_ptr STRlen AS total_len
         str_ptr total_len _STRNatoi
         FP.from_int
+        sign * ; Apply sign
         GOTO _fp_from_string_end
     END
 
@@ -214,7 +269,6 @@ DEF FP.from_string {
     
     frac_ptr frac_len _STRNatoi AS frac_as_int
 
-    # 10 frac_len _MATHpow AS divisor
     10 frac_len power AS divisor
 
     ; frac_fp = (frac_as_int * SCALE_FACTOR) / divisor
@@ -222,6 +276,8 @@ DEF FP.from_string {
 
     ; result = int_part_fp + frac_part_fp
     int_part_fp +
+
+    sign * ; Apply sign
 
     :_fp_from_string_end
 }

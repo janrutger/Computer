@@ -234,5 +234,5 @@ DEF rt_rnd {
     VALUE random_seed 54321
     
     random_seed rand_a * rand_c + rand_m % AS random_seed
-    random_seed 1000 % 
+    random_seed 10000 % 
 }

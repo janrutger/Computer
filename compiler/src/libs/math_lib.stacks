@@ -26,3 +26,19 @@ DEF power {
         GOTO loop_POWER
     :_power_end
 }
+
+; --- NEGATE ---
+; negate TOS
+; ( val -- res )
+DEF negate {
+    0 SWAP -
+}
+
+; --- ABS ---
+; absolute value of TOS
+; ( val -- res )
+DEF abs {
+    DUP 0 < IF
+        negate
+    END
+}

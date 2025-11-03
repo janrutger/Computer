@@ -1,9 +1,48 @@
 # .HEADER
+. $current_char 1
+. $current_mode 1
+. $current_color 1
+. $current_width 1
+. $current_height 1
+. $current_flip 1
+. $Xax 1
+. $Yax 1
+. $degrees 1
+. $TURTLE_HEADING_DEG 1
+. $TURTLE_HEADING 1
+. $degrees_to_turn 1
+. $dx 1
+. $dy 1
+. $distance 1
+. $temp_ptr 1
+. $msg 22
+. $i_turtle 1
+. $char 1
+. $p_char 1
+. $x1 1
+. $y1 1
+. $x2 1
+. $y2 1
+. $sx 1
+. $sy 1
+. $err 1
+. $e2 1
+. $circ_xc 1
+. $circ_yc 1
+. $circ_x 1
+. $circ_y 1
+. $circ_p 1
 . $_power_base 1
 . $_power_exp 1
 . $_power_res 1
 . $SCALE_FACTOR 1
 . $FP_DOT_STR 2
+. $fp_b 1
+. $fp_a 1
+. $result_sign 1
+. $abs_numerator 1
+. $abs_denominator 1
+. $raw_result 1
 . $frac 1
 . $num_digits 1
 . $MAX_VALID_DIGITS 1
@@ -20,172 +59,861 @@
 . $total_len 1
 . $frac_as_int 1
 . $divisor 1
-. $_main_str_0 5
-. $_main_str_1 2
-. $_main_str_2 6
-. $_main_str_3 7
-. $_main_str_4 25
-. $_main_str_5 15
-. $_main_str_6 15
-. $_main_str_7 37
-. $_main_str_8 24
-. $_main_str_9 18
-. $_main_str_10 6
-. $_main_str_11 37
-. $_main_str_12 24
-. $_main_str_13 3
+. $sign 1
+. $A1 1
+. $B1 1
+. $C1 1
+. $D1 1
+. $E1 1
+. $F1 1
+. $A2 1
+. $B2 1
+. $C2 1
+. $D2 1
+. $E2 1
+. $F2 1
+. $A3 1
+. $B3 1
+. $C3 1
+. $D3 1
+. $E3 1
+. $F3 1
+. $A4 1
+. $B4 1
+. $C4 1
+. $D4 1
+. $E4 1
+. $F4 1
+. $P1_THRESHOLD 1
+. $P2_THRESHOLD 1
+. $P3_THRESHOLD 1
+. $current_x 1
+. $current_y 1
+. $thisy 1
+. $thisx 1
+. $MAIN_LOOP_str_0 4
+. $MAIN_LOOP_str_1 5
+. $MAIN_LOOP_str_2 5
+. $MAIN_LOOP_str_3 5
+. $MAIN_LOOP_str_4 6
+. $MAIN_LOOP_str_5 4
+. $MAIN_LOOP_str_6 5
+. $MAIN_LOOP_str_7 6
+. $MAIN_LOOP_str_8 5
+. $MAIN_LOOP_str_9 5
+. $MAIN_LOOP_str_10 6
+. $MAIN_LOOP_str_11 5
+. $MAIN_LOOP_str_12 5
+. $MAIN_LOOP_str_13 5
+. $MAIN_LOOP_str_14 5
+. $ITERATIONS 1
+. $i 1
+. $random_val 1
+. $temp_x 1
+. $DEBUG_SCALE 1
+. $X_OFFSET 1
+. $Y_OFFSET 1
+. $mapped_x 1
+. $mapped_y 1
 
 # .CODE
-    ldi A 1
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ldi A $_main_str_0
-    stack A $DATASTACK_PTR
-    call @FP.from_string
-    call @FP.div
-    call @rt_dup
-    call @rt_print_tos
-    call @rt_dup
-    call @FP.print
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    call @rt_dup
-    call @FP.print
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    call @rt_dup
-    ldi A 2
-    stack A $DATASTACK_PTR
-    call @FP.fprint
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    call @rt_dup
-    ldi A 3
-    stack A $DATASTACK_PTR
-    call @FP.fprint
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 4
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    call @FP.mul
-    ldi A 15
-    stack A $DATASTACK_PTR
-    call @FP.fprint
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_2
-    stack A $DATASTACK_PTR
-    call @STRlen
-    call @rt_print_tos
-    ldi A $_main_str_3
-    stack A $DATASTACK_PTR
-    ldi A 46
-    stack A $DATASTACK_PTR
-    call @STRfind
-    call @rt_print_tos
-    call @rt_print_tos
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_4
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_3
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    call @_STRNatoi
-    call @rt_print_tos
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_5
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 10
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    call @power
-    call @rt_print_tos
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_6
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 10
-    stack A $DATASTACK_PTR
-    ldi A 3
-    stack A $DATASTACK_PTR
-    call @power
-    call @rt_print_tos
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_7
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_8
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_9
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_10
-    stack A $DATASTACK_PTR
-    call @FP.from_string
-    ldi A 2
-    stack A $DATASTACK_PTR
-    call @FP.fprint
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_11
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_12
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_9
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_13
-    stack A $DATASTACK_PTR
-    call @FP.from_string
-    ldi A 2
-    stack A $DATASTACK_PTR
-    call @FP.fprint
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
+    call @MAIN_LOOP
     ret
 
 # .FUNCTIONS
+
+@_drawTurtle
+    ldm A $current_mode
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_drawTurtle_if_else_0
+    ldm A $current_color
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    jmp :_drawTurtle_if_end_0
+:_drawTurtle_if_else_0
+    ldm A $current_char
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+:_drawTurtle_if_end_0
+    ret
+@TURTLE.mode
+    call @rt_dup
+    ustack A $DATASTACK_PTR
+    sto A $current_mode
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 14
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $current_mode
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.mode_if_end_1
+    ldi A 0
+    sto A $current_flip
+:TURTLE.mode_if_end_1
+    ldm A $current_mode
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.mode_if_end_2
+    ldi A 0
+    sto A $current_flip
+:TURTLE.mode_if_end_2
+    ldm A $current_mode
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.mode_if_end_3
+    ldi A 0
+    sto A $current_mode
+    ldi A 1
+    sto A $current_flip
+:TURTLE.mode_if_end_3
+    ldm A $current_mode
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.mode_if_end_4
+    ldi A 1
+    sto A $current_mode
+    ldi A 1
+    sto A $current_flip
+:TURTLE.mode_if_end_4
+    ldm A $current_mode
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.mode_if_else_5
+    ldi A 480
+    sto A $current_height
+    ldi A 640
+    sto A $current_width
+    jmp :TURTLE.mode_if_end_5
+:TURTLE.mode_if_else_5
+    ldi A 60
+    sto A $current_height
+    ldi A 80
+    sto A $current_width
+:TURTLE.mode_if_end_5
+    ret
+@TURTLE.flip
+    ldm A $current_flip
+    tst A 0
+    jmpt :TURTLE.flip_if_end_6
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 18
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+:TURTLE.flip_if_end_6
+    ret
+@TURTLE.right
+    ustack A $DATASTACK_PTR
+    sto A $degrees_to_turn
+    ldm A $TURTLE_HEADING_DEG
+    stack A $DATASTACK_PTR
+    ldm A $degrees_to_turn
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 360
+    ustack B $DATASTACK_PTR
+    dmod B A
+    sto A $TURTLE_HEADING_DEG
+    ret
+@TURTLE.left
+    ustack A $DATASTACK_PTR
+    sto A $degrees_to_turn
+    ldi A 360
+    stack A $DATASTACK_PTR
+    ldm A $TURTLE_HEADING_DEG
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $degrees_to_turn
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldi A 360
+    ustack B $DATASTACK_PTR
+    dmod B A
+    sto A $TURTLE_HEADING_DEG
+    ret
+@TURTLE.color
+    call @rt_dup
+    ustack A $DATASTACK_PTR
+    sto A $current_color
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ret
+@TURTLE.goto
+    ldm A $current_height
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
+    call @rt_dup
+    ustack A $DATASTACK_PTR
+    sto A $Yax
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 16
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $current_width
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
+    call @rt_dup
+    ustack A $DATASTACK_PTR
+    sto A $Xax
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    call @_drawTurtle
+    ret
+@TURTLE.forward
+    ustack A $DATASTACK_PTR
+    sto A $distance
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.forward_if_end_7
+    jmp :move_end
+:TURTLE.forward_if_end_7
+    ldm A $TURTLE_HEADING_DEG
+    stack A $DATASTACK_PTR
+    ldi A 22
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 45
+    ustack B $DATASTACK_PTR
+    dmod B A
+    ld A B
+    sto A $TURTLE_HEADING
+    ldi A $TURTLE_DX
+    stack A $DATASTACK_PTR
+    ldm A $TURTLE_HEADING
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $temp_ptr
+    ldm I $temp_ptr
+    ldx A $_start_memory_
+    sto A $dx
+    ldi A $TURTLE_DY
+    stack A $DATASTACK_PTR
+    ldm A $TURTLE_HEADING
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $temp_ptr
+    ldm I $temp_ptr
+    ldx A $_start_memory_
+    sto A $dy
+:move_loop
+    ldm A $distance
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.forward_if_end_8
+    jmp :move_end
+:TURTLE.forward_if_end_8
+    ldm A $Xax
+    stack A $DATASTACK_PTR
+    ldm A $dx
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $Xax
+    ldm A $Yax
+    stack A $DATASTACK_PTR
+    ldm A $dy
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $Yax
+    ldm A $Xax
+    stack A $DATASTACK_PTR
+    ldm A $Yax
+    stack A $DATASTACK_PTR
+    call @TURTLE.goto
+    ldm A $distance
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $distance
+    jmp :move_loop
+:move_end
+    ret
+@_welcome_at_turtle
+    ldi A 30
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 16
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+:welcome_loop
+    ldi A $msg
+    stack A $DATASTACK_PTR
+    ldm A $i_turtle
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $p_char
+    ldm I $p_char
+    ldx A $_start_memory_
+    sto A $char
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_welcome_at_turtle_if_end_9
+    jmp :welcome_end
+:_welcome_at_turtle_if_end_9
+    ldm A $char
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 30
+    stack A $DATASTACK_PTR
+    ldm A $i_turtle
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $i_turtle
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $i_turtle
+    jmp :welcome_loop
+:welcome_end
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 18
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ret
+@TURTLE.start
+
+    . $TURTLE_DX 8
+    % $TURTLE_DX  1  1  0 -1 -1 -1  0  1
+    . $TURTLE_DY 8
+    % $TURTLE_DY  0  1  1  1  0 -1 -1 -1
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $current_mode
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 14
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $current_color
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    call @_welcome_at_turtle
+    ret
+@TURTLE.line
+    ustack A $DATASTACK_PTR
+    sto A $y2
+    ustack A $DATASTACK_PTR
+    sto A $x2
+    ustack A $DATASTACK_PTR
+    sto A $y1
+    ustack A $DATASTACK_PTR
+    sto A $x1
+    ldm A $x2
+    stack A $DATASTACK_PTR
+    ldm A $x1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $dx
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.line_if_end_10
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $dx
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    sto A $dx
+:TURTLE.line_if_end_10
+    ldm A $y2
+    stack A $DATASTACK_PTR
+    ldm A $y1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $dy
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.line_if_end_11
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $dy
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    sto A $dy
+:TURTLE.line_if_end_11
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $sx
+    ldm A $x1
+    stack A $DATASTACK_PTR
+    ldm A $x2
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.line_if_end_12
+    ldi A 1
+    sto A $sx
+:TURTLE.line_if_end_12
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $sy
+    ldm A $y1
+    stack A $DATASTACK_PTR
+    ldm A $y2
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.line_if_end_13
+    ldi A 1
+    sto A $sy
+:TURTLE.line_if_end_13
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $dy
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    sto A $dy
+    ldm A $dx
+    stack A $DATASTACK_PTR
+    ldm A $dy
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $err
+:line_loop
+    ldm A $x1
+    stack A $DATASTACK_PTR
+    ldm A $y1
+    stack A $DATASTACK_PTR
+    call @TURTLE.goto
+    ldm A $x1
+    stack A $DATASTACK_PTR
+    ldm A $x2
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.line_if_end_14
+    ldm A $y1
+    stack A $DATASTACK_PTR
+    ldm A $y2
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.line_if_end_15
+    jmp :line_end
+:TURTLE.line_if_end_15
+:TURTLE.line_if_end_14
+    ldm A $err
+    stack A $DATASTACK_PTR
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    sto A $e2
+    stack A $DATASTACK_PTR
+    ldm A $dy
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.line_if_end_16
+    jmp :skip_x_move
+:TURTLE.line_if_end_16
+    ldm A $err
+    stack A $DATASTACK_PTR
+    ldm A $dy
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $err
+    ldm A $x1
+    stack A $DATASTACK_PTR
+    ldm A $sx
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $x1
+:skip_x_move
+    ldm A $e2
+    stack A $DATASTACK_PTR
+    ldm A $dx
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.line_if_end_17
+    jmp :skip_y_move
+:TURTLE.line_if_end_17
+    ldm A $err
+    stack A $DATASTACK_PTR
+    ldm A $dx
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $err
+    ldm A $y1
+    stack A $DATASTACK_PTR
+    ldm A $sy
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $y1
+:skip_y_move
+    jmp :line_loop
+:line_end
+    ldm A $x2
+    sto A $Xax
+    ldm A $y2
+    sto A $Yax
+    ret
+@_plot_circle_points
+    ustack A $DATASTACK_PTR
+    sto A $circ_y
+    ustack A $DATASTACK_PTR
+    sto A $circ_x
+    ldm A $circ_xc
+    stack A $DATASTACK_PTR
+    ldm A $circ_x
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $circ_yc
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.goto
+    ldm A $circ_xc
+    stack A $DATASTACK_PTR
+    ldm A $circ_x
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $circ_yc
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.goto
+    ldm A $circ_xc
+    stack A $DATASTACK_PTR
+    ldm A $circ_x
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $circ_yc
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.goto
+    ldm A $circ_xc
+    stack A $DATASTACK_PTR
+    ldm A $circ_x
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $circ_yc
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.goto
+    ldm A $circ_xc
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $circ_yc
+    stack A $DATASTACK_PTR
+    ldm A $circ_x
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.goto
+    ldm A $circ_xc
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $circ_yc
+    stack A $DATASTACK_PTR
+    ldm A $circ_x
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.goto
+    ldm A $circ_xc
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $circ_yc
+    stack A $DATASTACK_PTR
+    ldm A $circ_x
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.goto
+    ldm A $circ_xc
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $circ_yc
+    stack A $DATASTACK_PTR
+    ldm A $circ_x
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    call @TURTLE.goto
+    ret
+@TURTLE.circle
+    ustack A $DATASTACK_PTR
+    sto A $circ_p
+    ustack A $DATASTACK_PTR
+    sto A $circ_yc
+    ustack A $DATASTACK_PTR
+    sto A $circ_xc
+    ldm A $circ_p
+    sto A $circ_x
+    ldi A 0
+    sto A $circ_y
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $circ_p
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $circ_p
+:circle_loop
+    ldm A $circ_x
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    call @_plot_circle_points
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $circ_y
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $circ_p
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.circle_if_else_18
+    ldm A $circ_p
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $circ_p
+    jmp :TURTLE.circle_if_end_18
+:TURTLE.circle_if_else_18
+    ldm A $circ_x
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $circ_x
+    ldm A $circ_p
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $circ_x
+    stack A $DATASTACK_PTR
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $circ_p
+:TURTLE.circle_if_end_18
+    ldm A $circ_x
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TURTLE.circle_if_end_19
+    jmp :circle_loop
+:TURTLE.circle_if_end_19
+    ldm A $circ_x
+    stack A $DATASTACK_PTR
+    ldm A $circ_y
+    stack A $DATASTACK_PTR
+    call @_plot_circle_points
+    ret
+
 
 @gcd
 :gcd_while_start_0
@@ -243,8 +971,32 @@
     jmp :loop_POWER
 :_power_end
     ret
+@negate
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_swap
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ret
+@abs
+    call @rt_dup
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :abs_if_end_1
+    call @negate
+:abs_if_end_1
+    ret
 
 
+@FP.set_scale
+    ustack A $DATASTACK_PTR
+    sto A $SCALE_FACTOR
+    ret
 @TOS_nnl
 
         ustack A $DATASTACK_PTR
@@ -283,24 +1035,121 @@
     ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
+    call @rt_dup
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :FP.mul_if_else_0
+    ldm A $SCALE_FACTOR
+    stack A $DATASTACK_PTR
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    dmod B A
+    ld A B
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    jmp :FP.mul_if_end_0
+:FP.mul_if_else_0
+    ldm A $SCALE_FACTOR
+    stack A $DATASTACK_PTR
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    dmod B A
+    ld A B
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+:FP.mul_if_end_0
     ldm A $SCALE_FACTOR
     ustack B $DATASTACK_PTR
     dmod B A
     stack B $DATASTACK_PTR
     ret
 @FP.div
-    call @rt_swap
+    ldi A 1
+    sto A $result_sign
+    ustack A $DATASTACK_PTR
+    sto A $fp_b
+    ustack A $DATASTACK_PTR
+    sto A $fp_a
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :FP.div_if_end_1
+    ldm A $result_sign
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @negate
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    sto A $result_sign
+:FP.div_if_end_1
+    ldm A $fp_b
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :FP.div_if_end_2
+    ldm A $result_sign
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @negate
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    sto A $result_sign
+:FP.div_if_end_2
+    ldm A $fp_a
+    stack A $DATASTACK_PTR
+    call @abs
+    ustack A $DATASTACK_PTR
+    sto A $abs_numerator
+    ldm A $fp_b
+    stack A $DATASTACK_PTR
+    call @abs
+    ustack A $DATASTACK_PTR
+    sto A $abs_denominator
+    ldm A $abs_numerator
+    stack A $DATASTACK_PTR
     ldm A $SCALE_FACTOR
     ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
-    call @rt_swap
-    ustack A $DATASTACK_PTR
+    ldm A $abs_denominator
     ustack B $DATASTACK_PTR
     dmod B A
     stack B $DATASTACK_PTR
+    ldm A $result_sign
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
     ret
 @FP.print
+    call @rt_dup
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :FP.print_if_end_3
+    ldi A 45
+    stack A $DATASTACK_PTR
+    call @PRTchar
+    call @negate
+:FP.print_if_end_3
     call @rt_dup
     ldm A $SCALE_FACTOR
     ustack B $DATASTACK_PTR
@@ -366,6 +1215,18 @@
 @FP.fprint
     ustack A $DATASTACK_PTR
     sto A $num_digits
+    call @rt_dup
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :FP.fprint_if_end_4
+    ldi A 45
+    stack A $DATASTACK_PTR
+    call @PRTchar
+    call @negate
+:FP.fprint_if_end_4
     ldi A 0
     sto A $MAX_VALID_DIGITS
     ldi A 1
@@ -378,7 +1239,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.fprint_if_end_0
+    jmpt :FP.fprint_if_end_5
     ldm A $temp_scale
     stack A $DATASTACK_PTR
     ldi A 10
@@ -394,7 +1255,7 @@
     ld A B
     sto A $MAX_VALID_DIGITS
     jmp :loop_calc_valid_digits
-:FP.fprint_if_end_0
+:FP.fprint_if_end_5
     ldm A $num_digits
     stack A $DATASTACK_PTR
     ldm A $MAX_VALID_DIGITS
@@ -402,10 +1263,10 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.fprint_if_end_1
+    jmpt :FP.fprint_if_end_6
     ldm A $MAX_VALID_DIGITS
     sto A $num_digits
-:FP.fprint_if_end_1
+:FP.fprint_if_end_6
     call @rt_dup
     ldm A $SCALE_FACTOR
     ustack B $DATASTACK_PTR
@@ -427,7 +1288,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.fprint_if_end_2
+    jmpt :FP.fprint_if_end_7
     ldm A $frac
     stack A $DATASTACK_PTR
     ldi A 10
@@ -455,7 +1316,7 @@
     ld A B
     sto A $num_digits
     jmp :loop_print_digits
-:FP.fprint_if_end_2
+:FP.fprint_if_end_7
     ret
 @_STRNatoi
     ustack A $DATASTACK_PTR
@@ -472,11 +1333,11 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_STRNatoi_if_end_3
+    jmpt :_STRNatoi_if_end_8
     ldm A $__natoi_res
     stack A $DATASTACK_PTR
     jmp :_natoi_end
-:_STRNatoi_if_end_3
+:_STRNatoi_if_end_8
     ldm I $__natoi_p
     ldx A $_start_memory_
     stack A $DATASTACK_PTR
@@ -514,6 +1375,31 @@
 @FP.from_string
     ustack A $DATASTACK_PTR
     sto A $str_ptr
+    ldi A 1
+    sto A $sign
+    ldm I $str_ptr
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldi A 45
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :FP.from_string_if_end_9
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @negate
+    ustack A $DATASTACK_PTR
+    sto A $sign
+    ldm A $str_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $str_ptr
+:FP.from_string_if_end_9
+    ldm A $str_ptr
     stack A $DATASTACK_PTR
     ldi A 46
     stack A $DATASTACK_PTR
@@ -529,7 +1415,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.from_string_if_end_4
+    jmpt :FP.from_string_if_end_10
     ldm A $str_ptr
     stack A $DATASTACK_PTR
     call @STRlen
@@ -541,8 +1427,12 @@
     stack A $DATASTACK_PTR
     call @_STRNatoi
     call @FP.from_int
+    ldm A $sign
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
     jmp :_fp_from_string_end
-:FP.from_string_if_end_4
+:FP.from_string_if_end_10
     ldm A $str_ptr
     stack A $DATASTACK_PTR
     ldm A $dot_index
@@ -605,18 +1495,478 @@
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
+    ldm A $sign
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
 :_fp_from_string_end
     ret
 
+@DRAW_PIXEL
+    ustack A $DATASTACK_PTR
+    sto A $thisy
+    ustack A $DATASTACK_PTR
+    sto A $thisx
+    stack A $DATASTACK_PTR
+    ldm A $thisy
+    stack A $DATASTACK_PTR
+    call @TURTLE.goto
+    ret
+@MAIN_LOOP
+    ldi A 1000
+    stack A $DATASTACK_PTR
+    call @FP.set_scale
+    ldi A $MAIN_LOOP_str_0
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $A1
+    ldi A $MAIN_LOOP_str_0
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $B1
+    ldi A $MAIN_LOOP_str_0
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $C1
+    ldi A $MAIN_LOOP_str_1
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $D1
+    ldi A $MAIN_LOOP_str_0
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $E1
+    ldi A $MAIN_LOOP_str_0
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $F1
+    ldi A $MAIN_LOOP_str_2
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $A2
+    ldi A $MAIN_LOOP_str_3
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $B2
+    ldi A $MAIN_LOOP_str_4
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $C2
+    ldi A $MAIN_LOOP_str_2
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $D2
+    ldi A $MAIN_LOOP_str_0
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $E2
+    ldi A $MAIN_LOOP_str_5
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $F2
+    ldi A $MAIN_LOOP_str_6
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $A3
+    ldi A $MAIN_LOOP_str_7
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $B3
+    ldi A $MAIN_LOOP_str_8
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $C3
+    ldi A $MAIN_LOOP_str_9
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $D3
+    ldi A $MAIN_LOOP_str_0
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $E3
+    ldi A $MAIN_LOOP_str_5
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $F3
+    ldi A $MAIN_LOOP_str_10
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $A4
+    ldi A $MAIN_LOOP_str_11
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $B4
+    ldi A $MAIN_LOOP_str_12
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $C4
+    ldi A $MAIN_LOOP_str_13
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $D4
+    ldi A $MAIN_LOOP_str_0
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $E4
+    ldi A $MAIN_LOOP_str_14
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $F4
+    ldi A $MAIN_LOOP_str_0
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $current_x
+    ldi A $MAIN_LOOP_str_0
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $current_y
+    call @TURTLE.start
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @TURTLE.mode
+    ldi A 5
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldi A 1
+    sto A $current_color
+:loop_iterations
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldm A $ITERATIONS
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :MAIN_LOOP_if_end_0
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldi A 500
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :MAIN_LOOP_if_end_1
+    ldm A $i
+    stack A $DATASTACK_PTR
+    call @rt_print_tos
+    call @TURTLE.flip
+    ldm A $current_color
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $current_color
+    stack A $DATASTACK_PTR
+    ldi A 15
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $current_color
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+:MAIN_LOOP_if_end_1
+    call @rt_rnd
+    ustack A $DATASTACK_PTR
+    sto A $random_val
+    ldm A $current_x
+    sto A $temp_x
+    ldm A $random_val
+    stack A $DATASTACK_PTR
+    ldm A $P1_THRESHOLD
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :MAIN_LOOP_if_else_2
+    ldm A $temp_x
+    stack A $DATASTACK_PTR
+    ldm A $A1
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    ldm A $current_y
+    stack A $DATASTACK_PTR
+    ldm A $B1
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    call @FP.add
+    ldm A $E1
+    stack A $DATASTACK_PTR
+    call @FP.add
+    ustack A $DATASTACK_PTR
+    sto A $current_x
+    ldm A $temp_x
+    stack A $DATASTACK_PTR
+    ldm A $C1
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    ldm A $current_y
+    stack A $DATASTACK_PTR
+    ldm A $D1
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    call @FP.add
+    ldm A $F1
+    stack A $DATASTACK_PTR
+    call @FP.add
+    ustack A $DATASTACK_PTR
+    sto A $current_y
+    jmp :MAIN_LOOP_if_end_2
+:MAIN_LOOP_if_else_2
+    ldm A $random_val
+    stack A $DATASTACK_PTR
+    ldm A $P2_THRESHOLD
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :MAIN_LOOP_if_else_3
+    ldm A $temp_x
+    stack A $DATASTACK_PTR
+    ldm A $A2
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    ldm A $current_y
+    stack A $DATASTACK_PTR
+    ldm A $B2
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    call @FP.add
+    ldm A $E2
+    stack A $DATASTACK_PTR
+    call @FP.add
+    ustack A $DATASTACK_PTR
+    sto A $current_x
+    ldm A $temp_x
+    stack A $DATASTACK_PTR
+    ldm A $C2
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    ldm A $current_y
+    stack A $DATASTACK_PTR
+    ldm A $D2
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    call @FP.add
+    ldm A $F2
+    stack A $DATASTACK_PTR
+    call @FP.add
+    ustack A $DATASTACK_PTR
+    sto A $current_y
+    jmp :MAIN_LOOP_if_end_3
+:MAIN_LOOP_if_else_3
+    ldm A $random_val
+    stack A $DATASTACK_PTR
+    ldm A $P3_THRESHOLD
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :MAIN_LOOP_if_else_4
+    ldm A $temp_x
+    stack A $DATASTACK_PTR
+    ldm A $A3
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    ldm A $current_y
+    stack A $DATASTACK_PTR
+    ldm A $B3
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    call @FP.add
+    ldm A $E3
+    stack A $DATASTACK_PTR
+    call @FP.add
+    ustack A $DATASTACK_PTR
+    sto A $current_x
+    ldm A $temp_x
+    stack A $DATASTACK_PTR
+    ldm A $C3
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    ldm A $current_y
+    stack A $DATASTACK_PTR
+    ldm A $D3
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    call @FP.add
+    ldm A $F3
+    stack A $DATASTACK_PTR
+    call @FP.add
+    ustack A $DATASTACK_PTR
+    sto A $current_y
+    jmp :MAIN_LOOP_if_end_4
+:MAIN_LOOP_if_else_4
+    ldm A $temp_x
+    stack A $DATASTACK_PTR
+    ldm A $A4
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    ldm A $current_y
+    stack A $DATASTACK_PTR
+    ldm A $B4
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    call @FP.add
+    ldm A $E4
+    stack A $DATASTACK_PTR
+    call @FP.add
+    ustack A $DATASTACK_PTR
+    sto A $current_x
+    ldm A $temp_x
+    stack A $DATASTACK_PTR
+    ldm A $C4
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    ldm A $current_y
+    stack A $DATASTACK_PTR
+    ldm A $D4
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    call @FP.add
+    ldm A $F4
+    stack A $DATASTACK_PTR
+    call @FP.add
+    ustack A $DATASTACK_PTR
+    sto A $current_y
+:MAIN_LOOP_if_end_4
+:MAIN_LOOP_if_end_3
+:MAIN_LOOP_if_end_2
+    ldi A 40
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    ustack A $DATASTACK_PTR
+    sto A $DEBUG_SCALE
+    ldi A 300
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    ustack A $DATASTACK_PTR
+    sto A $X_OFFSET
+    ldi A 20
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    ustack A $DATASTACK_PTR
+    sto A $Y_OFFSET
+    ldm A $current_x
+    stack A $DATASTACK_PTR
+    ldm A $DEBUG_SCALE
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    ldm A $X_OFFSET
+    stack A $DATASTACK_PTR
+    call @FP.add
+    ustack A $DATASTACK_PTR
+    sto A $mapped_x
+    ldm A $current_y
+    stack A $DATASTACK_PTR
+    ldm A $DEBUG_SCALE
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    ldm A $Y_OFFSET
+    stack A $DATASTACK_PTR
+    call @FP.add
+    ustack A $DATASTACK_PTR
+    sto A $mapped_y
+    ldm A $mapped_x
+    stack A $DATASTACK_PTR
+    call @FP.to_int
+    ldm A $mapped_y
+    stack A $DATASTACK_PTR
+    call @FP.to_int
+    call @DRAW_PIXEL
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $i
+    jmp :loop_iterations
+:MAIN_LOOP_if_end_0
+    ret
 
 # .DATA
+
+% $current_char 203
+% $current_mode 3
+% $current_color 5
+% $current_width 80
+% $current_height 60
+% $current_flip 1
+% $Xax 0
+% $Yax 0
+% $degrees 0
+% $TURTLE_HEADING_DEG 0
+% $TURTLE_HEADING 0
+% $degrees_to_turn 0
+% $dx 0
+% $dy 0
+% $distance 0
+% $temp_ptr 0
+% $msg \* \space \W \e \l \c \o \m \e \space \a \t \space \T \U \R \T \L \E \space \* \null
+% $i_turtle 0
+% $char 0
+% $p_char 0
+% $x1 0
+% $y1 0
+% $x2 0
+% $y2 0
+% $sx 0
+% $sy 0
+% $err 0
+% $e2 0
+% $circ_xc 0
+% $circ_yc 0
+% $circ_x 0
+% $circ_y 0
+% $circ_p 0
 
 % $_power_base 0
 % $_power_exp 0
 % $_power_res 0
 
-% $SCALE_FACTOR 10000000
+% $SCALE_FACTOR 1000
 % $FP_DOT_STR \. \null
+% $fp_b 0
+% $fp_a 0
+% $result_sign 1
+% $abs_numerator 0
+% $abs_denominator 0
+% $raw_result 0
 % $frac 0
 % $num_digits 0
 % $MAX_VALID_DIGITS 0
@@ -633,17 +1983,56 @@
 % $total_len 0
 % $frac_as_int 0
 % $divisor 0
-% $_main_str_0 \3 \. \1 \4 \null
-% $_main_str_1 \Return \null
-% $_main_str_2 \1 \0 \5 \1 \2 \null
-% $_main_str_3 \1 \0 \. \5 \1 \2 \null
-% $_main_str_4 \P \a \r \s \i \n \g \space \1 \0 \space \f \r \o \m \space \1 \0 \. \5 \1 \2 \: \space \null
-% $_main_str_5 \T \e \s \t \i \n \g \space \1 \0 \^ \2 \: \space \null
-% $_main_str_6 \T \e \s \t \i \n \g \space \1 \0 \^ \3 \: \space \null
-% $_main_str_7 \T \e \s \t \i \n \g \space \F \P \. \f \r \o \m \_ \s \t \r \i \n \g \space \w \i \t \h \space \1 \2 \. \7 \5 \. \. \. \null
-% $_main_str_8 \E \x \p \e \c \t \e \d \space \o \u \t \p \u \t \: \space \1 \2 \. \7 \5 \0 \null
-% $_main_str_9 \A \c \t \u \a \l \space \o \u \t \p \u \t \: \space \space \space \null
-% $_main_str_10 \1 \2 \. \7 \5 \null
-% $_main_str_11 \T \e \s \t \i \n \g \space \w \i \t \h \space \a \n \space \i \n \t \e \g \e \r \space \s \t \r \i \n \g \space \1 \5 \. \. \. \null
-% $_main_str_12 \E \x \p \e \c \t \e \d \space \o \u \t \p \u \t \: \space \1 \5 \. \0 \0 \0 \null
-% $_main_str_13 \1 \5 \null
+% $sign 1
+% $A1 0
+% $B1 0
+% $C1 0
+% $D1 0
+% $E1 0
+% $F1 0
+% $A2 0
+% $B2 0
+% $C2 0
+% $D2 0
+% $E2 0
+% $F2 0
+% $A3 0
+% $B3 0
+% $C3 0
+% $D3 0
+% $E3 0
+% $F3 0
+% $A4 0
+% $B4 0
+% $C4 0
+% $D4 0
+% $E4 0
+% $F4 0
+% $P1_THRESHOLD 100
+% $P2_THRESHOLD 8600
+% $P3_THRESHOLD 9300
+% $current_x 0
+% $current_y 0
+% $MAIN_LOOP_str_0 \0 \. \0 \null
+% $MAIN_LOOP_str_1 \0 \. \1 \6 \null
+% $MAIN_LOOP_str_2 \0 \. \8 \5 \null
+% $MAIN_LOOP_str_3 \0 \. \0 \4 \null
+% $MAIN_LOOP_str_4 \- \0 \. \0 \4 \null
+% $MAIN_LOOP_str_5 \1 \. \6 \null
+% $MAIN_LOOP_str_6 \0 \. \2 \0 \null
+% $MAIN_LOOP_str_7 \- \0 \. \2 \6 \null
+% $MAIN_LOOP_str_8 \0 \. \2 \3 \null
+% $MAIN_LOOP_str_9 \0 \. \2 \2 \null
+% $MAIN_LOOP_str_10 \- \0 \. \1 \5 \null
+% $MAIN_LOOP_str_11 \0 \. \2 \8 \null
+% $MAIN_LOOP_str_12 \0 \. \2 \6 \null
+% $MAIN_LOOP_str_13 \0 \. \2 \4 \null
+% $MAIN_LOOP_str_14 \0 \. \4 \4 \null
+% $ITERATIONS 100000
+% $i 0
+% $temp_x 0
+% $DEBUG_SCALE 0
+% $X_OFFSET 0
+% $Y_OFFSET 0
+% $mapped_x 0
+% $mapped_y 0

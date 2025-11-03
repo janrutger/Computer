@@ -1,9 +1,9 @@
 {
   "functions": [
-    "STRlen",
+    "STRcmp",
     "STRatoi",
     "STRfind",
-    "STRcmp"
+    "STRlen"
   ],
   "variables": [
     {
