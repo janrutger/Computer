@@ -1,0 +1,147 @@
+# implementation of Barnsly Fern
+INCLUDE math_lib
+USE std_stern_io
+USE std_time
+INCLUDE turtle_lib
+INCLUDE fixed_point_lib
+
+
+; --- Barnsley Fern Demo ---
+
+; Screen dimensions
+CONST SCREEN_WIDTH 480
+CONST SCREEN_HEIGHT 640
+
+
+; Fixed-point constants for transformations (a, b, c, d, e, f)
+VALUE A1 0 
+VALUE B1 0 
+VALUE C1 0 
+VALUE D1 0 
+VALUE E1 0 
+VALUE F1 0
+
+VALUE A2 0 
+VALUE B2 0 
+VALUE C2 0 
+VALUE D2 0 
+VALUE E2 0 
+VALUE F2 0
+
+VALUE A3 0 
+VALUE B3 0 
+VALUE C3 0 
+VALUE D3 0 
+VALUE E3 0 
+VALUE F3 0
+
+VALUE A4 0 
+VALUE B4 0 
+VALUE C4 0 
+VALUE D4 0 
+VALUE E4 0 
+VALUE F4 0
+
+; Probabilities (scaled by 1000 for RND 0-999)
+# ; P4_THRESHOLD is 10000 (9300-9999)
+CONST P1_THRESHOLD 10   ; 1% (0-9)
+CONST P2_THRESHOLD 860  ; 85% (10-859)
+CONST P3_THRESHOLD 930  ; 7% (860-929)
+; P4_THRESHOLD is 10000 (930-999)
+
+; Current point (fixed-point)
+VALUE current_x 0
+VALUE current_y 0
+
+
+
+; --- Main Demo Loop ---
+DEF MAIN_LOOP {
+    ; Set SCALE_FACTOR for the demo (e.g., 4 decimal places for good precision)
+    1000 FP.set_scale
+
+    ; Initialize transformation constants
+     "0.0"  FP.from_string AS A1  "0.0"  FP.from_string AS B1  "0.0"  FP.from_string AS C1 "0.16" FP.from_string AS D1 "0.0" FP.from_string AS E1 "0.0"  FP.from_string AS F1
+     "0.85" FP.from_string AS A2  "0.04" FP.from_string AS B2 "-0.04" FP.from_string AS C2 "0.85" FP.from_string AS D2 "0.0" FP.from_string AS E2 "1.6"  FP.from_string AS F2
+     "0.20" FP.from_string AS A3 "-0.26" FP.from_string AS B3  "0.23" FP.from_string AS C3 "0.22" FP.from_string AS D3 "0.0" FP.from_string AS E3 "1.6"  FP.from_string AS F3
+    "-0.15" FP.from_string AS A4  "0.28" FP.from_string AS B4  "0.26" FP.from_string AS C4 "0.24" FP.from_string AS D4 "0.0" FP.from_string AS E4 "0.44" FP.from_string AS F4
+
+    ; Initialize current point
+    "0.0" FP.from_string AS current_x
+    "0.0" FP.from_string AS current_y
+
+    TURTLE.start
+    db_pixel TURTLE.mode
+    lightGreen TURTLE.color
+
+    lightGray AS current_color
+    0 TIME.start
+    ; Loop for many iterations
+    CONST ITERATIONS 10000 ; Number of points to draw
+    VALUE i 0
+    VALUE SCALE 0
+    45 FP.from_int AS SCALE
+
+    VALUE X_OFFSET 0
+    300 FP.from_int AS X_OFFSET
+    
+    VALUE Y_OFFSET 0
+    160 FP.from_int AS Y_OFFSET ; Small offset from the top
+
+    VALUE mapped_x 0
+    VALUE mapped_y 0
+    VALUE temp_x 0
+    
+
+    :loop_iterations
+        i ITERATIONS < IF
+
+            i 500 % 0 == IF 
+                TURTLE.flip   
+                0 TIME.read TIME.as_string 32 PRTchar i PRINT 
+                #current_color 1 + 15 % 1 + AS current_color
+                current_color TURTLE.color 
+            END
+
+            ; Choose transformation based on RND
+            RND AS random_val
+
+            ; Store current_x in a temporary variable to correctly calculate the new point
+            current_x AS temp_x
+
+            random_val P1_THRESHOLD < IF ; Transformation 1 (1%)
+                temp_x A1 FP.mul current_y B1 FP.mul FP.add E1 FP.add AS current_x
+                temp_x C1 FP.mul current_y D1 FP.mul FP.add F1 FP.add AS current_y
+            ELSE random_val P2_THRESHOLD < IF ; Transformation 2 (85%)
+                temp_x A2 FP.mul current_y B2 FP.mul FP.add E2 FP.add AS current_x
+                temp_x C2 FP.mul current_y D2 FP.mul FP.add F2 FP.add AS current_y
+            ELSE random_val P3_THRESHOLD < IF ; Transformation 3 (7%)
+                temp_x A3 FP.mul current_y B3 FP.mul FP.add E3 FP.add AS current_x
+                temp_x C3 FP.mul current_y D3 FP.mul FP.add F3 FP.add AS current_y
+            ELSE ; Transformation 4 (7%)
+                temp_x A4 FP.mul current_y B4 FP.mul FP.add E4 FP.add AS current_x
+                temp_x C4 FP.mul current_y D4 FP.mul FP.add F4 FP.add AS current_y
+            END END END
+
+            ; --- Simple Scaling v2 ---
+            ; Scale X and apply offset
+            current_x SCALE FP.mul
+            X_OFFSET FP.add AS mapped_x
+
+            ; Scale Y and apply offset (with vertical flip)
+            SCREEN_HEIGHT FP.from_int Y_OFFSET FP.sub
+            current_y SCALE FP.mul
+            FP.sub AS mapped_y
+
+
+            # mapped_x FP.to_int mapped_y FP.to_int DRAW_PIXEL ; Draw pixel
+             mapped_x FP.to_int mapped_y FP.to_int TURTLE.goto ; Draw pixel
+
+            i 1+ AS i
+            
+            GOTO loop_iterations
+        END
+    0 TIME.read TIME.as_string 32 PRTchar i PRINT ; Print final time
+}
+
+MAIN_LOOP

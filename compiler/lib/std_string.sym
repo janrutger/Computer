@@ -2,8 +2,8 @@
   "functions": [
     "STRcmp",
     "STRatoi",
-    "STRfind",
-    "STRlen"
+    "STRlen",
+    "STRfind"
   ],
   "variables": [
     {

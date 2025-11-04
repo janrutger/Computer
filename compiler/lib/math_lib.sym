@@ -1,9 +1,9 @@
 {
   "functions": [
-    "abs",
-    "gcd",
+    "power",
     "negate",
-    "power"
+    "gcd",
+    "abs"
   ],
   "variables": [
     {

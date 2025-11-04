@@ -164,7 +164,7 @@
     dmod B A
     sto A $random_seed
     stack A $DATASTACK_PTR
-    ldi A 10000
+    ldi A 1000
     ustack B $DATASTACK_PTR
     dmod B A
     stack A $DATASTACK_PTR

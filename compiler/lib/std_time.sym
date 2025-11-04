@@ -1,8 +1,8 @@
 {
   "functions": [
     "TIME.as_string",
-    "TIME.read",
     "TIME.wait",
+    "TIME.read",
     "TIME.uptime",
     "TIME.init",
     "TIME.start"
