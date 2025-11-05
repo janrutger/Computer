@@ -72,9 +72,10 @@ DEF MAIN_LOOP {
 
     TURTLE.start
     db_pixel TURTLE.mode
-    lightGreen TURTLE.color
-
     lightGray AS current_color
+    current_color TURTLE.color
+
+    
     0 TIME.start
     ; Loop for many iterations
     CONST ITERATIONS 10000 ; Number of points to draw
@@ -86,7 +87,7 @@ DEF MAIN_LOOP {
     300 FP.from_int AS X_OFFSET
     
     VALUE Y_OFFSET 0
-    160 FP.from_int AS Y_OFFSET ; Small offset from the top
+    160 FP.from_int AS Y_OFFSET ; Small offset from the bottom
 
     VALUE mapped_x 0
     VALUE mapped_y 0

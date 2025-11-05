@@ -182,7 +182,7 @@ def main():
 
         # --- Simulation Logic (runs as fast as possible) ---
         if not debugger.in_debug_mode:
-            rtc.tick()          # let the RTC tick
+             rtc.tick()          # let the RTC tick
             
         # Poll virtual disk
         # vdisk.access()    #DISABLED, because the Vdisk is not avalible, yet

@@ -1,1 +1,264 @@
-# Start of an new program
+# Taylor Series Visualization for sin(x)
+#
+# This program demonstrates the Taylor series expansion for the sin(x) function.
+# It visualizes how adding more terms to the series improves the accuracy of
+# the approximation of the sine wave.
+#
+# The approximations are drawn in different colors:
+# - 1 Term (y=x):       Blue
+# - 3 Terms:            Green
+# - 5 Terms:            Red
+
+INCLUDE math_lib
+INCLUDE fixed_point_lib
+INCLUDE turtle_lib
+USE std_stern_io
+USE std_time
+
+; --- Constants ---
+CONST SCREEN_WIDTH 640
+CONST SCREEN_HEIGHT 480
+
+; --- Drawing transformation ---
+; World coordinate range to be drawn
+; X-axis: -10 to +10
+; Y-axis: will be scaled by SCALE_Y
+
+; Center of the screen
+CONST X_OFFSET 320 ; SCREEN_WIDTH / 2
+CONST Y_OFFSET 240 ; SCREEN_HEIGHT / 2
+
+; Scale factor for the axes
+; To draw from -10 to +10 on the x-axis (a range of 20) on a 640px wide screen,
+; the scale factor is 640 / 20 = 32.
+CONST SCALE_X 32  ; 1 unit in world space = 32 pixels
+
+; This value needs to be adjusted based on the range of the function being plotted.
+; For sin(x), the range is [-1, 1]. A scale of 100 makes this visible.
+CONST SCALE_Y 10 ; 1 unit in world space = 100 pixels
+
+
+; --- Helper Functions ---
+
+; Iterative factorial calculation: n -- n!
+DEF factorial_iter { ; ( n -- n! )
+    VALUE n 0
+    AS n
+    VALUE result 1
+    
+    :loop
+    n 0 > IF
+        result n * AS result
+        n 1- AS n
+        GOTO loop
+    END
+    result
+}
+
+; Fixed-point power function: base_fp, exponent_int -- result_fp
+DEF FP_pow { ; ( base_fp exponent_int -- result_fp )
+    AS exponent
+    AS base
+
+    exponent 0 == IF
+        1 FP.from_int
+    ELSE
+        base AS result
+        exponent 1- AS exponent
+        :loop_pw
+        exponent 0 > IF
+            result base FP.mul AS result
+            exponent 1- AS exponent
+            GOTO loop_pw
+        END
+        result
+    END
+}
+
+; --- Coordinate Transformation Functions ---
+
+; Converts a screen x-coordinate to a world x-coordinate.
+DEF screen_to_world_x { ; ( screen_x_int -- world_x_fp )
+    X_OFFSET - FP.from_int
+    SCALE_X FP.from_int
+    FP.div
+}
+
+; Converts a world x-coordinate to a screen x-coordinate.
+DEF world_to_screen_x { ; ( world_x_fp -- screen_x_int )
+    X_OFFSET FP.from_int
+    SWAP
+    SCALE_X FP.from_int
+    FP.mul
+    FP.add
+    FP.to_int
+}
+
+; Converts a world y-coordinate to a screen y-coordinate.
+DEF world_to_screen_y { ; ( world_y_fp -- screen_y_int )
+    SCALE_Y negate FP.from_int
+    FP.mul
+    Y_OFFSET FP.from_int
+    FP.add
+    FP.to_int
+}
+
+; Calculates sin(x) using Taylor series approximation
+; Stack: x_fp, num_terms -- result_fp
+DEF taylor { ; ( x_fp num_terms -- result_fp )
+    DROP
+}
+
+; --- Drawing Functions ---
+
+; Draws the X and Y axes
+DEF draw_axes {
+    white TURTLE.color
+    ; Y-axis (x is constant at X_OFFSET)
+    X_OFFSET 0 
+    X_OFFSET SCREEN_HEIGHT 1 - TURTLE.line
+    ; X-axis (y is constant at Y_OFFSET)
+    0 Y_OFFSET 
+    SCREEN_WIDTH 1 - Y_OFFSET TURTLE.line
+}
+
+; This is the function that will be plotted by `draw_plot`.
+; It should take a fixed-point x-value from the stack and
+; return a fixed-point y-value.
+; This example calculates y = x^2.
+# DEF function_to_plot0 { ; ( x_fp -- y_fp )
+#     DUP FP.mul
+# }
+
+# ; This example calculates y = 0.1 * x^3
+# DEF function_to_plot { ; ( x_fp -- y_fp )
+#     DUP DUP FP.mul FP.mul  ; Calculates x^3
+#     10 FP.from_int SWAP FP.div   ; Divides by 10 to scale it
+# }
+
+# ; Draws `function_to_plot` by iterating through world coordinates from -10 to 10.
+# DEF draw_plot {
+#     AS color
+#     color TURTLE.color
+
+#     ; Variables for screen coordinates
+#     VALUE sx1 0
+#     VALUE sy1 0
+#     VALUE prev_sx 0
+#     VALUE prev_sy 0
+#     VALUE is_first_point 1
+#     VALUE world_x 0
+
+#     ; Loop from -100 to 100, representing world_x from -10.0 to 10.0 with a step of 0.1
+#     100 negate AS i
+#     :loop_draw
+    
+#     ; Loop exit condition: jump to the end if i > 100
+#     i 100 > IF
+#         GOTO end_draw_plot
+#     END
+
+#     ; --- Loop Body ---
+    
+#     ; Convert loop counter `i` to world_x
+#     i FP.from_int 10 FP.from_int FP.div AS world_x
+
+#     ; Convert world coordinates to screen coordinates
+#     world_x world_to_screen_x AS sx1
+#     world_x function_to_plot world_to_screen_y AS sy1
+
+#     is_first_point IF
+#         ; For the first point, we only store it as "previous" and don't draw.
+#         0 AS is_first_point
+#     ELSE
+#         ; For subsequent points, draw a line from the previous point.
+#         prev_sx prev_sy sx1 sy1 TURTLE.line
+#     END
+
+#     ; Save current screen coordinates for the next iteration.
+#     sx1 AS prev_sx
+#     sy1 AS prev_sy
+
+#     ; Increment counter and loop
+#     i 1 + AS i
+#     GOTO loop_draw
+
+#     :end_draw_plot
+# }
+
+; Draws a function plot by calling the taylor function
+DEF draw_taylor_plot { ; ( num_terms color -- )
+    AS color
+    AS num_terms
+    color TURTLE.color
+
+    ; Variables for screen coordinates
+    0 AS sx1 
+    0 AS sy1 
+    0 AS prev_sx 
+    0 AS prev_sy 
+    1 AS is_first_point 
+    0 AS world_x 
+
+    ; Loop from -20 to 20, representing world_x from -2.0 to 2.0 with a step of 0.1
+    20 negate AS i
+    :loop_draw_taylor
+    
+    ; Loop exit condition: jump to the end if i > 20
+    i 20 > IF
+        GOTO end_draw_taylor_plot
+    END
+    ; --- Loop Body ---
+    
+    ; Convert loop counter `i` to world_x
+    i FP.from_int 10 FP.from_int FP.div AS world_x
+
+    ; Convert world coordinates to screen coordinates
+    world_x world_to_screen_x AS sx1
+    world_x num_terms taylor world_to_screen_y AS sy1
+
+    is_first_point IF
+        ; For the first point, we only store it as "previous" and don't draw.
+        0 AS is_first_point
+    ELSE
+        ; For subsequent points, draw a line from the previous point.
+        prev_sx prev_sy sx1 sy1 TURTLE.line
+    END
+
+    ; Save current screen coordinates for the next iteration.
+    sx1 AS prev_sx
+    sy1 AS prev_sy
+
+    ; Increment counter and loop
+    i 1 + AS i
+    GOTO loop_draw_taylor
+
+    :end_draw_taylor_plot
+}
+
+; --- Main Program ---
+DEF main {
+    ; Set fixed-point precision (e.g., 3 decimal places)
+    1000 FP.set_scale
+
+    TURTLE.start
+    pixel TURTLE.mode
+    
+    ; Draw the X and Y axes
+    draw_axes
+    #blue draw_plot
+    
+    ; Draw the plot for 1, 3, and 5 terms
+    "Drawing 1 term (y=x)..." PRTstring
+    1 blue draw_taylor_plot
+
+    "Drawing 3 terms..." PRTstring
+    3 green draw_taylor_plot
+
+    "Drawing 5 terms..." PRTstring
+    5 red draw_taylor_plot
+
+    "All done!" PRTstring
+}
+
+main
