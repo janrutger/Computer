@@ -60,12 +60,9 @@
 . $circ_x 1
 . $circ_y 1
 . $circ_p 1
-. $n 1
-. $result 1
-. $exponent 1
-. $base 1
+. $SCALE_Y 1
+. $function_to_draw_str_0 5
 . $color 1
-. $num_terms 1
 . $sx1 1
 . $sy1 1
 . $prev_sx 1
@@ -73,9 +70,8 @@
 . $is_first_point 1
 . $world_x 1
 . $i 1
-. $main_str_0 24
-. $main_str_1 19
-. $main_str_2 19
+. $main_str_1 33
+. $main_str_2 4
 . $main_str_3 10
 
 # .CODE
@@ -291,6 +287,17 @@
     call @abs
     ustack A $DATASTACK_PTR
     sto A $abs_denominator
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :FP.div_if_else_3
+    ldi A 0
+    stack A $DATASTACK_PTR
+    jmp :FP.div_if_end_3
+:FP.div_if_else_3
     ldm A $abs_numerator
     stack A $DATASTACK_PTR
     ldm A $SCALE_FACTOR
@@ -305,6 +312,7 @@
     ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
+:FP.div_if_end_3
     ret
 @FP.print
     call @rt_dup
@@ -313,12 +321,12 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.print_if_end_3
+    jmpt :FP.print_if_end_4
     ldi A 45
     stack A $DATASTACK_PTR
     call @PRTchar
     call @negate
-:FP.print_if_end_3
+:FP.print_if_end_4
     call @rt_dup
     ldm A $SCALE_FACTOR
     ustack B $DATASTACK_PTR
@@ -390,12 +398,12 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.fprint_if_end_4
+    jmpt :FP.fprint_if_end_5
     ldi A 45
     stack A $DATASTACK_PTR
     call @PRTchar
     call @negate
-:FP.fprint_if_end_4
+:FP.fprint_if_end_5
     ldi A 0
     sto A $MAX_VALID_DIGITS
     ldi A 1
@@ -408,7 +416,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.fprint_if_end_5
+    jmpt :FP.fprint_if_end_6
     ldm A $temp_scale
     stack A $DATASTACK_PTR
     ldi A 10
@@ -424,7 +432,7 @@
     ld A B
     sto A $MAX_VALID_DIGITS
     jmp :loop_calc_valid_digits
-:FP.fprint_if_end_5
+:FP.fprint_if_end_6
     ldm A $num_digits
     stack A $DATASTACK_PTR
     ldm A $MAX_VALID_DIGITS
@@ -432,10 +440,10 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.fprint_if_end_6
+    jmpt :FP.fprint_if_end_7
     ldm A $MAX_VALID_DIGITS
     sto A $num_digits
-:FP.fprint_if_end_6
+:FP.fprint_if_end_7
     call @rt_dup
     ldm A $SCALE_FACTOR
     ustack B $DATASTACK_PTR
@@ -457,7 +465,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.fprint_if_end_7
+    jmpt :FP.fprint_if_end_8
     ldm A $frac
     stack A $DATASTACK_PTR
     ldi A 10
@@ -485,7 +493,7 @@
     ld A B
     sto A $num_digits
     jmp :loop_print_digits
-:FP.fprint_if_end_7
+:FP.fprint_if_end_8
     ret
 @_STRNatoi
     ustack A $DATASTACK_PTR
@@ -502,11 +510,11 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_STRNatoi_if_end_8
+    jmpt :_STRNatoi_if_end_9
     ldm A $__natoi_res
     stack A $DATASTACK_PTR
     jmp :_natoi_end
-:_STRNatoi_if_end_8
+:_STRNatoi_if_end_9
     ldm I $__natoi_p
     ldx A $_start_memory_
     stack A $DATASTACK_PTR
@@ -554,7 +562,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.from_string_if_end_9
+    jmpt :FP.from_string_if_end_10
     ldi A 1
     stack A $DATASTACK_PTR
     call @negate
@@ -567,7 +575,7 @@
     add B A
     ld A B
     sto A $str_ptr
-:FP.from_string_if_end_9
+:FP.from_string_if_end_10
     ldm A $str_ptr
     stack A $DATASTACK_PTR
     ldi A 46
@@ -584,7 +592,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.from_string_if_end_10
+    jmpt :FP.from_string_if_end_11
     ldm A $str_ptr
     stack A $DATASTACK_PTR
     call @STRlen
@@ -601,7 +609,7 @@
     mul B A
     stack B $DATASTACK_PTR
     jmp :_fp_from_string_end
-:FP.from_string_if_end_10
+:FP.from_string_if_end_11
     ldm A $str_ptr
     stack A $DATASTACK_PTR
     ldm A $dot_index
@@ -1464,130 +1472,59 @@
     call @_plot_circle_points
     ret
 
-@factorial_iter
-    ustack A $DATASTACK_PTR
-    sto A $n
-:loop
-    ldm A $n
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :factorial_iter_if_end_0
-    ldm A $result
-    stack A $DATASTACK_PTR
-    ldm A $n
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
-    sto A $result
-    ldm A $n
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    sub B A
-    ld A B
-    sto A $n
-    jmp :loop
-:factorial_iter_if_end_0
-    ldm A $result
-    stack A $DATASTACK_PTR
-    ret
-@FP_pow
-    ustack A $DATASTACK_PTR
-    sto A $exponent
-    ustack A $DATASTACK_PTR
-    sto A $base
-    ldm A $exponent
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :FP_pow_if_else_1
-    ldi A 1
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    jmp :FP_pow_if_end_1
-:FP_pow_if_else_1
-    ldm A $base
-    sto A $result
-    ldm A $exponent
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    sub B A
-    ld A B
-    sto A $exponent
-:loop_pw
-    ldm A $exponent
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :FP_pow_if_end_2
-    ldm A $result
-    stack A $DATASTACK_PTR
-    ldm A $base
-    stack A $DATASTACK_PTR
-    call @FP.mul
-    ustack A $DATASTACK_PTR
-    sto A $result
-    ldm A $exponent
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    sub B A
-    ld A B
-    sto A $exponent
-    jmp :loop_pw
-:FP_pow_if_end_2
-    ldm A $result
-    stack A $DATASTACK_PTR
-:FP_pow_if_end_1
-    ret
 @screen_to_world_x
-    ldi A 320
-    ustack B $DATASTACK_PTR
-    sub B A
-    stack B $DATASTACK_PTR
     call @FP.from_int
-    ldi A 32
+    ldi A 320
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    call @FP.sub
+    ldi A 45
     stack A $DATASTACK_PTR
     call @FP.from_int
     call @FP.div
     ret
 @world_to_screen_x
-    ldi A 320
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    call @rt_swap
-    ldi A 32
+    ldi A 45
     stack A $DATASTACK_PTR
     call @FP.from_int
     call @FP.mul
+    ldi A 320
+    stack A $DATASTACK_PTR
+    call @FP.from_int
     call @FP.add
     call @FP.to_int
     ret
 @world_to_screen_y
-    ldi A 10
+    ldm A $SCALE_Y
     stack A $DATASTACK_PTR
-    call @negate
-    call @FP.from_int
     call @FP.mul
     ldi A 240
     stack A $DATASTACK_PTR
     call @FP.from_int
-    call @FP.add
+    call @rt_swap
+    call @FP.sub
     call @FP.to_int
     ret
-@taylor
-    call @rt_drop
+@function_to_draw
+    call @rt_dup
+    ldi A $function_to_draw_str_0
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    call @FP.mul
+    call @FP.mul
+    ret
+@function_to_draw2
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @FP.mul
+    call @FP.mul
+    ldi A 6
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    call @FP.div
+    call @rt_swap
+    call @FP.sub
     ret
 @draw_axes
     ldi A 1
@@ -1620,12 +1557,9 @@
     stack A $DATASTACK_PTR
     call @TURTLE.line
     ret
-@draw_taylor_plot
+@draw_plot2
     ustack A $DATASTACK_PTR
     sto A $color
-    ustack A $DATASTACK_PTR
-    sto A $num_terms
-    ldm A $color
     stack A $DATASTACK_PTR
     call @TURTLE.color
     ldi A 0
@@ -1640,22 +1574,22 @@
     sto A $is_first_point
     ldi A 0
     sto A $world_x
-    ldi A 20
+    ldi A 70
     stack A $DATASTACK_PTR
     call @negate
     ustack A $DATASTACK_PTR
     sto A $i
-:loop_draw_taylor
+:loop_draw2
     ldm A $i
     stack A $DATASTACK_PTR
-    ldi A 20
+    ldi A 70
     stack A $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :draw_taylor_plot_if_end_3
-    jmp :end_draw_taylor_plot
-:draw_taylor_plot_if_end_3
+    jmpt :draw_plot2_if_end_0
+    jmp :end_draw_plot2
+:draw_plot2_if_end_0
     ldm A $i
     stack A $DATASTACK_PTR
     call @FP.from_int
@@ -1671,19 +1605,17 @@
     sto A $sx1
     ldm A $world_x
     stack A $DATASTACK_PTR
-    ldm A $num_terms
-    stack A $DATASTACK_PTR
-    call @taylor
+    call @function_to_draw2
     call @world_to_screen_y
     ustack A $DATASTACK_PTR
     sto A $sy1
     ldm A $is_first_point
     tst A 0
-    jmpt :draw_taylor_plot_if_else_4
+    jmpt :draw_plot2_if_else_1
     ldi A 0
     sto A $is_first_point
-    jmp :draw_taylor_plot_if_end_4
-:draw_taylor_plot_if_else_4
+    jmp :draw_plot2_if_end_1
+:draw_plot2_if_else_1
     ldm A $prev_sx
     stack A $DATASTACK_PTR
     ldm A $prev_sy
@@ -1693,7 +1625,7 @@
     ldm A $sy1
     stack A $DATASTACK_PTR
     call @TURTLE.line
-:draw_taylor_plot_if_end_4
+:draw_plot2_if_end_1
     ldm A $sx1
     sto A $prev_sx
     ldm A $sy1
@@ -1705,8 +1637,8 @@
     add B A
     ld A B
     sto A $i
-    jmp :loop_draw_taylor
-:end_draw_taylor_plot
+    jmp :loop_draw2
+:end_draw_plot2
     ret
 @main
     ldi A 1000
@@ -1717,30 +1649,17 @@
     stack A $DATASTACK_PTR
     call @TURTLE.mode
     call @draw_axes
-    ldi A $main_str_0
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldi A 6
-    stack A $DATASTACK_PTR
-    call @draw_taylor_plot
     ldi A $main_str_1
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 3
-    stack A $DATASTACK_PTR
-    ldi A 5
-    stack A $DATASTACK_PTR
-    call @draw_taylor_plot
     ldi A $main_str_2
     stack A $DATASTACK_PTR
-    call @PRTstring
+    call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $SCALE_Y
     ldi A 5
     stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    call @draw_taylor_plot
+    call @draw_plot2
     ldi A $main_str_3
     stack A $DATASTACK_PTR
     call @PRTstring
@@ -1811,9 +1730,8 @@
 % $circ_x 0
 % $circ_y 0
 % $circ_p 0
-% $n 0
-% $result 1
-% $main_str_0 \D \r \a \w \i \n \g \space \1 \space \t \e \r \m \space \( \y \= \x \) \. \. \. \null
-% $main_str_1 \D \r \a \w \i \n \g \space \3 \space \t \e \r \m \s \. \. \. \null
-% $main_str_2 \D \r \a \w \i \n \g \space \5 \space \t \e \r \m \s \. \. \. \null
+% $SCALE_Y 0
+% $function_to_draw_str_0 \- \0 \. \5 \null
+% $main_str_1 \D \r \a \w \i \n \g \space \2 \- \t \e \r \m \space \( \g \r \e \e \n \) \space \s \e \r \i \e \s \. \. \. \null
+% $main_str_2 \4 \. \5 \null
 % $main_str_3 \A \l \l \space \d \o \n \e \! \null

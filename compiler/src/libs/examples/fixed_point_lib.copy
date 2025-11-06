@@ -103,11 +103,7 @@ DEF FP.div {
     # ; Apply sign
     # raw_result result_sign *
 
-    abs_denominator 0 == IF
-        0 ; Return 0 if denominator is 0
-    ELSE
-        abs_numerator SCALE_FACTOR * abs_denominator // result_sign *
-    END
+    abs_numerator SCALE_FACTOR * abs_denominator // result_sign *
 
 }
 
