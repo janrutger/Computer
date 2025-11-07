@@ -148,57 +148,6 @@ DEF function_to_draw6 { ; ( x_fp -- result_fp )
     FP.sub                    ; Stack: [5-term-result - (x^11 / 39916800)]
 }
 
-; Calculates the Taylor series for sin(x) with 7 terms: ... + (x^13 / 6227020800)
-DEF function_to_draw7 { ; ( x_fp -- result_fp )
-    # apply the 6-term
-    DUP function_to_draw6     ; Stack: [x, 6-term-result]
-    SWAP                      ; Stack: [6-term-result, x]
-
-    # calculate x^13
-    DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP ; Stack: [6-term-result, x, x, x, x, x, x, x, x, x, x, x, x, x]
-    FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul ; x^13
-                                                                        ; Stack: [6-term-result, x^13]
-
-    6227020800 FP.from_int      ; Stack: [6-term-result, x^13, 13!_fp]
-    FP.div                    ; Stack: [6-term-result, (x^13 / 13!)]
-         
-    FP.add                    ; Stack: [6-term-result + (x^13 / 13!)]
-}
-
-; Calculates the Taylor series for sin(x) with 8 terms: ... - (x^15 / 1307674368000)
-DEF function_to_draw8 { ; ( x_fp -- result_fp )
-    # apply the 7-term
-    DUP function_to_draw7     ; Stack: [x, 7-term-result]
-    SWAP                      ; Stack: [7-term-result, x]
-
-    # calculate x^15
-    DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP ; Stack: [7-term-result, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x]
-    FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul ; x^15
-                                                                        ; Stack: [7-term-result, x^15]
-
-    1307674368000 FP.from_int      ; Stack: [7-term-result, x^15, 15!_fp]
-    FP.div                    ; Stack: [7-term-result, (x^15 / 15!)]
-         
-    FP.sub                    ; Stack: [7-term-result - (x^15 / 15!)]
-}
-
-; Calculates the Taylor series for sin(x) with 9 terms: ... + (x^17 / 355687428096000)
-DEF function_to_draw9 { ; ( x_fp -- result_fp )
-    # apply the 8-term
-    DUP function_to_draw8     ; Stack: [x, 8-term-result]
-    SWAP                      ; Stack: [8-term-result, x]
-
-    # calculate x^17
-    DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP ; Stack: [8-term-result, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x]
-    FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul ; x^17
-                                                                        ; Stack: [8-term-result, x^17]
-
-    355687428096000 FP.from_int      ; Stack: [8-term-result, x^17, 17!_fp]
-    FP.div                    ; Stack: [8-term-result, (x^17 / 17!)]
-         
-    FP.add                    ; Stack: [8-term-result + (x^17 / 17!)]
-}
-
 ; --- Drawing Functions ---
 
 ; Draws the X and Y axes
@@ -260,18 +209,6 @@ DEF draw_plot { ; ( color function_index -- )
                 ELSE
                     function_index 6 == IF
                         function_to_draw6
-                    ELSE
-                        function_index 7 == IF
-                            function_to_draw7
-                        ELSE 
-                            function_index 8 == IF
-                                function_to_draw8
-                            ELSE
-                                function_index 9 == IF
-                                    function_to_draw9
-                                END
-                            END
-                        END
                     END
                 END
             END
@@ -315,35 +252,24 @@ DEF main {
     ; Draw the X and Y axes
     draw_axes
     
-    "120" FP.from_string AS SCALE_Y
+    "50" FP.from_string AS SCALE_Y
 
-    "Drawing 2-term (green) series....\n" PRTstring
+    "Drawing 2-term (green) series..." PRTstring
     green 2 draw_plot
 
-    "Drawing 3-term (red) series......\n" PRTstring
+    "Drawing 3-term (red) series..." PRTstring
     red 3 draw_plot
 
-    "Drawing 4-term (cyan) series.....\n" PRTstring
+    "Drawing 4-term (cyan) series..." PRTstring
     cyan 4 draw_plot
 
-    "Drawing 5-term (yellow) series...\n" PRTstring
+    "Drawing 5-term (yellow) series..." PRTstring
     yellow 5 draw_plot
 
-    "Drawing 6-term (magenta) series..\n" PRTstring
+    "Drawing 6-term (magenta) series..." PRTstring
     orange 6 draw_plot
-
-    "Drawing 7-term (lightBlue) series\n" PRTstring
-    lightBlue 7 draw_plot
-
-    "Drawing 8-term (lightRed) series.\n" PRTstring
-    lightRed 8 draw_plot
-
-    "Drawing 9-term (white) series....\n" PRTstring
-    white 9 draw_plot
 
     "All done!" PRTstring
 }
 
-0 TIME.start
 main
-0 TIME.read TIME.as_string 13 PRTchar

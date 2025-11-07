@@ -148,57 +148,6 @@ DEF function_to_draw6 { ; ( x_fp -- result_fp )
     FP.sub                    ; Stack: [5-term-result - (x^11 / 39916800)]
 }
 
-; Calculates the Taylor series for sin(x) with 7 terms: ... + (x^13 / 6227020800)
-DEF function_to_draw7 { ; ( x_fp -- result_fp )
-    # apply the 6-term
-    DUP function_to_draw6     ; Stack: [x, 6-term-result]
-    SWAP                      ; Stack: [6-term-result, x]
-
-    # calculate x^13
-    DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP ; Stack: [6-term-result, x, x, x, x, x, x, x, x, x, x, x, x, x]
-    FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul ; x^13
-                                                                        ; Stack: [6-term-result, x^13]
-
-    6227020800 FP.from_int      ; Stack: [6-term-result, x^13, 13!_fp]
-    FP.div                    ; Stack: [6-term-result, (x^13 / 13!)]
-         
-    FP.add                    ; Stack: [6-term-result + (x^13 / 13!)]
-}
-
-; Calculates the Taylor series for sin(x) with 8 terms: ... - (x^15 / 1307674368000)
-DEF function_to_draw8 { ; ( x_fp -- result_fp )
-    # apply the 7-term
-    DUP function_to_draw7     ; Stack: [x, 7-term-result]
-    SWAP                      ; Stack: [7-term-result, x]
-
-    # calculate x^15
-    DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP ; Stack: [7-term-result, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x]
-    FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul ; x^15
-                                                                        ; Stack: [7-term-result, x^15]
-
-    1307674368000 FP.from_int      ; Stack: [7-term-result, x^15, 15!_fp]
-    FP.div                    ; Stack: [7-term-result, (x^15 / 15!)]
-         
-    FP.sub                    ; Stack: [7-term-result - (x^15 / 15!)]
-}
-
-; Calculates the Taylor series for sin(x) with 9 terms: ... + (x^17 / 355687428096000)
-DEF function_to_draw9 { ; ( x_fp -- result_fp )
-    # apply the 8-term
-    DUP function_to_draw8     ; Stack: [x, 8-term-result]
-    SWAP                      ; Stack: [8-term-result, x]
-
-    # calculate x^17
-    DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP DUP ; Stack: [8-term-result, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x]
-    FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul FP.mul ; x^17
-                                                                        ; Stack: [8-term-result, x^17]
-
-    355687428096000 FP.from_int      ; Stack: [8-term-result, x^17, 17!_fp]
-    FP.div                    ; Stack: [8-term-result, (x^17 / 17!)]
-         
-    FP.add                    ; Stack: [8-term-result + (x^17 / 17!)]
-}
-
 ; --- Drawing Functions ---
 
 ; Draws the X and Y axes
@@ -213,10 +162,8 @@ DEF draw_axes {
 }
 
 
-
-; Draws a function plot by calling the specified function
-DEF draw_plot { ; ( color function_index -- )
-    AS function_index
+; Draws a function plot by calling the taylor function
+DEF draw_plot2 { ; ( color -- )
     AS color
     color TURTLE.color
 
@@ -230,11 +177,11 @@ DEF draw_plot { ; ( color function_index -- )
     
     ; Loop from -63 to 63, representing world_x from -6.3 to 6.3 with a step of 0.1
     63 negate AS i
-    :loop_draw
+    :loop_draw2
     
     ; Loop exit condition: jump to the end if i > 63
     i 63 > IF
-        GOTO end_draw_plot
+        GOTO end_draw_plot2
     END
     ; --- Loop Body ---
     
@@ -243,54 +190,17 @@ DEF draw_plot { ; ( color function_index -- )
 
     ; Convert world coordinates to screen coordinates
     world_x world_to_screen_x AS sx1
-    
-    ; Call the selected function
-    world_x
-    function_index 2 == IF
-        function_to_draw2
-    ELSE
-        function_index 3 == IF
-            function_to_draw3
-        ELSE
-            function_index 4 == IF
-                function_to_draw4
-            ELSE
-                function_index 5 == IF
-                    function_to_draw5
-                ELSE
-                    function_index 6 == IF
-                        function_to_draw6
-                    ELSE
-                        function_index 7 == IF
-                            function_to_draw7
-                        ELSE 
-                            function_index 8 == IF
-                                function_to_draw8
-                            ELSE
-                                function_index 9 == IF
-                                    function_to_draw9
-                                END
-                            END
-                        END
-                    END
-                END
-            END
-        END
-    END
-
+    world_x function_to_draw2
     world_to_screen_y AS sy1
 
-    ; --- Clipping and Drawing Logic ---
-    sy1 0 > IF
-        sy1 480 < IF
-            is_first_point IF
-                ; For the first point, we only store it as "previous" and don't draw.
-                0 AS is_first_point
-            ELSE
-                ; For subsequent points, draw a line from the previous point.
-                prev_sx prev_sy sx1 sy1 TURTLE.line
-            END
-    END END
+
+    is_first_point IF
+        ; For the first point, we only store it as "previous" and don't draw.
+        0 AS is_first_point
+    ELSE
+        ; For subsequent points, draw a line from the previous point.
+        prev_sx prev_sy sx1 sy1 TURTLE.line
+    END
 
     ; Save current screen coordinates for the next iteration.
     sx1 AS prev_sx
@@ -298,9 +208,213 @@ DEF draw_plot { ; ( color function_index -- )
 
     ; Increment counter and loop
     i 1 + AS i
-    GOTO loop_draw
+    GOTO loop_draw2
 
-    :end_draw_plot
+    :end_draw_plot2
+}
+
+; Draws a function plot by calling the taylor function
+DEF draw_plot3 { ; ( color -- )
+    AS color
+    color TURTLE.color
+
+    ; Variables for screen coordinates
+    0 AS sx1 
+    0 AS sy1 
+    0 AS prev_sx 
+    0 AS prev_sy 
+    1 AS is_first_point 
+    0 AS world_x 
+    
+    ; Loop from -63 to 63, representing world_x from -6.3 to 6.3 with a step of 0.1
+    63 negate AS i
+    :loop_draw3
+    
+    ; Loop exit condition: jump to the end if i > 63
+    i 63 > IF
+        GOTO end_draw_plot3
+    END
+    ; --- Loop Body ---
+    
+    ; Convert loop counter `i` to FP world_x
+    i FP.from_int 10 FP.from_int FP.div AS world_x
+
+    ; Convert world coordinates to screen coordinates
+    world_x world_to_screen_x AS sx1
+    world_x function_to_draw3
+    world_to_screen_y AS sy1
+
+
+    is_first_point IF
+        ; For the first point, we only store it as "previous" and don't draw.
+        0 AS is_first_point
+    ELSE
+        ; For subsequent points, draw a line from the previous point.
+        prev_sx prev_sy sx1 sy1 TURTLE.line
+    END
+
+    ; Save current screen coordinates for the next iteration.
+    sx1 AS prev_sx
+    sy1 AS prev_sy
+
+    ; Increment counter and loop
+    i 1 + AS i
+    GOTO loop_draw3
+
+    :end_draw_plot3
+}
+
+; Draws a function plot by calling the taylor function
+DEF draw_plot4 { ; ( color -- )
+    AS color
+    color TURTLE.color
+
+    ; Variables for screen coordinates
+    0 AS sx1 
+    0 AS sy1 
+    0 AS prev_sx 
+    0 AS prev_sy 
+    1 AS is_first_point 
+    0 AS world_x 
+    
+    ; Loop from -63 to 63, representing world_x from -6.3 to 6.3 with a step of 0.1
+    63 negate AS i
+    :loop_draw4
+    
+    ; Loop exit condition: jump to the end if i > 63
+    i 63 > IF
+        GOTO end_draw_plot4
+    END
+    ; --- Loop Body ---
+    
+    ; Convert loop counter `i` to FP world_x
+    i FP.from_int 10 FP.from_int FP.div AS world_x
+
+    ; Convert world coordinates to screen coordinates
+    world_x world_to_screen_x AS sx1
+    world_x function_to_draw4
+    world_to_screen_y AS sy1
+
+
+    is_first_point IF
+        ; For the first point, we only store it as "previous" and don't draw.
+        0 AS is_first_point
+    ELSE
+        ; For subsequent points, draw a line from the previous point.
+        prev_sx prev_sy sx1 sy1 TURTLE.line
+    END
+
+    ; Save current screen coordinates for the next iteration.
+    sx1 AS prev_sx
+    sy1 AS prev_sy
+
+    ; Increment counter and loop
+    i 1 + AS i
+    GOTO loop_draw4
+
+    :end_draw_plot4
+}
+
+; Draws a function plot by calling the taylor function
+DEF draw_plot5 { ; ( color -- )
+    AS color
+    color TURTLE.color
+
+    ; Variables for screen coordinates
+    0 AS sx1 
+    0 AS sy1 
+    0 AS prev_sx 
+    0 AS prev_sy 
+    1 AS is_first_point 
+    0 AS world_x 
+    
+    ; Loop from -63 to 63, representing world_x from -6.3 to 6.3 with a step of 0.1
+    63 negate AS i
+    :loop_draw5
+    
+    ; Loop exit condition: jump to the end if i > 63
+    i 63 > IF
+        GOTO end_draw_plot5
+    END
+    ; --- Loop Body ---
+    
+    ; Convert loop counter `i` to FP world_x
+    i FP.from_int 10 FP.from_int FP.div AS world_x
+
+    ; Convert world coordinates to screen coordinates
+    world_x world_to_screen_x AS sx1
+    world_x function_to_draw5
+    world_to_screen_y AS sy1
+
+
+    is_first_point IF
+        ; For the first point, we only store it as "previous" and don't draw.
+        0 AS is_first_point
+    ELSE
+        ; For subsequent points, draw a line from the previous point.
+        prev_sx prev_sy sx1 sy1 TURTLE.line
+    END
+
+    ; Save current screen coordinates for the next iteration.
+    sx1 AS prev_sx
+    sy1 AS prev_sy
+
+    ; Increment counter and loop
+    i 1 + AS i
+    GOTO loop_draw5
+
+    :end_draw_plot5
+}
+
+; Draws a function plot by calling the taylor function
+DEF draw_plot6 { ; ( color -- )
+    AS color
+    color TURTLE.color
+
+    ; Variables for screen coordinates
+    0 AS sx1 
+    0 AS sy1 
+    0 AS prev_sx 
+    0 AS prev_sy 
+    1 AS is_first_point 
+    0 AS world_x 
+    
+    ; Loop from -63 to 63, representing world_x from -6.3 to 6.3 with a step of 0.1
+    63 negate AS i
+    :loop_draw6
+    
+    ; Loop exit condition: jump to the end if i > 63
+    i 63 > IF
+        GOTO end_draw_plot6
+    END
+    ; --- Loop Body ---
+    
+    ; Convert loop counter `i` to FP world_x
+    i FP.from_int 10 FP.from_int FP.div AS world_x
+
+    ; Convert world coordinates to screen coordinates
+    world_x world_to_screen_x AS sx1
+    world_x function_to_draw6
+    world_to_screen_y AS sy1
+
+
+    is_first_point IF
+        ; For the first point, we only store it as "previous" and don't draw.
+        0 AS is_first_point
+    ELSE
+        ; For subsequent points, draw a line from the previous point.
+        prev_sx prev_sy sx1 sy1 TURTLE.line
+    END
+
+    ; Save current screen coordinates for the next iteration.
+    sx1 AS prev_sx
+    sy1 AS prev_sy
+
+    ; Increment counter and loop
+    i 1 + AS i
+    GOTO loop_draw6
+
+    :end_draw_plot6
 }
 
 
@@ -309,41 +423,34 @@ DEF main {
     ; Set fixed-point precision (e.g., 3 decimal places)
     1000 FP.set_scale
 
+
     TURTLE.start
     pixel TURTLE.mode
     
     ; Draw the X and Y axes
     draw_axes
     
-    "120" FP.from_string AS SCALE_Y
+    "Drawing 2-term (green) series..." PRTstring
+    "50" FP.from_string AS SCALE_Y
+    green draw_plot2
 
-    "Drawing 2-term (green) series....\n" PRTstring
-    green 2 draw_plot
+    "Drawing 3-term (red) series..." PRTstring
+    "50" FP.from_string AS SCALE_Y
+    red draw_plot3
 
-    "Drawing 3-term (red) series......\n" PRTstring
-    red 3 draw_plot
+    "Drawing 4-term (cyan) series..." PRTstring
+    "50" FP.from_string AS SCALE_Y
+    cyan draw_plot4
 
-    "Drawing 4-term (cyan) series.....\n" PRTstring
-    cyan 4 draw_plot
+    "Drawing 5-term (yellow) series..." PRTstring
+    "50" FP.from_string AS SCALE_Y
+    yellow draw_plot5
 
-    "Drawing 5-term (yellow) series...\n" PRTstring
-    yellow 5 draw_plot
-
-    "Drawing 6-term (magenta) series..\n" PRTstring
-    orange 6 draw_plot
-
-    "Drawing 7-term (lightBlue) series\n" PRTstring
-    lightBlue 7 draw_plot
-
-    "Drawing 8-term (lightRed) series.\n" PRTstring
-    lightRed 8 draw_plot
-
-    "Drawing 9-term (white) series....\n" PRTstring
-    white 9 draw_plot
+    "Drawing 6-term (magenta) series..." PRTstring
+    "50" FP.from_string AS SCALE_Y
+    orange draw_plot6
 
     "All done!" PRTstring
 }
 
-0 TIME.start
 main
-0 TIME.read TIME.as_string 13 PRTchar

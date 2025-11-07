@@ -61,7 +61,7 @@
 . $circ_y 1
 . $circ_p 1
 . $SCALE_Y 1
-. $function_to_draw_str_0 5
+. $function_index 1
 . $color 1
 . $sx1 1
 . $sy1 1
@@ -70,12 +70,29 @@
 . $is_first_point 1
 . $world_x 1
 . $i 1
-. $main_str_1 33
-. $main_str_2 4
-. $main_str_3 10
+. $main_str_0 4
+. $main_str_1 35
+. $main_str_2 35
+. $main_str_3 35
+. $main_str_4 35
+. $main_str_5 35
+. $main_str_6 35
+. $main_str_7 35
+. $main_str_8 35
+. $main_str_9 10
 
 # .CODE
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @TIME.start
     call @main
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @TIME.read
+    call @TIME.as_string
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @PRTchar
     ret
 
 # .FUNCTIONS
@@ -1478,13 +1495,13 @@
     stack A $DATASTACK_PTR
     call @FP.from_int
     call @FP.sub
-    ldi A 45
+    ldi A 51
     stack A $DATASTACK_PTR
     call @FP.from_int
     call @FP.div
     ret
 @world_to_screen_x
-    ldi A 45
+    ldi A 51
     stack A $DATASTACK_PTR
     call @FP.from_int
     call @FP.mul
@@ -1505,14 +1522,6 @@
     call @FP.sub
     call @FP.to_int
     ret
-@function_to_draw
-    call @rt_dup
-    ldi A $function_to_draw_str_0
-    stack A $DATASTACK_PTR
-    call @FP.from_string
-    call @FP.mul
-    call @FP.mul
-    ret
 @function_to_draw2
     call @rt_dup
     call @rt_dup
@@ -1523,8 +1532,217 @@
     stack A $DATASTACK_PTR
     call @FP.from_int
     call @FP.div
-    call @rt_swap
     call @FP.sub
+    ret
+@function_to_draw3
+    call @rt_dup
+    call @function_to_draw2
+    call @rt_swap
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    ldi A 120
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    call @FP.div
+    call @FP.add
+    ret
+@function_to_draw4
+    call @rt_dup
+    call @function_to_draw3
+    call @rt_swap
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    ldi A 5040
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    call @FP.div
+    call @FP.sub
+    ret
+@function_to_draw5
+    call @rt_dup
+    call @function_to_draw4
+    call @rt_swap
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    ldi A 362880
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    call @FP.div
+    call @FP.add
+    ret
+@function_to_draw6
+    call @rt_dup
+    call @function_to_draw5
+    call @rt_swap
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    ldi A 39916800
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    call @FP.div
+    call @FP.sub
+    ret
+@function_to_draw7
+    call @rt_dup
+    call @function_to_draw6
+    call @rt_swap
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    ldi A 6227020800
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    call @FP.div
+    call @FP.add
+    ret
+@function_to_draw8
+    call @rt_dup
+    call @function_to_draw7
+    call @rt_swap
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    ldi A 1307674368000
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    call @FP.div
+    call @FP.sub
+    ret
+@function_to_draw9
+    call @rt_dup
+    call @function_to_draw8
+    call @rt_swap
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @rt_dup
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    call @FP.mul
+    ldi A 355687428096000
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    call @FP.div
+    call @FP.add
     ret
 @draw_axes
     ldi A 1
@@ -1557,7 +1775,9 @@
     stack A $DATASTACK_PTR
     call @TURTLE.line
     ret
-@draw_plot2
+@draw_plot
+    ustack A $DATASTACK_PTR
+    sto A $function_index
     ustack A $DATASTACK_PTR
     sto A $color
     stack A $DATASTACK_PTR
@@ -1574,22 +1794,22 @@
     sto A $is_first_point
     ldi A 0
     sto A $world_x
-    ldi A 70
+    ldi A 63
     stack A $DATASTACK_PTR
     call @negate
     ustack A $DATASTACK_PTR
     sto A $i
-:loop_draw2
+:loop_draw
     ldm A $i
     stack A $DATASTACK_PTR
-    ldi A 70
+    ldi A 63
     stack A $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :draw_plot2_if_end_0
-    jmp :end_draw_plot2
-:draw_plot2_if_end_0
+    jmpt :draw_plot_if_end_0
+    jmp :end_draw_plot
+:draw_plot_if_end_0
     ldm A $i
     stack A $DATASTACK_PTR
     call @FP.from_int
@@ -1605,17 +1825,125 @@
     sto A $sx1
     ldm A $world_x
     stack A $DATASTACK_PTR
+    ldm A $function_index
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_plot_if_else_1
     call @function_to_draw2
+    jmp :draw_plot_if_end_1
+:draw_plot_if_else_1
+    ldm A $function_index
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_plot_if_else_2
+    call @function_to_draw3
+    jmp :draw_plot_if_end_2
+:draw_plot_if_else_2
+    ldm A $function_index
+    stack A $DATASTACK_PTR
+    ldi A 4
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_plot_if_else_3
+    call @function_to_draw4
+    jmp :draw_plot_if_end_3
+:draw_plot_if_else_3
+    ldm A $function_index
+    stack A $DATASTACK_PTR
+    ldi A 5
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_plot_if_else_4
+    call @function_to_draw5
+    jmp :draw_plot_if_end_4
+:draw_plot_if_else_4
+    ldm A $function_index
+    stack A $DATASTACK_PTR
+    ldi A 6
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_plot_if_else_5
+    call @function_to_draw6
+    jmp :draw_plot_if_end_5
+:draw_plot_if_else_5
+    ldm A $function_index
+    stack A $DATASTACK_PTR
+    ldi A 7
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_plot_if_else_6
+    call @function_to_draw7
+    jmp :draw_plot_if_end_6
+:draw_plot_if_else_6
+    ldm A $function_index
+    stack A $DATASTACK_PTR
+    ldi A 8
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_plot_if_else_7
+    call @function_to_draw8
+    jmp :draw_plot_if_end_7
+:draw_plot_if_else_7
+    ldm A $function_index
+    stack A $DATASTACK_PTR
+    ldi A 9
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_plot_if_end_8
+    call @function_to_draw9
+:draw_plot_if_end_8
+:draw_plot_if_end_7
+:draw_plot_if_end_6
+:draw_plot_if_end_5
+:draw_plot_if_end_4
+:draw_plot_if_end_3
+:draw_plot_if_end_2
+:draw_plot_if_end_1
     call @world_to_screen_y
     ustack A $DATASTACK_PTR
     sto A $sy1
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_plot_if_end_9
+    ldm A $sy1
+    stack A $DATASTACK_PTR
+    ldi A 480
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_plot_if_end_10
     ldm A $is_first_point
     tst A 0
-    jmpt :draw_plot2_if_else_1
+    jmpt :draw_plot_if_else_11
     ldi A 0
     sto A $is_first_point
-    jmp :draw_plot2_if_end_1
-:draw_plot2_if_else_1
+    jmp :draw_plot_if_end_11
+:draw_plot_if_else_11
     ldm A $prev_sx
     stack A $DATASTACK_PTR
     ldm A $prev_sy
@@ -1625,7 +1953,9 @@
     ldm A $sy1
     stack A $DATASTACK_PTR
     call @TURTLE.line
-:draw_plot2_if_end_1
+:draw_plot_if_end_11
+:draw_plot_if_end_10
+:draw_plot_if_end_9
     ldm A $sx1
     sto A $prev_sx
     ldm A $sy1
@@ -1637,8 +1967,8 @@
     add B A
     ld A B
     sto A $i
-    jmp :loop_draw2
-:end_draw_plot2
+    jmp :loop_draw
+:end_draw_plot
     ret
 @main
     ldi A 1000
@@ -1648,19 +1978,76 @@
     ldi A 0
     stack A $DATASTACK_PTR
     call @TURTLE.mode
-    call @draw_axes
-    ldi A $main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $main_str_2
+    ldi A $main_str_0
     stack A $DATASTACK_PTR
     call @FP.from_string
     ustack A $DATASTACK_PTR
     sto A $SCALE_Y
+    ldi A $main_str_1
+    stack A $DATASTACK_PTR
+    call @PRTstring
     ldi A 5
     stack A $DATASTACK_PTR
-    call @draw_plot2
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @draw_plot
+    ldi A $main_str_2
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    call @draw_plot
     ldi A $main_str_3
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 4
+    stack A $DATASTACK_PTR
+    call @draw_plot
+    ldi A $main_str_4
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A 7
+    stack A $DATASTACK_PTR
+    ldi A 5
+    stack A $DATASTACK_PTR
+    call @draw_plot
+    ldi A $main_str_5
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A 8
+    stack A $DATASTACK_PTR
+    ldi A 6
+    stack A $DATASTACK_PTR
+    call @draw_plot
+    ldi A $main_str_6
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A 14
+    stack A $DATASTACK_PTR
+    ldi A 7
+    stack A $DATASTACK_PTR
+    call @draw_plot
+    ldi A $main_str_7
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldi A 8
+    stack A $DATASTACK_PTR
+    call @draw_plot
+    ldi A $main_str_8
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 9
+    stack A $DATASTACK_PTR
+    call @draw_plot
+    ldi A $main_str_9
     stack A $DATASTACK_PTR
     call @PRTstring
     ret
@@ -1731,7 +2118,13 @@
 % $circ_y 0
 % $circ_p 0
 % $SCALE_Y 0
-% $function_to_draw_str_0 \- \0 \. \5 \null
-% $main_str_1 \D \r \a \w \i \n \g \space \2 \- \t \e \r \m \space \( \g \r \e \e \n \) \space \s \e \r \i \e \s \. \. \. \null
-% $main_str_2 \4 \. \5 \null
-% $main_str_3 \A \l \l \space \d \o \n \e \! \null
+% $main_str_0 \1 \2 \0 \null
+% $main_str_1 \D \r \a \w \i \n \g \space \2 \- \t \e \r \m \space \( \g \r \e \e \n \) \space \s \e \r \i \e \s \. \. \. \. \Return \null
+% $main_str_2 \D \r \a \w \i \n \g \space \3 \- \t \e \r \m \space \( \r \e \d \) \space \s \e \r \i \e \s \. \. \. \. \. \. \Return \null
+% $main_str_3 \D \r \a \w \i \n \g \space \4 \- \t \e \r \m \space \( \c \y \a \n \) \space \s \e \r \i \e \s \. \. \. \. \. \Return \null
+% $main_str_4 \D \r \a \w \i \n \g \space \5 \- \t \e \r \m \space \( \y \e \l \l \o \w \) \space \s \e \r \i \e \s \. \. \. \Return \null
+% $main_str_5 \D \r \a \w \i \n \g \space \6 \- \t \e \r \m \space \( \m \a \g \e \n \t \a \) \space \s \e \r \i \e \s \. \. \Return \null
+% $main_str_6 \D \r \a \w \i \n \g \space \7 \- \t \e \r \m \space \( \l \i \g \h \t \B \l \u \e \) \space \s \e \r \i \e \s \Return \null
+% $main_str_7 \D \r \a \w \i \n \g \space \8 \- \t \e \r \m \space \( \l \i \g \h \t \R \e \d \) \space \s \e \r \i \e \s \. \Return \null
+% $main_str_8 \D \r \a \w \i \n \g \space \9 \- \t \e \r \m \space \( \w \h \i \t \e \) \space \s \e \r \i \e \s \. \. \. \. \Return \null
+% $main_str_9 \A \l \l \space \d \o \n \e \! \null
