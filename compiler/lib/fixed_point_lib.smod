@@ -1,6 +1,7 @@
 # .HEADER
 . $SCALE_FACTOR 1
 . $FP_DOT_STR 2
+. $div_error 38
 . $fp_b 1
 . $fp_a 1
 . $result_sign 1
@@ -161,6 +162,9 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :FP.div_if_else_3
+    ldm A $div_error
+    stack A $DATASTACK_PTR
+    call @PRTstring
     ldi A 0
     stack A $DATASTACK_PTR
     jmp :FP.div_if_end_3
@@ -549,6 +553,7 @@
 # .DATA
 % $SCALE_FACTOR 1000
 % $FP_DOT_STR \. \null
+% $div_error \E \R \R \O \R \: \space \F \i \x \e \d \space \p \o \i \n \t \space \D \i \v \i \s \i \o \n \space \b \y \space \z \e \r \o \! \Return \null
 % $fp_b 0
 % $fp_a 0
 % $result_sign 1

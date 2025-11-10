@@ -35,7 +35,7 @@ ASSEMBLER := python3 assembler/assembler.py
 MICROCODE_ASSEMBLER := python3 $(MICROCODE_DIR)/assembler.py
 
 # --- Main Programs ---
-MAIN_PROGRAMS := main fly maze chaos3 turtle koch fib conway barnsly test
+MAIN_PROGRAMS := main fly maze chaos3 turtle koch fib conway barnsly taylor test
 DEFAULT_PROGRAM := $(firstword $(MAIN_PROGRAMS))
 
 # --- Target Calculation ---

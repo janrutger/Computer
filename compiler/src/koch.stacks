@@ -83,55 +83,31 @@ DEF draw_koch {
 # Main Program
 # -----------------------------------------------------------------------------
 
-# 1. Initialize turtle
-TURTLE.start
 
-db_pixel TURTLE.mode
-# pixel TURTLE.mode
+TURTLE.start                # 1. Initialize the turtle
+db_pixel TURTLE.mode        # pixel TURTLE.mode
 
-
-# 2. Prepare for drawing
-red TURTLE.color
-30 30 TURTLE.goto       # Adjusted starting position for better visibility
-
-# 3. Push the starting level onto our manual stack and start the recursion
-4 stack_push draw_koch
-
-# 4. Finalize drawing
-TURTLE.flip
+red TURTLE.color            # 2. Prepare for drawing
+30 30 TURTLE.goto           # Adjusted starting position for better visibility
+4 stack_push draw_koch      # 3. Push the starting level onto our manual stack and start the recursion
+TURTLE.flip                 # 4. Finalize drawing
 
 green TURTLE.color
 30 30 TURTLE.goto       # Adjusted starting position for better visibility
-
-# 3. Push the starting level onto our manual stack and start the recursion
-3 stack_push draw_koch
-
-# 4. Finalize drawing
+3 stack_push draw_koch  # 3 genearions
 TURTLE.flip
 
 blue TURTLE.color
 30 30 TURTLE.goto       # Adjusted starting position for better visibility
-
-# 3. Push the starting level onto our manual stack and start the recursion
-2 stack_push draw_koch
-
-# 4. Finalize drawing
+2 stack_push draw_koch  # 2 generations
 TURTLE.flip
 
 orange TURTLE.color
 30 30 TURTLE.goto       # Adjusted starting position for better visibility
-
-# 3. Push the starting level onto our manual stack and start the recursion
-1 stack_push draw_koch
-
-# 4. Finalize drawing
+1 stack_push draw_koch  # 1 generation
 TURTLE.flip
 
 white TURTLE.color
 30 30 TURTLE.goto       # Adjusted starting position for better visibility
-
-# 3. Push the starting level onto our manual stack and start the recursion
-0 stack_push draw_koch
-
-# 4. Finalize drawing
+0 stack_push draw_koch  # 0 generations
 TURTLE.flip

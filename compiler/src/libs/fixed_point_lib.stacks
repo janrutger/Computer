@@ -14,6 +14,8 @@ VALUE SCALE_FACTOR  1000 ;.default 3 fixed-point scale factor
 CONST FP_DOT 46     ; the assci value for a single .
 STRING FP_DOT_STR "."
 
+STRING div_error "ERROR: Fixed point Division by zero!\n"
+
 DEF FP.set_scale {
     AS SCALE_FACTOR
 }
@@ -103,7 +105,9 @@ DEF FP.div {
     # ; Apply sign
     # raw_result result_sign *
 
+    # Check for division by zero, and trow error return 0 if so
     abs_denominator 0 == IF
+        div_error PRTstring
         0 ; Return 0 if denominator is 0
     ELSE
         abs_numerator SCALE_FACTOR * abs_denominator // result_sign *
