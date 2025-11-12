@@ -27,6 +27,24 @@ DEF power {
     :_power_end
 }
 
+
+; --- FACTORIAL ---
+; Calculates the factorial of an integer.
+; ( n -- n! )
+DEF factorial {
+    VALUE n 0
+    VALUE res 1
+    1 AS res
+    AS n
+    1 AS res
+    WHILE n 1 > DO
+        res n * AS res
+        n 1- AS n
+    DONE
+    res
+}
+
+
 ; --- NEGATE ---
 ; negate TOS
 ; ( val -- res )

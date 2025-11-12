@@ -2,6 +2,8 @@
 . $_power_base 1
 . $_power_exp 1
 . $_power_res 1
+. $n 1
+. $res 1
 . $SCALE_FACTOR 1
 . $FP_DOT_STR 2
 . $div_error 38
@@ -11,6 +13,9 @@
 . $abs_numerator 1
 . $abs_denominator 1
 . $raw_result 1
+. $exponent 1
+. $base 1
+. $result 1
 . $frac 1
 . $num_digits 1
 . $MAX_VALID_DIGITS 1
@@ -154,6 +159,41 @@
     sto A $_power_exp
     jmp :loop_POWER
 :_power_end
+    ret
+@factorial
+    ldi A 1
+    sto A $res
+    ustack A $DATASTACK_PTR
+    sto A $n
+    ldi A 1
+    sto A $res
+:factorial_while_start_1
+    ldm A $n
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :factorial_while_end_1
+    ldm A $res
+    stack A $DATASTACK_PTR
+    ldm A $n
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    sto A $res
+    ldm A $n
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $n
+    jmp :factorial_while_start_1
+:factorial_while_end_1
+    ldm A $res
+    stack A $DATASTACK_PTR
     ret
 @negate
     ldi A 0
@@ -336,6 +376,57 @@
     stack B $DATASTACK_PTR
 :FP.div_if_end_3
     ret
+@FP.power
+    ustack A $DATASTACK_PTR
+    sto A $exponent
+    ustack A $DATASTACK_PTR
+    sto A $base
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    ustack A $DATASTACK_PTR
+    sto A $result
+    ldm A $exponent
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :FP.power_if_end_4
+    ldm A $result
+    stack A $DATASTACK_PTR
+    jmp :_fp_power_end
+:FP.power_if_end_4
+:loop_power
+    ldm A $exponent
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :FP.power_if_end_5
+    ldm A $result
+    stack A $DATASTACK_PTR
+    ldm A $base
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    ustack A $DATASTACK_PTR
+    sto A $result
+    ldm A $exponent
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $exponent
+    jmp :loop_power
+:FP.power_if_end_5
+    ldm A $result
+    stack A $DATASTACK_PTR
+:_fp_power_end
+    ret
 @FP.print
     call @rt_dup
     ldi A 0
@@ -343,12 +434,12 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.print_if_end_4
+    jmpt :FP.print_if_end_6
     ldi A 45
     stack A $DATASTACK_PTR
     call @PRTchar
     call @negate
-:FP.print_if_end_4
+:FP.print_if_end_6
     call @rt_dup
     ldm A $SCALE_FACTOR
     ustack B $DATASTACK_PTR
@@ -420,12 +511,12 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.fprint_if_end_5
+    jmpt :FP.fprint_if_end_7
     ldi A 45
     stack A $DATASTACK_PTR
     call @PRTchar
     call @negate
-:FP.fprint_if_end_5
+:FP.fprint_if_end_7
     ldi A 0
     sto A $MAX_VALID_DIGITS
     ldi A 1
@@ -438,7 +529,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.fprint_if_end_6
+    jmpt :FP.fprint_if_end_8
     ldm A $temp_scale
     stack A $DATASTACK_PTR
     ldi A 10
@@ -454,7 +545,7 @@
     ld A B
     sto A $MAX_VALID_DIGITS
     jmp :loop_calc_valid_digits
-:FP.fprint_if_end_6
+:FP.fprint_if_end_8
     ldm A $num_digits
     stack A $DATASTACK_PTR
     ldm A $MAX_VALID_DIGITS
@@ -462,10 +553,10 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.fprint_if_end_7
+    jmpt :FP.fprint_if_end_9
     ldm A $MAX_VALID_DIGITS
     sto A $num_digits
-:FP.fprint_if_end_7
+:FP.fprint_if_end_9
     call @rt_dup
     ldm A $SCALE_FACTOR
     ustack B $DATASTACK_PTR
@@ -487,7 +578,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.fprint_if_end_8
+    jmpt :FP.fprint_if_end_10
     ldm A $frac
     stack A $DATASTACK_PTR
     ldi A 10
@@ -515,7 +606,7 @@
     ld A B
     sto A $num_digits
     jmp :loop_print_digits
-:FP.fprint_if_end_8
+:FP.fprint_if_end_10
     ret
 @_STRNatoi
     ustack A $DATASTACK_PTR
@@ -532,11 +623,11 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_STRNatoi_if_end_9
+    jmpt :_STRNatoi_if_end_11
     ldm A $__natoi_res
     stack A $DATASTACK_PTR
     jmp :_natoi_end
-:_STRNatoi_if_end_9
+:_STRNatoi_if_end_11
     ldm I $__natoi_p
     ldx A $_start_memory_
     stack A $DATASTACK_PTR
@@ -584,7 +675,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.from_string_if_end_10
+    jmpt :FP.from_string_if_end_12
     ldi A 1
     stack A $DATASTACK_PTR
     call @negate
@@ -597,7 +688,7 @@
     add B A
     ld A B
     sto A $str_ptr
-:FP.from_string_if_end_10
+:FP.from_string_if_end_12
     ldm A $str_ptr
     stack A $DATASTACK_PTR
     ldi A 46
@@ -614,7 +705,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.from_string_if_end_11
+    jmpt :FP.from_string_if_end_13
     ldm A $str_ptr
     stack A $DATASTACK_PTR
     call @STRlen
@@ -631,7 +722,7 @@
     mul B A
     stack B $DATASTACK_PTR
     jmp :_fp_from_string_end
-:FP.from_string_if_end_11
+:FP.from_string_if_end_13
     ldm A $str_ptr
     stack A $DATASTACK_PTR
     ldm A $dot_index
@@ -1531,12 +1622,12 @@
     ret
 @function_to_draw2
     call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @FP.mul
-    call @FP.mul
-    ldi A 6
+    ldi A 3
     stack A $DATASTACK_PTR
+    call @FP.power
+    ldi A 3
+    stack A $DATASTACK_PTR
+    call @factorial
     call @FP.from_int
     call @FP.div
     call @FP.sub
@@ -1545,16 +1636,12 @@
     call @rt_dup
     call @function_to_draw2
     call @rt_swap
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    ldi A 120
+    ldi A 5
     stack A $DATASTACK_PTR
+    call @FP.power
+    ldi A 5
+    stack A $DATASTACK_PTR
+    call @factorial
     call @FP.from_int
     call @FP.div
     call @FP.add
@@ -1563,20 +1650,12 @@
     call @rt_dup
     call @function_to_draw3
     call @rt_swap
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    ldi A 5040
+    ldi A 7
     stack A $DATASTACK_PTR
+    call @FP.power
+    ldi A 7
+    stack A $DATASTACK_PTR
+    call @factorial
     call @FP.from_int
     call @FP.div
     call @FP.sub
@@ -1585,24 +1664,12 @@
     call @rt_dup
     call @function_to_draw4
     call @rt_swap
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    ldi A 362880
+    ldi A 9
     stack A $DATASTACK_PTR
+    call @FP.power
+    ldi A 9
+    stack A $DATASTACK_PTR
+    call @factorial
     call @FP.from_int
     call @FP.div
     call @FP.add
@@ -1611,28 +1678,12 @@
     call @rt_dup
     call @function_to_draw5
     call @rt_swap
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    ldi A 39916800
+    ldi A 11
     stack A $DATASTACK_PTR
+    call @FP.power
+    ldi A 11
+    stack A $DATASTACK_PTR
+    call @factorial
     call @FP.from_int
     call @FP.div
     call @FP.sub
@@ -1641,32 +1692,12 @@
     call @rt_dup
     call @function_to_draw6
     call @rt_swap
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    ldi A 6227020800
+    ldi A 13
     stack A $DATASTACK_PTR
+    call @FP.power
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @factorial
     call @FP.from_int
     call @FP.div
     call @FP.add
@@ -1675,36 +1706,12 @@
     call @rt_dup
     call @function_to_draw7
     call @rt_swap
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    ldi A 1307674368000
+    ldi A 15
     stack A $DATASTACK_PTR
+    call @FP.power
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @factorial
     call @FP.from_int
     call @FP.div
     call @FP.sub
@@ -1713,40 +1720,12 @@
     call @rt_dup
     call @function_to_draw8
     call @rt_swap
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @rt_dup
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    call @FP.mul
-    ldi A 355687428096000
+    ldi A 17
     stack A $DATASTACK_PTR
+    call @FP.power
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @factorial
     call @FP.from_int
     call @FP.div
     call @FP.add
@@ -1832,9 +1811,6 @@
     sto A $sx1
     ldm A $world_x
     stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    call @TIME.start
     ldm A $function_index
     stack A $DATASTACK_PTR
     ldi A 1
@@ -1941,13 +1917,6 @@
 :draw_plot_if_end_3
 :draw_plot_if_end_2
 :draw_plot_if_end_1
-    ldi A 1
-    stack A $DATASTACK_PTR
-    call @TIME.read
-    call @TIME.as_string
-    ldi A 13
-    stack A $DATASTACK_PTR
-    call @PRTchar
     call @world_to_screen_y
     ustack A $DATASTACK_PTR
     sto A $sy1
@@ -2095,6 +2064,8 @@
 % $_power_base 0
 % $_power_exp 0
 % $_power_res 0
+% $n 0
+% $res 1
 
 % $SCALE_FACTOR 1000
 % $FP_DOT_STR \. \null
@@ -2105,6 +2076,9 @@
 % $abs_numerator 0
 % $abs_denominator 0
 % $raw_result 0
+% $exponent 0
+% $base 0
+% $result 0
 % $frac 0
 % $num_digits 0
 % $MAX_VALID_DIGITS 0

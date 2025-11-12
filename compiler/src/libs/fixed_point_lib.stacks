@@ -115,6 +115,40 @@ DEF FP.div {
 
 }
 
+
+; Calculates fp_base ^ int_exponent for positive exponents
+; ( fp_base int_exponent -- fp_result )
+DEF FP.power {
+    VALUE exponent 0
+    VALUE base 0
+    VALUE result 0
+
+    AS exponent
+    AS base
+
+    ; Initialize result to 1.0_fp
+    1 FP.from_int AS result
+
+    ; Handle exponent = 0
+    exponent 0 == IF
+        result
+        GOTO _fp_power_end
+    END
+
+    ; Positive exponent loop
+    :loop_power
+        exponent 0 > IF
+            result base FP.mul AS result
+            exponent 1- AS exponent
+            GOTO loop_power
+        END
+
+    result
+
+    :_fp_power_end
+}
+
+
 ; --- Output Functions ---
 
 ; Prints a fixed-point number with a few decimal places (3 digits).

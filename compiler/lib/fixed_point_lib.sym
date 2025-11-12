@@ -1,33 +1,35 @@
 {
   "functions": [
-    "gcd",
-    "STRatoi",
-    "FP.fprint",
-    "FP.print",
-    "STRcmp",
-    "power",
     "CURSORon",
-    "READline",
-    "negate",
-    "FP.add",
-    "KEYchar",
-    "FP.to_int",
-    "PRTchar",
-    "FP.from_string",
-    "PRTstring",
-    "FP.sub",
-    "_STRNatoi",
     "FP.mul",
+    "PRTstring",
+    "STRatoi",
+    "CURSORoff",
+    "STRlen",
+    "FP.from_string",
+    "PRTcls",
+    "STRfind",
+    "FP.add",
+    "TOS_nnl",
+    "abs",
+    "negate",
+    "factorial",
+    "FP.to_int",
+    "FP.sub",
+    "gcd",
+    "FP.set_scale",
     "FP.div",
+    "FP.fprint",
+    "FP.power",
+    "FP.print",
     "FP.from_int",
     "io_lib_init",
-    "STRfind",
-    "PRTcls",
-    "FP.set_scale",
-    "abs",
-    "STRlen",
-    "CURSORoff",
-    "TOS_nnl"
+    "READline",
+    "STRcmp",
+    "power",
+    "PRTchar",
+    "_STRNatoi",
+    "KEYchar"
   ],
   "variables": [
     {
@@ -42,6 +44,16 @@
     },
     {
       "name": "_power_res",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "n",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "res",
       "type": "LIB_VAR",
       "size": 1
     },
@@ -177,6 +189,21 @@
     },
     {
       "name": "raw_result",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "exponent",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "base",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "result",
       "type": "VALUE",
       "size": 1
     },

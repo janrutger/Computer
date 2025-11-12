@@ -2,6 +2,8 @@
 . $_power_base 1
 . $_power_exp 1
 . $_power_res 1
+. $n 1
+. $res 1
 # .FUNCTIONS
 @gcd
 :gcd_while_start_0
@@ -59,6 +61,41 @@
     jmp :loop_POWER
 :_power_end
     ret
+@factorial
+    ldi A 1
+    sto A $res
+    ustack A $DATASTACK_PTR
+    sto A $n
+    ldi A 1
+    sto A $res
+:factorial_while_start_1
+    ldm A $n
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :factorial_while_end_1
+    ldm A $res
+    stack A $DATASTACK_PTR
+    ldm A $n
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    sto A $res
+    ldm A $n
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $n
+    jmp :factorial_while_start_1
+:factorial_while_end_1
+    ldm A $res
+    stack A $DATASTACK_PTR
+    ret
 @negate
     ldi A 0
     stack A $DATASTACK_PTR
@@ -84,3 +121,5 @@
 % $_power_base 0
 % $_power_exp 0
 % $_power_res 0
+% $n 0
+% $res 1
