@@ -316,3 +316,40 @@ ASM {
 
 
 }
+
+
+DEF print_vdisk_error {
+    ASM {
+        # pointer to the string at the datastack
+        # Read Pointer in A
+        ustack A $DATASTACK_PTR
+
+        :loop_print_vdisk_error
+            ld I A                ; Load address from A into I (R0)
+            ldx C $_start_memory_ ; Load character from memory[start_memory + I] into C
+            tst C \null           ; Check for null terminator
+            jmpt :end_print_vdisk_error     ; If null, end loop
+
+            call @print_char      ; Directly call print_char routine
+
+            addi A 1              ; Increment string address
+            jmp :loop_print_vdisk_error     ; Continue loop
+        :end_print_vdisk_error
+    }
+}
+
+
+
+DEF error_wrong_filename {
+    STRING error_wrong_vdisk_filename "Vdisk: wrong filename error"
+    &error_wrong_vdisk_filename print_vdisk_error
+}
+
+DEF error_fatal_disk_error {
+    STRING fatal_vdisk_error " Vdisk: fatal disk error"
+    & fatal_vdisk_error print_vdisk_error
+    WHILE 1 DO 
+        # do nothing endless loop
+    DONE
+}
+

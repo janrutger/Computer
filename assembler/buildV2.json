@@ -30,6 +30,26 @@
       {
         "file": "asm/apps/fly.asm",
         "output": "../bin/apps/fly.bin"
+      },
+      {
+        "file": "asm/apps/barnsly.asm",
+        "output": "../bin/apps/barnsly.bin"
+      },
+      {
+        "file": "asm/apps/chaos3.asm",
+        "output": "../bin/apps/chaos3.bin"
+      },
+      {
+        "file": "asm/apps/koch.asm",
+        "output": "../bin/apps/koch.bin"
+      },
+      {
+        "file": "asm/apps/conway.asm",
+        "output": "../bin/apps/conway.bin"
+      },
+      {
+        "file": "asm/apps/maze.asm",
+        "output": "../bin/apps/maze.bin"
       }
     ]
   }

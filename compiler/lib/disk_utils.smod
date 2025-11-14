@@ -1,0 +1,123 @@
+# .FUNCTIONS
+@_read_disk_block
+
+        ldi I ~SYS_F_READ_BLOCK
+        int $INT_VECTORS
+        # After read block 12 (or less) bytes from the file are loaded in $disk_io_buffer
+        # \null terminated
+
+        # reset Disk_io_buffer_prt
+        sto Z $disk_io_buffer_ptr
+
+        # Check for error
+        ldm A $SYSCALL_RETURN_STATUS
+        tste A Z
+        ret
+@_check_last_block
+
+        ldm A $SYSCALL_RETURN_VALUE ; check if it was the last block
+        tst A 1
+        ret
+@_read_next_block
+
+        call @_check_last_block
+        jmpt :close_and_end
+        call @_read_disk_block
+        jmpt :close_and_end
+
+        ret
+        ret
+@load_bin_file
+
+        # Pointer to File_name_string on the stack (kernel_stacks.asm)
+        ustack A $DATASTACK_PTR     ; Pop filename pointer into A
+        
+        ##
+        ldi I ~SYS_F_OPEN_READ      ; Open the file for read
+        int $INT_VECTORS
+
+        ldm A $SYSCALL_RETURN_STATUS
+        tste A Z               ; Status is 1 at success
+        jmpt :cmd_load_end     ; do nothing when file error, mesage is already printed
+
+        . $mem_adres 1
+        . $mem_val 1
+
+        # read the first disk block
+        call @_read_disk_block
+        jmpt :close_and_end ; if error, close file and end
+
+        :read_disk_loop
+            # 1 find the adres from the input buffer
+            #   an number seperated by an space (32)
+            #   2 blocks can be needed
+
+            # reset adres and value
+            sto Z $mem_adres
+            sto Z $mem_val
+
+        :adres_lookup_loop
+            inc I $disk_io_buffer_ptr
+            ldx C $disk_io_buffer_base
+            tst C \null
+            jmpf :skip_next0                     ; End of input buffer
+                call @_read_next_block
+                inc I $disk_io_buffer_ptr
+                ldx C $disk_io_buffer_base
+
+            :skip_next0
+
+            tst C \space                    ; check for adres delimiter
+            jmpt :value_lookup_loop         ; $mem_adres containts the adres
+
+            ldm A $mem_adres
+            muli A 10                       ; shift result by 10
+            subi C 48                       ; Substract ascci offset
+            add A C 
+            sto A $mem_adres
+
+            jmp :adres_lookup_loop
+            
+        # 2 Find the value of that adres from the input buffer
+        #   an number seperated by Return (13)
+        #   2 block van be needed
+        :value_lookup_loop  
+            inc I $disk_io_buffer_ptr
+            ldx C $disk_io_buffer_base
+            tst C \null                     ; End of input buffer
+            jmpf :skip_next1 
+                call @_read_next_block
+                inc I $disk_io_buffer_ptr
+                ldx C $disk_io_buffer_base
+
+            :skip_next1
+
+            tst C \Return                   ; check for value delimiter
+            jmpt :store_adres_value_pair
+
+            ldm A $mem_val
+            muli A 10                       ; shift result by 10
+            subi C 48                       ; Substract ascci offset
+            add A C 
+            sto A $mem_val
+
+            jmp :value_lookup_loop
+
+        # 3 Write found value on found adres
+        :store_adres_value_pair
+            ldm I $mem_adres
+            ldm A $mem_val
+
+            stx A $_start_memory_
+
+        # 4 Repeat till last block found
+        jmp :read_disk_loop
+
+
+        :close_and_end
+            ldi I ~SYS_F_CLOSE
+            int $INT_VECTORS
+            pop K               ; Drop return adres, due to jump outside the routine
+            
+        :cmd_load_end
+        ret

@@ -30,6 +30,7 @@
     call @init_interrupt_vector_table
     call @init_kernel_syscalls
     call @init_udc
+    call @init_vdisk
     call @KBD_INIT
 
     ei
@@ -52,6 +53,7 @@
     INCLUDE udc_routines.stacks
     INCLUDE syscalls.stacks
     INCLUDE stern_kernel.stacks
+    INCLUDE vdisk_routines.stacks
     ret
 
 # .FUNCTIONS

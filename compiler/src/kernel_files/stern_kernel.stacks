@@ -1,5 +1,6 @@
 # --- RPN  Kernel Command Line ---
 #
+INCLUDE disk_utils
 INCLUDE parser_tools
 USE std_stern_io 
 USE std_string
@@ -75,8 +76,18 @@ DEF start_kernel {
             GOTO parser_loop
         END
 
+        # Check for 'LOAD' command
+        DUP "LOAD" STRcmp IF
+            "Found LOAD command\n" PRTstring
+            DROP OPC_LOAD_FROM_DISK WRITE_TO_BYTECODE
+            GOTO parser_loop
+        END
+
+
 
         # If not a known command, try to convert it to a number.
+        # when it also not a valid number, convert it to a (temp) String
+        # since the (tmp)string is reused, a string must be consumed directly
         STRatoi
         
         # ATOI returns [result, flag]. Check the flag.
@@ -87,12 +98,17 @@ DEF start_kernel {
             DUP PRINT # PRINT consumes the number from the stack
             "\n" PRTstring
             OPC_PUSH WRITE_TO_BYTECODE
-        ELSE
-            # Failure! It was not a valid number.
-            # ATOI returned [&token, 0]. We need to drop the pointer.
-             
-            "Syntax Error: Invalid token\n" PRTstring
-            OPC_UNKOWN WRITE_TO_BYTECODE
+        ELSE    ;ATOI returned [&token, 0] status 0 is already eaten
+            # It was not a valid number.
+            # create the token_string var
+            LIST token_string 17        ; max lenght 16 + terminator 
+            # stack: [ &token ]
+            &token_string `STRcopy      ; Copy input buffer to token_string
+
+            &token_string
+
+            "Found an string token" PRTstring
+            OPC_STRING WRITE_TO_BYTECODE
         END
         
         GOTO parser_loop
@@ -102,4 +118,40 @@ DEF start_kernel {
     :end_kernel
         "Exiting.\n" PRTstring
 }
+
+# String copy method
+# takes  : &from_string &to_string
+# returns: &to_string
+
+DEF STRcopy {
+    ASM {
+        push A 
+        push B
+        push C
+
+        ustack B $DATASTACK_PTR     ; pointer to to_string in B
+        ustack A $DATASTACK_PTR     ; pointer to from_string in A
+
+        :string_copy_loop
+            ld I A 
+            ldx C $_start_memory_    ; read char from source
+
+            ld I B 
+            stx C $_start_memory_    ; write char to dest
+
+            tst C \null
+            jmpt :string_copy_end   ; end of string to copy
+
+            addi A 1
+            addi B 1
+            jmp :string_copy_loop
+
+        :string_copy_end            ; copy is done
+
+        pop C 
+        pop B 
+        pop A
+
+    }
+}   ; End of STRcopy
 

@@ -52,7 +52,7 @@ class VirtualDisk:
     def _build_file_map(self):
         self.file_map = {}
         for filename in os.listdir(self.real_directory):
-            if filename.endswith(".spc"):
+            if filename.endswith(".bin"):
                 file_path = os.path.join(self.real_directory, filename)
                 if os.path.isfile(file_path):
                     basename = os.path.splitext(filename)[0]

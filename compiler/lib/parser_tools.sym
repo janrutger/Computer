@@ -1,16 +1,20 @@
 {
   "functions": [
+    "PRTstring",
     "CURSORoff",
-    "CURSORon",
+    "_check_last_block",
+    "io_lib_init",
     "TOKENIZE",
+    "CURSORon",
+    "WRITE_TO_BYTECODE",
+    "load_bin_file",
+    "READline",
     "KEYchar",
     "PRTchar",
-    "PRTcls",
-    "io_lib_init",
-    "PRTstring",
+    "_read_disk_block",
     "EXECUTE_BYTECODE",
-    "WRITE_TO_BYTECODE",
-    "READline"
+    "PRTcls",
+    "_read_next_block"
   ],
   "variables": [
     {
@@ -100,6 +104,8 @@
     "OPC_ADD": 2,
     "OPC_PRINT": 3,
     "OPC_UNKOWN": 4,
-    "OPC_USR": 5
+    "OPC_USR": 5,
+    "OPC_STRING": 6,
+    "OPC_LOAD_FROM_DISK": 7
   }
 }

@@ -141,7 +141,7 @@ def main():
     keyboard = Keyboard(interrupt_controller, vector=KEYBOARD_INTERRUPT_VECTOR)
     rtc = RTC(interrupt_controller, vector=RTC_INTERRUPT_VECTOR)
 
-    vdisk = VirtualDisk(ram, MEM_VDSK_I0_BASE, "Vdisk0")
+    vdisk = VirtualDisk(ram, MEM_VDSK_I0_BASE, "bin/apps")
     udc = UDC(ram, MEM_UDC_I0_BASE)
     debugger = Debugger(cpu, ram)
 
@@ -185,7 +185,7 @@ def main():
              rtc.tick()          # let the RTC tick
             
         # Poll virtual disk
-        # vdisk.access()    #DISABLED, because the Vdisk is not avalible, yet
+        vdisk.access()    
 
         # Universal Device Controler
         udc.tick()

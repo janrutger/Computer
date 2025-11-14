@@ -1,4 +1,6 @@
 USE std_stern_io 
+USE disk_utils
+
 # Standard Parser and Tokenizer Library
 # --- Private variables for TOKENIZE ---
 # These act as private, static variables for the TOKENIZE function,
@@ -84,6 +86,8 @@ CONST OPC_ADD   2
 CONST OPC_PRINT 3
 CONST OPC_UNKOWN 4
 CONST OPC_USR 5
+CONST OPC_STRING 6
+CONST OPC_LOAD_FROM_DISK 7
 # ... more opcodes will be added here
 
 
@@ -121,7 +125,16 @@ DEF WRITE_TO_BYTECODE {
         GOTO write_to_bytecode_end
     END
 
-    # If not PUSH or UNKOWN, it's a simple opcode with no argument.
+    current_opcode OPC_STRING == IF
+        AS current_value # Pop the value from the stack
+        current_opcode AS *bytecode_ptr
+        bytecode_ptr 1 + AS bytecode_ptr
+        current_value AS *bytecode_ptr
+        bytecode_ptr 1 + AS bytecode_ptr
+        GOTO write_to_bytecode_end
+    END
+
+    # If not PUSH or UNKOWN/STRING, it's a simple opcode with no argument.
     # The stack should be empty now.
     current_opcode AS *bytecode_ptr
     bytecode_ptr 1 + AS bytecode_ptr
@@ -160,12 +173,30 @@ DEF EXECUTE_BYTECODE {
             GOTO execution_loop
         END
 
+        current_opcode OPC_STRING == IF
+            *bytecode_execution_ptr AS current_value
+            bytecode_execution_ptr 1 + AS bytecode_execution_ptr
+            current_value
+            GOTO execution_loop
+        END
+
         current_opcode OPC_USR == IF
             ASM {
                 ustack A $DATASTACK_PTR
                 ld I A
                 callx $_start_memory_
             }
+            GOTO execution_loop
+        END
+
+        current_opcode OPC_LOAD_FROM_DISK == IF
+            # "Load from disk routine " 
+            # Expects an filename string pointer on the datastack
+
+            DUP PRTstring 13 PRTchar
+     
+            load_bin_file
+
             GOTO execution_loop
         END
 
