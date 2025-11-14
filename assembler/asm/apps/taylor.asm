@@ -84,9 +84,7 @@
 . $main_str_5 35
 . $main_str_6 35
 . $main_str_7 35
-. $main_str_8 35
-. $main_str_9 35
-. $main_str_10 14
+. $main_str_8 14
 
 # .CODE
     ldi A 0
@@ -1730,6 +1728,20 @@
     call @FP.div
     call @FP.add
     ret
+@function_to_draw10
+    call @rt_dup
+    call @function_to_draw9
+    call @rt_swap
+    ldi A 19
+    stack A $DATASTACK_PTR
+    call @FP.power
+    ldi A 19
+    stack A $DATASTACK_PTR
+    call @factorial
+    call @FP.from_int
+    call @FP.div
+    call @FP.sub
+    ret
 @draw_axes
     ldi A 15
     stack A $DATASTACK_PTR
@@ -1901,13 +1913,13 @@
 :draw_plot_if_else_8
     ldm A $function_index
     stack A $DATASTACK_PTR
-    ldi A 9
+    ldi A 10
     stack A $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :draw_plot_if_end_9
-    call @function_to_draw9
+    call @function_to_draw10
 :draw_plot_if_end_9
 :draw_plot_if_end_8
 :draw_plot_if_end_7
@@ -2033,28 +2045,12 @@
     ldi A $main_str_7
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 14
+    ldi A 1
     stack A $DATASTACK_PTR
-    ldi A 7
+    ldi A 10
     stack A $DATASTACK_PTR
     call @draw_plot
     ldi A $main_str_8
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 10
-    stack A $DATASTACK_PTR
-    ldi A 8
-    stack A $DATASTACK_PTR
-    call @draw_plot
-    ldi A $main_str_9
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldi A 9
-    stack A $DATASTACK_PTR
-    call @draw_plot
-    ldi A $main_str_10
     stack A $DATASTACK_PTR
     call @PRTstring
     ret
@@ -2138,7 +2134,5 @@
 % $main_str_4 \D \r \a \w \i \n \g \space \4 \- \t \e \r \m \space \( \c \y \a \n \) \space \s \e \r \i \e \s \. \. \. \. \. \Return \null
 % $main_str_5 \D \r \a \w \i \n \g \space \5 \- \t \e \r \m \space \( \y \e \l \l \o \w \) \space \s \e \r \i \e \s \. \. \. \Return \null
 % $main_str_6 \D \r \a \w \i \n \g \space \6 \- \t \e \r \m \space \( \m \a \g \e \n \t \a \) \space \s \e \r \i \e \s \. \. \Return \null
-% $main_str_7 \D \r \a \w \i \n \g \space \7 \- \t \e \r \m \space \( \l \i \g \h \t \B \l \u \e \) \space \s \e \r \i \e \s \Return \null
-% $main_str_8 \D \r \a \w \i \n \g \space \8 \- \t \e \r \m \space \( \l \i \g \h \t \R \e \d \) \space \s \e \r \i \e \s \. \Return \null
-% $main_str_9 \D \r \a \w \i \n \g \space \9 \- \t \e \r \m \space \( \w \h \i \t \e \) \space \s \e \r \i \e \s \. \. \. \. \Return \null
-% $main_str_10 \A \l \l \space \d \o \n \e \! \space \i \n \space \null
+% $main_str_7 \D \r \a \w \i \n \g \space \1 \0 \- \t \e \r \m \space \( \w \h \i \t \e \) \space \s \e \r \i \e \s \. \. \. \Return \null
+% $main_str_8 \A \l \l \space \d \o \n \e \! \space \i \n \space \null

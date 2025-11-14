@@ -28,6 +28,7 @@ BOOT_FILES_SRC_DIR := $(SRC_DIR)/boot_files
 ASM_DIR := assembler/asm
 INCL_DIR := $(ASM_DIR)/incl
 MICROCODE_DIR := microcode_assembler
+APPS_DIR := $(ASM_DIR)/apps
 
 # --- Tools ---
 COMPILER := python3 compiler/compiler.py
@@ -46,10 +47,6 @@ SRC := $(if $(SRC_TARGET),$(SRC_TARGET),$(DEFAULT_PROGRAM))
 # --- Output Files ---
 PROGRAM_ROM := $(BIN_DIR)/program.bin
 MICROCODE_ROM := $(BIN_DIR)/stern_rom.json
-# Intermediate file for the compiled main program
-MAIN_ASM_TEMP_TARGET := $(BUILD_DIR)/main.asm
-# Final destination for the compiled main program
-MAIN_ASM_FINAL_TARGET := $(ASM_DIR)/main_stacks.asm
 
 # =============================================================================
 # Source File Discovery
@@ -58,6 +55,7 @@ MAIN_ASM_FINAL_TARGET := $(ASM_DIR)/main_stacks.asm
 LIB_STACKS_SOURCES    := $(wildcard $(LIB_SRC_DIR)/*.stacks)
 KERNEL_STACKS_SOURCES := $(wildcard $(KERNEL_STACKS_SRC_DIR)/*.stacks)
 BOOT_FILES_SOURCES    := $(wildcard $(BOOT_FILES_SRC_DIR)/*.stacks)
+MAIN_PROGRAMS_SOURCES := $(addsuffix .stacks, $(addprefix $(SRC_DIR)/, $(MAIN_PROGRAMS)))
 ALL_ASM_FILES         := $(wildcard $(ASM_DIR)/**/*.asm)
 MICROCODE_SOURCES     := $(MICROCODE_DIR)/base_rom.uasm
 
@@ -65,15 +63,23 @@ MICROCODE_SOURCES     := $(MICROCODE_DIR)/base_rom.uasm
 COMPILED_LIBS := $(patsubst $(LIB_SRC_DIR)/%.stacks,$(LIB_OUT_DIR)/%.smod,$(LIB_STACKS_SOURCES))
 GENERATED_KERNEL_ASM := $(patsubst $(KERNEL_STACKS_SRC_DIR)/%.stacks,$(INCL_DIR)/%.stacks.asm,$(KERNEL_STACKS_SOURCES))
 GENERATED_BOOT_ASM   := $(patsubst $(BOOT_FILES_SRC_DIR)/%.stacks,$(ASM_DIR)/%.stacks.asm,$(BOOT_FILES_SOURCES))
+COMPILED_APPS_ASM    := $(patsubst $(SRC_DIR)/%.stacks,$(APPS_DIR)/%.asm,$(MAIN_PROGRAMS_SOURCES))
+
+
+# Prevent Make from deleting the compiled library files as 'intermediate' files.
+.SECONDARY: $(COMPILED_LIBS)
 
 
 # =============================================================================
 # Main Targets
 # =============================================================================
 
-.PHONY: all run debug clean $(MAIN_PROGRAMS)
+.PHONY: all run debug clean $(MAIN_PROGRAMS) directories
 
 all: $(PROGRAM_ROM)
+
+directories:
+	@mkdir -p $(BUILD_DIR) $(BIN_DIR) $(LIB_OUT_DIR) $(APPS_DIR) $(BIN_DIR)/apps
 
 run: $(PROGRAM_ROM)
 	@echo "====== Running Simulation ======"
@@ -85,8 +91,8 @@ debug: $(PROGRAM_ROM)
 
 clean:
 	@echo "====== Cleaning up build artifacts ======"
-	rm -rf $(BUILD_DIR) $(BIN_DIR) $(LIB_OUT_DIR)
-	rm -f $(GENERATED_KERNEL_ASM) $(GENERATED_BOOT_ASM) $(MAIN_ASM_FINAL_TARGET)
+	rm -rf $(BUILD_DIR) $(BIN_DIR) $(LIB_OUT_DIR) $(APPS_DIR)
+	rm -f $(GENERATED_KERNEL_ASM) $(GENERATED_BOOT_ASM) $(COMPILED_APPS_ASM)
 
 
 # =============================================================================
@@ -95,9 +101,9 @@ clean:
 
 # --- 1. Final Program ROM Assembly ---
 # Depends on all assembly sources AND the microcode ROM being built first.
-$(PROGRAM_ROM): $(GENERATED_BOOT_ASM) $(GENERATED_KERNEL_ASM) $(MAIN_ASM_FINAL_TARGET) $(ALL_ASM_FILES) $(MICROCODE_ROM) assembler/build.json
+$(PROGRAM_ROM): directories $(GENERATED_BOOT_ASM) $(GENERATED_KERNEL_ASM) $(COMPILED_APPS_ASM) $(ALL_ASM_FILES) $(MICROCODE_ROM) assembler/buildV2.json
 	@echo "====== Assembling Final Program ROM ======"
-	$(ASSEMBLER) assembler/build.json
+	$(ASSEMBLER) assembler/buildV2.json
 
 # --- 2. Microcode ROM Assembly ---
 $(MICROCODE_ROM): $(MICROCODE_SOURCES)
@@ -105,43 +111,33 @@ $(MICROCODE_ROM): $(MICROCODE_SOURCES)
 	@mkdir -p $(@D)
 	$(MICROCODE_ASSEMBLER) $(MICROCODE_SOURCES)
 
-# --- 3. Install Compiled Main Program ---
-# Copies the temporary compiled file to its final destination.
-$(MAIN_ASM_FINAL_TARGET): $(MAIN_ASM_TEMP_TARGET)
-	@echo "====== Installing compiled program: $< -> $@ ======"
-	cp $< $@
-
-# --- 4. Main Program Compilation (Temporary) ---
-$(MAIN_ASM_TEMP_TARGET): $(SRC_DIR)/$(SRC).stacks $(COMPILED_LIBS)
-	@echo "====== Compiling Main Program: $(SRC).stacks ======"
+# --- 3. Main Program(s) Compilation ---
+$(APPS_DIR)/%.asm: $(SRC_DIR)/%.stacks $(COMPILED_LIBS)
+	@echo "====== Compiling Main Program: $< ======"
 	@mkdir -p $(@D)
 	$(COMPILER) $< -o $@
 
-# --- 5. Stacks Library Compilation ---
+# --- 4. Stacks Library Compilation ---
 $(LIB_OUT_DIR)/%.smod: $(LIB_SRC_DIR)/%.stacks
 	@echo "====== Compiling Stacks Library: $< ======"
+	@mkdir -p $(@D)
 	$(COMPILER) $< --module
 
-# --- 5a. Explicit Library Dependencies ---
+# --- 4a. Explicit Library Dependencies ---
 # Make needs to be told when one library includes another.
 $(LIB_OUT_DIR)/parser_tools.smod:    $(LIB_OUT_DIR)/std_stern_io.smod
 $(LIB_OUT_DIR)/fixed_point_lib.smod: $(LIB_OUT_DIR)/std_stern_io.smod
 $(LIB_OUT_DIR)/fixed_point_lib.smod: $(LIB_OUT_DIR)/std_string.smod
 $(LIB_OUT_DIR)/fixed_point_lib.smod: $(LIB_OUT_DIR)/math_lib.smod
 
-# --- 6. Stacks Kernel Module Compilation ---
+# --- 5. Stacks Kernel Module Compilation ---
 $(INCL_DIR)/%.stacks.asm: $(KERNEL_STACKS_SRC_DIR)/%.stacks $(COMPILED_LIBS)
 	@echo "====== Compiling Stacks Kernel Module: $< ======"
+	@mkdir -p $(@D)
 	$(COMPILER) $< -o $@ --block
 
-# --- 7. Stacks Boot File Compilation ---
+# --- 6. Stacks Boot File Compilation ---
 $(ASM_DIR)/%.stacks.asm: $(BOOT_FILES_SRC_DIR)/%.stacks $(COMPILED_LIBS)
 	@echo "====== Compiling Stacks Boot File: $< ======"
+	@mkdir -p $(@D)
 	$(COMPILER) $< -o $@
-
-# --- Dynamic Target Handling ---
-$(MAIN_PROGRAMS):
-	@: # No-op phony target
-
-# This links the phony program targets to the intermediate compiled file.
-$(MAIN_ASM_TEMP_TARGET): $(MAIN_PROGRAMS)

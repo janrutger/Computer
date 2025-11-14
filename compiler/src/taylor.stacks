@@ -84,10 +84,7 @@ DEF function_to_draw3 { ; ( x_fp -- result_fp )
     SWAP                      ; Stack: [x-(x^3 / 6), x]
 
     # calculate x^5
-    # DUP 5 FP.power
-    # SWAP DROP                 ; drop x, stack: [res, x^5]
     5 FP.power
-
 
     # 120 FP.from_int           ; Stack: [x-(x^3 / 6), x^5, 120_fp]
     5 factorial FP.from_int   ; Stack: [x-(x^3 / 6), x^5, 120_fp]
@@ -103,10 +100,7 @@ DEF function_to_draw4 { ; ( x_fp -- result_fp )
     SWAP                      ; Stack: [3-term-result, x]
 
     # calculate x^7
-    # DUP 7 FP.power
-    # SWAP DROP
     7 FP.power
-
 
     # 5040 FP.from_int          ; Stack: [3-term-result, x^7, 5040_fp]
     7 factorial FP.from_int    ; Stack: [3-term-result, x^7, 5040_fp]
@@ -122,10 +116,7 @@ DEF function_to_draw5 { ; ( x_fp -- result_fp )
     SWAP                      ; Stack: [4-term-result, x]
 
     # calculate x^9
-    # DUP 9 FP.power
-    # SWAP DROP
     9 FP.power
-
 
     # 362880 FP.from_int        ; Stack: [4-term-result, x^9, 362880_fp]
     9 factorial FP.from_int    ; Stack: [4-term-result, x^9, 362880_fp]
@@ -141,11 +132,7 @@ DEF function_to_draw6 { ; ( x_fp -- result_fp )
     SWAP                      ; Stack: [5-term-result, x]
 
     # calculate x^11
-    # DUP 11 FP.power
-    # SWAP DROP
     11 FP.power
-
-
 
     # 39916800 FP.from_int      ; Stack: [5-term-result, x^11, 39916800_fp]
     11 factorial FP.from_int    ; Stack: [5-term-result, x^11, 39916800_fp]
@@ -161,15 +148,10 @@ DEF function_to_draw7 { ; ( x_fp -- result_fp )
     SWAP                      ; Stack: [6-term-result, x]
 
     # calculate x^13
-        # DUP 13 FP.power
-        # SWAP DROP
-        13 FP.power
-        
+        13 FP.power        
 
     # 6227020800 FP.from_int      ; Stack: [6-term-result, x^13, 13!_fp]
-    # 13 factorial FP.from_int    ; Stack: [6-term-result, x^13, 13!_fp]
-    # FP.div                    ; Stack: [6-term-result, (x^13 / 13!)]
-    13 factorial FP.from_int
+    13 factorial FP.from_int    ; Stack: [6-term-result, x^13, 13!_fp]
     FP.div                    ; Stack: [7-term-result, (x^15 / 15!)]
          
     FP.add                    ; Stack: [6-term-result + (x^13 / 13!)]
@@ -182,10 +164,7 @@ DEF function_to_draw8 { ; ( x_fp -- result_fp )
     SWAP                      ; Stack: [7-term-result, x]
 
     # calculate x^15
-    # DUP 15 FP.power
-    # SWAP DROP
     15 FP.power
-
 
     # 1307674368000 FP.from_int      ; Stack: [7-term-result, x^15, 15!_fp]
     15 factorial FP.from_int    ; Stack: [7-term-result, x^15, 15!_fp]
@@ -201,11 +180,7 @@ DEF function_to_draw9 { ; ( x_fp -- result_fp )
     SWAP                      ; Stack: [8-term-result, x]
 
     # calculate x^17
-    # DUP 17 FP.power
-    # SWAP DROP
     17 FP.power
-
-
 
     # 355687428096000 FP.from_int      ; Stack: [8-term-result, x^17, 17!_fp]
     17 factorial FP.from_int    ; Stack: [8-term-result, x^17, 17!_fp]
@@ -213,6 +188,21 @@ DEF function_to_draw9 { ; ( x_fp -- result_fp )
          
     FP.add                    ; Stack: [8-term-result + (x^17 / 17!)]
 }
+
+DEF function_to_draw10 { ; ( x_fp -- result_fp )
+    # apply the 9-term
+    DUP function_to_draw9     ; Stack: [x, 9-term-result]
+    SWAP                      ; Stack: [9-term-result, x]
+
+    # calculate x^19
+    19 FP.power
+
+    # 355687428096000 FP.from_int      ; Stack: [8-term-result, x^17, 17!_fp]
+    19 factorial FP.from_int    ; Stack: [8-term-result, x^17, 17!_fp]
+    FP.div                    ; Stack: [8-term-result, (x^17 / 17!)]
+
+    FP.sub
+}         
 
 ; --- Drawing Functions ---
 
@@ -284,8 +274,8 @@ DEF draw_plot { ; ( color function_index -- )
                             ELSE
                                 function_index 8 == IF
                                     function_to_draw8
-                                ELSE function_index 9 == IF
-                                        function_to_draw9
+                                ELSE function_index 10 == IF
+                                        function_to_draw10
                                     END
                                 END
                             END
@@ -353,14 +343,14 @@ DEF main {
     "Drawing 6-term (magenta) series..\n" PRTstring
     orange 6 draw_plot
 
-    "Drawing 7-term (lightBlue) series\n" PRTstring
-    lightBlue 7 draw_plot
+    # "Drawing 7-term (lightBlue) series\n" PRTstring
+    # lightBlue 7 draw_plot
 
-    "Drawing 8-term (lightRed) series.\n" PRTstring
-    lightRed 8 draw_plot
+    # "Drawing 8-term (lightRed) series.\n" PRTstring
+    # lightRed 8 draw_plot
 
-    "Drawing 9-term (white) series....\n" PRTstring
-    white 9 draw_plot
+    "Drawing 10-term (white) series...\n" PRTstring
+    white 10 draw_plot
 
     "All done! in " PRTstring
 }

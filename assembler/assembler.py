@@ -441,7 +441,7 @@ class Assembler:
 
 
 if __name__ == "__main__":
-    build_file = "assembler/build.json"
+    build_file = "assembler/buildV2.json"
     if len(sys.argv) > 1:
         build_file = sys.argv[1]
 
@@ -455,60 +455,88 @@ if __name__ == "__main__":
         print(f"ERROR: Invalid JSON in build configuration file: {build_file}", file=sys.stderr)
         sys.exit(1)
 
-    output_file = os.path.join(os.path.dirname(build_file), build_config.get("output", "program.bin"))
-    var_start = build_config.get("var_start", 12288) # Default if not specified
-
+    # --- Initialize Assembler ---
+    # var_start is primarily for the bootrom/main program context.
+    var_start = build_config.get("bootrom", {}).get("var_start", 12288)
     assembler = Assembler(var_start)
-    combined_binary = []
+    
+    build_dir = os.path.dirname(os.path.abspath(build_file))
 
-    print(f"\n--- Starting multi-file assembly from {build_file} ---")
-
-    for source_entry in build_config.get("sources", []):
-        file_path = source_entry.get("file")
-        base_address = source_entry.get("base_address", 0)
-        restore_symbols = source_entry.get("restore_symbols", False)
-        save_symbols = True        # must be part of the command line
-
-
-        if not file_path:
-            print("WARNING: Skipping source entry with missing 'file' path.", file=sys.stderr)
-            continue
-
-        # Construct absolute path for the assembly file
-        # Assuming assembly files are relative to the assembler.py script or project root
-        # For now, let's assume they are relative to the project root as per the build.json example
-        abs_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), file_path)
+    # --- Process "bootrom" section ---
+    if "bootrom" in build_config:
+        print(f"\n--- Starting BOOTROM assembly from {build_file} ---")
+        bootrom_config = build_config["bootrom"]
+        combined_binary = []
         
-        print(f"Assembling {file_path} (base address: {base_address})...")
+        for source_entry in bootrom_config.get("sources", []):
+            file_path = source_entry.get("file")
+            if not file_path:
+                print("WARNING: Skipping source entry with missing 'file' path in bootrom.", file=sys.stderr)
+                continue
+
+            base_address = source_entry.get("base_address", 0)
+            restore_symbols = source_entry.get("restore_symbols", False)
+            save_symbols = True  # Always save symbols during the bootrom build process
+
+            abs_file_path = os.path.join(build_dir, file_path)
+            
+            print(f"Assembling {file_path} (base address: {base_address})...")
+            try:
+                current_binary, last_symbols = assembler.assemble(abs_file_path, base_address, save_symbols, restore_symbols)
+                combined_binary.extend(current_binary)
+            except (AssemblyError, FileNotFoundError):
+                print(f"--- Assembly failed for {file_path}. Halting build. ---", file=sys.stderr)
+                sys.exit(1)
+
+        # Write combined bootrom binary
+        output_file = os.path.join(build_dir, bootrom_config.get("output", "../bin/program.bin"))
+        print(f"\nWriting combined bootrom binary to '{output_file}'...")
         try:
-            # The assemble method already handles its own error printing
-            current_binary, last_symbols = assembler.assemble(abs_file_path, base_address, save_symbols, restore_symbols)
-            combined_binary.extend(current_binary)
-        except (AssemblyError, FileNotFoundError):
-            print(f"--- Assembly failed for {file_path}. Halting build. ---", file=sys.stderr)
-            sys.exit(1)
+            writeBin(combined_binary, output_file)
+            print("Bootrom binary written successfully.")
         except Exception as e:
-            print(f"FATAL ERROR during assembly of {file_path}: {e}", file=sys.stderr)
+            print(f"ERROR: Failed to write bootrom binary to '{output_file}': {e}", file=sys.stderr)
             sys.exit(1)
 
-    print("\n--- Multi-file assembly process completed. ---")
-
-    # write the binary
-
-    print(f"Writing combined binary output to '{output_file}'...")
-    try:
-        writeBin(combined_binary, output_file)
-        print("Binary output written successfully.")
-    except Exception as e:
-        print(f"ERROR: Failed to write combined binary output to '{output_file}': {e}", file=sys.stderr)
-        sys.exit(1)
-
-    # write the symbols
-    if save_symbols:
-        symbol_filename = os.path.join(os.path.dirname(output_file), "../bin/symbols.json")
+        # Write symbols file for the bootrom
+        symbol_filename = os.path.join(os.path.dirname(output_file), "symbols.json")
+        print(f"Writing symbols to '{symbol_filename}'...")
         assembler.write_symbols_to_file(symbol_filename)
-    
-
-    
+        print("--- BOOTROM assembly process completed. ---\n")
 
 
+    # --- Process "apps" section ---
+    if "apps" in build_config:
+        print(f"--- Starting APPS assembly from {build_file} ---")
+        apps_config = build_config["apps"]
+        
+        # Global settings for all apps in this section
+        base_address = apps_config.get("base_address", 6144)
+        restore_symbols = apps_config.get("restore_symbols", True)
+        
+        for app_source in apps_config.get("sources", []):
+            file_path = app_source.get("file")
+            output_file = app_source.get("output")
+
+            if not file_path or not output_file:
+                print("WARNING: Skipping app with missing 'file' or 'output' path.", file=sys.stderr)
+                continue
+
+            abs_file_path = os.path.join(build_dir, file_path)
+            abs_output_path = os.path.join(build_dir, output_file)
+            
+            print(f"Assembling app {file_path}...")
+            try:
+                # For apps, we don't need to save symbols individually, just assemble
+                app_binary, _ = assembler.assemble(abs_file_path, base_address, symbols=False, restore=restore_symbols)
+                
+                print(f"Writing app binary to '{abs_output_path}'...")
+                writeBin(app_binary, abs_output_path)
+                print(f"Successfully wrote {output_file}.")
+
+            except (AssemblyError, FileNotFoundError):
+                print(f"--- Assembly failed for app {file_path}. Halting build. ---", file=sys.stderr)
+                # Decide if one app failing should stop everything. For now, it does.
+                sys.exit(1)
+        
+        print("--- APPS assembly process completed. ---\n")

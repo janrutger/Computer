@@ -8,9 +8,11 @@
       "restore_symbols": false
     },
     {
-      "file": "asm/main_stacks.asm",
+      "file": "asm/apps/turtle.asm",
       "base_address": 6144,
-      "restore_symbols": false
+      "restore_symbols": true
     }
   ]
 }
+
+

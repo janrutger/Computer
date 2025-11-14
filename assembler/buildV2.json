@@ -1,0 +1,38 @@
+{
+  "bootrom": {
+    "output": "../bin/program.bin",
+    "var_start": 12288,
+    "sources": [
+      {
+        "file": "asm/bootfile.stacks.asm",
+        "base_address": 0,
+        "restore_symbols": false
+      },
+      {
+        "file": "asm/apps/chaos3.asm",
+        "base_address": 6144,
+        "restore_symbols": true
+      }
+    ]
+  }, 
+  "apps": {
+    "base_address": 6144,
+    "restore_symbols": true,
+    "sources": [
+      {
+        "file": "asm/apps/turtle.asm",
+        "output": "../bin/apps/turtle.bin"
+      },
+      {
+        "file": "asm/apps/taylor.asm",
+        "output": "../bin/apps/taylor.bin"
+      },
+      {
+        "file": "asm/apps/fly.asm",
+        "output": "../bin/apps/fly.bin"
+      }
+    ]
+  }
+}
+
+
