@@ -1,18 +1,18 @@
 {
   "functions": [
-    "TURTLE.line",
-    "TURTLE.right",
-    "TURTLE.forward",
-    "_welcome_at_turtle",
-    "TURTLE.circle",
-    "_plot_circle_points",
-    "TURTLE.mode",
-    "TURTLE.left",
     "_drawTurtle",
-    "TURTLE.color",
+    "TURTLE.circle",
     "TURTLE.flip",
+    "TURTLE.right",
+    "TURTLE.color",
+    "_plot_circle_points",
+    "TURTLE.line",
     "TURTLE.goto",
-    "TURTLE.start"
+    "TURTLE.start",
+    "TURTLE.mode",
+    "TURTLE.forward",
+    "TURTLE.left",
+    "_welcome_at_turtle"
   ],
   "variables": [
     {
@@ -114,6 +114,16 @@
       "name": "p_char",
       "type": "VALUE",
       "size": 1
+    },
+    {
+      "name": "TURTLE_DX",
+      "type": "LIST",
+      "size": 8
+    },
+    {
+      "name": "TURTLE_DY",
+      "type": "LIST",
+      "size": 8
     },
     {
       "name": "x1",

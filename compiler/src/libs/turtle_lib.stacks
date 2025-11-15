@@ -217,13 +217,16 @@ DEF _welcome_at_turtle {
 
 
 DEF TURTLE.start {
-    ASM {
-    . $TURTLE_DX 8
+    LIST TURTLE_DX 8
+    LIST TURTLE_DY 8
+    ASM {       ; one time initialization
+    ;. $TURTLE_DX 8
     % $TURTLE_DX  1  1  0 -1 -1 -1  0  1
-    . $TURTLE_DY 8
+    ;. $TURTLE_DY 8
     % $TURTLE_DY  0  1  1  1  0 -1 -1 -1
 }
     IO 2 ONLINE                 # Set screen online
+    IO 2 NEW
     current_mode  IO 2 MODE     # Set Device in Sprite mode
     current_color IO 2 COLOR    # set an default color     
 

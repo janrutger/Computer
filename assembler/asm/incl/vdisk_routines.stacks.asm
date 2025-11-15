@@ -1,6 +1,6 @@
 # .HEADER
-. $error_wrong_vdisk_filename 28
-. $fatal_vdisk_error 25
+. $error_wrong_vdisk_filename 29
+. $fatal_vdisk_error 26
 
 # .CODE
 
@@ -355,5 +355,5 @@
     ret
 
 # .DATA
-% $error_wrong_vdisk_filename \V \d \i \s \k \: \space \w \r \o \n \g \space \f \i \l \e \n \a \m \e \space \e \r \r \o \r \null
-% $fatal_vdisk_error \space \V \d \i \s \k \: \space \f \a \t \a \l \space \d \i \s \k \space \e \r \r \o \r \null
+% $error_wrong_vdisk_filename \V \d \i \s \k \: \space \w \r \o \n \g \space \f \i \l \e \n \a \m \e \space \e \r \r \o \r \Return \null
+% $fatal_vdisk_error \space \V \d \i \s \k \: \space \f \a \t \a \l \space \d \i \s \k \space \e \r \r \o \r \Return \null

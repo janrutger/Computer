@@ -158,3 +158,41 @@ DEF STRfind {
         GOTO strfind_loop
     :strfind_end
 }
+
+
+
+# String copy method
+# takes  : &from_string &to_string
+# returns: &to_string
+
+DEF STRcopy {
+    ASM {
+        push A 
+        push B
+        push C
+
+        ustack B $DATASTACK_PTR     ; pointer to to_string in B
+        ustack A $DATASTACK_PTR     ; pointer to from_string in A
+
+        :string_copy_loop
+            ld I A 
+            ldx C $_start_memory_    ; read char from source
+
+            ld I B 
+            stx C $_start_memory_    ; write char to dest
+
+            tst C \null
+            jmpt :string_copy_end   ; end of string to copy
+
+            addi A 1
+            addi B 1
+            jmp :string_copy_loop
+
+        :string_copy_end            ; copy is done
+
+        pop C 
+        pop B 
+        pop A
+
+    }
+}   ; End of STRcopy

@@ -3,7 +3,7 @@
 
 # 1. Declare the string data using the high-level `STRING` keyword.
 #    The compiler will correctly place this in the .HEADER and .DATA sections.
-STRING hello_msg "Hello from ASM! \n"
+STRING hello_msg "PLEASE load an program to run!! \n"
 
 
 

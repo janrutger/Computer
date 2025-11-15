@@ -19,6 +19,8 @@
 . $i_turtle 1
 . $char 1
 . $p_char 1
+. $TURTLE_DX 8
+. $TURTLE_DY 8
 . $x1 1
 . $y1 1
 . $x2 1
@@ -438,16 +440,23 @@
     call @rt_udc_control
     ret
 @TURTLE.start
-
-    . $TURTLE_DX 8
+       ; one time initialization
+    ;. $TURTLE_DX 8
     % $TURTLE_DX  1  1  0 -1 -1 -1  0  1
-    . $TURTLE_DY 8
+    ;. $TURTLE_DY 8
     % $TURTLE_DY  0  1  1  1  0 -1 -1 -1
     ldi A 0
     stack A $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 10
     stack A $DATASTACK_PTR
     call @rt_udc_control
     ldm A $current_mode

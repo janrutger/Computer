@@ -19,6 +19,8 @@
 . $i_turtle 1
 . $char 1
 . $p_char 1
+. $TURTLE_DX 8
+. $TURTLE_DY 8
 . $x1 1
 . $y1 1
 . $x2 1
@@ -39,12 +41,16 @@
     ldi A $level_stack
     sto A $stack_ptr
     call @TURTLE.start
+    ldi A 0
+    sto A $TURTLE_HEADING_DEG
     ldi A 2
     stack A $DATASTACK_PTR
     call @TURTLE.mode
     ldi A 2
     stack A $DATASTACK_PTR
     call @TURTLE.color
+    ldi A $level_stack
+    sto A $stack_ptr
     ldi A 30
     stack A $DATASTACK_PTR
     ldi A 30
@@ -58,6 +64,8 @@
     ldi A 5
     stack A $DATASTACK_PTR
     call @TURTLE.color
+    ldi A $level_stack
+    sto A $stack_ptr
     ldi A 30
     stack A $DATASTACK_PTR
     ldi A 30
@@ -71,6 +79,8 @@
     ldi A 6
     stack A $DATASTACK_PTR
     call @TURTLE.color
+    ldi A $level_stack
+    sto A $stack_ptr
     ldi A 30
     stack A $DATASTACK_PTR
     ldi A 30
@@ -84,6 +94,8 @@
     ldi A 8
     stack A $DATASTACK_PTR
     call @TURTLE.color
+    ldi A $level_stack
+    sto A $stack_ptr
     ldi A 30
     stack A $DATASTACK_PTR
     ldi A 30
@@ -97,6 +109,8 @@
     ldi A 1
     stack A $DATASTACK_PTR
     call @TURTLE.color
+    ldi A $level_stack
+    sto A $stack_ptr
     ldi A 30
     stack A $DATASTACK_PTR
     ldi A 30
@@ -455,16 +469,23 @@
     call @rt_udc_control
     ret
 @TURTLE.start
-
-    . $TURTLE_DX 8
+       ; one time initialization
+    ;. $TURTLE_DX 8
     % $TURTLE_DX  1  1  0 -1 -1 -1  0  1
-    . $TURTLE_DY 8
+    ;. $TURTLE_DY 8
     % $TURTLE_DY  0  1  1  1  0 -1 -1 -1
     ldi A 0
     stack A $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 10
     stack A $DATASTACK_PTR
     call @rt_udc_control
     ldm A $current_mode
@@ -976,6 +997,7 @@
     call @TURTLE.right
     call @stack_push
     call @draw_koch
+    call @TURTLE.flip
 :draw_koch_end
     ret
 
@@ -1014,3 +1036,4 @@
 % $circ_x 0
 % $circ_y 0
 % $circ_p 0
+% $stack_ptr 0

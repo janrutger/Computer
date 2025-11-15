@@ -1,1 +1,13 @@
 # placeholder for an new program
+
+USE math_lib
+USE std_stern_io
+USE disk_utils
+
+
+
+#VALUE A -1
+
+VALUE B 0
+
+1 negate AS B

@@ -275,6 +275,7 @@ if __name__ == "__main__":
         profiler = cProfile.Profile()
         try:
             profiler.enable()
+            main()
         finally:
             profiler.disable()
             print("\n--- CProfile Results ---")

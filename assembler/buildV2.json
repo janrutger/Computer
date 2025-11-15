@@ -9,7 +9,7 @@
         "restore_symbols": false
       },
       {
-        "file": "asm/apps/chaos3.asm",
+        "file": "asm/apps/main.asm",
         "base_address": 6144,
         "restore_symbols": true
       }

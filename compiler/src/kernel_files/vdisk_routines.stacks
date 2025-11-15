@@ -341,12 +341,12 @@ DEF print_vdisk_error {
 
 
 DEF error_wrong_filename {
-    STRING error_wrong_vdisk_filename "Vdisk: wrong filename error"
+    STRING error_wrong_vdisk_filename "Vdisk: wrong filename error\n"
     &error_wrong_vdisk_filename print_vdisk_error
 }
 
 DEF error_fatal_disk_error {
-    STRING fatal_vdisk_error " Vdisk: fatal disk error"
+    STRING fatal_vdisk_error " Vdisk: fatal disk error\n"
     & fatal_vdisk_error print_vdisk_error
     WHILE 1 DO 
         # do nothing endless loop

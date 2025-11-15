@@ -1,5 +1,5 @@
 # .HEADER
-. $hello_msg 18
+. $hello_msg 34
 
 # .CODE
     call @hello_from_asm
@@ -15,4 +15,4 @@
         ret
 
 # .DATA
-% $hello_msg \H \e \l \l \o \space \f \r \o \m \space \A \S \M \! \space \Return \null
+% $hello_msg \P \L \E \A \S \E \space \l \o \a \d \space \a \n \space \p \r \o \g \r \a \m \space \t \o \space \r \u \n \! \! \space \Return \null

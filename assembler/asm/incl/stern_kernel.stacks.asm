@@ -25,7 +25,7 @@ MALLOC $bytecode_buffer 4096
 . $start_kernel_str_11 9
 . $start_kernel_str_12 2
 . $token_string 17
-. $start_kernel_str_13 22
+. $start_kernel_str_13 23
 . $start_kernel_str_14 10
 
 # .CODE
@@ -75,6 +75,8 @@ MALLOC $bytecode_buffer 4096
 
         . $mem_adres 1
         . $mem_val 1
+        . $is_negative 1
+        . $is_first_digit 1
 
         # read the first disk block
         call @_read_disk_block
@@ -101,7 +103,7 @@ MALLOC $bytecode_buffer 4096
             :skip_next0
 
             tst C \space                    ; check for adres delimiter
-            jmpt :value_lookup_loop         ; $mem_adres containts the adres
+            jmpt :value_lookup_start         ; $mem_adres containts the adres
 
             ldm A $mem_adres
             muli A 10                       ; shift result by 10
@@ -114,6 +116,10 @@ MALLOC $bytecode_buffer 4096
         # 2 Find the value of that adres from the input buffer
         #   an number seperated by Return (13)
         #   2 block van be needed
+        :value_lookup_start
+            sto Z $is_negative
+            sto Z $is_first_digit
+
         :value_lookup_loop  
             inc I $disk_io_buffer_ptr
             ldx C $disk_io_buffer_base
@@ -126,8 +132,25 @@ MALLOC $bytecode_buffer 4096
             :skip_next1
 
             tst C \Return                   ; check for value delimiter
-            jmpt :store_adres_value_pair
+            jmpt :apply_val_sign
 
+            ldm A $is_first_digit
+            tste A Z
+            jmpf :not_first_digit_val
+
+                ; It is the first char, so we check for sign and spaces
+                sto Z $is_first_digit
+                tst C \-
+                jmpf :not_a_sign_val
+                    ldi B 1
+                    sto B $is_negative
+                    jmp :value_lookup_loop ; read next char
+                :not_a_sign_val
+
+                # tst C ' '
+                # jmpt :value_lookup_loop
+
+            :not_first_digit_val
             ldm A $mem_val
             muli A 10                       ; shift result by 10
             subi C 48                       ; Substract ascci offset
@@ -135,6 +158,21 @@ MALLOC $bytecode_buffer 4096
             sto A $mem_val
 
             jmp :value_lookup_loop
+
+        :apply_val_sign
+            ldm A $is_negative
+            tste A Z
+            jmpf :negate_val
+            jmp :store_adres_value_pair
+        :negate_val
+            # ldm A $mem_val
+            # negi A
+            # sto A $mem_val
+            ldm B $mem_val
+            ldi A 0
+            sub A B 
+            sto A $mem_val
+            jmp :store_adres_value_pair
 
         # 3 Write found value on found adres
         :store_adres_value_pair
@@ -688,36 +726,6 @@ MALLOC $bytecode_buffer 4096
     stack A $DATASTACK_PTR
     call @PRTstring
     ret
-@STRcopy
-
-        push A 
-        push B
-        push C
-
-        ustack B $DATASTACK_PTR     ; pointer to to_string in B
-        ustack A $DATASTACK_PTR     ; pointer to from_string in A
-
-        :string_copy_loop
-            ld I A 
-            ldx C $_start_memory_    ; read char from source
-
-            ld I B 
-            stx C $_start_memory_    ; write char to dest
-
-            tst C \null
-            jmpt :string_copy_end   ; end of string to copy
-
-            addi A 1
-            addi B 1
-            jmp :string_copy_loop
-
-        :string_copy_end            ; copy is done
-
-        pop C 
-        pop B 
-        pop A
-
-        ret
 
 # .DATA
 
@@ -744,5 +752,5 @@ MALLOC $bytecode_buffer 4096
 % $start_kernel_str_10 \F \o \u \n \d \space \L \O \A \D \space \c \o \m \m \a \n \d \Return \null
 % $start_kernel_str_11 \N \u \m \b \e \r \: \space \null
 % $start_kernel_str_12 \Return \null
-% $start_kernel_str_13 \F \o \u \n \d \space \a \n \space \s \t \r \i \n \g \space \t \o \k \e \n \null
+% $start_kernel_str_13 \F \o \u \n \d \space \a \n \space \s \t \r \i \n \g \space \t \o \k \e \n \Return \null
 % $start_kernel_str_14 \E \x \i \t \i \n \g \. \Return \null

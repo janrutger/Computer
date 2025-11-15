@@ -49,6 +49,8 @@ DEF load_bin_file {
 
         . $mem_adres 1
         . $mem_val 1
+        . $is_negative 1
+        . $is_first_digit 1
 
         # read the first disk block
         call @_read_disk_block
@@ -75,7 +77,7 @@ DEF load_bin_file {
             :skip_next0
 
             tst C \space                    ; check for adres delimiter
-            jmpt :value_lookup_loop         ; $mem_adres containts the adres
+            jmpt :value_lookup_start         ; $mem_adres containts the adres
 
             ldm A $mem_adres
             muli A 10                       ; shift result by 10
@@ -88,6 +90,10 @@ DEF load_bin_file {
         # 2 Find the value of that adres from the input buffer
         #   an number seperated by Return (13)
         #   2 block van be needed
+        :value_lookup_start
+            sto Z $is_negative
+            sto Z $is_first_digit
+
         :value_lookup_loop  
             inc I $disk_io_buffer_ptr
             ldx C $disk_io_buffer_base
@@ -100,8 +106,25 @@ DEF load_bin_file {
             :skip_next1
 
             tst C \Return                   ; check for value delimiter
-            jmpt :store_adres_value_pair
+            jmpt :apply_val_sign
 
+            ldm A $is_first_digit
+            tste A Z
+            jmpf :not_first_digit_val
+
+                ; It is the first char, so we check for sign and spaces
+                sto Z $is_first_digit
+                tst C \-
+                jmpf :not_a_sign_val
+                    ldi B 1
+                    sto B $is_negative
+                    jmp :value_lookup_loop ; read next char
+                :not_a_sign_val
+
+                # tst C ' '
+                # jmpt :value_lookup_loop
+
+            :not_first_digit_val
             ldm A $mem_val
             muli A 10                       ; shift result by 10
             subi C 48                       ; Substract ascci offset
@@ -109,6 +132,21 @@ DEF load_bin_file {
             sto A $mem_val
 
             jmp :value_lookup_loop
+
+        :apply_val_sign
+            ldm A $is_negative
+            tste A Z
+            jmpf :negate_val
+            jmp :store_adres_value_pair
+        :negate_val
+            # ldm A $mem_val
+            # negi A
+            # sto A $mem_val
+            ldm B $mem_val
+            ldi A 0
+            sub A B 
+            sto A $mem_val
+            jmp :store_adres_value_pair
 
         # 3 Write found value on found adres
         :store_adres_value_pair
