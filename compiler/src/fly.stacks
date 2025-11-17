@@ -31,5 +31,5 @@ WHILE N 700 < DO
     R plot
     R AS P 
     N 1 + AS N 
-    ; 1 TIME.wait
+    #1 TIME.wait
 DONE

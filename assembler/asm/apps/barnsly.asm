@@ -581,6 +581,8 @@
     call @rt_udc_control
     ret
 @TURTLE.start
+    ldi A 3
+    sto A $current_mode
        ; one time initialization
     ;. $TURTLE_DX 8
     % $TURTLE_DX  1  1  0 -1 -1 -1  0  1
@@ -1757,6 +1759,8 @@
     ldi A 0
     stack A $DATASTACK_PTR
     call @TIME.start
+    ldi A 0
+    sto A $i
     ldi A 45
     stack A $DATASTACK_PTR
     call @FP.from_int
@@ -1775,7 +1779,7 @@
 :loop_iterations
     ldm A $i
     stack A $DATASTACK_PTR
-    ldi A 10000
+    ldi A 20000
     stack A $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
@@ -1805,6 +1809,20 @@
     stack A $DATASTACK_PTR
     call @rt_print_tos
     ldm A $current_color
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 15
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $current_color
     stack A $DATASTACK_PTR
     call @TURTLE.color
 :MAIN_LOOP_if_end_1
@@ -2012,8 +2030,16 @@
     add B A
     ld A B
     sto A $i
+    call @KEYpressed
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :MAIN_LOOP_if_end_5
+    call @rt_drop
+    jmp :end_of_barnsly
+:MAIN_LOOP_if_end_5
     jmp :loop_iterations
 :MAIN_LOOP_if_end_0
+:end_of_barnsly
     ldi A 0
     stack A $DATASTACK_PTR
     call @TIME.read
@@ -2138,7 +2164,6 @@
 % $MAIN_LOOP_str_12 \0 \. \2 \6 \null
 % $MAIN_LOOP_str_13 \0 \. \2 \4 \null
 % $MAIN_LOOP_str_14 \0 \. \4 \4 \null
-% $i 0
 % $SCALE 0
 % $X_OFFSET 0
 % $Y_OFFSET 0

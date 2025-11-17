@@ -8,7 +8,9 @@ MALLOC $bytecode_buffer 4096
 . $current_opcode 1
 . $current_value 1
 . $bytecode_execution_ptr 1
-. $ErrorMessage 40
+. $ErrorMessage 32
+. $InfoMessage0 27
+. $InfoMessage1 27
 # .FUNCTIONS
 @TOKENIZE
     ustack A $DATASTACK_PTR
@@ -340,11 +342,41 @@ MALLOC $bytecode_buffer 4096
     tst A 0
     jmpt :EXECUTE_BYTECODE_if_end_13
     call @rt_print_tos
-    ldi A 13
-    stack A $DATASTACK_PTR
-    call @PRTchar
     jmp :execution_loop
 :EXECUTE_BYTECODE_if_end_13
+    ldm A $current_opcode
+    stack A $DATASTACK_PTR
+    ldi A 8
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :EXECUTE_BYTECODE_if_end_14
+    call @TOS.check
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :EXECUTE_BYTECODE_if_else_15
+    call @TOS.check
+    ldi A $InfoMessage0
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @rt_print_tos
+    call @rt_dup
+    ldi A $InfoMessage1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @rt_print_tos
+    jmp :EXECUTE_BYTECODE_if_end_15
+:EXECUTE_BYTECODE_if_else_15
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A $InfoMessage0
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @rt_print_tos
+:EXECUTE_BYTECODE_if_end_15
+    jmp :execution_loop
+:EXECUTE_BYTECODE_if_end_14
     ldm A $current_opcode
     stack A $DATASTACK_PTR
     ldi A 4
@@ -352,7 +384,7 @@ MALLOC $bytecode_buffer 4096
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :EXECUTE_BYTECODE_if_end_14
+    jmpt :EXECUTE_BYTECODE_if_end_16
     ldi A $ErrorMessage
     stack A $DATASTACK_PTR
     call @PRTstring
@@ -364,7 +396,7 @@ MALLOC $bytecode_buffer 4096
     ld A B
     sto A $bytecode_execution_ptr
     jmp :execution_loop
-:EXECUTE_BYTECODE_if_end_14
+:EXECUTE_BYTECODE_if_end_16
     ldi A $ErrorMessage
     stack A $DATASTACK_PTR
     call @PRTstring
@@ -381,4 +413,6 @@ MALLOC $bytecode_buffer 4096
 % $current_opcode 1
 % $current_value 1
 % $bytecode_execution_ptr 4096
-% $ErrorMessage \F \a \t \a \l \space \e \r \r \o \r \: \space \f \o \r \space \n \o \w \, \a \n \space \i \n \v \a \l \i \d \space \t \o \k \e \n \space \Return \null
+% $ErrorMessage \F \a \t \a \l \space \e \r \r \o \r \: \space \a \n \space \i \n \v \a \l \i \d \space \t \o \k \e \n \space \Return \null
+% $InfoMessage0 \T \o \t \a \l \space \i \t \e \m \s \space \o \n \space \t \h \e \space \s \t \a \c \k \: \space \null
+% $InfoMessage1 \F \i \r \s \t \space \v \a \l \u \e \space \o \n \space \t \h \e \space \s \t \a \c \k \: \space \null

@@ -1,13 +1,39 @@
-# placeholder for an new program
+# starot of something new
 
-USE math_lib
+
+
+
+
 USE std_stern_io
-USE disk_utils
+USE std_string
+USE std_time
+
+
+# DEF checkstack {
+#     ASM {
+#         ldi K $DATASTACK
+#         ldm M $DATASTACK_PTR
+
+#         tste K M
+#         jmpt :stack_underflow
+#         ldi A 1
+#         stack A $DATASTACK_PTR
+#         jmp :checkstack_done
+#     :stack_underflow
+#         ldi A 0
+#         stack A $DATASTACK_PTR
+#     :checkstack_done
+#     }
+# }
 
 
 
-#VALUE A -1
 
-VALUE B 0
+TOS.check PRINT
+1 TOS.check PRINT
+2 TOS.check PRINT
+3 TOS.check PRINT
+4 TOS.check PRINT
 
-1 negate AS B
+TOS.check "Remaining items on the stack: " PRTstring PRINT
+

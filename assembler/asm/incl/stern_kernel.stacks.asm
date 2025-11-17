@@ -8,25 +8,31 @@ MALLOC $bytecode_buffer 4096
 . $current_opcode 1
 . $current_value 1
 . $bytecode_execution_ptr 1
-. $ErrorMessage 40
+. $ErrorMessage 32
+. $InfoMessage0 27
+. $InfoMessage1 27
 . $rpn_input_ptr 1
-. $start_kernel_str_0 59
-. $start_kernel_str_1 4
+. $start_kernel_str_0 22
+. $start_kernel_str_1 38
 . $start_kernel_str_2 2
-. $char_pointer 1
 . $start_kernel_str_3 2
-. $start_kernel_str_4 20
-. $start_kernel_str_5 6
-. $start_kernel_str_6 21
-. $start_kernel_str_7 4
-. $start_kernel_str_8 19
-. $start_kernel_str_9 5
-. $start_kernel_str_10 20
-. $start_kernel_str_11 9
-. $start_kernel_str_12 2
+. $start_kernel_str_4 5
+. $start_kernel_str_5 2
+. $char_pointer 1
+. $start_kernel_str_6 2
+. $start_kernel_str_7 20
+. $start_kernel_str_8 6
+. $start_kernel_str_9 21
+. $start_kernel_str_10 5
+. $start_kernel_str_11 20
+. $start_kernel_str_12 4
+. $start_kernel_str_13 19
+. $start_kernel_str_14 5
+. $start_kernel_str_15 20
+. $start_kernel_str_16 9
 . $token_string 17
-. $start_kernel_str_13 23
-. $start_kernel_str_14 10
+. $start_kernel_str_17 23
+. $start_kernel_str_18 10
 
 # .CODE
 
@@ -523,11 +529,41 @@ MALLOC $bytecode_buffer 4096
     tst A 0
     jmpt :EXECUTE_BYTECODE_if_end_13
     call @rt_print_tos
-    ldi A 13
-    stack A $DATASTACK_PTR
-    call @PRTchar
     jmp :execution_loop
 :EXECUTE_BYTECODE_if_end_13
+    ldm A $current_opcode
+    stack A $DATASTACK_PTR
+    ldi A 8
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :EXECUTE_BYTECODE_if_end_14
+    call @TOS.check
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :EXECUTE_BYTECODE_if_else_15
+    call @TOS.check
+    ldi A $InfoMessage0
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @rt_print_tos
+    call @rt_dup
+    ldi A $InfoMessage1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @rt_print_tos
+    jmp :EXECUTE_BYTECODE_if_end_15
+:EXECUTE_BYTECODE_if_else_15
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A $InfoMessage0
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @rt_print_tos
+:EXECUTE_BYTECODE_if_end_15
+    jmp :execution_loop
+:EXECUTE_BYTECODE_if_end_14
     ldm A $current_opcode
     stack A $DATASTACK_PTR
     ldi A 4
@@ -535,7 +571,7 @@ MALLOC $bytecode_buffer 4096
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :EXECUTE_BYTECODE_if_end_14
+    jmpt :EXECUTE_BYTECODE_if_end_16
     ldi A $ErrorMessage
     stack A $DATASTACK_PTR
     call @PRTstring
@@ -547,7 +583,7 @@ MALLOC $bytecode_buffer 4096
     ld A B
     sto A $bytecode_execution_ptr
     jmp :execution_loop
-:EXECUTE_BYTECODE_if_end_14
+:EXECUTE_BYTECODE_if_end_16
     ldi A $ErrorMessage
     stack A $DATASTACK_PTR
     call @PRTstring
@@ -559,13 +595,24 @@ MALLOC $bytecode_buffer 4096
     ldi A $start_kernel_str_0
     stack A $DATASTACK_PTR
     call @PRTstring
-:main_loop
     ldi A $start_kernel_str_1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+:main_loop
+    ldi A $start_kernel_str_2
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @TOS.check
+    call @TOS.print
+    ldi A $start_kernel_str_3
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $start_kernel_str_4
     stack A $DATASTACK_PTR
     call @PRTstring
     call @READline
     call @rt_dup
-    ldi A $start_kernel_str_2
+    ldi A $start_kernel_str_5
     stack A $DATASTACK_PTR
     call @STRcmp
     ustack A $DATASTACK_PTR
@@ -628,13 +675,13 @@ MALLOC $bytecode_buffer 4096
     jmp :parser_loop
 :start_kernel_if_end_3
     call @rt_dup
-    ldi A $start_kernel_str_3
+    ldi A $start_kernel_str_6
     stack A $DATASTACK_PTR
     call @STRcmp
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :start_kernel_if_end_4
-    ldi A $start_kernel_str_4
+    ldi A $start_kernel_str_7
     stack A $DATASTACK_PTR
     call @PRTstring
     call @rt_drop
@@ -644,13 +691,13 @@ MALLOC $bytecode_buffer 4096
     jmp :parser_loop
 :start_kernel_if_end_4
     call @rt_dup
-    ldi A $start_kernel_str_5
+    ldi A $start_kernel_str_8
     stack A $DATASTACK_PTR
     call @STRcmp
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :start_kernel_if_end_5
-    ldi A $start_kernel_str_6
+    ldi A $start_kernel_str_9
     stack A $DATASTACK_PTR
     call @PRTstring
     call @rt_drop
@@ -660,13 +707,29 @@ MALLOC $bytecode_buffer 4096
     jmp :parser_loop
 :start_kernel_if_end_5
     call @rt_dup
-    ldi A $start_kernel_str_7
+    ldi A $start_kernel_str_10
     stack A $DATASTACK_PTR
     call @STRcmp
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :start_kernel_if_end_6
-    ldi A $start_kernel_str_8
+    ldi A $start_kernel_str_11
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @rt_drop
+    ldi A 8
+    stack A $DATASTACK_PTR
+    call @WRITE_TO_BYTECODE
+    jmp :parser_loop
+:start_kernel_if_end_6
+    call @rt_dup
+    ldi A $start_kernel_str_12
+    stack A $DATASTACK_PTR
+    call @STRcmp
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :start_kernel_if_end_7
+    ldi A $start_kernel_str_13
     stack A $DATASTACK_PTR
     call @PRTstring
     call @rt_drop
@@ -674,15 +737,15 @@ MALLOC $bytecode_buffer 4096
     stack A $DATASTACK_PTR
     call @WRITE_TO_BYTECODE
     jmp :parser_loop
-:start_kernel_if_end_6
+:start_kernel_if_end_7
     call @rt_dup
-    ldi A $start_kernel_str_9
+    ldi A $start_kernel_str_14
     stack A $DATASTACK_PTR
     call @STRcmp
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :start_kernel_if_end_7
-    ldi A $start_kernel_str_10
+    jmpt :start_kernel_if_end_8
+    ldi A $start_kernel_str_15
     stack A $DATASTACK_PTR
     call @PRTstring
     call @rt_drop
@@ -690,39 +753,36 @@ MALLOC $bytecode_buffer 4096
     stack A $DATASTACK_PTR
     call @WRITE_TO_BYTECODE
     jmp :parser_loop
-:start_kernel_if_end_7
+:start_kernel_if_end_8
     call @STRatoi
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :start_kernel_if_else_8
-    ldi A $start_kernel_str_11
+    jmpt :start_kernel_if_else_9
+    ldi A $start_kernel_str_16
     stack A $DATASTACK_PTR
     call @PRTstring
     call @rt_dup
     call @rt_print_tos
-    ldi A $start_kernel_str_12
-    stack A $DATASTACK_PTR
-    call @PRTstring
     ldi A 1
     stack A $DATASTACK_PTR
     call @WRITE_TO_BYTECODE
-    jmp :start_kernel_if_end_8
-:start_kernel_if_else_8
+    jmp :start_kernel_if_end_9
+:start_kernel_if_else_9
     ldi A $token_string
     stack A $DATASTACK_PTR
     call @STRcopy
     ldi A $token_string
     stack A $DATASTACK_PTR
-    ldi A $start_kernel_str_13
+    ldi A $start_kernel_str_17
     stack A $DATASTACK_PTR
     call @PRTstring
     ldi A 6
     stack A $DATASTACK_PTR
     call @WRITE_TO_BYTECODE
-:start_kernel_if_end_8
+:start_kernel_if_end_9
     jmp :parser_loop
 :end_kernel
-    ldi A $start_kernel_str_14
+    ldi A $start_kernel_str_18
     stack A $DATASTACK_PTR
     call @PRTstring
     ret
@@ -737,20 +797,26 @@ MALLOC $bytecode_buffer 4096
 % $current_opcode 1
 % $current_value 1
 % $bytecode_execution_ptr 4096
-% $ErrorMessage \F \a \t \a \l \space \e \r \r \o \r \: \space \f \o \r \space \n \o \w \, \a \n \space \i \n \v \a \l \i \d \space \t \o \k \e \n \space \Return \null
+% $ErrorMessage \F \a \t \a \l \space \e \r \r \o \r \: \space \a \n \space \i \n \v \a \l \i \d \space \t \o \k \e \n \space \Return \null
+% $InfoMessage0 \T \o \t \a \l \space \i \t \e \m \s \space \o \n \space \t \h \e \space \s \t \a \c \k \: \space \null
+% $InfoMessage1 \F \i \r \s \t \space \v \a \l \u \e \space \o \n \space \t \h \e \space \s \t \a \c \k \: \space \null
 % $rpn_input_ptr 0
-% $start_kernel_str_0 \N \e \w \space \K \e \r \n \e \l \space \C \o \m \m \a \n \d \space \L \i \n \e \: \space \E \n \t \e \r \space \e \x \p \r \e \s \s \i \o \n \space \o \r \space \' \q \' \space \t \o \space \q \u \i \t \. \Return \null
-% $start_kernel_str_1 \> \> \space \null
-% $start_kernel_str_2 \q \null
-% $start_kernel_str_3 \+ \null
-% $start_kernel_str_4 \F \o \u \n \d \space \A \D \D \space \o \p \e \r \a \t \o \r \Return \null
-% $start_kernel_str_5 \P \R \I \N \T \null
-% $start_kernel_str_6 \F \o \u \n \d \space \P \R \I \N \T \space \c \o \m \m \a \n \d \Return \null
-% $start_kernel_str_7 \U \S \R \null
-% $start_kernel_str_8 \F \o \u \n \d \space \U \S \R \space \c \o \m \m \a \n \d \Return \null
-% $start_kernel_str_9 \L \O \A \D \null
-% $start_kernel_str_10 \F \o \u \n \d \space \L \O \A \D \space \c \o \m \m \a \n \d \Return \null
-% $start_kernel_str_11 \N \u \m \b \e \r \: \space \null
-% $start_kernel_str_12 \Return \null
-% $start_kernel_str_13 \F \o \u \n \d \space \a \n \space \s \t \r \i \n \g \space \t \o \k \e \n \Return \null
-% $start_kernel_str_14 \E \x \i \t \i \n \g \. \Return \null
+% $start_kernel_str_0 \W \E \L \C \O \M \E \space \a \t \space \S \t \e \r \n \- \X \T \! \Return \null
+% $start_kernel_str_1 \Return \E \n \t \e \r \space \i \n \s \t \r \u \c \t \i \o \n \s \space \o \r \space \' \q \' \space \t \o \space \q \u \i \t \. \Return \Return \null
+% $start_kernel_str_2 \[ \null
+% $start_kernel_str_3 \] \null
+% $start_kernel_str_4 \space \> \> \space \null
+% $start_kernel_str_5 \q \null
+% $start_kernel_str_6 \+ \null
+% $start_kernel_str_7 \F \o \u \n \d \space \A \D \D \space \o \p \e \r \a \t \o \r \Return \null
+% $start_kernel_str_8 \P \R \I \N \T \null
+% $start_kernel_str_9 \F \o \u \n \d \space \P \R \I \N \T \space \c \o \m \m \a \n \d \Return \null
+% $start_kernel_str_10 \I \N \F \O \null
+% $start_kernel_str_11 \F \o \u \n \d \space \I \N \F \O \space \c \o \m \m \a \n \d \Return \null
+% $start_kernel_str_12 \U \S \R \null
+% $start_kernel_str_13 \F \o \u \n \d \space \U \S \R \space \c \o \m \m \a \n \d \Return \null
+% $start_kernel_str_14 \L \O \A \D \null
+% $start_kernel_str_15 \F \o \u \n \d \space \L \O \A \D \space \c \o \m \m \a \n \d \Return \null
+% $start_kernel_str_16 \N \u \m \b \e \r \: \space \null
+% $start_kernel_str_17 \F \o \u \n \d \space \a \n \space \s \t \r \i \n \g \space \t \o \k \e \n \Return \null
+% $start_kernel_str_18 \E \x \i \t \i \n \g \. \Return \null

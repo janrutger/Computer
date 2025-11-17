@@ -9,10 +9,14 @@ USE std_stern_io
 VALUE A 10
 VALUE B 10
 
-VALUE C 630
-VALUE D 10
 
-VALUE E 320
+VALUE C 630
+#VALUE D 10
+VALUE D 200
+
+#VALUE E 320
+VALUE E 520
+
 VALUE F 470
 
 VALUE X 10
@@ -84,7 +88,12 @@ WHILE 50000 N > DO
   END
   # IO 2 FLIP
   
+  KEYpressed IF
+        DROP                ; Drop key value
+        GOTO end_of_chaos3
+    END
 
 DONE
 
+:end_of_chaos3
 "Total run time: " PRTstring 0 TIME.read TIME.as_string "!!\n" PRTstring

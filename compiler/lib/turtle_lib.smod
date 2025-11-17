@@ -379,6 +379,8 @@
     call @rt_udc_control
     ret
 @TURTLE.start
+    ldi A 3
+    sto A $current_mode
        ; one time initialization
     ;. $TURTLE_DX 8
     % $TURTLE_DX  1  1  0 -1 -1 -1  0  1

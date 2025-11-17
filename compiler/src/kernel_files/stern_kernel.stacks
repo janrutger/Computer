@@ -10,7 +10,8 @@ USE std_string
 VALUE rpn_input_ptr 0
 
 DEF start_kernel {
-    "New Kernel Command Line: Enter expression or 'q' to quit.\n" PRTstring
+    "WELCOME at Stern-XT!\n" PRTstring
+    "\nEnter instructions or 'q' to quit.\n\n" PRTstring
 
     # ASM {
     #     ldi I 6144
@@ -18,7 +19,10 @@ DEF start_kernel {
     # }
 
     :main_loop
-        ">> " PRTstring
+        "[" PRTstring
+        TOS.check TOS.print     ; Print the number of items on the stack
+        "]" PRTstring
+        " >> " PRTstring        ; Print the prompt
         READline
         DUP "q" STRcmp IF
             DROP GOTO end_kernel
@@ -69,6 +73,12 @@ DEF start_kernel {
             GOTO parser_loop # Finished with this token, continue loop
         END
 
+        DUP "INFO" STRcmp IF
+            "Found INFO command\n" PRTstring
+            DROP OPC_STACKINFO WRITE_TO_BYTECODE
+            GOTO parser_loop
+        END
+
         # Check fot 'USR' command
         DUP "USR" STRcmp IF
             "Found USR command\n" PRTstring
@@ -96,7 +106,7 @@ DEF start_kernel {
             # For now, we'll just print it. Later, we'll push it to the RPN stack.
             "Number: " PRTstring
             DUP PRINT # PRINT consumes the number from the stack
-            "\n" PRTstring
+            # "\n" PRTstring
             OPC_PUSH WRITE_TO_BYTECODE
         ELSE    ;ATOI returned [&token, 0] status 0 is already eaten
             # It was not a valid number.

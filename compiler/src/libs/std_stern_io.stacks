@@ -97,6 +97,25 @@ DEF KEYchar {
     :key_end_loop
 }
 
+# checks if key is pressed, pushes at TOS if pressed, and an 1 to mark keypressed
+# if no key pressed, push \null 0 on the stack only
+# a NON-BLOCKING call
+DEF KEYpressed {
+    ASM {
+        ldi I ~SYS_GET_CHAR
+        int $INT_VECTORS
+    }
+
+    *p_syscall_status       ; Check the status by dereferencing our pointer
+    IF
+        *p_syscall_value 1  ; Success, push the character value by dereferencing its pointer, and push 1
+    ELSE
+        0
+    END
+
+
+}
+
 #### READline method
 LIST input_buffer 80
 VALUE p_input_buffer 0
@@ -147,4 +166,39 @@ DEF READline {
 
         0 AS input_buffer_index     ; Reset the index
         &input_buffer               ; Result (index) to the stack 
-}   
+}  
+
+# returns the stack-dept, isf noting on the stack
+# it retruns 0 
+DEF TOS.check {
+    ASM {
+        ldi K $DATASTACK        ; start adres of buffer in K
+        ldm M $DATASTACK_PTR    ; Current stackpointer in M
+
+        tste K M                ; 0 when stack emty
+        jmpt :stack_empty
+        # ldi A 1
+        # stack A $DATASTACK_PTR
+        sub M K                 ; Calculate stack use
+        stack M $DATASTACK_PTR  ; place numner of stack items at TOS
+        jmp :checkstack_done
+    :stack_empty                ; Stack is empty
+        ldi A 0
+        stack A $DATASTACK_PTR
+    :checkstack_done
+    }
+}
+
+# print TOS /w newline
+DEF TOS.print {
+    ASM {
+        ustack A $DATASTACK_PTR
+        ld C A
+
+        ldi I ~SYS_PRINT_NUMBER
+        int $INT_VECTORS
+        
+    }
+}
+
+

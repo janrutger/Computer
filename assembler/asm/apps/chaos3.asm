@@ -130,8 +130,16 @@
     stack A $DATASTACK_PTR
     call @rt_print_tos
 :_main_if_end_3
+    call @KEYpressed
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_main_if_end_4
+    call @rt_drop
+    jmp :end_of_chaos3
+:_main_if_end_4
     jmp :_main_while_start_0
 :_main_while_end_0
+:end_of_chaos3
     ldi A $_main_str_0
     stack A $DATASTACK_PTR
     call @PRTstring
@@ -234,8 +242,8 @@
 % $A 10
 % $B 10
 % $C 630
-% $D 10
-% $E 320
+% $D 200
+% $E 520
 % $F 470
 % $X 10
 % $Y 10

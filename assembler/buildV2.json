@@ -50,6 +50,14 @@
       {
         "file": "asm/apps/maze.asm",
         "output": "../bin/apps/maze.bin"
+      },
+      {
+        "file": "asm/apps/test.asm",
+        "output": "../bin/apps/test.bin"
+      },
+      {
+        "file": "asm/apps/keypress.asm",
+        "output": "../bin/apps/keypress.bin"
       }
     ]
   }

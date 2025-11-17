@@ -87,35 +87,45 @@ DEF draw_koch {
 
 
 TURTLE.start                # 1. Initialize the turtle
-0 AS TURTLE_HEADING_DEG     # Reset heading to 0. Workaround for app loader bug.
 db_pixel TURTLE.mode        # pixel TURTLE.mode
 
-red TURTLE.color            # 2. Prepare for drawing
-&level_stack AS stack_ptr   # Reset stack pointer
-30 30 TURTLE.goto           # Adjusted starting position for better visibility
-4 stack_push draw_koch      # 3. Push the starting level onto our manual stack and start the recursion
-TURTLE.flip                 # 4. Finalize drawing
 
-green TURTLE.color
-&level_stack AS stack_ptr   # Reset stack pointer
-30 30 TURTLE.goto       # Adjusted starting position for better visibility
-3 stack_push draw_koch  # 3 genearions
-TURTLE.flip
+TOS.check IF               # check is something on the stack
+    red TURTLE.color            # 2. Prepare for drawing
+    &level_stack AS stack_ptr   # Reset stack pointer
+    30 30 TURTLE.goto
+    stack_push draw_koch
+    TURTLE.flip
+ELSE
+    "\nUse of Koch: [0..4] 6144 USR \n" PRTstring
+END
 
-blue TURTLE.color
-&level_stack AS stack_ptr   # Reset stack pointer
-30 30 TURTLE.goto       # Adjusted starting position for better visibility
-2 stack_push draw_koch  # 2 generations
-TURTLE.flip
+# red TURTLE.color            # 2. Prepare for drawing
+# &level_stack AS stack_ptr   # Reset stack pointer
+# 30 30 TURTLE.goto           # Adjusted starting position for better visibility
+# 4 stack_push draw_koch      # 3. Push the starting level onto our manual stack and start the recursion
+# TURTLE.flip                 # 4. Finalize drawing
 
-orange TURTLE.color
-&level_stack AS stack_ptr   # Reset stack pointer
-30 30 TURTLE.goto       # Adjusted starting position for better visibility
-1 stack_push draw_koch  # 1 generation
-TURTLE.flip
+# green TURTLE.color
+# &level_stack AS stack_ptr   # Reset stack pointer
+# 30 30 TURTLE.goto       # Adjusted starting position for better visibility
+# 3 stack_push draw_koch  # 3 genearions
+# TURTLE.flip
 
-white TURTLE.color
-&level_stack AS stack_ptr   # Reset stack pointer
-30 30 TURTLE.goto       # Adjusted starting position for better visibility
-0 stack_push draw_koch  # 0 generations
-TURTLE.flip
+# blue TURTLE.color
+# &level_stack AS stack_ptr   # Reset stack pointer
+# 30 30 TURTLE.goto       # Adjusted starting position for better visibility
+# 2 stack_push draw_koch  # 2 generations
+# TURTLE.flip
+
+# orange TURTLE.color
+# &level_stack AS stack_ptr   # Reset stack pointer
+# 30 30 TURTLE.goto       # Adjusted starting position for better visibility
+# 1 stack_push draw_koch  # 1 generation
+# TURTLE.flip
+
+# white TURTLE.color
+# &level_stack AS stack_ptr   # Reset stack pointer
+# 30 30 TURTLE.goto       # Adjusted starting position for better visibility
+# 0 stack_push draw_koch  # 0 generations
+# TURTLE.flip

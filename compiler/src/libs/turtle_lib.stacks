@@ -217,6 +217,7 @@ DEF _welcome_at_turtle {
 
 
 DEF TURTLE.start {
+    3 AS current_mode       ; set default mode at start
     LIST TURTLE_DX 8
     LIST TURTLE_DY 8
     ASM {       ; one time initialization

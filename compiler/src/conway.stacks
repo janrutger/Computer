@@ -31,16 +31,16 @@ VAR next_board 10416
 USE std_stern_io
 USE std_time
 
-DEF ROT {
-    ASM {
-        ustack C $DATASTACK_PTR
-        ustack B $DATASTACK_PTR
-        ustack A $DATASTACK_PTR
-        stack B $DATASTACK_PTR
-        stack C $DATASTACK_PTR
-        stack A $DATASTACK_PTR
-    }
-}
+# DEF ROT {
+#     ASM {
+#         ustack C $DATASTACK_PTR
+#         ustack B $DATASTACK_PTR
+#         ustack A $DATASTACK_PTR
+#         stack B $DATASTACK_PTR
+#         stack C $DATASTACK_PTR
+#         stack A $DATASTACK_PTR
+#     }
+# }
 
 DEF count_neighbors2 {
     ASM {
@@ -629,15 +629,16 @@ DEF test_pulsar_pattern {
 # db_sprite TURTLE.mode
 # Set sprite mode with double buffering
 IO 2 ONLINE     ; set screen online
+IO 2 NEW        ; Refresh screen
 3 IO 2 MODE     ; set 3 as doublebuffer sprite mode
 
 
-test_random_board ; We replace random init with our test
-; test_glider_pattern
+; test_random_board ; We replace random init with our test
+test_glider_pattern
 ; test_blinker_pattern
 ; test_r_pentomino_pattern
 ; test_gosper_glider_gun_pattern
-; test_pulsar_pattern
+test_pulsar_pattern
 
 copy_board2 ; Copy the result from next_board to current_board to be drawn
 
@@ -647,9 +648,18 @@ WHILE 1 DO
     0 TIME.read TIME.as_string " " PRTstring counter PRINT
     0 TIME.start
 
+    KEYpressed IF
+        27 == IF                ; Drop key value
+            GOTO stop_conway
+        END
+    END
+
+
     compute_next_generation
     copy_board2
 
     #0 TIME.start
     counter 1 + AS counter
 DONE
+
+:stop_conway

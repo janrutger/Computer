@@ -56,6 +56,25 @@
     jmp :key_loop
 :key_end_loop
     ret
+@KEYpressed
+
+        ldi I ~SYS_GET_CHAR
+        int $INT_VECTORS
+        ldm I $p_syscall_status
+    ldx A $_start_memory_
+    tst A 0
+    jmpt :KEYpressed_if_else_1
+    ldm I $p_syscall_value
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    jmp :KEYpressed_if_end_1
+:KEYpressed_if_else_1
+    ldi A 0
+    stack A $DATASTACK_PTR
+:KEYpressed_if_end_1
+    ret
 @READline
 :readline_loop
     call @CURSORon
@@ -67,18 +86,18 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :READline_if_end_1
+    jmpt :READline_if_end_2
     call @CURSORoff
     call @PRTchar
     jmp :finish_readline
-:READline_if_end_1
+:READline_if_end_2
     call @rt_dup
     ldi A 8
     stack A $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :READline_if_end_2
+    jmpt :READline_if_end_3
     ldm A $input_buffer_index
     stack A $DATASTACK_PTR
     ldi A 0
@@ -86,7 +105,7 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :READline_if_else_3
+    jmpt :READline_if_else_4
     call @CURSORoff
     call @PRTchar
     ldm A $input_buffer_index
@@ -97,12 +116,12 @@
     ld A B
     sto A $input_buffer_index
     jmp :readline_loop
-    jmp :READline_if_end_3
-:READline_if_else_3
+    jmp :READline_if_end_4
+:READline_if_else_4
     call @rt_drop
     jmp :readline_loop
+:READline_if_end_4
 :READline_if_end_3
-:READline_if_end_2
     call @rt_dup
     call @PRTchar
     ldi A $input_buffer
@@ -140,6 +159,32 @@
     ldi A $input_buffer
     stack A $DATASTACK_PTR
     ret
+@TOS.check
+
+        ldi K $DATASTACK        ; start adres of buffer in K
+        ldm M $DATASTACK_PTR    ; Current stackpointer in M
+
+        tste K M                ; 0 when stack emty
+        jmpt :stack_empty
+        # ldi A 1
+        # stack A $DATASTACK_PTR
+        sub M K                 ; Calculate stack use
+        stack M $DATASTACK_PTR  ; place numner of stack items at TOS
+        jmp :checkstack_done
+    :stack_empty                ; Stack is empty
+        ldi A 0
+        stack A $DATASTACK_PTR
+    :checkstack_done
+        ret
+@TOS.print
+
+        ustack A $DATASTACK_PTR
+        ld C A
+
+        ldi I ~SYS_PRINT_NUMBER
+        int $INT_VECTORS
+        
+        ret
 
 # .DATA
 % $p_syscall_status 0

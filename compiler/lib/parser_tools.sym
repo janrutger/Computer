@@ -1,20 +1,23 @@
 {
   "functions": [
-    "_check_last_block",
-    "PRTcls",
-    "KEYchar",
-    "io_lib_init",
-    "_read_disk_block",
-    "TOKENIZE",
-    "WRITE_TO_BYTECODE",
-    "READline",
-    "_read_next_block",
     "EXECUTE_BYTECODE",
-    "CURSORoff",
+    "_read_next_block",
+    "KEYchar",
+    "TOS.check",
     "PRTstring",
-    "CURSORon",
+    "_read_disk_block",
     "PRTchar",
-    "load_bin_file"
+    "CURSORon",
+    "KEYpressed",
+    "PRTcls",
+    "io_lib_init",
+    "READline",
+    "_check_last_block",
+    "load_bin_file",
+    "WRITE_TO_BYTECODE",
+    "TOS.print",
+    "CURSORoff",
+    "TOKENIZE"
   ],
   "variables": [
     {
@@ -90,7 +93,17 @@
     {
       "name": "ErrorMessage",
       "type": "STRING",
-      "size": 40
+      "size": 32
+    },
+    {
+      "name": "InfoMessage0",
+      "type": "STRING",
+      "size": 27
+    },
+    {
+      "name": "InfoMessage1",
+      "type": "STRING",
+      "size": 27
     }
   ],
   "constants": {
@@ -106,6 +119,7 @@
     "OPC_UNKOWN": 4,
     "OPC_USR": 5,
     "OPC_STRING": 6,
-    "OPC_LOAD_FROM_DISK": 7
+    "OPC_LOAD_FROM_DISK": 7,
+    "OPC_STACKINFO": 8
   }
 }

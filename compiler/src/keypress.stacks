@@ -1,0 +1,20 @@
+USE std_stern_io
+USE std_string
+
+
+
+"Press an key and see the ASCCI value! \n" PRTstring
+"Press spacebar to end the program. \n" PRTstring
+
+
+:test_loop
+
+    KEYpressed IF
+        DUP DUP PRTchar " is pressed! : " PRTstring PRINT
+        32 == IF
+            GOTO test_end_loop
+        END
+    END
+    GOTO test_loop
+
+    :test_end_loop

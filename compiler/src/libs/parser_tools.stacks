@@ -74,7 +74,7 @@ DEF TOKENIZE {
 # =============================================================================
 
 # --- Bytecode Buffer ---
-VAR bytecode_buffer 4096    # create buffer at adres 4096
+VAR bytecode_buffer 4096    # create buffer at adres 4096 - 512
 VALUE bytecode_ptr 4096     # Pointer points to the start adres
 VALUE current_opcode 1
 VALUE current_value 1
@@ -88,6 +88,7 @@ CONST OPC_UNKOWN 4
 CONST OPC_USR 5
 CONST OPC_STRING 6
 CONST OPC_LOAD_FROM_DISK 7
+CONST OPC_STACKINFO 8
 # ... more opcodes will be added here
 
 
@@ -152,7 +153,9 @@ DEF WRITE_TO_BYTECODE {
 # No return values
 
 VALUE bytecode_execution_ptr 4096
-STRING ErrorMessage "Fatal error: for now,an invalid token \n"
+STRING ErrorMessage "Fatal error: an invalid token \n"
+STRING InfoMessage0 "Total items on the stack: "
+STRING InfoMessage1 "First value on the stack: "
 
 DEF EXECUTE_BYTECODE {
     AS bytecode_execution_ptr
@@ -208,9 +211,20 @@ DEF EXECUTE_BYTECODE {
 
         current_opcode OPC_PRINT == IF
             PRINT
-            return PRTchar      # print an newline
+            # return PRTchar      # print an newline
             GOTO execution_loop
         END
+
+        current_opcode OPC_STACKINFO == IF
+            TOS.check IF
+                TOS.check &InfoMessage0 PRTstring PRINT     ; Print stack depth
+                DUP &InfoMessage1 PRTstring PRINT           ; Print first value (TOS)
+            ELSE
+                0 &InfoMessage0 PRTstring PRINT
+            END
+            GOTO execution_loop
+        END
+
 
         current_opcode OPC_UNKOWN == IF
             # An OPC_UNKOWN has a value, so we need to skip it

@@ -78,8 +78,9 @@ DEF MAIN_LOOP {
     
     0 TIME.start
     ; Loop for many iterations
-    CONST ITERATIONS 10000 ; Number of points to draw
-    VALUE i 0
+    CONST ITERATIONS 20000 ; Number of points to draw
+    # VALUE i 0
+    0 AS i
     VALUE SCALE 0
     45 FP.from_int AS SCALE
 
@@ -100,7 +101,7 @@ DEF MAIN_LOOP {
             i 500 % 0 == IF 
                 TURTLE.flip   
                 0 TIME.read TIME.as_string 32 PRTchar i PRINT 
-                #current_color 1 + 15 % 1 + AS current_color
+                current_color 1 + 15 % 1 + AS current_color
                 current_color TURTLE.color 
             END
 
@@ -139,9 +140,17 @@ DEF MAIN_LOOP {
              mapped_x FP.to_int mapped_y FP.to_int TURTLE.goto ; Draw pixel
 
             i 1+ AS i
+
+            KEYpressed IF
+                DROP                ; Drop key value
+                GOTO end_of_barnsly
+            END
             
             GOTO loop_iterations
         END
+
+
+    :end_of_barnsly    
     0 TIME.read TIME.as_string 32 PRTchar i PRINT ; Print final time
 }
 

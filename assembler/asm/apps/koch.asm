@@ -36,16 +36,19 @@
 . $circ_p 1
 . $level_stack 16
 . $stack_ptr 1
+. $_main_str_0 32
 
 # .CODE
     ldi A $level_stack
     sto A $stack_ptr
     call @TURTLE.start
-    ldi A 0
-    sto A $TURTLE_HEADING_DEG
     ldi A 2
     stack A $DATASTACK_PTR
     call @TURTLE.mode
+    call @TOS.check
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_main_if_else_1
     ldi A 2
     stack A $DATASTACK_PTR
     call @TURTLE.color
@@ -56,71 +59,15 @@
     ldi A 30
     stack A $DATASTACK_PTR
     call @TURTLE.goto
-    ldi A 4
-    stack A $DATASTACK_PTR
     call @stack_push
     call @draw_koch
     call @TURTLE.flip
-    ldi A 5
+    jmp :_main_if_end_1
+:_main_if_else_1
+    ldi A $_main_str_0
     stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldi A $level_stack
-    sto A $stack_ptr
-    ldi A 30
-    stack A $DATASTACK_PTR
-    ldi A 30
-    stack A $DATASTACK_PTR
-    call @TURTLE.goto
-    ldi A 3
-    stack A $DATASTACK_PTR
-    call @stack_push
-    call @draw_koch
-    call @TURTLE.flip
-    ldi A 6
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldi A $level_stack
-    sto A $stack_ptr
-    ldi A 30
-    stack A $DATASTACK_PTR
-    ldi A 30
-    stack A $DATASTACK_PTR
-    call @TURTLE.goto
-    ldi A 2
-    stack A $DATASTACK_PTR
-    call @stack_push
-    call @draw_koch
-    call @TURTLE.flip
-    ldi A 8
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldi A $level_stack
-    sto A $stack_ptr
-    ldi A 30
-    stack A $DATASTACK_PTR
-    ldi A 30
-    stack A $DATASTACK_PTR
-    call @TURTLE.goto
-    ldi A 1
-    stack A $DATASTACK_PTR
-    call @stack_push
-    call @draw_koch
-    call @TURTLE.flip
-    ldi A 1
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldi A $level_stack
-    sto A $stack_ptr
-    ldi A 30
-    stack A $DATASTACK_PTR
-    ldi A 30
-    stack A $DATASTACK_PTR
-    call @TURTLE.goto
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @stack_push
-    call @draw_koch
-    call @TURTLE.flip
+    call @PRTstring
+:_main_if_end_1
     ret
 
 # .FUNCTIONS
@@ -469,6 +416,8 @@
     call @rt_udc_control
     ret
 @TURTLE.start
+    ldi A 3
+    sto A $current_mode
        ; one time initialization
     ;. $TURTLE_DX 8
     % $TURTLE_DX  1  1  0 -1 -1 -1  0  1
@@ -1037,3 +986,4 @@
 % $circ_y 0
 % $circ_p 0
 % $stack_ptr 0
+% $_main_str_0 \Return \U \s \e \space \o \f \space \K \o \c \h \: \space \[ \0 \. \. \4 \] \space \6 \1 \4 \4 \space \U \S \R \space \Return \null

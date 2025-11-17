@@ -34,6 +34,13 @@ MALLOC $next_board 10416
     ldi A 1
     stack A $DATASTACK_PTR
     call @rt_udc_control
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
     ldi A 3
     stack A $DATASTACK_PTR
     ldi A 2
@@ -41,7 +48,8 @@ MALLOC $next_board 10416
     ldi A 14
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    call @test_random_board
+    call @test_glider_pattern
+    call @test_pulsar_pattern
     call @copy_board2
 :_main_while_start_5
     ldi A 1
@@ -61,6 +69,19 @@ MALLOC $next_board 10416
     ldi A 0
     stack A $DATASTACK_PTR
     call @TIME.start
+    call @KEYpressed
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_main_if_end_6
+    ldi A 27
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_main_if_end_7
+    jmp :stop_conway
+:_main_if_end_7
+:_main_if_end_6
     call @compute_next_generation
     call @copy_board2
     ldm A $counter
@@ -72,18 +93,10 @@ MALLOC $next_board 10416
     sto A $counter
     jmp :_main_while_start_5
 :_main_while_end_5
+:stop_conway
     ret
 
 # .FUNCTIONS
-@ROT
-
-        ustack C $DATASTACK_PTR
-        ustack B $DATASTACK_PTR
-        ustack A $DATASTACK_PTR
-        stack B $DATASTACK_PTR
-        stack C $DATASTACK_PTR
-        stack A $DATASTACK_PTR
-        ret
 @count_neighbors2
 
         ; Get arguments from the stack into registers X and Y.
