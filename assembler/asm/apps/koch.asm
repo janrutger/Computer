@@ -36,19 +36,19 @@
 . $circ_p 1
 . $level_stack 16
 . $stack_ptr 1
-. $_main_str_0 32
+. $_main_str_0 35
 
 # .CODE
     ldi A $level_stack
     sto A $stack_ptr
-    call @TURTLE.start
-    ldi A 2
-    stack A $DATASTACK_PTR
-    call @TURTLE.mode
     call @TOS.check
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :_main_if_else_1
+    call @TURTLE.start
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @TURTLE.mode
     ldi A 2
     stack A $DATASTACK_PTR
     call @TURTLE.color
@@ -986,4 +986,4 @@
 % $circ_y 0
 % $circ_p 0
 % $stack_ptr 0
-% $_main_str_0 \Return \U \s \e \space \o \f \space \K \o \c \h \: \space \[ \0 \. \. \4 \] \space \6 \1 \4 \4 \space \U \S \R \space \Return \null
+% $_main_str_0 \Return \U \s \e \space \o \f \space \K \o \c \h \: \space \[ \0 \. \. \4 \] \space \< \a \d \r \e \s \> \space \U \S \R \space \Return \null

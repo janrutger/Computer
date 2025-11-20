@@ -9,14 +9,14 @@
         "restore_symbols": false
       },
       {
-        "file": "asm/apps/main.asm",
-        "base_address": 6144,
+        "file": "asm/apps/test.asm",
+        "base_address": 4096,
         "restore_symbols": true
       }
     ]
   }, 
   "apps": {
-    "base_address": 6144,
+    "base_address": 4096,
     "restore_symbols": true,
     "sources": [
       {
@@ -58,6 +58,10 @@
       {
         "file": "asm/apps/keypress.asm",
         "output": "../bin/apps/keypress.bin"
+      },
+      {
+        "file": "asm/apps/pi.asm",
+        "output": "../bin/apps/pi.bin"
       }
     ]
   }

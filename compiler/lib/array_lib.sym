@@ -1,0 +1,45 @@
+{
+  "functions": [
+    "ARRAY.new",
+    "lib_array.init",
+    "EXIT"
+  ],
+  "variables": [
+    {
+      "name": "_ARR_HEAP_START",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_ARR_HEAP_SIZE",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_ARR_NEXT_FREE",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_ARR_TEMP_PTR",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "requested_capacity",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "total_size",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "new_array_pointer",
+      "type": "VALUE",
+      "size": 1
+    }
+  ],
+  "constants": {}
+}

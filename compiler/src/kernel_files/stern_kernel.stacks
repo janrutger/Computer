@@ -20,9 +20,9 @@ DEF start_kernel {
 
     :main_loop
         "[" PRTstring
-        TOS.check TOS.print     ; Print the number of items on the stack
-        "]" PRTstring
-        " >> " PRTstring        ; Print the prompt
+        TOS.check PRTnum     ; Print the number of items on the stack
+        #"]" PRTstring
+        "] >> " PRTstring        ; Print the prompt
         READline
         DUP "q" STRcmp IF
             DROP GOTO end_kernel
@@ -113,7 +113,7 @@ DEF start_kernel {
             # create the token_string var
             LIST token_string 17        ; max lenght 16 + terminator 
             # stack: [ &token ]
-            &token_string `STRcopy      ; Copy input buffer to token_string
+            &token_string STRcopy      ; Copy input buffer to token_string
 
             &token_string
 

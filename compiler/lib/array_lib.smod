@@ -6,32 +6,7 @@
 . $requested_capacity 1
 . $total_size 1
 . $new_array_pointer 1
-. $_ERROR_str_0 13
-MALLOC $array_heap 6144
-. $my_array 1
-
-# .CODE
-    ldi A $array_heap
-    stack A $DATASTACK_PTR
-    ldi A 1024
-    stack A $DATASTACK_PTR
-    call @lib_array.init
-    ldi A 512
-    stack A $DATASTACK_PTR
-    call @ARRAY.new
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_if_else_0
-    ustack A $DATASTACK_PTR
-    sto A $my_array
-    jmp :_main_if_end_0
-:_main_if_else_0
-    call @_ERROR
-:_main_if_end_0
-    ret
-
 # .FUNCTIONS
-
 @lib_array.init
     ustack A $DATASTACK_PTR
     sto A $_ARR_HEAP_SIZE
@@ -106,14 +81,7 @@ MALLOC $array_heap 6144
 :end_array_new
     ret
 
-@_ERROR
-    ldi A $_ERROR_str_0
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ret
-
 # .DATA
-
 % $_ARR_HEAP_START 0
 % $_ARR_HEAP_SIZE 0
 % $_ARR_NEXT_FREE 0
@@ -121,4 +89,3 @@ MALLOC $array_heap 6144
 % $requested_capacity 0
 % $total_size 0
 % $new_array_pointer 0
-% $_ERROR_str_0 \a \r \r \a \y \space \E \R \R \O \R \Return \null

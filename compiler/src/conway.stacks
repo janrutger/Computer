@@ -649,7 +649,7 @@ WHILE 1 DO
     0 TIME.start
 
     KEYpressed IF
-        27 == IF                ; Drop key value
+        27 == IF                ; Check for <esc>
             GOTO stop_conway
         END
     END

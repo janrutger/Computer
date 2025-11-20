@@ -27,7 +27,7 @@ class Plotter(UDCDevice):
         self.x_counter = 0
 
         self.dirty = True
-        self.max_lenght = 1024
+        self.max_lenght = 1000     # was 1024, but 1000 reamains scaling
         self.last_draw_time = 0
 
         # --- Matplotlib Objects ---

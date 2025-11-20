@@ -1,0 +1,197 @@
+; ##############################################################################
+; #
+; #   Array Library for the Stacks Language
+; #
+; ##############################################################################
+;
+; Provides functions for creating and manipulating dynamic arrays on a pre-allocated heap.
+
+; --- Internal state for the heap allocator ---
+VALUE _ARR_HEAP_START 0
+VALUE _ARR_HEAP_SIZE 0
+VALUE _ARR_NEXT_FREE 0
+VALUE _ARR_TEMP_PTR 0
+VALUE requested_capacity 0
+VALUE total_size 0
+VALUE new_array_pointer 0
+
+
+
+; --- lib-array.init ---
+; Initializes the array heap allocator. This must be called once before any
+; other array functions are used.
+; ( heap_start_ptr heap_size -- )
+DEF lib_array.init {
+    AS _ARR_HEAP_SIZE
+    AS _ARR_HEAP_START
+    _ARR_HEAP_START AS _ARR_NEXT_FREE
+}
+
+## Helper
+DEF EXIT {
+    ASM {
+        pop A       ; Drop the return adress from the stack
+        ret
+    }
+}
+## End helper
+
+
+; --- ARRAY.new ---
+; Creates a new array.
+; ( requested_capacity -- new_array_pointer status_code )
+; status_code: 1 for success, 0 for failure
+DEF ARRAY.new {
+    AS requested_capacity
+    
+    ; total_size = requested_capacity + 2 (for header)
+    requested_capacity 2 + AS total_size
+
+    ; Check if there is enough space on the heap
+    _ARR_NEXT_FREE total_size + _ARR_HEAP_START _ARR_HEAP_SIZE + > IF
+        ; Not enough space
+        0 EXIT
+    END
+
+    _ARR_NEXT_FREE AS new_array_pointer
+
+    ; Update next_free_space
+    _ARR_NEXT_FREE total_size + AS _ARR_NEXT_FREE
+
+    ; Write header
+    new_array_pointer AS _ARR_TEMP_PTR
+    requested_capacity AS *_ARR_TEMP_PTR   ; Capacity
+    
+    new_array_pointer 1 + AS _ARR_TEMP_PTR
+    0 AS *_ARR_TEMP_PTR                    ; Count
+
+    new_array_pointer 1     ; return new array pointer, and success code 1
+
+:end_array_new
+}
+
+
+# ; --- ARRAY.append ---
+# ; Appends an element to the end of the array.
+# ; ( value array_ptr -- status_code )
+# ; status_code: 1 for success, 0 for failure
+# DEF ARRAY.append {
+#     AS array_ptr
+#     AS value
+
+#     ; Read header
+#     array_ptr AS _ARR_TEMP_PTR
+#     *_ARR_TEMP_PTR AS capacity
+#     array_ptr 1 + AS _ARR_TEMP_PTR
+#     *_ARR_TEMP_PTR AS count
+
+#     ; Check if array is full
+#     count capacity > IF
+#         0 EXIT
+#     END
+#     count capacity == IF
+#         0 EXIT
+#     END
+
+#     ; Calculate destination address
+#     array_ptr 2 + count + AS dest_addr
+    
+#     ; Write value
+#     dest_addr AS _ARR_TEMP_PTR
+#     value AS *_ARR_TEMP_PTR
+
+#     ; Increment count
+#     array_ptr 1 + AS _ARR_TEMP_PTR
+#     count 1 + AS *_ARR_TEMP_PTR
+
+#     1
+# }
+
+
+# ; --- ARRAY.put ---
+# ; Updates a value at a specific index.
+# ; ( value index array_ptr -- status_code )
+# ; status_code: 1 for success, 0 for failure
+# DEF ARRAY.put {
+#     AS array_ptr
+#     AS index
+#     AS value
+
+#     ; Read count
+#     array_ptr 1 + AS _ARR_TEMP_PTR
+#     *_ARR_TEMP_PTR AS count
+
+#     ; Check if index is out of bounds
+#     index 0 < IF
+#         0 EXIT
+#     END
+#     index count > IF
+#         0 EXIT
+#     END
+#     index count == IF
+#         0 EXIT
+#     END
+
+#     ; Calculate destination address
+#     array_ptr 2 + index + AS dest_addr
+
+#     ; Write value
+#     dest_addr AS _ARR_TEMP_PTR
+#     value AS *_ARR_TEMP_PTR
+
+#     1
+# }
+
+
+# ; --- ARRAY.get ---
+# ; Reads the value at any index.
+# ; ( index array_ptr -- value status_code )
+# ; status_code: 1 for success, 0 for failure
+# DEF ARRAY.get {
+#     AS array_ptr
+#     AS index
+
+#     ; Read count
+#     array_ptr 1 + AS _ARR_TEMP_PTR
+#     *_ARR_TEMP_PTR AS count
+
+#     ; Check if index is out of bounds
+#     index 0 < IF
+#         0 0 EXIT
+#     END
+#     index count > IF
+#         0 0 EXIT
+#     END
+#     index count == IF
+#         0 0 EXIT
+#     END
+
+#     ; Calculate read address
+#     array_ptr 2 + index + AS read_addr
+
+#     ; Read value
+#     read_addr AS _ARR_TEMP_PTR
+#     *_ARR_TEMP_PTR
+
+#     1
+# }
+
+
+# ; --- ARRAY.size ---
+# ; Returns the capacity of the array.
+# ; ( array_ptr -- capacity )
+# DEF ARRAY.size {
+#     AS array_ptr
+#     array_ptr AS _ARR_TEMP_PTR
+#     *_ARR_TEMP_PTR
+# }
+
+
+# ; --- ARRAY.len ---
+# ; Returns the current number of elements.
+# ; ( array_ptr -- count )
+# DEF ARRAY.len {
+#     AS array_ptr
+#     array_ptr 1 + AS _ARR_TEMP_PTR
+#     *_ARR_TEMP_PTR
+# }

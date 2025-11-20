@@ -3,7 +3,7 @@
 . $_strtok_d 1
 . $_strtok_p 1
 . $_strtok_c 1
-MALLOC $bytecode_buffer 4096
+MALLOC $bytecode_buffer 3584
 . $bytecode_ptr 1
 . $current_opcode 1
 . $current_value 1
@@ -409,10 +409,10 @@ MALLOC $bytecode_buffer 4096
 % $_strtok_d 0
 % $_strtok_p 0
 % $_strtok_c 0
-% $bytecode_ptr 4096
+% $bytecode_ptr 3584
 % $current_opcode 1
 % $current_value 1
-% $bytecode_execution_ptr 4096
+% $bytecode_execution_ptr 3584
 % $ErrorMessage \F \a \t \a \l \space \e \r \r \o \r \: \space \a \n \space \i \n \v \a \l \i \d \space \t \o \k \e \n \space \Return \null
 % $InfoMessage0 \T \o \t \a \l \space \i \t \e \m \s \space \o \n \space \t \h \e \space \s \t \a \c \k \: \space \null
 % $InfoMessage1 \F \i \r \s \t \space \v \a \l \u \e \space \o \n \space \t \h \e \space \s \t \a \c \k \: \space \null

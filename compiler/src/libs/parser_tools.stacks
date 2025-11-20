@@ -74,8 +74,8 @@ DEF TOKENIZE {
 # =============================================================================
 
 # --- Bytecode Buffer ---
-VAR bytecode_buffer 4096    # create buffer at adres 4096 - 512
-VALUE bytecode_ptr 4096     # Pointer points to the start adres
+VAR bytecode_buffer 3584    # create buffer at adres 4096 - 512
+VALUE bytecode_ptr 3584     # Pointer points to the start adres
 VALUE current_opcode 1
 VALUE current_value 1
 
@@ -152,7 +152,7 @@ DEF WRITE_TO_BYTECODE {
 # Program stops at OPC_END (null) termination
 # No return values
 
-VALUE bytecode_execution_ptr 4096
+VALUE bytecode_execution_ptr 3584
 STRING ErrorMessage "Fatal error: an invalid token \n"
 STRING InfoMessage0 "Total items on the stack: "
 STRING InfoMessage1 "First value on the stack: "
@@ -237,8 +237,7 @@ DEF EXECUTE_BYTECODE {
         GOTO execution_end # Stop execution on error
 
     :execution_end
-        # Reset bytecode pointer for the next line of input
-        # 4096 AS bytecode_ptr
+        
 }
 
 

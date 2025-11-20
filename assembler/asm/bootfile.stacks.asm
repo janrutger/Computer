@@ -193,6 +193,15 @@
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
         ret
+@PRTnum
+
+        ustack A $DATASTACK_PTR
+        ld C A
+
+        ldi I ~SYS_PRINT_NUMBER
+        int $INT_VECTORS
+        
+        ret
 @PRTcls
 
         ldi I ~SYS_CLEAR_SCREEN
@@ -344,15 +353,6 @@
         ldi A 0
         stack A $DATASTACK_PTR
     :checkstack_done
-        ret
-@TOS.print
-
-        ustack A $DATASTACK_PTR
-        ld C A
-
-        ldi I ~SYS_PRINT_NUMBER
-        int $INT_VECTORS
-        
         ret
 
 

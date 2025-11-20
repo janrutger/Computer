@@ -1,0 +1,101 @@
+; This program calculates PI using the Leibniz formula (arctan(1) * 4)
+; PI/4 = 1 - 1/3 + 1/5 - 1/7 + ...
+
+
+INCLUDE math_lib
+INCLUDE fixed_point_lib
+USE std_stern_io
+USE std_time
+
+; --- Constants ---
+CONST NUM_TERMS 500000 ; Number of terms to calculate for the series
+
+; --- Main Program ---
+DEF main {
+    ; Set fixed-point precision. More decimal places for better accuracy.
+    #100000000 FP.set_scale
+    10000000000 FP.set_scale
+    8 AS valid_digits
+    "3.14159263" FP.from_string AS real_pi
+
+    "Calculating PI using " PRTstring
+    NUM_TERMS PRTnum
+    " terms of the Leibniz series...\n" PRTstring
+    "Takes arround 18 minutes, press <esc> to stop\n\n" PRTstring
+
+    0 FP.from_int AS sum_fp     ; Initialize sum
+    1 AS n                      ; Start with the first term (n=1)
+
+    :loop_leibniz
+    ; Loop exit condition
+    n NUM_TERMS > IF
+        GOTO end_leibniz
+    END
+
+    KEYpressed IF
+        27 == IF                ; Check for <esc>
+            GOTO end_leibniz
+        END
+    END
+
+    ; --- Loop Body ---
+
+    ; Calculate the denominator: 2*n - 1
+    n 2 * 1 - AS denominator
+    denominator FP.from_int AS denominator_fp
+
+    ; Calculate the term: 1 / denominator
+    1 FP.from_int denominator_fp FP.div AS term_fp
+
+    ; Check if n is odd or even to decide whether to add or subtract
+    n 2 % 1 == IF
+        ; Odd term, add to sum
+        sum_fp term_fp FP.add AS sum_fp
+    ELSE
+        ; Even term, subtract from sum
+        sum_fp term_fp FP.sub AS sum_fp
+    END
+
+    ; Increment counter and loop
+    n 1 + AS n
+
+    n 50 % 0 == IF
+        # sum_fp 4 FP.from_int FP.mul real_pi FP.sub
+        #"PI approximation: " PRTstring valid_digits FP.fprint "\n" PRTstring
+        # IO 1 SEND
+
+        sum_fp 4 FP.from_int FP.mul IO 1 SEND
+
+    END
+
+    GOTO loop_leibniz
+
+    :end_leibniz
+
+    ; Multiply by 4 to get PI
+    sum_fp 4 FP.from_int FP.mul AS pi_fp
+
+    "N terms passed  : " PRTstring n PRTnum 13 PRTchar
+
+    "PI approximation: " PRTstring
+    #pi_fp FP.to_string PRTstring
+    pi_fp valid_digits FP.fprint
+    "\n" PRTstring
+
+    "Real Pi         : " PRTstring
+    real_pi valid_digits FP.fprint
+    "\n" PRTstring
+
+
+    "Difference to Pi: " PRTstring
+    real_pi pi_fp FP.sub valid_digits FP.fprint
+    "\n" PRTstring
+}
+
+IO 1 ONLINE
+IO 1 NEW
+
+0 TIME.start
+main
+"Calculation took: " PRTstring
+0 TIME.read TIME.as_string " seconds\n" PRTstring

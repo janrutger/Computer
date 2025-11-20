@@ -92,7 +92,9 @@ DEF load_bin_file {
         #   2 block van be needed
         :value_lookup_start
             sto Z $is_negative
-            sto Z $is_first_digit
+            ldi B 1
+            sto B $is_first_digit
+            ;sto Z $is_first_digit
 
         :value_lookup_loop  
             inc I $disk_io_buffer_ptr
@@ -110,7 +112,7 @@ DEF load_bin_file {
 
             ldm A $is_first_digit
             tste A Z
-            jmpf :not_first_digit_val
+            jmpt :not_first_digit_val
 
                 ; It is the first char, so we check for sign and spaces
                 sto Z $is_first_digit

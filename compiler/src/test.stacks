@@ -1,39 +1,24 @@
 # starot of something new
 
-
-
-
-
 USE std_stern_io
-USE std_string
-USE std_time
+INCLUDE array_lib
 
+DEF _ERROR {
+    "Array error!!\n" PRTstring
+}
 
-# DEF checkstack {
-#     ASM {
-#         ldi K $DATASTACK
-#         ldm M $DATASTACK_PTR
+VAR array_heap 6144
+&array_heap 1024
+lib_array.init
 
-#         tste K M
-#         jmpt :stack_underflow
-#         ldi A 1
-#         stack A $DATASTACK_PTR
-#         jmp :checkstack_done
-#     :stack_underflow
-#         ldi A 0
-#         stack A $DATASTACK_PTR
-#     :checkstack_done
-#     }
-# }
+512 ARRAY.new IF AS my_array ELSE _ERROR END
 
 
 
 
-TOS.check PRINT
-1 TOS.check PRINT
-2 TOS.check PRINT
-3 TOS.check PRINT
-4 TOS.check PRINT
 
-TOS.check "Remaining items on the stack: " PRTstring PRINT
+
+
+
+
 

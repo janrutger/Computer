@@ -53,6 +53,18 @@ DEF PRTstring {
     }
 }
 
+# print TOS \w newline
+DEF PRTnum {
+    ASM {
+        ustack A $DATASTACK_PTR
+        ld C A
+
+        ldi I ~SYS_PRINT_NUMBER
+        int $INT_VECTORS
+        
+    }
+}
+
 # Clears the console screen
 DEF PRTcls {
     ASM {
@@ -189,16 +201,6 @@ DEF TOS.check {
     }
 }
 
-# print TOS /w newline
-DEF TOS.print {
-    ASM {
-        ustack A $DATASTACK_PTR
-        ld C A
 
-        ldi I ~SYS_PRINT_NUMBER
-        int $INT_VECTORS
-        
-    }
-}
 
 

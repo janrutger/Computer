@@ -1,0 +1,78 @@
+I like to create an library to give the Stacks language support for Arrays
+
+it must be able to create an array where the array data is stored on the array-heap
+The array-heap is an reververd part of the memory created with LIST or MALLOC directives of the stacklanguage
+
+an array needs two positions for bookkeeping:
+- header 0 (Capacity): The maximum number of elements the array can hold.
+- header 1 (Count): The number of elements currently in the array. Initialized to 0.
+
+The array is full when `Count == Capacity`.
+
+; NOTE FOR IMPLEMENTOR:
+; The Stacks language does not support `<=` or `>=`.
+; Only ',', '>', '==', '!=' are supported
+;
+; ! and @ are not supported
+; END NOTE
+
+
+the array library has:
+
+an lib-array.init method, run to initialize the array library. 
+- Takes heap_size and heap_start pointer.
+- Stores these internally for the allocator.
+- Initializes the next_free_space pointer to heap_start.
+
+an ARRAY.new method, to create a new array
+- Arguments: requested_capacity
+- Returns: new_array_pointer, status_code (1 for success, 0 for fail)
+- Logic:
+  1. total_size = requested_capacity + 2
+  2. Check if total_size fits in remaining heap space. If not, return 0 (pointer), 0 (status).
+  3. Get pointer for new array from next_free_space.
+  4. Update next_free_space by adding total_size.
+  5. Write `requested_capacity` to `new_array_pointer + 0`.
+  6. Write `0` to `new_array_pointer + 1`.
+  7. Return new_array_pointer, 1 (status).
+
+an ARRAY.append method, to append an element to the end of the array
+- Arguments: value, array_ptr
+- Returns: status_code (1 for success, 0 for fail)
+- Logic:
+  1. Read Capacity (from `array_ptr + 0`) and Count (from `array_ptr + 1`).
+  2. Check if `Count >= Capacity`. If so, return 0 (fail).
+  3. Calculate address: `dest_addr = array_ptr + 2 + Count`.
+  4. Write `value` to `dest_addr`.
+  5. Increment `Count` at `array_ptr + 1`.
+  6. Return 1 (success).
+
+an ARRAY.put method, to update a value at a specific index
+- Arguments: value, index, array_ptr
+- Returns: status_code (1 for success, 0 for fail)
+- Logic:
+  1. Read Count from `array_ptr + 1`.
+  2. Check if `0 <= index < Count`. If not, return 0 (fail).
+  3. Calculate address: `dest_addr = array_ptr + 2 + index`.
+  4. Write `value` to `dest_addr`.
+  5. Return 1 (success).
+
+an ARRAY.get method, to read the value at any index
+- Arguments: index, array_ptr
+- Returns: value, status_code (1 for success, 0 for fail)
+- Logic:
+  1. Read Count from `array_ptr + 1`.
+  2. Check if `0 <= index < Count`. If not, return 0 (value), 0 (status).
+  3. Calculate address: `read_addr = array_ptr + 2 + index`.
+  4. Read `value` from `read_addr`.
+  5. Return `value`, 1 (status).
+
+an ARRAY.size method, returns the capacity of the array
+- Arguments: array_ptr
+- Returns: capacity
+- Logic: Read and return the value at `array_ptr + 0`.
+
+an ARRAY.len method, returns the current number of elements
+- Arguments: array_ptr
+- Returns: count
+- Logic: Read and return the value at `array_ptr + 1`.

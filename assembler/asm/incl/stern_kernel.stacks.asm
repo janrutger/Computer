@@ -3,7 +3,7 @@
 . $_strtok_d 1
 . $_strtok_p 1
 . $_strtok_c 1
-MALLOC $bytecode_buffer 4096
+MALLOC $bytecode_buffer 3584
 . $bytecode_ptr 1
 . $current_opcode 1
 . $current_value 1
@@ -15,24 +15,23 @@ MALLOC $bytecode_buffer 4096
 . $start_kernel_str_0 22
 . $start_kernel_str_1 38
 . $start_kernel_str_2 2
-. $start_kernel_str_3 2
-. $start_kernel_str_4 5
-. $start_kernel_str_5 2
+. $start_kernel_str_3 6
+. $start_kernel_str_4 2
 . $char_pointer 1
-. $start_kernel_str_6 2
-. $start_kernel_str_7 20
-. $start_kernel_str_8 6
-. $start_kernel_str_9 21
-. $start_kernel_str_10 5
-. $start_kernel_str_11 20
-. $start_kernel_str_12 4
-. $start_kernel_str_13 19
-. $start_kernel_str_14 5
-. $start_kernel_str_15 20
-. $start_kernel_str_16 9
+. $start_kernel_str_5 2
+. $start_kernel_str_6 20
+. $start_kernel_str_7 6
+. $start_kernel_str_8 21
+. $start_kernel_str_9 5
+. $start_kernel_str_10 20
+. $start_kernel_str_11 4
+. $start_kernel_str_12 19
+. $start_kernel_str_13 5
+. $start_kernel_str_14 20
+. $start_kernel_str_15 9
 . $token_string 17
-. $start_kernel_str_17 23
-. $start_kernel_str_18 10
+. $start_kernel_str_16 23
+. $start_kernel_str_17 10
 
 # .CODE
 
@@ -124,7 +123,9 @@ MALLOC $bytecode_buffer 4096
         #   2 block van be needed
         :value_lookup_start
             sto Z $is_negative
-            sto Z $is_first_digit
+            ldi B 1
+            sto B $is_first_digit
+            ;sto Z $is_first_digit
 
         :value_lookup_loop  
             inc I $disk_io_buffer_ptr
@@ -142,7 +143,7 @@ MALLOC $bytecode_buffer 4096
 
             ldm A $is_first_digit
             tste A Z
-            jmpf :not_first_digit_val
+            jmpt :not_first_digit_val
 
                 ; It is the first char, so we check for sign and spaces
                 sto Z $is_first_digit
@@ -603,16 +604,13 @@ MALLOC $bytecode_buffer 4096
     stack A $DATASTACK_PTR
     call @PRTstring
     call @TOS.check
-    call @TOS.print
+    call @PRTnum
     ldi A $start_kernel_str_3
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $start_kernel_str_4
     stack A $DATASTACK_PTR
     call @PRTstring
     call @READline
     call @rt_dup
-    ldi A $start_kernel_str_5
+    ldi A $start_kernel_str_4
     stack A $DATASTACK_PTR
     call @STRcmp
     ustack A $DATASTACK_PTR
@@ -675,13 +673,13 @@ MALLOC $bytecode_buffer 4096
     jmp :parser_loop
 :start_kernel_if_end_3
     call @rt_dup
-    ldi A $start_kernel_str_6
+    ldi A $start_kernel_str_5
     stack A $DATASTACK_PTR
     call @STRcmp
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :start_kernel_if_end_4
-    ldi A $start_kernel_str_7
+    ldi A $start_kernel_str_6
     stack A $DATASTACK_PTR
     call @PRTstring
     call @rt_drop
@@ -691,13 +689,13 @@ MALLOC $bytecode_buffer 4096
     jmp :parser_loop
 :start_kernel_if_end_4
     call @rt_dup
-    ldi A $start_kernel_str_8
+    ldi A $start_kernel_str_7
     stack A $DATASTACK_PTR
     call @STRcmp
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :start_kernel_if_end_5
-    ldi A $start_kernel_str_9
+    ldi A $start_kernel_str_8
     stack A $DATASTACK_PTR
     call @PRTstring
     call @rt_drop
@@ -707,13 +705,13 @@ MALLOC $bytecode_buffer 4096
     jmp :parser_loop
 :start_kernel_if_end_5
     call @rt_dup
-    ldi A $start_kernel_str_10
+    ldi A $start_kernel_str_9
     stack A $DATASTACK_PTR
     call @STRcmp
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :start_kernel_if_end_6
-    ldi A $start_kernel_str_11
+    ldi A $start_kernel_str_10
     stack A $DATASTACK_PTR
     call @PRTstring
     call @rt_drop
@@ -723,13 +721,13 @@ MALLOC $bytecode_buffer 4096
     jmp :parser_loop
 :start_kernel_if_end_6
     call @rt_dup
-    ldi A $start_kernel_str_12
+    ldi A $start_kernel_str_11
     stack A $DATASTACK_PTR
     call @STRcmp
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :start_kernel_if_end_7
-    ldi A $start_kernel_str_13
+    ldi A $start_kernel_str_12
     stack A $DATASTACK_PTR
     call @PRTstring
     call @rt_drop
@@ -739,13 +737,13 @@ MALLOC $bytecode_buffer 4096
     jmp :parser_loop
 :start_kernel_if_end_7
     call @rt_dup
-    ldi A $start_kernel_str_14
+    ldi A $start_kernel_str_13
     stack A $DATASTACK_PTR
     call @STRcmp
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :start_kernel_if_end_8
-    ldi A $start_kernel_str_15
+    ldi A $start_kernel_str_14
     stack A $DATASTACK_PTR
     call @PRTstring
     call @rt_drop
@@ -758,7 +756,7 @@ MALLOC $bytecode_buffer 4096
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :start_kernel_if_else_9
-    ldi A $start_kernel_str_16
+    ldi A $start_kernel_str_15
     stack A $DATASTACK_PTR
     call @PRTstring
     call @rt_dup
@@ -773,7 +771,7 @@ MALLOC $bytecode_buffer 4096
     call @STRcopy
     ldi A $token_string
     stack A $DATASTACK_PTR
-    ldi A $start_kernel_str_17
+    ldi A $start_kernel_str_16
     stack A $DATASTACK_PTR
     call @PRTstring
     ldi A 6
@@ -782,7 +780,7 @@ MALLOC $bytecode_buffer 4096
 :start_kernel_if_end_9
     jmp :parser_loop
 :end_kernel
-    ldi A $start_kernel_str_18
+    ldi A $start_kernel_str_17
     stack A $DATASTACK_PTR
     call @PRTstring
     ret
@@ -793,10 +791,10 @@ MALLOC $bytecode_buffer 4096
 % $_strtok_d 0
 % $_strtok_p 0
 % $_strtok_c 0
-% $bytecode_ptr 4096
+% $bytecode_ptr 3584
 % $current_opcode 1
 % $current_value 1
-% $bytecode_execution_ptr 4096
+% $bytecode_execution_ptr 3584
 % $ErrorMessage \F \a \t \a \l \space \e \r \r \o \r \: \space \a \n \space \i \n \v \a \l \i \d \space \t \o \k \e \n \space \Return \null
 % $InfoMessage0 \T \o \t \a \l \space \i \t \e \m \s \space \o \n \space \t \h \e \space \s \t \a \c \k \: \space \null
 % $InfoMessage1 \F \i \r \s \t \space \v \a \l \u \e \space \o \n \space \t \h \e \space \s \t \a \c \k \: \space \null
@@ -804,19 +802,18 @@ MALLOC $bytecode_buffer 4096
 % $start_kernel_str_0 \W \E \L \C \O \M \E \space \a \t \space \S \t \e \r \n \- \X \T \! \Return \null
 % $start_kernel_str_1 \Return \E \n \t \e \r \space \i \n \s \t \r \u \c \t \i \o \n \s \space \o \r \space \' \q \' \space \t \o \space \q \u \i \t \. \Return \Return \null
 % $start_kernel_str_2 \[ \null
-% $start_kernel_str_3 \] \null
-% $start_kernel_str_4 \space \> \> \space \null
-% $start_kernel_str_5 \q \null
-% $start_kernel_str_6 \+ \null
-% $start_kernel_str_7 \F \o \u \n \d \space \A \D \D \space \o \p \e \r \a \t \o \r \Return \null
-% $start_kernel_str_8 \P \R \I \N \T \null
-% $start_kernel_str_9 \F \o \u \n \d \space \P \R \I \N \T \space \c \o \m \m \a \n \d \Return \null
-% $start_kernel_str_10 \I \N \F \O \null
-% $start_kernel_str_11 \F \o \u \n \d \space \I \N \F \O \space \c \o \m \m \a \n \d \Return \null
-% $start_kernel_str_12 \U \S \R \null
-% $start_kernel_str_13 \F \o \u \n \d \space \U \S \R \space \c \o \m \m \a \n \d \Return \null
-% $start_kernel_str_14 \L \O \A \D \null
-% $start_kernel_str_15 \F \o \u \n \d \space \L \O \A \D \space \c \o \m \m \a \n \d \Return \null
-% $start_kernel_str_16 \N \u \m \b \e \r \: \space \null
-% $start_kernel_str_17 \F \o \u \n \d \space \a \n \space \s \t \r \i \n \g \space \t \o \k \e \n \Return \null
-% $start_kernel_str_18 \E \x \i \t \i \n \g \. \Return \null
+% $start_kernel_str_3 \] \space \> \> \space \null
+% $start_kernel_str_4 \q \null
+% $start_kernel_str_5 \+ \null
+% $start_kernel_str_6 \F \o \u \n \d \space \A \D \D \space \o \p \e \r \a \t \o \r \Return \null
+% $start_kernel_str_7 \P \R \I \N \T \null
+% $start_kernel_str_8 \F \o \u \n \d \space \P \R \I \N \T \space \c \o \m \m \a \n \d \Return \null
+% $start_kernel_str_9 \I \N \F \O \null
+% $start_kernel_str_10 \F \o \u \n \d \space \I \N \F \O \space \c \o \m \m \a \n \d \Return \null
+% $start_kernel_str_11 \U \S \R \null
+% $start_kernel_str_12 \F \o \u \n \d \space \U \S \R \space \c \o \m \m \a \n \d \Return \null
+% $start_kernel_str_13 \L \O \A \D \null
+% $start_kernel_str_14 \F \o \u \n \d \space \L \O \A \D \space \c \o \m \m \a \n \d \Return \null
+% $start_kernel_str_15 \N \u \m \b \e \r \: \space \null
+% $start_kernel_str_16 \F \o \u \n \d \space \a \n \space \s \t \r \i \n \g \space \t \o \k \e \n \Return \null
+% $start_kernel_str_17 \E \x \i \t \i \n \g \. \Return \null

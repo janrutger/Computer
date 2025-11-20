@@ -28,7 +28,7 @@ class VirtualLCD(UDCDevice):
         # --- Device Specifications ---
         self.width = 640
         self.height = 480
-        self.scale = 1.5
+        self.scale = 1.0
         
         # --- Internal State ---
         self.x = 0

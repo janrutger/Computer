@@ -84,20 +84,18 @@ DEF draw_koch {
 # -----------------------------------------------------------------------------
 # Main Program
 # -----------------------------------------------------------------------------
-
-
-TURTLE.start                # 1. Initialize the turtle
-db_pixel TURTLE.mode        # pixel TURTLE.mode
-
-
 TOS.check IF               # check is something on the stack
-    red TURTLE.color            # 2. Prepare for drawing
+
+    TURTLE.start                # 1. Initialize the turtle
+    db_pixel TURTLE.mode        # 2. pixel TURTLE.mode
+    red TURTLE.color            # 3. Prepare for drawing
+
     &level_stack AS stack_ptr   # Reset stack pointer
     30 30 TURTLE.goto
     stack_push draw_koch
     TURTLE.flip
 ELSE
-    "\nUse of Koch: [0..4] 6144 USR \n" PRTstring
+    "\nUse of Koch: [0..4] <adres> USR \n" PRTstring
 END
 
 # red TURTLE.color            # 2. Prepare for drawing
