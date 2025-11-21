@@ -3,21 +3,37 @@
 ; #   Array Library for the Stacks Language
 ; #
 ; ##############################################################################
-;
+; 
 ; Provides functions for creating and manipulating dynamic arrays on a pre-allocated heap.
+; This version of the library will "panic" (print an error and halt) on any error.
+
+USE std_stern_io
 
 ; --- Internal state for the heap allocator ---
 VALUE _ARR_HEAP_START 0
 VALUE _ARR_HEAP_SIZE 0
 VALUE _ARR_NEXT_FREE 0
 VALUE _ARR_TEMP_PTR 0
-VALUE requested_capacity 0
-VALUE total_size 0
-VALUE new_array_pointer 0
+VALUE _ARR_VALUE_PTR 0
 
 
+STRING error_mesg0 "PANIC: ARRAY.new: No space on heap\n"
+STRING error_mesg1 "PANIC: ARRAY.append: Array is full\n"
+STRING error_mesg2 "PANIC: ARRAY.put: Index out of bounds\n"
+STRING error_mesg3 "PANIC: ARRAY.get: Index out of bounds\n"
 
-; --- lib-array.init ---
+
+; --- HALT ---
+; Halts the program by entering an infinite loop.
+DEF HALT {
+    ASM {
+    :loop_endless_halt
+        jmp :loop_endless_halt
+    }
+}
+
+
+; --- lib_array.init ---
 ; Initializes the array heap allocator. This must be called once before any
 ; other array functions are used.
 ; ( heap_start_ptr heap_size -- )
@@ -27,20 +43,13 @@ DEF lib_array.init {
     _ARR_HEAP_START AS _ARR_NEXT_FREE
 }
 
-## Helper
-DEF EXIT {
-    ASM {
-        pop A       ; Drop the return adress from the stack
-        ret
-    }
-}
-## End helper
-
 
 ; --- ARRAY.new ---
-; Creates a new array.
-; ( requested_capacity -- new_array_pointer status_code )
-; status_code: 1 for success, 0 for failure
+; Creates a new array. Halts on failure.
+; ( requested_capacity -- new_array_pointer )
+VALUE requested_capacity 0
+VALUE total_size 0
+VALUE new_array_pointer 0
 DEF ARRAY.new {
     AS requested_capacity
     
@@ -49,8 +58,8 @@ DEF ARRAY.new {
 
     ; Check if there is enough space on the heap
     _ARR_NEXT_FREE total_size + _ARR_HEAP_START _ARR_HEAP_SIZE + > IF
-        ; Not enough space
-        0 EXIT
+        &error_mesg0 PRTstring
+        HALT
     END
 
     _ARR_NEXT_FREE AS new_array_pointer
@@ -65,133 +74,130 @@ DEF ARRAY.new {
     new_array_pointer 1 + AS _ARR_TEMP_PTR
     0 AS *_ARR_TEMP_PTR                    ; Count
 
-    new_array_pointer 1     ; return new array pointer, and success code 1
-
-:end_array_new
+    new_array_pointer     ; return new array pointer
 }
 
 
-# ; --- ARRAY.append ---
-# ; Appends an element to the end of the array.
-# ; ( value array_ptr -- status_code )
-# ; status_code: 1 for success, 0 for failure
-# DEF ARRAY.append {
-#     AS array_ptr
-#     AS value
+; --- ARRAY.append ---
+; Appends an element to the end of the array. Halts on failure.
+; ( value array_ptr -- )
+VALUE array_ptr 0
+VALUE _value 0
+VALUE _capacity 0
+VALUE _count 0
+VALUE dest_addr 0
+DEF ARRAY.append {
+    AS array_ptr
+    AS _value
 
-#     ; Read header
-#     array_ptr AS _ARR_TEMP_PTR
-#     *_ARR_TEMP_PTR AS capacity
-#     array_ptr 1 + AS _ARR_TEMP_PTR
-#     *_ARR_TEMP_PTR AS count
+    ; Read header
+    array_ptr AS _ARR_TEMP_PTR
+    *_ARR_TEMP_PTR AS _capacity
+    array_ptr 1 + AS _ARR_TEMP_PTR
+    *_ARR_TEMP_PTR AS _count
 
-#     ; Check if array is full
-#     count capacity > IF
-#         0 EXIT
-#     END
-#     count capacity == IF
-#         0 EXIT
-#     END
+    ; Check if array is full
+    _count _capacity > IF
+        &error_mesg1 PRTstring HALT
+    END
+    _count _capacity == IF
+        &error_mesg1 PRTstring HALT
+    END
 
-#     ; Calculate destination address
-#     array_ptr 2 + count + AS dest_addr
+    ; Calculate destination address
+    array_ptr 2 + _count + AS dest_addr
     
-#     ; Write value
-#     dest_addr AS _ARR_TEMP_PTR
-#     value AS *_ARR_TEMP_PTR
+    ; Write value
+    dest_addr AS _ARR_TEMP_PTR
+    _value AS *_ARR_TEMP_PTR
 
-#     ; Increment count
-#     array_ptr 1 + AS _ARR_TEMP_PTR
-#     count 1 + AS *_ARR_TEMP_PTR
-
-#     1
-# }
+    ; Increment _count
+    array_ptr 1 + AS _ARR_TEMP_PTR
+    _count 1 + AS *_ARR_TEMP_PTR
+}
 
 
-# ; --- ARRAY.put ---
-# ; Updates a value at a specific index.
-# ; ( value index array_ptr -- status_code )
-# ; status_code: 1 for success, 0 for failure
-# DEF ARRAY.put {
-#     AS array_ptr
-#     AS index
-#     AS value
+; --- ARRAY.put ---
+; Updates a value at a specific index. Halts on failure.
+; ( value index array_ptr -- )
+VALUE index 0
+DEF ARRAY.put {
+    AS array_ptr
+    AS index
+    AS _value
 
-#     ; Read count
-#     array_ptr 1 + AS _ARR_TEMP_PTR
-#     *_ARR_TEMP_PTR AS count
+    ; Read count
+    array_ptr 1 + AS _ARR_TEMP_PTR
+    *_ARR_TEMP_PTR AS _count
 
-#     ; Check if index is out of bounds
-#     index 0 < IF
-#         0 EXIT
-#     END
-#     index count > IF
-#         0 EXIT
-#     END
-#     index count == IF
-#         0 EXIT
-#     END
+    ; Check if index is out of bounds
+    index 0 < IF
+        &error_mesg2 PRTstring HALT
+    END
+    index _count > IF
+        &error_mesg2 PRTstring HALT
+    END
+    index _count == IF
+        &error_mesg2 PRTstring HALT
+    END
 
-#     ; Calculate destination address
-#     array_ptr 2 + index + AS dest_addr
+    ; Calculate destination address
+    array_ptr 2 + index + AS dest_addr
 
-#     ; Write value
-#     dest_addr AS _ARR_TEMP_PTR
-#     value AS *_ARR_TEMP_PTR
-
-#     1
-# }
+    ; Write value
+    dest_addr AS _ARR_TEMP_PTR
+    _value AS *_ARR_TEMP_PTR
+}
 
 
-# ; --- ARRAY.get ---
-# ; Reads the value at any index.
-# ; ( index array_ptr -- value status_code )
-# ; status_code: 1 for success, 0 for failure
-# DEF ARRAY.get {
-#     AS array_ptr
-#     AS index
+; --- ARRAY.get ---
+; Reads the value at any index. Halts on failure.
+; ( index array_ptr -- value )
+VALUE read_addr 0
+DEF ARRAY.get {
+    AS array_ptr
+    AS index
 
-#     ; Read count
-#     array_ptr 1 + AS _ARR_TEMP_PTR
-#     *_ARR_TEMP_PTR AS count
+    ; Read count
+    array_ptr 1 + AS _ARR_TEMP_PTR
+    *_ARR_TEMP_PTR AS _count
 
-#     ; Check if index is out of bounds
-#     index 0 < IF
-#         0 0 EXIT
-#     END
-#     index count > IF
-#         0 0 EXIT
-#     END
-#     index count == IF
-#         0 0 EXIT
-#     END
+    ; Check if index is out of bounds
+    index 0 < IF
+        &error_mesg3 PRTstring HALT
+    END
+    index _count > IF
+        &error_mesg3 PRTstring HALT
+    END
+    index _count == IF
+        &error_mesg3 PRTstring HALT
+    END
 
-#     ; Calculate read address
-#     array_ptr 2 + index + AS read_addr
+    ; Calculate read address
+    array_ptr 2 + index + AS read_addr
 
-#     ; Read value
-#     read_addr AS _ARR_TEMP_PTR
-#     *_ARR_TEMP_PTR
-
-#     1
-# }
+    ; Read value
+    read_addr AS _ARR_TEMP_PTR
+    *_ARR_TEMP_PTR
+}
 
 
-# ; --- ARRAY.size ---
-# ; Returns the capacity of the array.
-# ; ( array_ptr -- capacity )
-# DEF ARRAY.size {
-#     AS array_ptr
-#     array_ptr AS _ARR_TEMP_PTR
-#     *_ARR_TEMP_PTR
-# }
+; --- ARRAY.size ---
+; Returns the capacity of the array.
+; ( array_ptr -- capacity )
+# VALUE array_ptr 0   
+DEF ARRAY.size {
+    AS array_ptr
+    array_ptr AS _ARR_TEMP_PTR
+    *_ARR_TEMP_PTR
+}
 
 
-# ; --- ARRAY.len ---
-# ; Returns the current number of elements.
-# ; ( array_ptr -- count )
-# DEF ARRAY.len {
-#     AS array_ptr
-#     array_ptr 1 + AS _ARR_TEMP_PTR
-#     *_ARR_TEMP_PTR
-# }
+; --- ARRAY.len ---
+; Returns the current number of elements.
+; ( array_ptr -- count )
+DEF ARRAY.len {
+    AS array_ptr
+    array_ptr 1 + AS _ARR_TEMP_PTR
+    *_ARR_TEMP_PTR
+}
