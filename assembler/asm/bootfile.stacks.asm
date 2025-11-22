@@ -10,6 +10,7 @@
 . $input_buffer 80
 . $p_input_buffer 1
 . $input_buffer_index 1
+. $info_mesg0 61
 . $_strcmp_p1 1
 . $_strcmp_p2 1
 . $_strcmp_c1 1
@@ -354,6 +355,31 @@
         stack A $DATASTACK_PTR
     :checkstack_done
         ret
+@HALT
+    ldi A $info_mesg0
+    stack A $DATASTACK_PTR
+    call @PRTstring
+:HALT_while_start_0
+    ldi A 1
+    tst A 0
+    jmpt :HALT_while_end_0
+    call @KEYpressed
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :HALT_if_end_5
+    ldi A 27
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :HALT_if_end_6
+
+                    halt
+                :HALT_if_end_6
+:HALT_if_end_5
+    jmp :HALT_while_start_0
+:HALT_while_end_0
+    ret
 
 
 @STRcmp
@@ -619,6 +645,7 @@
 % $p_syscall_value 0
 % $p_input_buffer 0
 % $input_buffer_index 0
+% $info_mesg0 \P \A \N \I \C \: \space \H \a \l \t \e \d \space \a \f \t \e \r \space \a \n \space \n \o \n \- \r \e \c \o \v \e \r \a \b \l \e \space \e \r \r \o \r \. \space \( \p \r \e \s \s \space \< \e \s \c \> \) \Return \null
 
 % $_strcmp_p1 0
 % $_strcmp_p2 0

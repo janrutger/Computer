@@ -202,5 +202,23 @@ DEF TOS.check {
 }
 
 
+; --- HALT ---
+; Halts the program atfer an non-recoverable error.
+STRING info_mesg0  "PANIC: Halted after an non-recoverable error. (press <esc>)\n"
+
+DEF HALT {
+    &info_mesg0 PRTstring
+    WHILE 1 DO
+        KEYpressed IF
+            27 == IF    ; Press <esc> to exit
+                ASM {
+                    halt
+                }
+            END
+        END
+    DONE
+}
+
+
 
 

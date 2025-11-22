@@ -1,15 +1,15 @@
 # Test program for the array library
 
 USE std_stern_io
-INCLUDE array_lib
+INCLUDE heaper_lib
 
 
 VAR array_heap 6144 ; allocate 1k for the heap at adres
-&array_heap 1024 lib_array.init
+&array_heap 1024 HEAP.init
 
 "Creating array...\n" PRTstring
-10 ARRAY.new AS my_array0
-10 ARRAY.new AS my_array
+10 NEW.array AS my_array0
+10 NEW.array AS my_array
 
 
 "Array created. Pointer: " PRTstring

@@ -1,13 +1,13 @@
 # .HEADER
-. $_ARR_HEAP_START 1
-. $_ARR_HEAP_SIZE 1
-. $_ARR_NEXT_FREE 1
+. $HEAP_START 1
+. $HEAP_SIZE 1
+. $HEAP_FREE 1
 . $_ARR_TEMP_PTR 1
 . $_ARR_VALUE_PTR 1
-. $error_mesg0 36
-. $error_mesg1 36
-. $error_mesg2 39
-. $error_mesg3 39
+. $error_mesg0 29
+. $error_mesg1 29
+. $error_mesg2 32
+. $error_mesg3 32
 . $requested_capacity 1
 . $total_size 1
 . $new_array_pointer 1
@@ -19,19 +19,14 @@
 . $index 1
 . $read_addr 1
 # .FUNCTIONS
-@HALT
-
-    :loop_endless_halt
-        jmp :loop_endless_halt
-        ret
-@lib_array.init
+@HEAP.init
     ustack A $DATASTACK_PTR
-    sto A $_ARR_HEAP_SIZE
+    sto A $HEAP_SIZE
     ustack A $DATASTACK_PTR
-    sto A $_ARR_HEAP_START
-    sto A $_ARR_NEXT_FREE
+    sto A $HEAP_START
+    sto A $HEAP_FREE
     ret
-@ARRAY.new
+@NEW.array
     ustack A $DATASTACK_PTR
     sto A $requested_capacity
     stack A $DATASTACK_PTR
@@ -40,36 +35,36 @@
     add B A
     ld A B
     sto A $total_size
-    ldm A $_ARR_NEXT_FREE
+    ldm A $HEAP_FREE
     stack A $DATASTACK_PTR
     ldm A $total_size
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
-    ldm A $_ARR_HEAP_START
+    ldm A $HEAP_START
     stack A $DATASTACK_PTR
-    ldm A $_ARR_HEAP_SIZE
+    ldm A $HEAP_SIZE
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :ARRAY.new_if_end_0
+    jmpt :NEW.array_if_end_0
     ldi A $error_mesg0
     stack A $DATASTACK_PTR
     call @PRTstring
     call @HALT
-:ARRAY.new_if_end_0
-    ldm A $_ARR_NEXT_FREE
+:NEW.array_if_end_0
+    ldm A $HEAP_FREE
     sto A $new_array_pointer
-    ldm A $_ARR_NEXT_FREE
+    ldm A $HEAP_FREE
     stack A $DATASTACK_PTR
     ldm A $total_size
     ustack B $DATASTACK_PTR
     add B A
     ld A B
-    sto A $_ARR_NEXT_FREE
+    sto A $HEAP_FREE
     ldm A $new_array_pointer
     sto A $_ARR_TEMP_PTR
     ldm A $requested_capacity
@@ -332,15 +327,15 @@
     ret
 
 # .DATA
-% $_ARR_HEAP_START 0
-% $_ARR_HEAP_SIZE 0
-% $_ARR_NEXT_FREE 0
+% $HEAP_START 0
+% $HEAP_SIZE 0
+% $HEAP_FREE 0
 % $_ARR_TEMP_PTR 0
 % $_ARR_VALUE_PTR 0
-% $error_mesg0 \P \A \N \I \C \: \space \A \R \R \A \Y \. \n \e \w \: \space \N \o \space \s \p \a \c \e \space \o \n \space \h \e \a \p \Return \null
-% $error_mesg1 \P \A \N \I \C \: \space \A \R \R \A \Y \. \a \p \p \e \n \d \: \space \A \r \r \a \y \space \i \s \space \f \u \l \l \Return \null
-% $error_mesg2 \P \A \N \I \C \: \space \A \R \R \A \Y \. \p \u \t \: \space \I \n \d \e \x \space \o \u \t \space \o \f \space \b \o \u \n \d \s \Return \null
-% $error_mesg3 \P \A \N \I \C \: \space \A \R \R \A \Y \. \g \e \t \: \space \I \n \d \e \x \space \o \u \t \space \o \f \space \b \o \u \n \d \s \Return \null
+% $error_mesg0 \N \E \W \. \a \r \r \a \y \: \space \N \o \space \s \p \a \c \e \space \o \n \space \h \e \a \p \Return \null
+% $error_mesg1 \A \R \R \A \Y \. \a \p \p \e \n \d \: \space \A \r \r \a \y \space \i \s \space \f \u \l \l \Return \null
+% $error_mesg2 \A \R \R \A \Y \. \p \u \t \: \space \I \n \d \e \x \space \o \u \t \space \o \f \space \b \o \u \n \d \s \Return \null
+% $error_mesg3 \A \R \R \A \Y \. \g \e \t \: \space \I \n \d \e \x \space \o \u \t \space \o \f \space \b \o \u \n \d \s \Return \null
 % $requested_capacity 0
 % $total_size 0
 % $new_array_pointer 0

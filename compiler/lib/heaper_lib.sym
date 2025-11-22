@@ -1,24 +1,24 @@
 {
   "functions": [
-    "PRTchar",
-    "ARRAY.get",
-    "ARRAY.len",
-    "ARRAY.put",
-    "lib_array.init",
-    "ARRAY.size",
+    "ARRAY.append",
     "KEYpressed",
-    "ARRAY.new",
-    "PRTcls",
+    "ARRAY.put",
+    "ARRAY.get",
+    "PRTnum",
+    "PRTchar",
+    "CURSORoff",
+    "READline",
+    "HALT",
+    "CURSORon",
+    "PRTstring",
+    "ARRAY.size",
+    "NEW.array",
+    "HEAP.init",
+    "ARRAY.len",
     "io_lib_init",
     "KEYchar",
-    "PRTstring",
-    "CURSORoff",
-    "CURSORon",
     "TOS.check",
-    "HALT",
-    "ARRAY.append",
-    "PRTnum",
-    "READline"
+    "PRTcls"
   ],
   "variables": [
     {
@@ -47,17 +47,22 @@
       "size": 1
     },
     {
-      "name": "_ARR_HEAP_START",
+      "name": "info_mesg0",
+      "type": "LIB_VAR",
+      "size": 61
+    },
+    {
+      "name": "HEAP_START",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_ARR_HEAP_SIZE",
+      "name": "HEAP_SIZE",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_ARR_NEXT_FREE",
+      "name": "HEAP_FREE",
       "type": "VALUE",
       "size": 1
     },
@@ -74,22 +79,22 @@
     {
       "name": "error_mesg0",
       "type": "STRING",
-      "size": 36
+      "size": 29
     },
     {
       "name": "error_mesg1",
       "type": "STRING",
-      "size": 36
+      "size": 29
     },
     {
       "name": "error_mesg2",
       "type": "STRING",
-      "size": 39
+      "size": 32
     },
     {
       "name": "error_mesg3",
       "type": "STRING",
-      "size": 39
+      "size": 32
     },
     {
       "name": "requested_capacity",

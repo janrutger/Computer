@@ -129,6 +129,8 @@ $(LIB_OUT_DIR)/parser_tools.smod:    $(LIB_OUT_DIR)/std_stern_io.smod
 $(LIB_OUT_DIR)/fixed_point_lib.smod: $(LIB_OUT_DIR)/std_stern_io.smod
 $(LIB_OUT_DIR)/fixed_point_lib.smod: $(LIB_OUT_DIR)/std_string.smod
 $(LIB_OUT_DIR)/fixed_point_lib.smod: $(LIB_OUT_DIR)/math_lib.smod
+$(LIB_OUT_DIR)/array_lib.smod:       $(LIB_OUT_DIR)/std_stern_io.smod
+
 
 # --- 5. Stacks Kernel Module Compilation ---
 $(INCL_DIR)/%.stacks.asm: $(KERNEL_STACKS_SRC_DIR)/%.stacks $(COMPILED_LIBS)

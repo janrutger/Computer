@@ -1,0 +1,126 @@
+USE std_stern_io
+
+
+; --- ARRAY.append ---
+; Appends an element to the end of the array. Halts on failure.
+; ( value array_ptr -- )
+VALUE array_ptr 0
+VALUE _value 0
+VALUE _capacity 0
+VALUE _count 0
+VALUE dest_addr 0
+DEF ARRAY.append {
+    AS array_ptr
+    AS _value
+
+    ; Read header
+    array_ptr AS _ARR_TEMP_PTR
+    *_ARR_TEMP_PTR AS _capacity
+    array_ptr 1 + AS _ARR_TEMP_PTR
+    *_ARR_TEMP_PTR AS _count
+
+    ; Check if array is full
+    _count _capacity > IF
+        &error_mesg1 PRTstring `HALT
+    END
+    _count _capacity == IF
+        &error_mesg1 PRTstring `HALT
+    END
+
+    ; Calculate destination address
+    array_ptr 2 + _count + AS dest_addr
+    
+    ; Write value
+    dest_addr AS _ARR_TEMP_PTR
+    _value AS *_ARR_TEMP_PTR
+
+    ; Increment _count
+    array_ptr 1 + AS _ARR_TEMP_PTR
+    _count 1 + AS *_ARR_TEMP_PTR
+}
+
+
+; --- ARRAY.put ---
+; Updates a value at a specific index. Halts on failure.
+; ( value index array_ptr -- )
+VALUE index 0
+DEF ARRAY.put {
+    AS array_ptr
+    AS index
+    AS _value
+
+    ; Read count
+    array_ptr 1 + AS _ARR_TEMP_PTR
+    *_ARR_TEMP_PTR AS _count
+
+    ; Check if index is out of bounds
+    index 0 < IF
+        &error_mesg2 PRTstring `HALT
+    END
+    index _count > IF
+        &error_mesg2 PRTstring `HALT
+    END
+    index _count == IF
+        &error_mesg2 PRTstring `HALT
+    END
+
+    ; Calculate destination address
+    array_ptr 2 + index + AS dest_addr
+
+    ; Write value
+    dest_addr AS _ARR_TEMP_PTR
+    _value AS *_ARR_TEMP_PTR
+}
+
+
+; --- ARRAY.get ---
+; Reads the value at any index. Halts on failure.
+; ( index array_ptr -- value )
+VALUE read_addr 0
+DEF ARRAY.get {
+    AS array_ptr
+    AS index
+
+    ; Read count
+    array_ptr 1 + AS _ARR_TEMP_PTR
+    *_ARR_TEMP_PTR AS _count
+
+    ; Check if index is out of bounds
+    index 0 < IF
+        &error_mesg3 PRTstring `HALT
+    END
+    index _count > IF
+        &error_mesg3 PRTstring `HALT
+    END
+    index _count == IF
+        &error_mesg3 PRTstring `HALT
+    END
+
+    ; Calculate read address
+    array_ptr 2 + index + AS read_addr
+
+    ; Read value
+    read_addr AS _ARR_TEMP_PTR
+    *_ARR_TEMP_PTR
+}
+
+
+; --- ARRAY.size ---
+; Returns the capacity of the array.
+; ( array_ptr -- capacity )
+# VALUE array_ptr 0   
+DEF ARRAY.size {
+    AS array_ptr
+    array_ptr AS _ARR_TEMP_PTR
+    *_ARR_TEMP_PTR
+}
+
+
+; --- ARRAY.len ---
+; Returns the current number of elements.
+; ( array_ptr -- count )
+DEF ARRAY.len {
+    AS array_ptr
+    array_ptr 1 + AS _ARR_TEMP_PTR
+    *_ARR_TEMP_PTR
+}

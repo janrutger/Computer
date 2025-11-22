@@ -1,71 +1,62 @@
 ; ##############################################################################
 ; #
-; #   Array Library for the Stacks Language
+; #   Heap-allocated Data Structures Library for the Stacks Language
 ; #
 ; ##############################################################################
 ; 
-; Provides functions for creating and manipulating dynamic arrays on a pre-allocated heap.
+; Provides functions for creating and manipulating dynamic data structures on a 
+; pre-allocated heap.
 ; This version of the library will "panic" (print an error and halt) on any error.
 
 USE std_stern_io
 
 ; --- Internal state for the heap allocator ---
-VALUE _ARR_HEAP_START 0
-VALUE _ARR_HEAP_SIZE 0
-VALUE _ARR_NEXT_FREE 0
+VALUE HEAP_START 0
+VALUE HEAP_SIZE 0
+VALUE HEAP_FREE 0
 VALUE _ARR_TEMP_PTR 0
 VALUE _ARR_VALUE_PTR 0
 
 
-STRING error_mesg0 "PANIC: ARRAY.new: No space on heap\n"
-STRING error_mesg1 "PANIC: ARRAY.append: Array is full\n"
-STRING error_mesg2 "PANIC: ARRAY.put: Index out of bounds\n"
-STRING error_mesg3 "PANIC: ARRAY.get: Index out of bounds\n"
+STRING error_mesg0 "NEW.array: No space on heap\n"
+STRING error_mesg1 "ARRAY.append: Array is full\n"
+STRING error_mesg2 "ARRAY.put: Index out of bounds\n"
+STRING error_mesg3 "ARRAY.get: Index out of bounds\n"
 
 
-; --- HALT ---
-; Halts the program by entering an infinite loop.
-DEF HALT {
-    ASM {
-    :loop_endless_halt
-        jmp :loop_endless_halt
-    }
-}
-
-
-; --- lib_array.init ---
-; Initializes the array heap allocator. This must be called once before any
-; other array functions are used.
+; --- HEAP.init ---
+; Initializes the heap allocator. This must be called once before any
+; other data structure functions are used.
 ; ( heap_start_ptr heap_size -- )
-DEF lib_array.init {
-    AS _ARR_HEAP_SIZE
-    AS _ARR_HEAP_START
-    _ARR_HEAP_START AS _ARR_NEXT_FREE
+DEF HEAP.init {
+    AS HEAP_SIZE
+    AS HEAP_START
+    HEAP_START AS HEAP_FREE
 }
 
 
-; --- ARRAY.new ---
+; --- NEW.array ---
 ; Creates a new array. Halts on failure.
 ; ( requested_capacity -- new_array_pointer )
 VALUE requested_capacity 0
 VALUE total_size 0
 VALUE new_array_pointer 0
-DEF ARRAY.new {
+DEF NEW.array {
     AS requested_capacity
     
     ; total_size = requested_capacity + 2 (for header)
     requested_capacity 2 + AS total_size
 
     ; Check if there is enough space on the heap
-    _ARR_NEXT_FREE total_size + _ARR_HEAP_START _ARR_HEAP_SIZE + > IF
+    HEAP_FREE total_size + HEAP_START HEAP_SIZE + > IF
         &error_mesg0 PRTstring
         HALT
     END
 
-    _ARR_NEXT_FREE AS new_array_pointer
+    HEAP_FREE AS new_array_pointer
 
     ; Update next_free_space
-    _ARR_NEXT_FREE total_size + AS _ARR_NEXT_FREE
+    HEAP_FREE total_size + AS HEAP_FREE
 
     ; Write header
     new_array_pointer AS _ARR_TEMP_PTR

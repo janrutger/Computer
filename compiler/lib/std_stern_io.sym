@@ -1,16 +1,17 @@
 {
   "functions": [
+    "CURSORoff",
     "PRTstring",
+    "PRTchar",
+    "KEYchar",
     "READline",
+    "TOS.check",
+    "HALT",
     "CURSORon",
     "PRTnum",
-    "PRTchar",
-    "PRTcls",
-    "CURSORoff",
-    "KEYpressed",
-    "TOS.check",
     "io_lib_init",
-    "KEYchar"
+    "PRTcls",
+    "KEYpressed"
   ],
   "variables": [
     {
@@ -37,6 +38,11 @@
       "name": "input_buffer_index",
       "type": "VALUE",
       "size": 1
+    },
+    {
+      "name": "info_mesg0",
+      "type": "STRING",
+      "size": 61
     }
   ],
   "constants": {
