@@ -124,8 +124,6 @@ DEF KEYpressed {
     ELSE
         0
     END
-
-
 }
 
 #### READline method

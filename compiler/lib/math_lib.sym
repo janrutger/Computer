@@ -3,8 +3,8 @@
     "negate",
     "abs",
     "factorial",
-    "power",
-    "gcd"
+    "gcd",
+    "power"
   ],
   "variables": [
     {

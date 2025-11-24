@@ -16,21 +16,20 @@
 . $_capacity 1
 . $_count 1
 . $dest_addr 1
-. $index 1
+. $_index 1
 . $read_addr 1
+. $listlen 1
+. $N 1
+. $val1 1
+. $val2 1
+. $sorting 1
 MALLOC $array_heap 6144
-. $_main_str_0 19
-. $my_array0 1
-. $my_array 1
-. $_main_str_1 25
-. $_main_str_2 2
-. $_main_str_3 21
-. $_main_str_4 15
-. $_main_str_5 17
-. $_main_str_6 27
-. $_main_str_7 33
-. $_main_str_8 33
-. $_main_str_9 16
+. $sortlist 1
+. $size 1
+. $listlenn 1
+. $NN 1
+. $_main_str_0 12
+. $_main_str_1 7
 
 # .CODE
     ldi A $array_heap
@@ -38,108 +37,82 @@ MALLOC $array_heap 6144
     ldi A 1024
     stack A $DATASTACK_PTR
     call @HEAP.init
+    ldi A 500
+    stack A $DATASTACK_PTR
+    call @NEW.array
+    ustack A $DATASTACK_PTR
+    sto A $sortlist
+    stack A $DATASTACK_PTR
+    call @ARRAY.size
+    ustack A $DATASTACK_PTR
+    sto A $size
+    ldi A 0
+    sto A $N
+:_main_while_start_0
+    ldm A $N
+    stack A $DATASTACK_PTR
+    ldm A $size
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_main_while_end_0
+    call @rt_rnd
+    ldm A $sortlist
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $N
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $N
+    jmp :_main_while_start_0
+:_main_while_end_0
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
     ldi A $_main_str_0
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 10
+    ldi A 1
     stack A $DATASTACK_PTR
-    call @NEW.array
-    ustack A $DATASTACK_PTR
-    sto A $my_array0
-    ldi A 10
+    call @TIME.start
+    call @sort_list
+    ldi A 1
     stack A $DATASTACK_PTR
-    call @NEW.array
-    ustack A $DATASTACK_PTR
-    sto A $my_array
+    call @TIME.read
+    call @TIME.as_string
+    ldi A 32
+    stack A $DATASTACK_PTR
+    call @PRTchar
     ldi A $_main_str_1
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldm A $my_array
-    stack A $DATASTACK_PTR
-    call @PRTnum
-    ldi A $_main_str_2
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_3
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 111
-    stack A $DATASTACK_PTR
-    ldm A $my_array
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 222
-    stack A $DATASTACK_PTR
-    ldm A $my_array
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 333
-    stack A $DATASTACK_PTR
-    ldm A $my_array
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A $_main_str_4
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldm A $my_array
-    stack A $DATASTACK_PTR
-    call @ARRAY.len
-    call @PRTnum
-    ldi A $_main_str_2
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_5
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldm A $my_array
-    stack A $DATASTACK_PTR
-    call @ARRAY.size
-    call @PRTnum
-    ldi A $_main_str_2
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_6
-    stack A $DATASTACK_PTR
-    call @PRTstring
     ldi A 1
     stack A $DATASTACK_PTR
-    ldm A $my_array
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    call @PRTnum
-    ldi A $_main_str_2
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_7
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 444
-    stack A $DATASTACK_PTR
+    call @TIME.start
+    call @plotlist
     ldi A 1
     stack A $DATASTACK_PTR
-    ldm A $my_array
+    call @TIME.read
+    call @TIME.as_string
+    ldi A 32
     stack A $DATASTACK_PTR
-    call @ARRAY.put
-    ldi A $_main_str_8
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldm A $my_array
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    call @PRTnum
-    ldi A $_main_str_2
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 555
-    stack A $DATASTACK_PTR
-    ldi A 5
-    stack A $DATASTACK_PTR
-    ldm A $my_array
-    stack A $DATASTACK_PTR
-    call @ARRAY.put
-    ldi A $_main_str_9
+    call @PRTchar
+    ldi A $_main_str_1
     stack A $DATASTACK_PTR
     call @PRTstring
     ret
@@ -292,7 +265,7 @@ MALLOC $array_heap 6144
     ustack A $DATASTACK_PTR
     sto A $array_ptr
     ustack A $DATASTACK_PTR
-    sto A $index
+    sto A $_index
     ustack A $DATASTACK_PTR
     sto A $_value
     ldm A $array_ptr
@@ -305,7 +278,7 @@ MALLOC $array_heap 6144
     ldm I $_ARR_TEMP_PTR
     ldx A $_start_memory_
     sto A $_count
-    ldm A $index
+    ldm A $_index
     stack A $DATASTACK_PTR
     ldi A 0
     stack A $DATASTACK_PTR
@@ -318,7 +291,7 @@ MALLOC $array_heap 6144
     call @PRTstring
     call @HALT
 :ARRAY.put_if_end_3
-    ldm A $index
+    ldm A $_index
     stack A $DATASTACK_PTR
     ldm A $_count
     stack A $DATASTACK_PTR
@@ -331,7 +304,7 @@ MALLOC $array_heap 6144
     call @PRTstring
     call @HALT
 :ARRAY.put_if_end_4
-    ldm A $index
+    ldm A $_index
     stack A $DATASTACK_PTR
     ldm A $_count
     stack A $DATASTACK_PTR
@@ -350,7 +323,7 @@ MALLOC $array_heap 6144
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
-    ldm A $index
+    ldm A $_index
     ustack B $DATASTACK_PTR
     add B A
     ld A B
@@ -365,7 +338,7 @@ MALLOC $array_heap 6144
     ustack A $DATASTACK_PTR
     sto A $array_ptr
     ustack A $DATASTACK_PTR
-    sto A $index
+    sto A $_index
     ldm A $array_ptr
     stack A $DATASTACK_PTR
     ldi A 1
@@ -376,7 +349,7 @@ MALLOC $array_heap 6144
     ldm I $_ARR_TEMP_PTR
     ldx A $_start_memory_
     sto A $_count
-    ldm A $index
+    ldm A $_index
     stack A $DATASTACK_PTR
     ldi A 0
     stack A $DATASTACK_PTR
@@ -389,7 +362,7 @@ MALLOC $array_heap 6144
     call @PRTstring
     call @HALT
 :ARRAY.get_if_end_6
-    ldm A $index
+    ldm A $_index
     stack A $DATASTACK_PTR
     ldm A $_count
     stack A $DATASTACK_PTR
@@ -402,7 +375,7 @@ MALLOC $array_heap 6144
     call @PRTstring
     call @HALT
 :ARRAY.get_if_end_7
-    ldm A $index
+    ldm A $_index
     stack A $DATASTACK_PTR
     ldm A $_count
     stack A $DATASTACK_PTR
@@ -421,7 +394,7 @@ MALLOC $array_heap 6144
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
-    ldm A $index
+    ldm A $_index
     ustack B $DATASTACK_PTR
     add B A
     ld A B
@@ -453,6 +426,181 @@ MALLOC $array_heap 6144
     stack A $DATASTACK_PTR
     ret
 
+@plotlist
+    ldm A $sortlist
+    stack A $DATASTACK_PTR
+    call @ARRAY.len
+    ustack A $DATASTACK_PTR
+    sto A $listlenn
+    ldi A 0
+    sto A $NN
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+:plotlist_while_start_1
+    ldm A $NN
+    stack A $DATASTACK_PTR
+    ldm A $listlenn
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :plotlist_while_end_1
+    ldm A $NN
+    stack A $DATASTACK_PTR
+    ldm A $sortlist
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 11
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $NN
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $NN
+    jmp :plotlist_while_start_1
+:plotlist_while_end_1
+    ret
+@printlist
+    ldm A $sortlist
+    stack A $DATASTACK_PTR
+    call @ARRAY.len
+    ustack A $DATASTACK_PTR
+    sto A $listlen
+    ldi A 0
+    sto A $N
+:printlist_while_start_2
+    ldm A $N
+    stack A $DATASTACK_PTR
+    ldm A $listlen
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :printlist_while_end_2
+    ldm A $N
+    stack A $DATASTACK_PTR
+    ldm A $sortlist
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    call @PRTnum
+    ldi A 32
+    stack A $DATASTACK_PTR
+    call @PRTchar
+    ldm A $N
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $N
+    jmp :printlist_while_start_2
+:printlist_while_end_2
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @PRTchar
+    ret
+@sort_list
+    ldm A $sortlist
+    stack A $DATASTACK_PTR
+    call @ARRAY.len
+    ustack A $DATASTACK_PTR
+    sto A $listlen
+    ldi A 1
+    sto A $sorting
+:sort_list_while_start_3
+    ldm A $sorting
+    tst A 0
+    jmpt :sort_list_while_end_3
+    ldi A 0
+    sto A $sorting
+    ldi A 0
+    sto A $N
+:sort_list_while_start_4
+    ldm A $N
+    stack A $DATASTACK_PTR
+    ldm A $listlen
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :sort_list_while_end_4
+    ldm A $N
+    stack A $DATASTACK_PTR
+    ldm A $sortlist
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $val1
+    ldm A $N
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $sortlist
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $val2
+    ldm A $val1
+    stack A $DATASTACK_PTR
+    ldm A $val2
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :sort_list_if_end_0
+    ldm A $val2
+    stack A $DATASTACK_PTR
+    ldm A $N
+    stack A $DATASTACK_PTR
+    ldm A $sortlist
+    stack A $DATASTACK_PTR
+    call @ARRAY.put
+    ldm A $val1
+    stack A $DATASTACK_PTR
+    ldm A $N
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $sortlist
+    stack A $DATASTACK_PTR
+    call @ARRAY.put
+    ldi A 1
+    sto A $sorting
+:sort_list_if_end_0
+    ldm A $N
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $N
+    jmp :sort_list_while_start_4
+:sort_list_while_end_4
+    call @plotlist
+    ldi A 3000
+    stack A $DATASTACK_PTR
+    call @TIME.wait
+    jmp :sort_list_while_start_3
+:sort_list_while_end_3
+    ret
 
 # .DATA
 
@@ -473,15 +621,12 @@ MALLOC $array_heap 6144
 % $_capacity 0
 % $_count 0
 % $dest_addr 0
-% $index 0
+% $_index 0
 % $read_addr 0
-% $_main_str_0 \C \r \e \a \t \i \n \g \space \a \r \r \a \y \. \. \. \Return \null
-% $_main_str_1 \A \r \r \a \y \space \c \r \e \a \t \e \d \. \space \P \o \i \n \t \e \r \: \space \null
-% $_main_str_2 \Return \null
-% $_main_str_3 \A \p \p \e \n \d \i \n \g \space \v \a \l \u \e \s \. \. \. \Return \null
-% $_main_str_4 \A \r \r \a \y \space \l \e \n \g \t \h \: \space \null
-% $_main_str_5 \A \r \r \a \y \space \c \a \p \a \c \i \t \y \: \space \null
-% $_main_str_6 \G \e \t \t \i \n \g \space \v \a \l \u \e \space \a \t \space \i \n \d \e \x \space \1 \: \space \null
-% $_main_str_7 \P \u \t \t \i \n \g \space \v \a \l \u \e \space \4 \4 \4 \space \a \t \space \i \n \d \e \x \space \1 \. \. \. \Return \null
-% $_main_str_8 \G \e \t \t \i \n \g \space \v \a \l \u \e \space \a \t \space \i \n \d \e \x \space \1 \space \a \g \a \i \n \: \space \null
-% $_main_str_9 \T \e \s \t \space \f \i \n \i \s \h \e \d \. \Return \null
+% $listlen 0
+% $N 0
+% $val1 0
+% $val2 0
+% $sorting 0
+% $_main_str_0 \S \o \r \t \i \n \g \. \. \. \space \null
+% $_main_str_1 \D \o \n \e \. \Return \null

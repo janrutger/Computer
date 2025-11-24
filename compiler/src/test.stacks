@@ -1,44 +1,102 @@
-# Test program for the array library
-
+# Bubbelesort example in the Stacks language
 USE std_stern_io
+USE std_time
 INCLUDE heaper_lib
 
+VALUE listlen 0
+VALUE N 0
+VALUE val1 0
+VALUE val2 0
+VALUE sorting 0
 
+# Create the heap
 VAR array_heap 6144 ; allocate 1k for the heap at adres
 &array_heap 1024 HEAP.init
 
-"Creating array...\n" PRTstring
-10 NEW.array AS my_array0
-10 NEW.array AS my_array
+
+# Create an unsorted list to sort
+500 NEW.array AS sortlist
+sortlist ARRAY.size AS size
+0 AS N
+
+WHILE N size < DO
+    RND sortlist ARRAY.append
+    N 1 + AS N
+
+DONE
 
 
-"Array created. Pointer: " PRTstring
-my_array PRTnum "\n" PRTstring
+IO 1 ONLINE
+IO 1 NEW
 
-"Appending values...\n" PRTstring
-111 my_array ARRAY.append
-222 my_array ARRAY.append
-333 my_array ARRAY.append
+DEF plotlist {
+    sortlist ARRAY.len AS listlenn
+    0 AS NN
+    IO 1 NEW
+    
+    WHILE NN listlenn < DO
+        NN sortlist ARRAY.get IO 1 SEND 
+        NN 1 + AS NN
+    DONE
 
-"Array length: " PRTstring
-my_array ARRAY.len PRTnum "\n" PRTstring
-
-"Array capacity: " PRTstring
-my_array ARRAY.size PRTnum "\n" PRTstring
-
-"Getting value at index 1: " PRTstring
-1 my_array ARRAY.get PRTnum
-"\n" PRTstring
-
-"Putting value 444 at index 1...\n" PRTstring
-444 1 my_array ARRAY.put
-
-"Getting value at index 1 again: " PRTstring
-1 my_array ARRAY.get PRTnum
-"\n" PRTstring
-
-555 5 my_array ARRAY.put
+}
 
 
 
-"Test finished.\n" PRTstring
+DEF printlist {
+    sortlist ARRAY.len AS listlen
+    0 AS N
+
+    WHILE N listlen < DO
+        N sortlist ARRAY.get PRTnum space PRTchar
+        N 1 + AS N
+    DONE
+    return PRTchar
+}
+
+DEF sort_list {
+    sortlist ARRAY.len AS listlen
+    1 AS sorting
+
+    WHILE sorting  DO
+        0 AS sorting ; Assume sorted for this pass
+        0 AS N
+
+        WHILE N listlen 1 - < DO
+            ; Get adjacent values
+            N sortlist ARRAY.get AS val1
+            N 1 + sortlist ARRAY.get AS val2
+
+            ; Compare and swap if needed
+            val1 val2 > IF
+                val2 N sortlist ARRAY.put
+                val1 N 1 + sortlist ARRAY.put
+                1 AS sorting ; A swap was made, so list is not sorted yet
+            END
+            
+            N 1 + AS N
+        DONE
+        plotlist
+        3000 TIME.wait
+    DONE
+}
+
+
+# "Unsorted: " PRTstring
+# printlist
+
+"Sorting... " PRTstring
+1 TIME.start
+sort_list
+1 TIME.read TIME.as_string space PRTchar
+"Done.\n" PRTstring
+
+# "Sorted:   " PRTstring
+# printlist
+
+
+
+1 TIME.start
+plotlist
+1 TIME.read TIME.as_string space PRTchar
+"Done.\n" PRTstring

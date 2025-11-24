@@ -1779,7 +1779,7 @@
 :loop_iterations
     ldm A $i
     stack A $DATASTACK_PTR
-    ldi A 20000
+    ldi A 10000
     stack A $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR

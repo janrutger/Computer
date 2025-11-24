@@ -1,0 +1,44 @@
+# Test program for the array library
+
+USE std_stern_io
+INCLUDE heaper_lib
+
+
+VAR array_heap 6144 ; allocate 1k for the heap at adres
+&array_heap 1024 HEAP.init
+
+"Creating array...\n" PRTstring
+10 NEW.array AS my_array0
+10 NEW.array AS my_array
+
+
+"Array created. Pointer: " PRTstring
+my_array PRTnum "\n" PRTstring
+
+"Appending values...\n" PRTstring
+111 my_array ARRAY.append
+222 my_array ARRAY.append
+333 my_array ARRAY.append
+
+"Array length: " PRTstring
+my_array ARRAY.len PRTnum "\n" PRTstring
+
+"Array capacity: " PRTstring
+my_array ARRAY.size PRTnum "\n" PRTstring
+
+"Getting value at index 1: " PRTstring
+1 my_array ARRAY.get PRTnum
+"\n" PRTstring
+
+"Putting value 444 at index 1...\n" PRTstring
+444 1 my_array ARRAY.put
+
+"Getting value at index 1 again: " PRTstring
+1 my_array ARRAY.get PRTnum
+"\n" PRTstring
+
+555 5 my_array ARRAY.put
+
+
+
+"Test finished.\n" PRTstring

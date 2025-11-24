@@ -51,9 +51,9 @@ DEF TIME.wait {
     :wait_loop
         # If end_time is still greater than the current time, loop again.
         wait_end_time *p_currentime > IF {
-            ASM { 
-                nop           ; NOP yields by sleep(0) an gives time to the main thread
-            }
+            # ASM { 
+            #     nop           ; NOP yields by sleep(0) an gives time to the main thread
+            # }
 
             GOTO wait_loop
         } END

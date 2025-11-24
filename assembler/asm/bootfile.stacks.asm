@@ -121,9 +121,7 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :TIME.wait_if_end_0
- 
-                nop           ; NOP yields by sleep(0) an gives time to the main thread
-                jmp :wait_loop
+    jmp :wait_loop
 :TIME.wait_if_end_0
     ret
 @TIME.as_string

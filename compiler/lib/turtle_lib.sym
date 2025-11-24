@@ -1,18 +1,18 @@
 {
   "functions": [
-    "_welcome_at_turtle",
-    "_drawTurtle",
-    "TURTLE.flip",
-    "TURTLE.forward",
-    "TURTLE.mode",
-    "TURTLE.goto",
-    "TURTLE.start",
     "TURTLE.right",
-    "TURTLE.line",
-    "TURTLE.left",
-    "TURTLE.color",
+    "_welcome_at_turtle",
     "TURTLE.circle",
-    "_plot_circle_points"
+    "TURTLE.goto",
+    "TURTLE.color",
+    "TURTLE.mode",
+    "TURTLE.left",
+    "TURTLE.line",
+    "TURTLE.forward",
+    "_drawTurtle",
+    "_plot_circle_points",
+    "TURTLE.start",
+    "TURTLE.flip"
   ],
   "variables": [
     {

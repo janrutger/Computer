@@ -1,24 +1,24 @@
 {
   "functions": [
-    "ARRAY.append",
-    "KEYpressed",
-    "ARRAY.put",
-    "ARRAY.get",
-    "PRTnum",
-    "PRTchar",
+    "NEW.array",
+    "io_lib_init",
+    "ARRAY.len",
+    "PRTstring",
     "CURSORoff",
     "READline",
-    "HALT",
-    "CURSORon",
-    "PRTstring",
+    "ARRAY.put",
     "ARRAY.size",
-    "NEW.array",
+    "PRTcls",
     "HEAP.init",
-    "ARRAY.len",
-    "io_lib_init",
+    "KEYpressed",
     "KEYchar",
+    "PRTchar",
+    "PRTnum",
     "TOS.check",
-    "PRTcls"
+    "CURSORon",
+    "HALT",
+    "ARRAY.get",
+    "ARRAY.append"
   ],
   "variables": [
     {
@@ -137,7 +137,7 @@
       "size": 1
     },
     {
-      "name": "index",
+      "name": "_index",
       "type": "VALUE",
       "size": 1
     },

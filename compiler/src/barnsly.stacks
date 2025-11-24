@@ -78,7 +78,7 @@ DEF MAIN_LOOP {
     
     0 TIME.start
     ; Loop for many iterations
-    CONST ITERATIONS 20000 ; Number of points to draw
+    CONST ITERATIONS 10000 ; Number of points to draw
     # VALUE i 0
     0 AS i
     VALUE SCALE 0

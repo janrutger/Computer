@@ -5,7 +5,6 @@
 ; ##############################################################################
 ; 
 ; Provides functions for creating and manipulating dynamic data structures on a 
-; pre-allocated heap.
 ; This version of the library will "panic" (print an error and halt) on any error.
 
 USE std_stern_io
@@ -111,10 +110,10 @@ DEF ARRAY.append {
 ; --- ARRAY.put ---
 ; Updates a value at a specific index. Halts on failure.
 ; ( value index array_ptr -- )
-VALUE index 0
+VALUE _index 0
 DEF ARRAY.put {
     AS array_ptr
-    AS index
+    AS _index
     AS _value
 
     ; Read count
@@ -122,18 +121,18 @@ DEF ARRAY.put {
     *_ARR_TEMP_PTR AS _count
 
     ; Check if index is out of bounds
-    index 0 < IF
+    _index 0 < IF
         &error_mesg2 PRTstring HALT
     END
-    index _count > IF
+    _index _count > IF
         &error_mesg2 PRTstring HALT
     END
-    index _count == IF
+    _index _count == IF
         &error_mesg2 PRTstring HALT
     END
 
     ; Calculate destination address
-    array_ptr 2 + index + AS dest_addr
+    array_ptr 2 + _index + AS dest_addr
 
     ; Write value
     dest_addr AS _ARR_TEMP_PTR
@@ -147,25 +146,25 @@ DEF ARRAY.put {
 VALUE read_addr 0
 DEF ARRAY.get {
     AS array_ptr
-    AS index
+    AS _index
 
     ; Read count
     array_ptr 1 + AS _ARR_TEMP_PTR
     *_ARR_TEMP_PTR AS _count
 
     ; Check if index is out of bounds
-    index 0 < IF
+    _index 0 < IF
         &error_mesg3 PRTstring HALT
     END
-    index _count > IF
+    _index _count > IF
         &error_mesg3 PRTstring HALT
     END
-    index _count == IF
+    _index _count == IF
         &error_mesg3 PRTstring HALT
     END
 
     ; Calculate read address
-    array_ptr 2 + index + AS read_addr
+    array_ptr 2 + _index + AS read_addr
 
     ; Read value
     read_addr AS _ARR_TEMP_PTR

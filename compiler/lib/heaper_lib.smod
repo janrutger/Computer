@@ -16,7 +16,7 @@
 . $_capacity 1
 . $_count 1
 . $dest_addr 1
-. $index 1
+. $_index 1
 . $read_addr 1
 # .FUNCTIONS
 @HEAP.init
@@ -165,7 +165,7 @@
     ustack A $DATASTACK_PTR
     sto A $array_ptr
     ustack A $DATASTACK_PTR
-    sto A $index
+    sto A $_index
     ustack A $DATASTACK_PTR
     sto A $_value
     ldm A $array_ptr
@@ -178,7 +178,7 @@
     ldm I $_ARR_TEMP_PTR
     ldx A $_start_memory_
     sto A $_count
-    ldm A $index
+    ldm A $_index
     stack A $DATASTACK_PTR
     ldi A 0
     stack A $DATASTACK_PTR
@@ -191,7 +191,7 @@
     call @PRTstring
     call @HALT
 :ARRAY.put_if_end_3
-    ldm A $index
+    ldm A $_index
     stack A $DATASTACK_PTR
     ldm A $_count
     stack A $DATASTACK_PTR
@@ -204,7 +204,7 @@
     call @PRTstring
     call @HALT
 :ARRAY.put_if_end_4
-    ldm A $index
+    ldm A $_index
     stack A $DATASTACK_PTR
     ldm A $_count
     stack A $DATASTACK_PTR
@@ -223,7 +223,7 @@
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
-    ldm A $index
+    ldm A $_index
     ustack B $DATASTACK_PTR
     add B A
     ld A B
@@ -238,7 +238,7 @@
     ustack A $DATASTACK_PTR
     sto A $array_ptr
     ustack A $DATASTACK_PTR
-    sto A $index
+    sto A $_index
     ldm A $array_ptr
     stack A $DATASTACK_PTR
     ldi A 1
@@ -249,7 +249,7 @@
     ldm I $_ARR_TEMP_PTR
     ldx A $_start_memory_
     sto A $_count
-    ldm A $index
+    ldm A $_index
     stack A $DATASTACK_PTR
     ldi A 0
     stack A $DATASTACK_PTR
@@ -262,7 +262,7 @@
     call @PRTstring
     call @HALT
 :ARRAY.get_if_end_6
-    ldm A $index
+    ldm A $_index
     stack A $DATASTACK_PTR
     ldm A $_count
     stack A $DATASTACK_PTR
@@ -275,7 +275,7 @@
     call @PRTstring
     call @HALT
 :ARRAY.get_if_end_7
-    ldm A $index
+    ldm A $_index
     stack A $DATASTACK_PTR
     ldm A $_count
     stack A $DATASTACK_PTR
@@ -294,7 +294,7 @@
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
-    ldm A $index
+    ldm A $_index
     ustack B $DATASTACK_PTR
     add B A
     ld A B
@@ -344,5 +344,5 @@
 % $_capacity 0
 % $_count 0
 % $dest_addr 0
-% $index 0
+% $_index 0
 % $read_addr 0
