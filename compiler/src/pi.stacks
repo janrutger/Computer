@@ -59,12 +59,13 @@ DEF main {
     ; Increment counter and loop
     n 1 + AS n
 
-    n 50 % 0 == IF
+    n 1000 % 0 == IF
         # sum_fp 4 FP.from_int FP.mul real_pi FP.sub
         #"PI approximation: " PRTstring valid_digits FP.fprint "\n" PRTstring
         # IO 1 SEND
 
         sum_fp 4 FP.from_int FP.mul IO 1 SEND
+        IO 1 FLIP
 
     END
 

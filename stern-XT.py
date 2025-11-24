@@ -201,7 +201,7 @@ def main():
             last_draw_time = current_time
 
             # Keep the device windows responsive
-            plotter1.draw()
+            # plotter1.draw()  # turned of since the FLIP device instruction makes the plotter draw
             lcd.draw()
 
             # Main screen rendering, only if dirty

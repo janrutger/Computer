@@ -887,7 +887,7 @@
     ld A B
     sto A $n
     stack A $DATASTACK_PTR
-    ldi A 50
+    ldi A 1000
     ustack B $DATASTACK_PTR
     dmod B A
     stack A $DATASTACK_PTR
@@ -906,6 +906,13 @@
     ldi A 1
     stack A $DATASTACK_PTR
     ldi A 11
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 18
     stack A $DATASTACK_PTR
     call @rt_udc_control
 :main_if_end_4

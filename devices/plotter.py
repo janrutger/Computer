@@ -2,7 +2,7 @@ import time
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator, MultipleLocator
 import numpy as np
-from .UDC import UDCDevice, PLOTTER, UDC_DEVICE_NEW, UDC_DEVICE_SEND, UDC_DEVICE_COLOR, UDC_DEVICE_MODE, DEV_ERROR_DEVICE
+from .UDC import UDCDevice, PLOTTER, UDC_DEVICE_NEW, UDC_DEVICE_SEND, UDC_DEVICE_FLIP, UDC_DEVICE_COLOR, UDC_DEVICE_MODE, DEV_ERROR_DEVICE
 
 # ======================================================================
 # |
@@ -46,8 +46,8 @@ class Plotter(UDCDevice):
         Keeps the matplotlib window responsive. This should be called frequently from the main loop.
         """
         current_time = time.time()
-        if current_time - self.last_draw_time < 1: # Only draw once every 1 second
-            return
+        # if current_time - self.last_draw_time < 1: # Only draw once every 1 second
+        #     return
 
         if self.fig and self.dirty:
             try:
@@ -88,22 +88,27 @@ class Plotter(UDCDevice):
             self.x_buffer.clear()
             self.y_buffer.clear()
             self.x_counter = 0
-            self.dirty = True
-            # self.update_plot()
+            #self.dirty = True
+            #self.draw()
 
         elif command == UDC_DEVICE_SEND:
             # This is a Y value, X is the internal counter
             self.y_buffer.append(data)
             self.x_buffer.append(self.x_counter)
             self.x_counter += 1
+            # self.dirty = True
+        
+        elif command == UDC_DEVICE_FLIP:
             self.dirty = True
+            self.draw()
+
 
         elif command == UDC_DEVICE_COLOR:
             color_map = {0: 'black', 1: 'red', 2: 'green', 3: 'blue', 4: 'yellow', 5: 'magenta', 6: 'cyan', 7: 'white'}
             self.color = color_map.get(data, 'blue')
             if self.line:
                 self.line.set_color(self.color) # Use self.line
-                self.dirty = True
+                # self.dirty = True
 
         elif command == UDC_DEVICE_MODE:
             # Placeholder for future mode changes

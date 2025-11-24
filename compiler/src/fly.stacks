@@ -7,6 +7,7 @@ IO 1 NEW       ; create new plot
 
 DEF plot {
     IO 1 SEND
+    IO 1 FLIP
 }
 
 
