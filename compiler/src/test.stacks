@@ -20,6 +20,13 @@ VALUE current_color 1
 CONST solid_block 203
 CONST star 42
 
+LIST tile_data 10 ; NOTE: Duplicate LIST TILE removed
+ASM {
+   # % $tile_data 1 4 56 50 0 54  ; where 0 is an transparant sprite
+    % $tile_data 2 4  0 94  91 93  91 93  203 203
+}
+&tile_data AS tile   ; the pointer to the tile ; NOTE: Duplicate &TILE AS tile removed
+
 CONST up    56 ; key '8'
 CONST down  50 ; key '2'
 CONST left  52 ; key '4'
@@ -31,9 +38,6 @@ VALUE tile_y 30
 VALUE old_tile_x 40
 VALUE old_tile_y 30
 VALUE tile_is_moved 0
-
-VALUE tile_width 1
-VALUE tile_height 4
 
 
 VALUE background 0  ; black
@@ -59,23 +63,58 @@ DEF draw_screen {
 
 # Draws a rectangular shape of sprites.
 # Expects on stack: start_x, start_y, width, height, sprite_id
-DEF draw_shape {
+DEF clear_rect {
     AS sprite_id
     AS shape_h
     AS shape_w
     AS start_y
     AS start_x
 
-    start_y AS current_y
-    WHILE current_y start_y shape_h + < DO
-        current_y IO 2 Y
-        start_x AS current_x
-        WHILE current_x start_x shape_w + < DO
-            current_x IO 2 X
+    0 AS rect_y
+    start_y AS rect_y
+    WHILE rect_y start_y shape_h + < DO
+        rect_y IO 2 Y
+        0 AS rect_x
+        start_x AS rect_x
+        WHILE rect_x start_x shape_w + < DO
+            rect_x IO 2 X
             sprite_id IO 2 DRAW
-            current_x 1 + AS current_x
+            rect_x 1 + AS rect_x
         DONE
-        current_y 1 + AS current_y
+        rect_y 1 + AS rect_y
+    DONE
+}
+
+# Draws a tile defined in a LIST.
+# Expects on stack: start_x, start_y, tile_ptr
+DEF draw_tile_from_data {
+    AS tile_ptr
+    AS start_y
+    AS start_x
+
+    0 AS temp_ptr # Temporary pointer for calculations
+
+    # Read width and height from the tile data
+    *tile_ptr AS tile_w
+    tile_ptr 1 + AS temp_ptr
+    *temp_ptr AS tile_h
+
+    0 AS loop_y
+    WHILE loop_y tile_h < DO
+        0 AS loop_x
+        WHILE loop_x tile_w < DO
+            # Calculate index: data_offset = 2 + (y * width) + x
+            tile_ptr loop_y tile_w * loop_x + 2 + + AS temp_ptr
+            *temp_ptr AS sprite_id
+
+            sprite_id IF # Draw only if sprite_id is not 0 (transparent)
+                start_x loop_x + IO 2 X
+                start_y loop_y + IO 2 Y
+                sprite_id IO 2 DRAW
+            END
+            loop_x 1 + AS loop_x
+        DONE
+        loop_y 1 + AS loop_y
     DONE
 }
 
@@ -114,11 +153,15 @@ DEF draw_tile {
 
         ; 1. Erase the shape at its old position
         background IO 2 COLOR
-        old_tile_x old_tile_y tile_width tile_height solid_block draw_shape
+        0 AS temp_ptr
+        *tile AS tile_w
+        tile 1 + AS temp_ptr
+        *temp_ptr AS tile_h
+        old_tile_x old_tile_y tile_w tile_h solid_block clear_rect
 
         ; 2. Draw the shape at its new position
-        foreground IO 2 COLOR
-        tile_x tile_y tile_width tile_height star draw_shape
+        foreground IO 2 COLOR # Set color for drawing the new tile
+        tile_x tile_y tile draw_tile_from_data
 
         ; 3. Flip the buffer to make changes visible
         IO 2 FLIP
