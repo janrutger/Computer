@@ -1,602 +1,381 @@
 # .HEADER
-. $HEAP_START 1
-. $HEAP_SIZE 1
-. $HEAP_FREE 1
-. $_ARR_TEMP_PTR 1
-. $_ARR_VALUE_PTR 1
-. $error_mesg0 29
-. $error_mesg1 29
-. $error_mesg2 32
-. $error_mesg3 32
-. $requested_capacity 1
-. $total_size 1
-. $new_array_pointer 1
-. $array_ptr 1
-. $_value 1
-. $_capacity 1
-. $_count 1
-. $dest_addr 1
-. $_index 1
-. $read_addr 1
-. $listlen 1
-. $N 1
-. $val1 1
-. $val2 1
-. $sorting 1
-. $sortlist 1
-MALLOC $array_heap 6144
-. $listlenn 1
-. $NN 1
-. $_main_str_0 26
-. $size 1
-. $_main_str_1 7
-. $_main_str_2 12
+. $current_x 1
+. $current_y 1
+. $current_color 1
+. $tile_x 1
+. $tile_y 1
+. $old_tile_x 1
+. $old_tile_y 1
+. $tile_is_moved 1
+. $tile_width 1
+. $tile_height 1
+. $background 1
+. $foreground 1
+. $sprite_id 1
+. $shape_h 1
+. $shape_w 1
+. $start_y 1
+. $start_x 1
+. $KEYvalue 1
+. $draw_tile_str_0 13
+. $running 1
 
 # .CODE
-    ldi A $array_heap
-    stack A $DATASTACK_PTR
-    ldi A 1024
-    stack A $DATASTACK_PTR
-    call @HEAP.init
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldi A 10
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-    ldi A $_main_str_0
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 1
-    stack A $DATASTACK_PTR
-    call @TIME.start
-    ldi A 250
-    stack A $DATASTACK_PTR
-    call @NEW.array
-    ustack A $DATASTACK_PTR
-    sto A $sortlist
-    stack A $DATASTACK_PTR
-    call @ARRAY.size
-    ustack A $DATASTACK_PTR
-    sto A $size
-    ldi A 0
-    sto A $N
-:_main_while_start_3
-    ldm A $N
-    stack A $DATASTACK_PTR
-    ldm A $size
-    stack A $DATASTACK_PTR
-    call @rt_lt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_while_end_3
-    call @rt_rnd
-    ldm A $sortlist
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldm A $N
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $N
-    jmp :_main_while_start_3
-:_main_while_end_3
-    ldi A 1
-    stack A $DATASTACK_PTR
-    call @TIME.read
-    call @TIME.as_string
-    ldi A 32
-    stack A $DATASTACK_PTR
-    call @PRTchar
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_2
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 1
-    stack A $DATASTACK_PTR
-    call @TIME.start
-    call @sort_list
-    ldi A 1
-    stack A $DATASTACK_PTR
-    call @TIME.read
-    call @TIME.as_string
-    ldi A 32
-    stack A $DATASTACK_PTR
-    call @PRTchar
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
+    call @main
     ret
 
 # .FUNCTIONS
-
-@HEAP.init
-    ustack A $DATASTACK_PTR
-    sto A $HEAP_SIZE
-    ustack A $DATASTACK_PTR
-    sto A $HEAP_START
-    sto A $HEAP_FREE
-    ret
-@NEW.array
-    ustack A $DATASTACK_PTR
-    sto A $requested_capacity
-    stack A $DATASTACK_PTR
+@draw_screen
     ldi A 2
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $total_size
-    ldm A $HEAP_FREE
     stack A $DATASTACK_PTR
-    ldm A $total_size
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ldm A $HEAP_START
-    stack A $DATASTACK_PTR
-    ldm A $HEAP_SIZE
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :NEW.array_if_end_0
-    ldi A $error_mesg0
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
-:NEW.array_if_end_0
-    ldm A $HEAP_FREE
-    sto A $new_array_pointer
-    ldm A $HEAP_FREE
-    stack A $DATASTACK_PTR
-    ldm A $total_size
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $HEAP_FREE
-    ldm A $new_array_pointer
-    sto A $_ARR_TEMP_PTR
-    ldm A $requested_capacity
-    ld B A
-    ldm I $_ARR_TEMP_PTR
-    stx B $_start_memory_
-    ldm A $new_array_pointer
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $_ARR_TEMP_PTR
-    ldi A 0
-    ld B A
-    ldm I $_ARR_TEMP_PTR
-    stx B $_start_memory_
-    ldm A $new_array_pointer
-    stack A $DATASTACK_PTR
-    ret
-@ARRAY.append
-    ustack A $DATASTACK_PTR
-    sto A $array_ptr
-    ustack A $DATASTACK_PTR
-    sto A $_value
-    ldm A $array_ptr
-    sto A $_ARR_TEMP_PTR
-    ldm I $_ARR_TEMP_PTR
-    ldx A $_start_memory_
-    sto A $_capacity
-    ldm A $array_ptr
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $_ARR_TEMP_PTR
-    ldm I $_ARR_TEMP_PTR
-    ldx A $_start_memory_
-    sto A $_count
-    stack A $DATASTACK_PTR
-    ldm A $_capacity
-    stack A $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :ARRAY.append_if_end_1
-    ldi A $error_mesg1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
-:ARRAY.append_if_end_1
-    ldm A $_count
-    stack A $DATASTACK_PTR
-    ldm A $_capacity
-    stack A $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :ARRAY.append_if_end_2
-    ldi A $error_mesg1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
-:ARRAY.append_if_end_2
-    ldm A $array_ptr
-    stack A $DATASTACK_PTR
-    ldi A 2
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ldm A $_count
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $dest_addr
-    sto A $_ARR_TEMP_PTR
-    ldm A $_value
-    ld B A
-    ldm I $_ARR_TEMP_PTR
-    stx B $_start_memory_
-    ldm A $array_ptr
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $_ARR_TEMP_PTR
-    ldm A $_count
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ldm I $_ARR_TEMP_PTR
-    stx B $_start_memory_
-    ret
-@ARRAY.put
-    ustack A $DATASTACK_PTR
-    sto A $array_ptr
-    ustack A $DATASTACK_PTR
-    sto A $_index
-    ustack A $DATASTACK_PTR
-    sto A $_value
-    ldm A $array_ptr
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $_ARR_TEMP_PTR
-    ldm I $_ARR_TEMP_PTR
-    ldx A $_start_memory_
-    sto A $_count
-    ldm A $_index
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_lt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :ARRAY.put_if_end_3
-    ldi A $error_mesg2
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
-:ARRAY.put_if_end_3
-    ldm A $_index
-    stack A $DATASTACK_PTR
-    ldm A $_count
-    stack A $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :ARRAY.put_if_end_4
-    ldi A $error_mesg2
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
-:ARRAY.put_if_end_4
-    ldm A $_index
-    stack A $DATASTACK_PTR
-    ldm A $_count
-    stack A $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :ARRAY.put_if_end_5
-    ldi A $error_mesg2
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
-:ARRAY.put_if_end_5
-    ldm A $array_ptr
-    stack A $DATASTACK_PTR
-    ldi A 2
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ldm A $_index
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $dest_addr
-    sto A $_ARR_TEMP_PTR
-    ldm A $_value
-    ld B A
-    ldm I $_ARR_TEMP_PTR
-    stx B $_start_memory_
-    ret
-@ARRAY.get
-    ustack A $DATASTACK_PTR
-    sto A $array_ptr
-    ustack A $DATASTACK_PTR
-    sto A $_index
-    ldm A $array_ptr
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $_ARR_TEMP_PTR
-    ldm I $_ARR_TEMP_PTR
-    ldx A $_start_memory_
-    sto A $_count
-    ldm A $_index
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_lt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :ARRAY.get_if_end_6
-    ldi A $error_mesg3
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
-:ARRAY.get_if_end_6
-    ldm A $_index
-    stack A $DATASTACK_PTR
-    ldm A $_count
-    stack A $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :ARRAY.get_if_end_7
-    ldi A $error_mesg3
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
-:ARRAY.get_if_end_7
-    ldm A $_index
-    stack A $DATASTACK_PTR
-    ldm A $_count
-    stack A $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :ARRAY.get_if_end_8
-    ldi A $error_mesg3
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
-:ARRAY.get_if_end_8
-    ldm A $array_ptr
-    stack A $DATASTACK_PTR
-    ldi A 2
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ldm A $_index
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $read_addr
-    sto A $_ARR_TEMP_PTR
-    ldm I $_ARR_TEMP_PTR
-    ldx A $_start_memory_
-    stack A $DATASTACK_PTR
-    ret
-@ARRAY.size
-    ustack A $DATASTACK_PTR
-    sto A $array_ptr
-    sto A $_ARR_TEMP_PTR
-    ldm I $_ARR_TEMP_PTR
-    ldx A $_start_memory_
-    stack A $DATASTACK_PTR
-    ret
-@ARRAY.len
-    ustack A $DATASTACK_PTR
-    sto A $array_ptr
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $_ARR_TEMP_PTR
-    ldm I $_ARR_TEMP_PTR
-    ldx A $_start_memory_
-    stack A $DATASTACK_PTR
-    ret
-
-@plotlist
-    ldm A $sortlist
-    stack A $DATASTACK_PTR
-    call @ARRAY.len
-    ustack A $DATASTACK_PTR
-    sto A $listlenn
-    ldi A 0
-    sto A $NN
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldi A 10
+    ldi A 13
     stack A $DATASTACK_PTR
     call @rt_udc_control
-:plotlist_while_start_0
-    ldm A $NN
+    ldi A 0
+    sto A $current_y
+:draw_screen_while_start_0
+    ldm A $current_y
     stack A $DATASTACK_PTR
-    ldm A $listlenn
+    ldi A 60
     stack A $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :plotlist_while_end_0
-    ldm A $NN
+    jmpt :draw_screen_while_end_0
+    ldm A $current_y
     stack A $DATASTACK_PTR
-    ldm A $sortlist
+    ldi A 2
     stack A $DATASTACK_PTR
-    call @ARRAY.get
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldi A 11
+    ldi A 16
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldm A $NN
+    ldi A 0
+    sto A $current_x
+:draw_screen_while_start_1
+    ldm A $current_x
+    stack A $DATASTACK_PTR
+    ldi A 80
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_screen_while_end_1
+    ldm A $current_x
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 203
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $current_x
     stack A $DATASTACK_PTR
     ldi A 1
     ustack B $DATASTACK_PTR
     add B A
     ld A B
-    sto A $NN
-    jmp :plotlist_while_start_0
-:plotlist_while_end_0
-    ldi A 0
+    sto A $current_x
+    jmp :draw_screen_while_start_1
+:draw_screen_while_end_1
+    ldm A $current_y
     stack A $DATASTACK_PTR
     ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $current_y
+    jmp :draw_screen_while_start_0
+:draw_screen_while_end_0
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 2
     stack A $DATASTACK_PTR
     ldi A 18
     stack A $DATASTACK_PTR
     call @rt_udc_control
     ret
-@sort_list
-    ldm A $sortlist
-    stack A $DATASTACK_PTR
-    call @ARRAY.len
+@draw_shape
     ustack A $DATASTACK_PTR
-    sto A $listlen
-    ldi A 1
-    sto A $sorting
-:sort_list_while_start_1
-    ldm A $sorting
-    tst A 0
-    jmpt :sort_list_while_end_1
-    ldi A 0
-    sto A $sorting
-    ldi A 0
-    sto A $N
-:sort_list_while_start_2
-    ldm A $N
+    sto A $sprite_id
+    ustack A $DATASTACK_PTR
+    sto A $shape_h
+    ustack A $DATASTACK_PTR
+    sto A $shape_w
+    ustack A $DATASTACK_PTR
+    sto A $start_y
+    ustack A $DATASTACK_PTR
+    sto A $start_x
+    ldm A $start_y
+    sto A $current_y
+:draw_shape_while_start_2
+    ldm A $current_y
     stack A $DATASTACK_PTR
-    ldm A $listlen
+    ldm A $start_y
     stack A $DATASTACK_PTR
-    ldi A 1
+    ldm A $shape_h
     ustack B $DATASTACK_PTR
-    sub B A
+    add B A
     stack B $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :sort_list_while_end_2
-    ldm A $N
+    jmpt :draw_shape_while_end_2
+    ldm A $current_y
     stack A $DATASTACK_PTR
-    ldm A $sortlist
+    ldi A 2
     stack A $DATASTACK_PTR
-    call @ARRAY.get
-    ustack A $DATASTACK_PTR
-    sto A $val1
-    ldm A $N
+    ldi A 16
     stack A $DATASTACK_PTR
-    ldi A 1
+    call @rt_udc_control
+    ldm A $start_x
+    sto A $current_x
+:draw_shape_while_start_3
+    ldm A $current_x
+    stack A $DATASTACK_PTR
+    ldm A $start_x
+    stack A $DATASTACK_PTR
+    ldm A $shape_w
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
-    ldm A $sortlist
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    ustack A $DATASTACK_PTR
-    sto A $val2
-    ldm A $val1
-    stack A $DATASTACK_PTR
-    ldm A $val2
-    stack A $DATASTACK_PTR
-    call @rt_gt
+    call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :sort_list_if_end_0
-    ldm A $val2
+    jmpt :draw_shape_while_end_3
+    ldm A $current_x
     stack A $DATASTACK_PTR
-    ldm A $N
+    ldi A 2
     stack A $DATASTACK_PTR
-    ldm A $sortlist
+    ldi A 15
     stack A $DATASTACK_PTR
-    call @ARRAY.put
-    ldm A $val1
+    call @rt_udc_control
+    ldm A $sprite_id
     stack A $DATASTACK_PTR
-    ldm A $N
+    ldi A 2
     stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ldm A $sortlist
+    ldi A 17
     stack A $DATASTACK_PTR
-    call @ARRAY.put
-    ldi A 1
-    sto A $sorting
-:sort_list_if_end_0
-    ldm A $N
+    call @rt_udc_control
+    ldm A $current_x
     stack A $DATASTACK_PTR
     ldi A 1
     ustack B $DATASTACK_PTR
     add B A
     ld A B
-    sto A $N
-    jmp :sort_list_while_start_2
-:sort_list_while_end_2
-    call @plotlist
-    jmp :sort_list_while_start_1
-:sort_list_while_end_1
+    sto A $current_x
+    jmp :draw_shape_while_start_3
+:draw_shape_while_end_3
+    ldm A $current_y
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $current_y
+    jmp :draw_shape_while_start_2
+:draw_shape_while_end_2
+    ret
+@draw_tile
+    call @KEYpressed
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_tile_if_end_0
+    ustack A $DATASTACK_PTR
+    sto A $KEYvalue
+    ldi A $draw_tile_str_0
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldm A $KEYvalue
+    stack A $DATASTACK_PTR
+    call @rt_print_tos
+    ldm A $KEYvalue
+    stack A $DATASTACK_PTR
+    ldi A 56
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_tile_if_end_1
+    ldm A $tile_y
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $tile_y
+    ldi A 1
+    sto A $tile_is_moved
+:draw_tile_if_end_1
+    ldm A $KEYvalue
+    stack A $DATASTACK_PTR
+    ldi A 50
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_tile_if_end_2
+    ldm A $tile_y
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $tile_y
+    ldi A 1
+    sto A $tile_is_moved
+:draw_tile_if_end_2
+    ldm A $KEYvalue
+    stack A $DATASTACK_PTR
+    ldi A 52
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_tile_if_end_3
+    ldm A $tile_x
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $tile_x
+    ldi A 1
+    sto A $tile_is_moved
+:draw_tile_if_end_3
+    ldm A $KEYvalue
+    stack A $DATASTACK_PTR
+    ldi A 54
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_tile_if_end_4
+    ldm A $tile_x
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $tile_x
+    ldi A 1
+    sto A $tile_is_moved
+:draw_tile_if_end_4
+    ldm A $KEYvalue
+    stack A $DATASTACK_PTR
+    ldi A 32
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :draw_tile_if_end_5
+    ldi A 0
+    sto A $running
+:draw_tile_if_end_5
+:draw_tile_if_end_0
+    ldm A $tile_is_moved
+    tst A 0
+    jmpt :draw_tile_if_end_6
+    ldm A $background
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $old_tile_x
+    stack A $DATASTACK_PTR
+    ldm A $old_tile_y
+    stack A $DATASTACK_PTR
+    ldm A $tile_width
+    stack A $DATASTACK_PTR
+    ldm A $tile_height
+    stack A $DATASTACK_PTR
+    ldi A 203
+    stack A $DATASTACK_PTR
+    call @draw_shape
+    ldm A $foreground
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $tile_x
+    stack A $DATASTACK_PTR
+    ldm A $tile_y
+    stack A $DATASTACK_PTR
+    ldm A $tile_width
+    stack A $DATASTACK_PTR
+    ldm A $tile_height
+    stack A $DATASTACK_PTR
+    ldi A 42
+    stack A $DATASTACK_PTR
+    call @draw_shape
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 18
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $tile_x
+    sto A $old_tile_x
+    ldm A $tile_y
+    sto A $old_tile_y
+    ldi A 0
+    sto A $tile_is_moved
+:draw_tile_if_end_6
+    ret
+@main
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 14
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 1
+    sto A $running
+:main_while_start_4
+    ldm A $running
+    tst A 0
+    jmpt :main_while_end_4
+    call @draw_tile
+    jmp :main_while_start_4
+:main_while_end_4
     ret
 
 # .DATA
-
-% $HEAP_START 0
-% $HEAP_SIZE 0
-% $HEAP_FREE 0
-% $_ARR_TEMP_PTR 0
-% $_ARR_VALUE_PTR 0
-% $error_mesg0 \N \E \W \. \a \r \r \a \y \: \space \N \o \space \s \p \a \c \e \space \o \n \space \h \e \a \p \Return \null
-% $error_mesg1 \A \R \R \A \Y \. \a \p \p \e \n \d \: \space \A \r \r \a \y \space \i \s \space \f \u \l \l \Return \null
-% $error_mesg2 \A \R \R \A \Y \. \p \u \t \: \space \I \n \d \e \x \space \o \u \t \space \o \f \space \b \o \u \n \d \s \Return \null
-% $error_mesg3 \A \R \R \A \Y \. \g \e \t \: \space \I \n \d \e \x \space \o \u \t \space \o \f \space \b \o \u \n \d \s \Return \null
-% $requested_capacity 0
-% $total_size 0
-% $new_array_pointer 0
-% $array_ptr 0
-% $_value 0
-% $_capacity 0
-% $_count 0
-% $dest_addr 0
-% $_index 0
-% $read_addr 0
-% $listlen 0
-% $N 0
-% $val1 0
-% $val2 0
-% $sorting 0
-% $sortlist 0
-% $_main_str_0 \C \r \e \a \t \i \n \g \space \u \n \s \o \r \t \e \d \space \l \i \s \t \. \. \. \null
-% $_main_str_1 \D \o \n \e \. \Return \null
-% $_main_str_2 \S \o \r \t \i \n \g \. \. \. \space \null
+% $current_x 0
+% $current_y 0
+% $current_color 1
+% $tile_x 40
+% $tile_y 30
+% $old_tile_x 40
+% $old_tile_y 30
+% $tile_is_moved 0
+% $tile_width 1
+% $tile_height 4
+% $background 0
+% $foreground 5
+% $draw_tile_str_0 \K \e \y \space \p \r \e \s \s \e \d \space \null

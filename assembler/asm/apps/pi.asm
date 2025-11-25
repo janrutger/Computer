@@ -36,6 +36,7 @@
 . $valid_digits 1
 . $main_str_0 11
 . $real_pi 1
+. $last_plot_time 1
 . $main_str_1 22
 . $main_str_2 33
 . $main_str_3 48
@@ -784,6 +785,14 @@
     call @FP.from_string
     ustack A $DATASTACK_PTR
     sto A $real_pi
+    ldi A 3
+    stack A $DATASTACK_PTR
+    call @TIME.start
+    ldi A 3
+    stack A $DATASTACK_PTR
+    call @TIME.read
+    ustack A $DATASTACK_PTR
+    sto A $last_plot_time
     ldi A $main_str_1
     stack A $DATASTACK_PTR
     call @PRTstring
@@ -887,7 +896,7 @@
     ld A B
     sto A $n
     stack A $DATASTACK_PTR
-    ldi A 1000
+    ldi A 100
     ustack B $DATASTACK_PTR
     dmod B A
     stack A $DATASTACK_PTR
@@ -908,6 +917,19 @@
     ldi A 11
     stack A $DATASTACK_PTR
     call @rt_udc_control
+    ldi A 3
+    stack A $DATASTACK_PTR
+    call @TIME.read
+    ldm A $last_plot_time
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldi A 5000
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :main_if_end_5
     ldi A 0
     stack A $DATASTACK_PTR
     ldi A 1
@@ -915,6 +937,12 @@
     ldi A 18
     stack A $DATASTACK_PTR
     call @rt_udc_control
+    ldi A 3
+    stack A $DATASTACK_PTR
+    call @TIME.read
+    ustack A $DATASTACK_PTR
+    sto A $last_plot_time
+:main_if_end_5
 :main_if_end_4
     jmp :loop_leibniz
 :end_leibniz

@@ -208,14 +208,7 @@
 @plot
     ldi A 1
     stack A $DATASTACK_PTR
-    ldi A 11
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldi A 18
+    ldi A 17
     stack A $DATASTACK_PTR
     call @rt_udc_control
     ret

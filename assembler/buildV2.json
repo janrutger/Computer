@@ -9,7 +9,7 @@
         "restore_symbols": false
       },
       {
-        "file": "asm/apps/test.asm",
+        "file": "asm/apps/main.asm",
         "base_address": 4096,
         "restore_symbols": true
       }
@@ -62,6 +62,10 @@
       {
         "file": "asm/apps/pi.asm",
         "output": "../bin/apps/pi.bin"
+      },
+      {
+        "file": "asm/apps/bubble.asm",
+        "output": "../bin/apps/bubble.bin"
       }
     ]
   }

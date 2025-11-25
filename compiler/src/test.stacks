@@ -1,83 +1,157 @@
-# Bubbelesort example in the Stacks language
+# for a new program
+
+
 USE std_stern_io
 USE std_time
-INCLUDE heaper_lib
+USE std_string
 
-VALUE listlen 0
-VALUE N 0
-VALUE val1 0
-VALUE val2 0
-VALUE sorting 0
-VALUE sortlist 0
+# Some colors
+CONST purple 4
+CONST green 5
+CONST blue 6
+CONST yellow 7
+CONST orange 8
+
+CONST WIDTH  80
+CONST HEIGHT 60
+VALUE current_x 0
+VALUE current_y 0
+VALUE current_color 1
+CONST solid_block 203
+CONST star 42
+
+CONST up    56 ; key '8'
+CONST down  50 ; key '2'
+CONST left  52 ; key '4'
+CONST right 54 ; key '6'
+CONST exit  32 ; spacebar
+
+VALUE tile_x 40
+VALUE tile_y 30
+VALUE old_tile_x 40
+VALUE old_tile_y 30
+VALUE tile_is_moved 0
+
+VALUE tile_width 1
+VALUE tile_height 4
 
 
-# Create the heap
-VAR array_heap 6144 ; allocate 1k for the heap at adres
-&array_heap 1024 HEAP.init
+VALUE background 0  ; black
+VALUE foreground 5  ; green
 
-
-IO 1 ONLINE
-IO 1 NEW
-
-
-DEF plotlist {
-    sortlist ARRAY.len AS listlenn
-    0 AS NN
-    IO 1 NEW
-    
-    WHILE NN listlenn < DO
-        NN sortlist ARRAY.get IO 1 SEND 
-        NN 1 + AS NN
-    DONE
-    IO 1 FLIP
-}
-
-
-DEF sort_list {
-    sortlist ARRAY.len AS listlen
-    1 AS sorting
-
-    WHILE sorting  DO
-        0 AS sorting ; Assume sorted for this pass
-        0 AS N
-
-        WHILE N listlen 1 - < DO
-            ; Get adjacent values
-            N sortlist ARRAY.get AS val1
-            N 1 + sortlist ARRAY.get AS val2
-
-            ; Compare and swap if needed
-            val1 val2 > IF
-                val2 N sortlist ARRAY.put
-                val1 N 1 + sortlist ARRAY.put
-                1 AS sorting ; A swap was made, so list is not sorted yet
-            END
-            
-            N 1 + AS N
+# Takes the color as argument
+DEF draw_screen {
+    IO 2 COLOR
+    0 AS current_y
+    WHILE current_y HEIGHT < DO
+        current_y IO 2 Y
+        0 AS current_x
+        WHILE current_x WIDTH < DO
+            current_x IO 2 X
+            solid_block IO 2 DRAW
+            current_x 1 + AS current_x
         DONE
-        plotlist
-        # 3000 TIME.wait
+
+        current_y 1 + AS current_y
+    DONE
+    IO 2 FLIP
+}
+
+# Draws a rectangular shape of sprites.
+# Expects on stack: start_x, start_y, width, height, sprite_id
+DEF draw_shape {
+    AS sprite_id
+    AS shape_h
+    AS shape_w
+    AS start_y
+    AS start_x
+
+    start_y AS current_y
+    WHILE current_y start_y shape_h + < DO
+        current_y IO 2 Y
+        start_x AS current_x
+        WHILE current_x start_x shape_w + < DO
+            current_x IO 2 X
+            sprite_id IO 2 DRAW
+            current_x 1 + AS current_x
+        DONE
+        current_y 1 + AS current_y
+    DONE
+}
+
+# draw/move 1x1 sprite Tile
+DEF draw_tile {
+   
+    KEYpressed IF
+        AS KEYvalue
+        "Key pressed " PRTstring KEYvalue PRINT
+
+        KEYvalue up == IF
+            tile_y 1 - AS tile_y
+            1 AS tile_is_moved
+        END
+        KEYvalue down == IF
+            tile_y 1 + AS tile_y
+            1 AS tile_is_moved
+        END
+        KEYvalue left == IF
+            tile_x 1 - AS tile_x
+            1 AS tile_is_moved
+        END
+        KEYvalue right == IF
+            tile_x 1 +  AS tile_x
+            1 AS tile_is_moved
+        END
+        KEYvalue exit == IF
+            0 AS running
+        END
+    
+    END
+
+
+    tile_is_moved IF
+        ; A move happened, so redraw the tile.
+
+        ; 1. Erase the shape at its old position
+        background IO 2 COLOR
+        old_tile_x old_tile_y tile_width tile_height solid_block draw_shape
+
+        ; 2. Draw the shape at its new position
+        foreground IO 2 COLOR
+        tile_x tile_y tile_width tile_height star draw_shape
+
+        ; 3. Flip the buffer to make changes visible
+        IO 2 FLIP
+        
+        ; 4. Update old coordinates and reset the moved flag
+        tile_x AS old_tile_x
+        tile_y AS old_tile_y
+        0 AS tile_is_moved
+    END
+}
+
+
+
+
+
+# Main function
+DEF main {
+    IO 2 ONLINE
+    IO 2 NEW
+    3 IO 2 MODE     # doublebuffer sprite mode
+
+    # 1 TIME.start
+    #     background draw_screen ; take 15 seconds to draw the whole screen
+    # 1 TIME.read TIME.as_string return PRTchar
+
+    1 AS running
+    WHILE running DO
+        draw_tile
     DONE
 }
 
 
-# Create an unsorted list to sort
-"Creating unsorted list..." PRTstring
-1 TIME.start
-    250 NEW.array AS sortlist
-    sortlist ARRAY.size AS size
-    0 AS N
 
-    WHILE N size < DO
-        RND sortlist ARRAY.append
-        N 1 + AS N
-    DONE
-1 TIME.read TIME.as_string space PRTchar
-"Done.\n" PRTstring
 
-"Sorting... " PRTstring
-1 TIME.start
-sort_list
-1 TIME.read TIME.as_string space PRTchar
-"Done.\n" PRTstring
 
+main

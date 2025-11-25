@@ -17,6 +17,8 @@ DEF main {
     10000000000 FP.set_scale
     8 AS valid_digits
     "3.14159263" FP.from_string AS real_pi
+    3 TIME.start 3 TIME.read AS last_plot_time
+
 
     "Calculating PI using " PRTstring
     NUM_TERMS PRTnum
@@ -59,13 +61,17 @@ DEF main {
     ; Increment counter and loop
     n 1 + AS n
 
-    n 1000 % 0 == IF
+    n 100 % 0 == IF
         # sum_fp 4 FP.from_int FP.mul real_pi FP.sub
         #"PI approximation: " PRTstring valid_digits FP.fprint "\n" PRTstring
         # IO 1 SEND
 
         sum_fp 4 FP.from_int FP.mul IO 1 SEND
-        IO 1 FLIP
+
+        3 TIME.read last_plot_time - 5000 > IF 
+            IO 1 FLIP
+            3 TIME.read AS last_plot_time
+        END
 
     END
 

@@ -2,7 +2,7 @@ import time
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator, MultipleLocator
 import numpy as np
-from .UDC import UDCDevice, PLOTTER, UDC_DEVICE_NEW, UDC_DEVICE_SEND, UDC_DEVICE_FLIP, UDC_DEVICE_COLOR, UDC_DEVICE_MODE, DEV_ERROR_DEVICE
+from .UDC import UDCDevice, PLOTTER, UDC_DEVICE_NEW, UDC_DEVICE_SEND, UDC_DEVICE_FLIP, UDC_DEVICE_DRAW, UDC_DEVICE_COLOR, UDC_DEVICE_MODE, DEV_ERROR_DEVICE
 
 # ======================================================================
 # |
@@ -99,6 +99,14 @@ class Plotter(UDCDevice):
             # self.dirty = True
         
         elif command == UDC_DEVICE_FLIP:
+            self.dirty = True
+            self.draw()
+
+        elif command == UDC_DEVICE_DRAW:
+            # This is a Y value, X is the internal counter
+            self.y_buffer.append(data)
+            self.x_buffer.append(self.x_counter)
+            self.x_counter += 1
             self.dirty = True
             self.draw()
 
