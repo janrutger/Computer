@@ -1,6 +1,6 @@
 # for a new program
 
-
+INCLUDE math_lib
 USE std_stern_io
 USE std_time
 USE std_string
@@ -43,7 +43,7 @@ LIST tile_data2 6      ; Third tile data
 ASM {
     % $tile_data2 2 2 42 42 42 42 
 }
-&tile_data2 AS tile1
+&tile_data2 AS tile2
 
 CONST up    56 ; key '8'
 CONST down  50 ; key '2'
@@ -70,23 +70,30 @@ CONST TILE_OLD_Y 3
 CONST TILE_IS_MOVED 4
 CONST TILE_COLOR 5
 CONST TILE_DATA 6
+CONST TILE_REACTION 7   # NEW: How this tile reacts to being hit
 
 CONST NO_X 0
 CONST NO_Y 200
+CONST TILE_OBJ_SIZE 8     # The total size of one tile object structure
 
-CONST TILE_OBJ_SIZE 7     # The total size of one tile object structure
+# Reaction Codes
+CONST REACT_BLOCK 0
+CONST REACT_OVERWRITE 1
+CONST REACT_REPLACE 2
 
 # create an structure to keep the books
-# each Tile need 7 items
-# 2 Tiles = 2x7
-LIST TILE_INFO 14   ; an LIST size must be one integer, cannotbe calculated
+# each Tile need 8 items
+# 2 Tiles = 2x8 = 16
+LIST TILE_INFO 16
 &TILE_INFO AS tile_info     # Pointer to Tile Information structure
 
 VALUE KEYBOARD_TILE 1       # index of the Tile on keyboard controll
 
 # Initializes a single tile object in the TILE_INFO list.
 # Expects on stack: tile_id, start_x, start_y, data_ptr, color
+# Expects on stack: tile_id, start_x, start_y, data_ptr, color, reaction
 DEF init_single_tile {
+    AS reaction_new
     AS color_new
     AS data_ptr_new
     AS start_y_new
@@ -117,6 +124,9 @@ DEF init_single_tile {
 
     tile_base_prt TILE_DATA + AS item_pointer        # Data pointer to draw
     data_ptr_new AS *item_pointer
+
+    tile_base_prt TILE_REACTION + AS item_pointer    # Reaction type
+    reaction_new AS *item_pointer
 }
 
 # Draws a rectangular shape of sprites.
@@ -179,6 +189,7 @@ DEF draw_tile_from_data {
 # Checks if a tile at a potential new position collides with any other tile.
 # Expects on stack: potential_x, potential_y, moving_tile_id
 # Returns: 1 if collision detected, 0 otherwise.
+# Returns: collided_tile_id if collision detected, -1 otherwise.
 DEF check_collision {
     AS moving_tile_id
     AS pot_y  # potential y
@@ -220,17 +231,26 @@ DEF check_collision {
             other_y other_h + 1 - pot_y < IF GOTO no_collision_found END
 
             # If none of the above are true, the boxes are overlapping.
-            1 AS collision_found
-            GOTO collision_check_end # Exit loop and function
+            # Return the ID of the tile we collided with.
+            i GOTO collision_check_end # Exit loop and function
 
             :no_collision_found
         END
         i 1 + AS i
     DONE
 
+    # No collision found after checking all tiles. Return -1.
+    1 negate
+
     :collision_check_end
-    collision_found # Place the result on the stack to be returned
+    # The return value (collided_id or -1) is now on the stack.
 }
+
+VALUE EVENT_TYPE 0
+VALUE EVENT_TARGET 0
+VALUE EVENT_ACTOR 0
+VALUE EVENT_POTENTIAL_X 0
+VALUE EVENT_POTENTIAL_Y 0
 
 # Handles keyboard input to move the active tile
 DEF handle_input {
@@ -244,6 +264,9 @@ DEF handle_input {
         active_tile_ptr TILE_Y + AS temp_ptr
         *temp_ptr AS current_y
 
+        # Reset event from previous frame
+        1 negate AS EVENT_TYPE
+
         KEYvalue up    == IF current_y 1 - AS current_y END
         KEYvalue down  == IF current_y 1 + AS current_y END
         KEYvalue left  == IF current_x 1 - AS current_x END
@@ -252,7 +275,8 @@ DEF handle_input {
 
         # Check for collision at the potential new position
         current_x current_y KEYBOARD_TILE check_collision
-        IF ELSE # If no collision (check_collision returned 0)
+        AS collided_id
+        collided_id 1 negate == IF # If no collision...
             # Commit the move
             active_tile_ptr TILE_X + AS temp_ptr
             current_x AS *temp_ptr
@@ -260,6 +284,18 @@ DEF handle_input {
             current_y AS *temp_ptr
             active_tile_ptr TILE_IS_MOVED + AS temp_ptr
             1 AS *temp_ptr
+        END
+        collided_id 1 negate != IF # If a collision occurred...
+            # Post an event for the main loop to process.
+            # Do NOT move the tile.
+            KEYBOARD_TILE AS EVENT_ACTOR
+            collided_id AS EVENT_TARGET
+
+            # Get the reaction type from the tile that was hit
+            tile_info collided_id TILE_OBJ_SIZE * + TILE_REACTION + AS temp_ptr
+            *temp_ptr AS EVENT_TYPE
+            current_x AS EVENT_POTENTIAL_X
+            current_y AS EVENT_POTENTIAL_Y
         END
     END
 }
@@ -355,6 +391,7 @@ DEF draw_tile_by_id {
     current_x current_y data_ptr draw_tile_from_data
 }
 
+
 # "Deletes" a tile by moving it off-screen.
 # This function marks the tile as moved and sets its coordinates
 # to a position outside the visible area.
@@ -389,6 +426,46 @@ DEF draw_all_tiles {
     IO 2 FLIP # Flip the buffer to make the initial drawing visible
 }
 
+# This is where your high-level game logic lives.
+# It checks for events posted by the input/physics system.
+DEF process_events {
+    EVENT_TYPE 1 negate != IF # Check if an event occurred
+        # --- BLOCK REACTION ---
+        EVENT_TYPE REACT_BLOCK == IF
+            # A wall was hit. Do nothing.
+            # You could play a "thud" sound here in the future.
+        END
+
+        # --- OVERWRITE REACTION ---
+        EVENT_TYPE REACT_OVERWRITE == IF
+            # A coin was collected. Delete the coin.
+            EVENT_TARGET delete_tile
+            # TODO: Increment score counter here
+            # e.g. score 1 + AS score
+
+            # Now, move the actor tile into the newly empty space
+            0 AS temp_ptr
+            tile_info EVENT_ACTOR TILE_OBJ_SIZE * + AS actor_ptr
+
+            # Update X coordinate
+            actor_ptr TILE_X + AS temp_ptr
+            EVENT_POTENTIAL_X AS *temp_ptr
+            # Update Y coordinate
+            actor_ptr TILE_Y + AS temp_ptr
+            EVENT_POTENTIAL_Y AS *temp_ptr
+            # Mark the tile as moved
+            actor_ptr TILE_IS_MOVED + AS temp_ptr
+            1 AS *temp_ptr
+        END
+
+        # --- REPLACE REACTION ---
+        EVENT_TYPE REACT_REPLACE == IF
+            # A switch was hit. Replace it.
+            # TODO: Implement replace_tile function
+        END
+    END
+}
+
 DEF refresh_tiles {
     IO 2 FLIP
 }
@@ -399,10 +476,17 @@ DEF main {
     IO 2 NEW
     3 IO 2 MODE     # doublebuffer sprite mode
 
+    # Initialize event variables to -1 (no event)
+    1 negate AS EVENT_TYPE
+    1 negate AS EVENT_TARGET
+    1 negate AS EVENT_ACTOR
+    1 negate AS EVENT_POTENTIAL_X
+    1 negate AS EVENT_POTENTIAL_Y
+
     # Initialize our two tiles, expects argumnt on the stack
-    # [ tile_id, start_x, start_y, data_ptr, color ] 
-    0 40 30 tile  foreground init_single_tile    # Tile 0
-    1 20 50 tile1 purple     init_single_tile    # Tile 1
+    # [ tile_id, start_x, start_y, data_ptr, color, reaction ]
+    0 40 30 tile  foreground REACT_OVERWRITE init_single_tile    # Tile 0 is a wall
+    1 20 50 tile1 purple     REACT_BLOCK init_single_tile    # Tile 1 is the player
 
     # Perform the initial draw of all tiles
     # draw_all_tiles
@@ -417,6 +501,7 @@ DEF main {
     1 AS running
     WHILE running DO
         handle_input
+        process_events
         redraw_all_moved_tiles
     DONE
 }
