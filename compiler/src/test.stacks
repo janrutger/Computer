@@ -411,7 +411,7 @@ DEF main {
     refresh_tiles
     
     # Example of deleting tile 0
-    0 delete_tile
+    # 0 delete_tile
 
 
     1 AS running
