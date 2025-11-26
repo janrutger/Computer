@@ -6,6 +6,7 @@
 . $tile 1
 . $tile_data1 11
 . $tile1 1
+. $tile_data2 6
 . $background 1
 . $foreground 1
 . $TILE_INFO 14
@@ -66,6 +67,10 @@
 
     % $tile_data1 3 3 203 203 203 203 0 203 203 203 203
     ldi A $tile_data1
+    sto A $tile1
+
+    % $tile_data2 2 2 42 42 42 42 
+    ldi A $tile_data2
     sto A $tile1
     ldi A $TILE_INFO
     sto A $tile_info
@@ -1070,6 +1075,56 @@
     stack A $DATASTACK_PTR
     call @draw_tile_from_data
     ret
+@delete_tile
+    ustack A $DATASTACK_PTR
+    sto A $tile_id
+    ldi A 0
+    sto A $temp_ptr
+    ldm A $tile_info
+    stack A $DATASTACK_PTR
+    ldm A $tile_id
+    stack A $DATASTACK_PTR
+    ldi A 7
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $tile_obj_ptr
+    stack A $DATASTACK_PTR
+    ldi A 0
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $temp_ptr
+    ldi A 0
+    ld B A
+    ldm I $temp_ptr
+    stx B $_start_memory_
+    ldm A $tile_obj_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $temp_ptr
+    ldi A 200
+    ld B A
+    ldm I $temp_ptr
+    stx B $_start_memory_
+    ldm A $tile_obj_ptr
+    stack A $DATASTACK_PTR
+    ldi A 4
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $temp_ptr
+    ldi A 1
+    ld B A
+    ldm I $temp_ptr
+    stx B $_start_memory_
+    ret
 @draw_all_tiles
     ldi A 0
     sto A $i
@@ -1162,6 +1217,9 @@
     stack A $DATASTACK_PTR
     call @draw_tile_by_id
     call @refresh_tiles
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @delete_tile
     ldi A 1
     sto A $running
 :main_while_start_8

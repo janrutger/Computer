@@ -34,10 +34,16 @@ ASM {
 
 
 LIST tile_data1 11      ; Second tile data
-ASM{
+ASM {
     % $tile_data1 3 3 203 203 203 203 0 203 203 203 203
 }
 &tile_data1 AS tile1
+
+LIST tile_data2 6      ; Third tile data
+ASM {
+    % $tile_data2 2 2 42 42 42 42 
+}
+&tile_data2 AS tile1
 
 CONST up    56 ; key '8'
 CONST down  50 ; key '2'
@@ -64,6 +70,9 @@ CONST TILE_OLD_Y 3
 CONST TILE_IS_MOVED 4
 CONST TILE_COLOR 5
 CONST TILE_DATA 6
+
+CONST NO_X 0
+CONST NO_Y 200
 
 CONST TILE_OBJ_SIZE 7     # The total size of one tile object structure
 
@@ -346,6 +355,28 @@ DEF draw_tile_by_id {
     current_x current_y data_ptr draw_tile_from_data
 }
 
+# "Deletes" a tile by moving it off-screen.
+# This function marks the tile as moved and sets its coordinates
+# to a position outside the visible area.
+# Expects on stack: tile_id
+DEF delete_tile {
+    AS tile_id
+    0 AS temp_ptr
+
+    # Get the base pointer for the specified tile object
+    tile_info tile_id TILE_OBJ_SIZE * + AS tile_obj_ptr
+
+    # Set the new coordinates to be off-screen
+    tile_obj_ptr TILE_X + AS temp_ptr
+    NO_X AS *temp_ptr
+    tile_obj_ptr TILE_Y + AS temp_ptr
+    NO_Y AS *temp_ptr # Move far below the screen (HEIGHT is 60)
+
+    # Mark the tile as moved so it gets erased from its old position
+    tile_obj_ptr TILE_IS_MOVED + AS temp_ptr
+    1 AS *temp_ptr
+}
+
 # Draws all tiles at their current position, regardless of moved status.
 # Useful for the initial screen draw.
 DEF draw_all_tiles {
@@ -378,6 +409,9 @@ DEF main {
     0 draw_tile_by_id
     1 draw_tile_by_id
     refresh_tiles
+    
+    # Example of deleting tile 0
+    0 delete_tile
 
 
     1 AS running
