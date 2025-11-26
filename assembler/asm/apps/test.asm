@@ -31,10 +31,23 @@
 . $tile_h 1
 . $loop_y 1
 . $loop_x 1
+. $moving_tile_id 1
+. $pot_y 1
+. $pot_x 1
+. $collision_found 1
+. $moving_data_ptr 1
+. $pot_w 1
+. $pot_h 1
+. $i 1
+. $other_tile_ptr 1
+. $other_x 1
+. $other_y 1
+. $other_data_ptr 1
+. $other_w 1
+. $other_h 1
 . $KEYvalue 1
 . $active_tile_ptr 1
 . $running 1
-. $i 1
 . $any_tile_moved 1
 . $tile_obj_ptr 1
 . $is_moved 1
@@ -365,11 +378,217 @@
     jmp :draw_tile_from_data_while_start_2
 :draw_tile_from_data_while_end_2
     ret
+@check_collision
+    ustack A $DATASTACK_PTR
+    sto A $moving_tile_id
+    ustack A $DATASTACK_PTR
+    sto A $pot_y
+    ustack A $DATASTACK_PTR
+    sto A $pot_x
+    ldi A 0
+    sto A $collision_found
+    ldi A 0
+    sto A $temp_ptr
+    ldm A $tile_info
+    stack A $DATASTACK_PTR
+    ldm A $moving_tile_id
+    stack A $DATASTACK_PTR
+    ldi A 7
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 6
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $temp_ptr
+    ldm I $temp_ptr
+    ldx A $_start_memory_
+    sto A $moving_data_ptr
+    ldm I $moving_data_ptr
+    ldx A $_start_memory_
+    sto A $pot_w
+    ldm A $moving_data_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $temp_ptr
+    ldm I $temp_ptr
+    ldx A $_start_memory_
+    sto A $pot_h
+    ldi A 0
+    sto A $i
+:check_collision_while_start_4
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :check_collision_while_end_4
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldm A $moving_tile_id
+    stack A $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :check_collision_if_end_1
+    ldm A $tile_info
+    stack A $DATASTACK_PTR
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldi A 7
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $other_tile_ptr
+    stack A $DATASTACK_PTR
+    ldi A 0
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $temp_ptr
+    ldm I $temp_ptr
+    ldx A $_start_memory_
+    sto A $other_x
+    ldm A $other_tile_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $temp_ptr
+    ldm I $temp_ptr
+    ldx A $_start_memory_
+    sto A $other_y
+    ldm A $other_tile_ptr
+    stack A $DATASTACK_PTR
+    ldi A 6
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $temp_ptr
+    ldm I $temp_ptr
+    ldx A $_start_memory_
+    sto A $other_data_ptr
+    ldm I $other_data_ptr
+    ldx A $_start_memory_
+    sto A $other_w
+    ldm A $other_data_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $temp_ptr
+    ldm I $temp_ptr
+    ldx A $_start_memory_
+    sto A $other_h
+    ldm A $pot_x
+    stack A $DATASTACK_PTR
+    ldm A $pot_w
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $other_x
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :check_collision_if_end_2
+    jmp :no_collision_found
+:check_collision_if_end_2
+    ldm A $other_x
+    stack A $DATASTACK_PTR
+    ldm A $other_w
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $pot_x
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :check_collision_if_end_3
+    jmp :no_collision_found
+:check_collision_if_end_3
+    ldm A $pot_y
+    stack A $DATASTACK_PTR
+    ldm A $pot_h
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $other_y
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :check_collision_if_end_4
+    jmp :no_collision_found
+:check_collision_if_end_4
+    ldm A $other_y
+    stack A $DATASTACK_PTR
+    ldm A $other_h
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $pot_y
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :check_collision_if_end_5
+    jmp :no_collision_found
+:check_collision_if_end_5
+    ldi A 1
+    sto A $collision_found
+    jmp :collision_check_end
+:no_collision_found
+:check_collision_if_end_1
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $i
+    jmp :check_collision_while_start_4
+:check_collision_while_end_4
+:collision_check_end
+    ldm A $collision_found
+    stack A $DATASTACK_PTR
+    ret
 @handle_input
     call @KEYpressed
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :handle_input_if_end_1
+    jmpt :handle_input_if_end_6
     ustack A $DATASTACK_PTR
     sto A $KEYvalue
     ldm A $tile_info
@@ -385,7 +604,27 @@
     ld A B
     sto A $active_tile_ptr
     ldi A 0
-    sto A $item_pointer
+    sto A $temp_ptr
+    ldm A $active_tile_ptr
+    stack A $DATASTACK_PTR
+    ldi A 0
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $temp_ptr
+    ldm I $temp_ptr
+    ldx A $_start_memory_
+    sto A $current_x
+    ldm A $active_tile_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $temp_ptr
+    ldm I $temp_ptr
+    ldx A $_start_memory_
+    sto A $current_y
     ldm A $KEYvalue
     stack A $DATASTACK_PTR
     ldi A 56
@@ -393,35 +632,15 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :handle_input_if_else_2
-    ldm A $active_tile_ptr
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $item_pointer
-    ldm I $item_pointer
-    ldx A $_start_memory_
+    jmpt :handle_input_if_end_7
+    ldm A $current_y
     stack A $DATASTACK_PTR
     ldi A 1
     ustack B $DATASTACK_PTR
     sub B A
-    ldm I $item_pointer
-    stx B $_start_memory_
-    ldm A $active_tile_ptr
-    stack A $DATASTACK_PTR
-    ldi A 4
-    ustack B $DATASTACK_PTR
-    add B A
     ld A B
-    sto A $item_pointer
-    ldi A 1
-    ld B A
-    ldm I $item_pointer
-    stx B $_start_memory_
-    jmp :handle_input_if_end_2
-:handle_input_if_else_2
+    sto A $current_y
+:handle_input_if_end_7
     ldm A $KEYvalue
     stack A $DATASTACK_PTR
     ldi A 50
@@ -429,35 +648,15 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :handle_input_if_else_3
-    ldm A $active_tile_ptr
+    jmpt :handle_input_if_end_8
+    ldm A $current_y
     stack A $DATASTACK_PTR
     ldi A 1
     ustack B $DATASTACK_PTR
     add B A
     ld A B
-    sto A $item_pointer
-    ldm I $item_pointer
-    ldx A $_start_memory_
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ldm I $item_pointer
-    stx B $_start_memory_
-    ldm A $active_tile_ptr
-    stack A $DATASTACK_PTR
-    ldi A 4
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $item_pointer
-    ldi A 1
-    ld B A
-    ldm I $item_pointer
-    stx B $_start_memory_
-    jmp :handle_input_if_end_3
-:handle_input_if_else_3
+    sto A $current_y
+:handle_input_if_end_8
     ldm A $KEYvalue
     stack A $DATASTACK_PTR
     ldi A 52
@@ -465,35 +664,15 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :handle_input_if_else_4
-    ldm A $active_tile_ptr
-    stack A $DATASTACK_PTR
-    ldi A 0
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $item_pointer
-    ldm I $item_pointer
-    ldx A $_start_memory_
+    jmpt :handle_input_if_end_9
+    ldm A $current_x
     stack A $DATASTACK_PTR
     ldi A 1
     ustack B $DATASTACK_PTR
     sub B A
-    ldm I $item_pointer
-    stx B $_start_memory_
-    ldm A $active_tile_ptr
-    stack A $DATASTACK_PTR
-    ldi A 4
-    ustack B $DATASTACK_PTR
-    add B A
     ld A B
-    sto A $item_pointer
-    ldi A 1
-    ld B A
-    ldm I $item_pointer
-    stx B $_start_memory_
-    jmp :handle_input_if_end_4
-:handle_input_if_else_4
+    sto A $current_x
+:handle_input_if_end_9
     ldm A $KEYvalue
     stack A $DATASTACK_PTR
     ldi A 54
@@ -501,35 +680,15 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :handle_input_if_else_5
-    ldm A $active_tile_ptr
-    stack A $DATASTACK_PTR
-    ldi A 0
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $item_pointer
-    ldm I $item_pointer
-    ldx A $_start_memory_
+    jmpt :handle_input_if_end_10
+    ldm A $current_x
     stack A $DATASTACK_PTR
     ldi A 1
     ustack B $DATASTACK_PTR
     add B A
-    ldm I $item_pointer
-    stx B $_start_memory_
-    ldm A $active_tile_ptr
-    stack A $DATASTACK_PTR
-    ldi A 4
-    ustack B $DATASTACK_PTR
-    add B A
     ld A B
-    sto A $item_pointer
-    ldi A 1
-    ld B A
-    ldm I $item_pointer
-    stx B $_start_memory_
-    jmp :handle_input_if_end_5
-:handle_input_if_else_5
+    sto A $current_x
+:handle_input_if_end_10
     ldm A $KEYvalue
     stack A $DATASTACK_PTR
     ldi A 32
@@ -537,15 +696,57 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :handle_input_if_end_6
+    jmpt :handle_input_if_end_11
     ldi A 0
     sto A $running
+:handle_input_if_end_11
+    ldm A $current_x
+    stack A $DATASTACK_PTR
+    ldm A $current_y
+    stack A $DATASTACK_PTR
+    ldm A $KEYBOARD_TILE
+    stack A $DATASTACK_PTR
+    call @check_collision
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :handle_input_if_else_12
+    jmp :handle_input_if_end_12
+:handle_input_if_else_12
+    ldm A $active_tile_ptr
+    stack A $DATASTACK_PTR
+    ldi A 0
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $temp_ptr
+    ldm A $current_x
+    ld B A
+    ldm I $temp_ptr
+    stx B $_start_memory_
+    ldm A $active_tile_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $temp_ptr
+    ldm A $current_y
+    ld B A
+    ldm I $temp_ptr
+    stx B $_start_memory_
+    ldm A $active_tile_ptr
+    stack A $DATASTACK_PTR
+    ldi A 4
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $temp_ptr
+    ldi A 1
+    ld B A
+    ldm I $temp_ptr
+    stx B $_start_memory_
+:handle_input_if_end_12
 :handle_input_if_end_6
-:handle_input_if_end_5
-:handle_input_if_end_4
-:handle_input_if_end_3
-:handle_input_if_end_2
-:handle_input_if_end_1
     ret
 @redraw_all_moved_tiles
     ldi A 0
@@ -554,7 +755,7 @@
     sto A $any_tile_moved
     ldi A 0
     sto A $temp_ptr
-:redraw_all_moved_tiles_while_start_4
+:redraw_all_moved_tiles_while_start_5
     ldm A $i
     stack A $DATASTACK_PTR
     ldi A 2
@@ -562,7 +763,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :redraw_all_moved_tiles_while_end_4
+    jmpt :redraw_all_moved_tiles_while_end_5
     ldm A $tile_info
     stack A $DATASTACK_PTR
     ldm A $i
@@ -585,7 +786,7 @@
     ldx A $_start_memory_
     sto A $is_moved
     tst A 0
-    jmpt :redraw_all_moved_tiles_if_end_7
+    jmpt :redraw_all_moved_tiles_if_end_13
     ldi A 1
     sto A $any_tile_moved
     ldm A $background
@@ -649,7 +850,7 @@
     ldi A 203
     stack A $DATASTACK_PTR
     call @clear_rect
-:redraw_all_moved_tiles_if_end_7
+:redraw_all_moved_tiles_if_end_13
     ldm A $i
     stack A $DATASTACK_PTR
     ldi A 1
@@ -657,11 +858,11 @@
     add B A
     ld A B
     sto A $i
-    jmp :redraw_all_moved_tiles_while_start_4
-:redraw_all_moved_tiles_while_end_4
+    jmp :redraw_all_moved_tiles_while_start_5
+:redraw_all_moved_tiles_while_end_5
     ldi A 0
     sto A $i
-:redraw_all_moved_tiles_while_start_5
+:redraw_all_moved_tiles_while_start_6
     ldm A $i
     stack A $DATASTACK_PTR
     ldi A 2
@@ -669,7 +870,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :redraw_all_moved_tiles_while_end_5
+    jmpt :redraw_all_moved_tiles_while_end_6
     ldm A $tile_info
     stack A $DATASTACK_PTR
     ldm A $i
@@ -692,7 +893,7 @@
     ldx A $_start_memory_
     sto A $is_moved
     tst A 0
-    jmpt :redraw_all_moved_tiles_if_end_8
+    jmpt :redraw_all_moved_tiles_if_end_14
     ldm A $tile_obj_ptr
     stack A $DATASTACK_PTR
     ldi A 5
@@ -778,7 +979,7 @@
     ld B A
     ldm I $temp_ptr
     stx B $_start_memory_
-:redraw_all_moved_tiles_if_end_8
+:redraw_all_moved_tiles_if_end_14
     ldm A $i
     stack A $DATASTACK_PTR
     ldi A 1
@@ -786,11 +987,11 @@
     add B A
     ld A B
     sto A $i
-    jmp :redraw_all_moved_tiles_while_start_5
-:redraw_all_moved_tiles_while_end_5
+    jmp :redraw_all_moved_tiles_while_start_6
+:redraw_all_moved_tiles_while_end_6
     ldm A $any_tile_moved
     tst A 0
-    jmpt :redraw_all_moved_tiles_if_end_9
+    jmpt :redraw_all_moved_tiles_if_end_15
     ldi A 0
     stack A $DATASTACK_PTR
     ldi A 2
@@ -798,7 +999,7 @@
     ldi A 18
     stack A $DATASTACK_PTR
     call @rt_udc_control
-:redraw_all_moved_tiles_if_end_9
+:redraw_all_moved_tiles_if_end_15
     ret
 @draw_tile_by_id
     ustack A $DATASTACK_PTR
@@ -872,7 +1073,7 @@
 @draw_all_tiles
     ldi A 0
     sto A $i
-:draw_all_tiles_while_start_6
+:draw_all_tiles_while_start_7
     ldm A $i
     stack A $DATASTACK_PTR
     ldi A 2
@@ -880,7 +1081,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :draw_all_tiles_while_end_6
+    jmpt :draw_all_tiles_while_end_7
     ldm A $i
     stack A $DATASTACK_PTR
     call @draw_tile_by_id
@@ -891,8 +1092,8 @@
     add B A
     ld A B
     sto A $i
-    jmp :draw_all_tiles_while_start_6
-:draw_all_tiles_while_end_6
+    jmp :draw_all_tiles_while_start_7
+:draw_all_tiles_while_end_7
     ldi A 0
     stack A $DATASTACK_PTR
     ldi A 2
@@ -963,14 +1164,14 @@
     call @refresh_tiles
     ldi A 1
     sto A $running
-:main_while_start_7
+:main_while_start_8
     ldm A $running
     tst A 0
-    jmpt :main_while_end_7
+    jmpt :main_while_end_8
     call @handle_input
     call @redraw_all_moved_tiles
-    jmp :main_while_start_7
-:main_while_end_7
+    jmp :main_while_start_8
+:main_while_end_8
     ret
 
 # .DATA

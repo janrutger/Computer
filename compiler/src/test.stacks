@@ -167,44 +167,90 @@ DEF draw_tile_from_data {
     DONE
 }
 
+# Checks if a tile at a potential new position collides with any other tile.
+# Expects on stack: potential_x, potential_y, moving_tile_id
+# Returns: 1 if collision detected, 0 otherwise.
+DEF check_collision {
+    AS moving_tile_id
+    AS pot_y  # potential y
+    AS pot_x  # potential x
+
+    0 AS collision_found # Return value flag, default to 0 (no collision)
+    0 AS temp_ptr
+    # Get dimensions of the moving tile
+    tile_info moving_tile_id TILE_OBJ_SIZE * + TILE_DATA + AS temp_ptr
+    *temp_ptr AS moving_data_ptr
+    *moving_data_ptr AS pot_w # potential width
+    moving_data_ptr 1 + AS temp_ptr
+    *temp_ptr AS pot_h # potential height
+
+    0 AS i
+    WHILE i 2 < DO # Loop through all tiles to check against
+        i moving_tile_id != IF # Don't check a tile against itself
+            # Get properties of the other tile
+            tile_info i TILE_OBJ_SIZE * + AS other_tile_ptr
+            other_tile_ptr TILE_X + AS temp_ptr
+            *temp_ptr AS other_x
+            other_tile_ptr TILE_Y + AS temp_ptr
+            *temp_ptr AS other_y
+            other_tile_ptr TILE_DATA + AS temp_ptr
+            *temp_ptr AS other_data_ptr
+            *other_data_ptr AS other_w
+            other_data_ptr 1 + AS temp_ptr
+            *temp_ptr AS other_h
+
+            # AABB Collision Check Logic:
+            # A collision does NOT exist if any of these are true:
+            # 1. Moving box is entirely to the left of the other box.
+            pot_x pot_w + 1 - other_x < IF GOTO no_collision_found END
+            # 2. Moving box is entirely to the right of the other box.
+            other_x other_w + 1 - pot_x < IF GOTO no_collision_found END
+            # 3. Moving box is entirely above the other box.
+            pot_y pot_h + 1 - other_y < IF GOTO no_collision_found END
+            # 4. Moving box is entirely below the other box.
+            other_y other_h + 1 - pot_y < IF GOTO no_collision_found END
+
+            # If none of the above are true, the boxes are overlapping.
+            1 AS collision_found
+            GOTO collision_check_end # Exit loop and function
+
+            :no_collision_found
+        END
+        i 1 + AS i
+    DONE
+
+    :collision_check_end
+    collision_found # Place the result on the stack to be returned
+}
+
 # Handles keyboard input to move the active tile
 DEF handle_input {
     KEYpressed IF
         AS KEYvalue
 
-        # Get pointer to the currently active tile object
         tile_info KEYBOARD_TILE TILE_OBJ_SIZE * + AS active_tile_ptr
-        0 AS item_pointer # for writing values
+        0 AS temp_ptr
+        active_tile_ptr TILE_X + AS temp_ptr
+        *temp_ptr AS current_x
+        active_tile_ptr TILE_Y + AS temp_ptr
+        *temp_ptr AS current_y
 
-        KEYvalue up == IF
-            active_tile_ptr TILE_Y + AS item_pointer
-            *item_pointer 1 - AS *item_pointer
-            active_tile_ptr TILE_IS_MOVED + AS item_pointer
-            1 AS *item_pointer
-            ELSE KEYvalue down == IF
-                active_tile_ptr TILE_Y + AS item_pointer
-                *item_pointer 1 + AS *item_pointer
-                active_tile_ptr TILE_IS_MOVED + AS item_pointer
-                1 AS *item_pointer
+        KEYvalue up    == IF current_y 1 - AS current_y END
+        KEYvalue down  == IF current_y 1 + AS current_y END
+        KEYvalue left  == IF current_x 1 - AS current_x END
+        KEYvalue right == IF current_x 1 + AS current_x END
+        KEYvalue exit  == IF 0 AS running END
 
-                ELSE KEYvalue left == IF
-                    active_tile_ptr TILE_X + AS item_pointer
-                    *item_pointer 1 - AS *item_pointer
-                    active_tile_ptr TILE_IS_MOVED + AS item_pointer
-                    1 AS *item_pointer
-
-                    ELSE KEYvalue right == IF
-                        active_tile_ptr TILE_X + AS item_pointer
-                        *item_pointer 1 + AS *item_pointer
-                        active_tile_ptr TILE_IS_MOVED + AS item_pointer
-                        1 AS *item_pointer
-
-                        ELSE KEYvalue exit == IF
-                            0 AS running
-                        END
-                    END
-                END
-            END
+        # Check for collision at the potential new position
+        current_x current_y KEYBOARD_TILE check_collision
+        IF ELSE # If no collision (check_collision returned 0)
+            # Commit the move
+            active_tile_ptr TILE_X + AS temp_ptr
+            current_x AS *temp_ptr
+            active_tile_ptr TILE_Y + AS temp_ptr
+            current_y AS *temp_ptr
+            active_tile_ptr TILE_IS_MOVED + AS temp_ptr
+            1 AS *temp_ptr
         END
     END
 }
