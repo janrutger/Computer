@@ -577,6 +577,29 @@ DEF tile_move {
     1 AS *temp_ptr
 }
 
+# Initializes a replacement data structure.
+# Expects on stack: new_reaction, new_color, new_sprite_data_ptr, replacement_data_ptr
+DEF define_replacement {
+    AS new_reaction
+    AS new_color
+    AS new_sprite_data_ptr
+    AS replacement_data_ptr
+
+    0 AS temp_ptr
+
+    # Set the new sprite data pointer
+    replacement_data_ptr AS temp_ptr
+    new_sprite_data_ptr AS *temp_ptr
+
+    # Set the new color
+    replacement_data_ptr 1 + AS temp_ptr
+    new_color AS *temp_ptr
+
+    # Set the new reaction
+    replacement_data_ptr 2 + AS temp_ptr
+    new_reaction AS *temp_ptr
+}
+
 # Main function
 DEF main {
     IO 2 ONLINE
@@ -586,14 +609,8 @@ DEF main {
     # --- Define Replacement Data ---
     # This structure defines what a tile turns into when replaced.
     # Format: [new_tile_data_ptr, new_color, new_reaction]
-    LIST locked_door_replacement 3 # new_data_ptr, new_color, new_reaction
-    0 AS temp_ptr
-    &locked_door_replacement AS temp_ptr
-    &tile_data2 AS *temp_ptr # Set the new sprite data
-    &locked_door_replacement 1 + AS temp_ptr
-    green AS *temp_ptr       # Set the new color
-    &locked_door_replacement 2 + AS temp_ptr
-    REACT_BLOCK AS *temp_ptr # Set the new reaction
+    LIST locked_door_replacement 3
+    &locked_door_replacement &tile_data2 green REACT_BLOCK define_replacement
 
     # Initialize event variables to -1 (no event)
     1 negate AS EVENT_TYPE

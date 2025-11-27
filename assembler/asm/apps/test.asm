@@ -86,6 +86,8 @@
 . $actor_ptr 1
 . $cooldown 1
 . $timer_ptr 1
+. $new_sprite_data_ptr 1
+. $replacement_data_ptr 1
 . $locked_door_replacement 3
 . $timer_0_time 1
 . $timer_0 1
@@ -1759,6 +1761,46 @@
     ldm I $temp_ptr
     stx B $_start_memory_
     ret
+@define_replacement
+    ustack A $DATASTACK_PTR
+    sto A $new_reaction
+    ustack A $DATASTACK_PTR
+    sto A $new_color
+    ustack A $DATASTACK_PTR
+    sto A $new_sprite_data_ptr
+    ustack A $DATASTACK_PTR
+    sto A $replacement_data_ptr
+    ldi A 0
+    sto A $temp_ptr
+    ldm A $replacement_data_ptr
+    sto A $temp_ptr
+    ldm A $new_sprite_data_ptr
+    ld B A
+    ldm I $temp_ptr
+    stx B $_start_memory_
+    ldm A $replacement_data_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $temp_ptr
+    ldm A $new_color
+    ld B A
+    ldm I $temp_ptr
+    stx B $_start_memory_
+    ldm A $replacement_data_ptr
+    stack A $DATASTACK_PTR
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $temp_ptr
+    ldm A $new_reaction
+    ld B A
+    ldm I $temp_ptr
+    stx B $_start_memory_
+    ret
 @main
     ldi A 0
     stack A $DATASTACK_PTR
@@ -1781,36 +1823,15 @@
     ldi A 14
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldi A 0
-    sto A $temp_ptr
     ldi A $locked_door_replacement
-    sto A $temp_ptr
+    stack A $DATASTACK_PTR
     ldi A $tile_data2
-    ld B A
-    ldm I $temp_ptr
-    stx B $_start_memory_
-    ldi A $locked_door_replacement
     stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $temp_ptr
     ldi A 5
-    ld B A
-    ldm I $temp_ptr
-    stx B $_start_memory_
-    ldi A $locked_door_replacement
     stack A $DATASTACK_PTR
-    ldi A 2
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $temp_ptr
     ldi A 0
-    ld B A
-    ldm I $temp_ptr
-    stx B $_start_memory_
+    stack A $DATASTACK_PTR
+    call @define_replacement
     ldi A 1
     stack A $DATASTACK_PTR
     call @negate
