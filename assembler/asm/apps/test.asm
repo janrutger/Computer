@@ -15,6 +15,7 @@
 . $tile2 1
 . $background 1
 . $foreground 1
+. $score 1
 . $TILE_INFO 16
 . $tile_info 1
 . $KEYBOARD_TILE 1
@@ -71,6 +72,8 @@
 . $new_x 1
 . $new_y 1
 . $actor_ptr 1
+. $interacted_id 1
+. $game_event 1
 
 # .CODE
 
@@ -1363,6 +1366,11 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :process_events_if_end_18
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $EVENT_TARGET
+    stack A $DATASTACK_PTR
+    jmp :process_events_end
 :process_events_if_end_18
     ldm A $EVENT_TYPE
     stack A $DATASTACK_PTR
@@ -1421,6 +1429,11 @@
     ld B A
     ldm I $temp_ptr
     stx B $_start_memory_
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $EVENT_TARGET
+    stack A $DATASTACK_PTR
+    jmp :process_events_end
 :process_events_if_end_19
     ldm A $EVENT_TYPE
     stack A $DATASTACK_PTR
@@ -1430,8 +1443,19 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :process_events_if_end_20
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $EVENT_TARGET
+    stack A $DATASTACK_PTR
+    jmp :process_events_end
 :process_events_if_end_20
 :process_events_if_end_17
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @negate
+:process_events_end
     ret
 @refresh_tiles
     ldi A 0
@@ -1499,7 +1523,7 @@
     stack A $DATASTACK_PTR
     ldm A $foreground
     stack A $DATASTACK_PTR
-    ldi A 1
+    ldi A 0
     stack A $DATASTACK_PTR
     call @init_single_tile
     ldi A 1
@@ -1530,7 +1554,65 @@
     jmpt :main_while_end_8
     call @handle_input
     call @process_events
+    ustack A $DATASTACK_PTR
+    sto A $interacted_id
+    ustack A $DATASTACK_PTR
+    sto A $game_event
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :main_if_else_21
+    ldm A $interacted_id
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :main_if_end_22
+    ldm A $score
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $score
+:main_if_end_22
+    jmp :main_if_end_21
+:main_if_else_21
+    ldm A $game_event
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :main_if_end_23
+    ldm A $interacted_id
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :main_if_end_24
+    ldm A $score
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $score
+:main_if_end_24
+:main_if_end_23
+:main_if_end_21
     call @redraw_all_moved_tiles
+    ldm A $score
+    stack A $DATASTACK_PTR
+    call @rt_print_tos
     jmp :main_while_start_8
 :main_while_end_8
     ret
@@ -1547,6 +1629,7 @@
 % $current_color 1
 % $background 0
 % $foreground 5
+% $score 0
 % $KEYBOARD_TILE 1
 % $EVENT_TYPE 0
 % $EVENT_TARGET 0

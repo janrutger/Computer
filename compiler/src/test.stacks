@@ -60,6 +60,7 @@ CONST exit  32 ; spacebar
 
 VALUE background 0  ; black
 VALUE foreground 5  ; green
+VALUE score 0
 
 # to keep track of mulitple tiles we need some bookkeeping
 # We need to keep track of 7 items of tile information
@@ -80,6 +81,12 @@ CONST TILE_OBJ_SIZE 8     # The total size of one tile object structure
 CONST REACT_BLOCK 0
 CONST REACT_OVERWRITE 1
 CONST REACT_REPLACE 2
+
+# Gameplay Event Codes (the factual report from process_events)
+CONST GAME_EVENT_NONE 0
+CONST GAME_EVENT_BLOCK_ACTION 1
+CONST GAME_EVENT_OVERWRITE_ACTION 2
+CONST GAME_EVENT_REPLACE_ACTION 3
 
 # create an structure to keep the books
 # each Tile need 8 items
@@ -426,44 +433,59 @@ DEF draw_all_tiles {
     IO 2 FLIP # Flip the buffer to make the initial drawing visible
 }
 
-# This is where your high-level game logic lives.
-# It checks for events posted by the input/physics system.
+# ------------------------------------------------------------------
+# The Event Manager / Game Mechanics Engine
+# It reads the raw physics report from EVENT_* variables,
+# executes the mechanics (moving/deleting tiles),
+# and returns a factual mechanical report to main.
+# Returns: game_event_code, interacted_tile_id
+# ------------------------------------------------------------------
 DEF process_events {
     EVENT_TYPE 1 negate != IF # Check if an event occurred
         # --- BLOCK REACTION ---
         EVENT_TYPE REACT_BLOCK == IF
-            # A wall was hit. Do nothing.
-            # You could play a "thud" sound here in the future.
+            # Mechanic: Do nothing.
+            # Report: A BLOCK action occurred.
+            GAME_EVENT_BLOCK_ACTION EVENT_TARGET
+            GOTO process_events_end
         END
 
         # --- OVERWRITE REACTION ---
         EVENT_TYPE REACT_OVERWRITE == IF
-            # A coin was collected. Delete the coin.
+            # Mechanic 1: Delete the target tile.
             EVENT_TARGET delete_tile
-            # TODO: Increment score counter here
-            # e.g. score 1 + AS score
 
-            # Now, move the actor tile into the newly empty space
+            # Mechanic 2: Move the actor tile into the new space.
             0 AS temp_ptr
             tile_info EVENT_ACTOR TILE_OBJ_SIZE * + AS actor_ptr
-
-            # Update X coordinate
             actor_ptr TILE_X + AS temp_ptr
             EVENT_POTENTIAL_X AS *temp_ptr
-            # Update Y coordinate
             actor_ptr TILE_Y + AS temp_ptr
             EVENT_POTENTIAL_Y AS *temp_ptr
-            # Mark the tile as moved
             actor_ptr TILE_IS_MOVED + AS temp_ptr
             1 AS *temp_ptr
+
+            # Report: An OVERWRITE action occurred.
+            GAME_EVENT_OVERWRITE_ACTION EVENT_TARGET
+            GOTO process_events_end
         END
 
         # --- REPLACE REACTION ---
         EVENT_TYPE REACT_REPLACE == IF
             # A switch was hit. Replace it.
             # TODO: Implement replace_tile function
+            # For now, report a REPLACE action.
+            GAME_EVENT_REPLACE_ACTION EVENT_TARGET
+            GOTO process_events_end
         END
     END
+
+    # If we get here, no event was processed. Report NONE.
+    # Return NONE event and -1 for the tile ID.
+    GAME_EVENT_NONE 1 negate
+
+    :process_events_end
+    # The two return values are now on the stack.
 }
 
 DEF refresh_tiles {
@@ -485,7 +507,7 @@ DEF main {
 
     # Initialize our two tiles, expects argumnt on the stack
     # [ tile_id, start_x, start_y, data_ptr, color, reaction ]
-    0 40 30 tile  foreground REACT_OVERWRITE init_single_tile    # Tile 0 is a wall
+    0 40 30 tile  foreground REACT_BLOCK init_single_tile    # Tile 0 is a wall
     1 20 50 tile1 purple     REACT_BLOCK init_single_tile    # Tile 1 is the player
 
     # Perform the initial draw of all tiles
@@ -498,16 +520,38 @@ DEF main {
     # 0 delete_tile
 
 
+    # ------------------------------------------------------------------
+    # Main Game Loop (The "Game Developer's Script")
+    # ------------------------------------------------------------------
     1 AS running
     WHILE running DO
-        handle_input
-        process_events
-        redraw_all_moved_tiles
+        handle_input          # 1. Senses: Get a raw physics report.
+        process_events        # 2. Mechanics: Execute mechanics and get a factual report.
+
+        # 3. Logic: Apply game rules based on the factual report.
+        AS interacted_id
+        AS game_event
+
+        game_event GAME_EVENT_OVERWRITE_ACTION == IF
+            # Rule: An object was overwritten. What does this mean for the game?
+            # The game developer knows that tile 0 is a coin.
+            interacted_id 0 == IF
+                # It was the coin! Increment the score.
+                score 1 + AS score
+            END
+        ELSE game_event GAME_EVENT_BLOCK_ACTION == IF
+            # Rule: An object was blocked. What does this mean for the game?
+            # The game developer knows that tile 0 is a wall.
+            interacted_id 0 == IF
+                score 1 + AS score
+            END
+        END END
+
+
+        redraw_all_moved_tiles # 4. Hands: Update the screen.
+
+        score PRINT
     DONE
 }
-
-
-
-
 
 main
