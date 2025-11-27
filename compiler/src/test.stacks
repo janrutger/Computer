@@ -51,12 +51,6 @@ CONST left  52 ; key '4'
 CONST right 54 ; key '6'
 CONST exit  32 ; spacebar
 
-# VALUE tile_x 40
-# VALUE tile_y 30
-# VALUE old_tile_x 40
-# VALUE old_tile_y 30
-# VALUE tile_is_moved 0
-
 
 VALUE background 0  ; black
 VALUE foreground 5  ; green
@@ -543,6 +537,46 @@ DEF refresh_tiles {
     IO 2 FLIP
 }
 
+# Checks a global timer. Returns 1 (true) when the timer reaches zero,
+# and automatically resets it. Returns 0 otherwise.
+# Expects on stack: cooldown_duration, timer_variable_pointer
+DEF is_timer_ready {
+    AS cooldown
+    AS timer_ptr
+
+    *timer_ptr 0 > IF
+        # Timer is running, count it down.
+        *timer_ptr 1 - AS *timer_ptr
+        0 # Return 0 (not ready)
+    ELSE
+        # Timer is zero. It's time to act.
+        cooldown AS *timer_ptr # Reset the timer for the next cycle
+        1 # Return 1 (ready)
+    END
+}
+
+# Instantly moves a tile to a new position and marks it for redraw.
+# Expects on stack: new_x, new_y, tile_id
+DEF tile_move {
+    AS tile_id
+    AS new_y
+    AS new_x
+
+    # Get the base pointer for the specified tile object
+    tile_info tile_id TILE_OBJ_SIZE * + AS tile_obj_ptr
+    0 AS temp_ptr
+
+    # Update the tile's actual position
+    tile_obj_ptr TILE_X + AS temp_ptr
+    new_x AS *temp_ptr
+    tile_obj_ptr TILE_Y + AS temp_ptr
+    new_y AS *temp_ptr
+
+    # Mark it as moved so it gets redrawn in the next frame
+    tile_obj_ptr TILE_IS_MOVED + AS temp_ptr
+    1 AS *temp_ptr
+}
+
 # Main function
 DEF main {
     IO 2 ONLINE
@@ -585,12 +619,32 @@ DEF main {
     # Example of deleting tile 0
     # 0 delete_tile
 
+    # --- Game Developer's variables for a patrol sequence ---
+    750  AS timer_0_time      # Wait N frames between moves
+    0    AS timer_0           # The state variable for our patrol timer
+    0    AS timer_0_state     # 0 means 'even', 1 means means 'odd' (False/True)
 
     # ------------------------------------------------------------------
     # Main Game Loop (The "Game Developer's Script")
     # ------------------------------------------------------------------
     1 AS running
     WHILE running DO
+        # Ask the timer function if it's time to make a move.
+        # We pass a pointer to our specific timer variable.
+        &timer_0 timer_0_time is_timer_ready IF
+            # is_timer_ready returned 1, so we are "informed" it's time to act.
+            # The game developer's logic to calculate the next move goes here.
+            timer_0_state IF
+                # We are in state 1, move back to original position
+                40 30 0 tile_move
+                0 AS timer_0_state # Switch to state 0 for next time
+            ELSE
+                # We are in state 0, move to a new position
+                10 10 0 tile_move
+                1 AS timer_0_state # Switch to state 1 for next time
+            END
+        END
+
         handle_input          # 1. Senses: Get a raw physics report.
         process_events        # 2. Mechanics: Execute mechanics and get a factual report.
 
@@ -605,23 +659,19 @@ DEF main {
                 # It was the coin! Increment the score.
                 score 1 + AS score
             END
-        END
-
-        game_event GAME_EVENT_BLOCK_ACTION == IF
+        ELSE game_event GAME_EVENT_BLOCK_ACTION == IF
             # Rule: An object was blocked. What does this mean for the game?
             # The game developer knows that tile 0 is a wall.
             interacted_id 0 == IF
                 score 1 + AS score
             END
-        END
-
-        game_event GAME_EVENT_REPLACE_ACTION == IF
+        ELSE game_event GAME_EVENT_REPLACE_ACTION == IF
             # Rule: An object was replaced. What does this mean for the game?
             # The game developer knows that tile 0 is a locked door.
             interacted_id 0 == IF
                 score 1 + AS score
             END
-        END
+        END END END
 
         redraw_all_moved_tiles # 4. Hands: Update the screen.
 
