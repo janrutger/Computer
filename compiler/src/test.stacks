@@ -71,11 +71,14 @@ CONST TILE_OLD_Y 3
 CONST TILE_IS_MOVED 4
 CONST TILE_COLOR 5
 CONST TILE_DATA 6
-CONST TILE_REACTION 7   # NEW: How this tile reacts to being hit
+CONST TILE_REACTION 7   # How this tile reacts to being hit
+CONST TILE_REPLACE_DATA_PTR 8 # Pointer to replacement data
+CONST TILE_OLD_W 9 # Old width for erasing
+CONST TILE_OLD_H 10 # Old height for erasing
 
 CONST NO_X 0
 CONST NO_Y 200
-CONST TILE_OBJ_SIZE 8     # The total size of one tile object structure
+CONST TILE_OBJ_SIZE 11     # The total size of one tile object structure
 
 # Reaction Codes
 CONST REACT_BLOCK 0
@@ -88,24 +91,29 @@ CONST GAME_EVENT_BLOCK_ACTION 1
 CONST GAME_EVENT_OVERWRITE_ACTION 2
 CONST GAME_EVENT_REPLACE_ACTION 3
 
-# create an structure to keep the books
-# each Tile need 8 items
-# 2 Tiles = 2x8 = 16
-LIST TILE_INFO 16
+# Create the TILE_INFO structure
+# Each Tile needs 11 items, and we have 2 tiles (2 * 11 = 22)
+LIST TILE_INFO 22
 &TILE_INFO AS tile_info     # Pointer to Tile Information structure
 
 VALUE KEYBOARD_TILE 1       # index of the Tile on keyboard controll
 
 # Initializes a single tile object in the TILE_INFO list.
-# Expects on stack: tile_id, start_x, start_y, data_ptr, color
-# Expects on stack: tile_id, start_x, start_y, data_ptr, color, reaction
+# Expects on stack: tile_id, start_x, start_y, data_ptr, color, reaction, replace_ptr
 DEF init_single_tile {
+    AS replace_ptr_new
     AS reaction_new
     AS color_new
     AS data_ptr_new
     AS start_y_new
     AS start_x_new
     AS tile_id
+
+    # Get initial width and height from data pointer
+    0 AS temp_ptr
+    *data_ptr_new AS initial_w
+    data_ptr_new 1 + AS temp_ptr
+    *temp_ptr AS initial_h
 
     0 AS item_pointer
 
@@ -123,6 +131,11 @@ DEF init_single_tile {
     tile_base_prt TILE_OLD_Y + AS item_pointer
     start_y_new AS *item_pointer
 
+    tile_base_prt TILE_OLD_W + AS item_pointer       # Old W/H
+    initial_w AS *item_pointer
+    tile_base_prt TILE_OLD_H + AS item_pointer
+    initial_h AS *item_pointer
+
     tile_base_prt TILE_IS_MOVED + AS item_pointer    # Moving flag
     0 AS *item_pointer
 
@@ -134,6 +147,9 @@ DEF init_single_tile {
 
     tile_base_prt TILE_REACTION + AS item_pointer    # Reaction type
     reaction_new AS *item_pointer
+
+    tile_base_prt TILE_REPLACE_DATA_PTR + AS item_pointer # Replacement data pointer
+    replace_ptr_new AS *item_pointer
 }
 
 # Draws a rectangular shape of sprites.
@@ -323,18 +339,17 @@ DEF redraw_all_moved_tiles {
             1 AS any_tile_moved
             background IO 2 COLOR
             
-            tile_obj_ptr TILE_DATA + AS temp_ptr
-            *temp_ptr AS data_ptr
-            
-            *data_ptr AS tile_w
-            data_ptr 1 + AS temp_ptr
-            *temp_ptr AS tile_h
-
-            tile_obj_ptr TILE_OLD_X + AS temp_ptr
-            *temp_ptr AS old_x
-            tile_obj_ptr TILE_OLD_Y + AS temp_ptr 
-            *temp_ptr AS old_y
-            old_x old_y tile_w tile_h solid_block clear_rect
+            0 AS temp_ptr2 # Use a separate temp variable to avoid corruption
+            tile_obj_ptr TILE_OLD_X + AS temp_ptr2
+            *temp_ptr2 AS old_x
+            tile_obj_ptr TILE_OLD_Y + AS temp_ptr2
+            *temp_ptr2 AS old_y
+            tile_obj_ptr TILE_OLD_W + AS temp_ptr2
+            *temp_ptr2 AS old_w
+            tile_obj_ptr TILE_OLD_H + AS temp_ptr2
+            *temp_ptr2 AS old_h
+            # Clear the old tile's rectangular area using its old dimensions
+            old_x old_y old_w old_h solid_block clear_rect
         END
         i 1 + AS i
     DONE
@@ -366,6 +381,16 @@ DEF redraw_all_moved_tiles {
             new_y AS *temp_ptr
             tile_obj_ptr TILE_IS_MOVED + AS temp_ptr
             0 AS *temp_ptr
+
+            # Get current width/height and store them as OLD for the next frame
+            0 AS temp_ptr2
+            *data_ptr AS current_w
+            data_ptr 1 + AS temp_ptr2
+            *temp_ptr2 AS current_h
+            tile_obj_ptr TILE_OLD_W + AS temp_ptr2
+            current_w AS *temp_ptr2
+            tile_obj_ptr TILE_OLD_H + AS temp_ptr2
+            current_h AS *temp_ptr2
         END
         i 1 + AS i
     DONE
@@ -421,6 +446,39 @@ DEF delete_tile {
     1 AS *temp_ptr
 }
 
+# Replaces a tile's properties based on its replacement data pointer.
+# Expects on stack: tile_id
+DEF replace_tile {
+    AS tile_id
+    0 AS temp_ptr
+
+    # Get the base pointer for the tile to be replaced
+    tile_info tile_id TILE_OBJ_SIZE * + AS tile_obj_ptr
+
+    # Get the pointer to the replacement data structure
+    tile_obj_ptr TILE_REPLACE_DATA_PTR + AS temp_ptr
+    *temp_ptr AS replace_data_ptr
+
+    # Read new properties from the replacement data structure
+    *replace_data_ptr AS new_data_ptr
+    replace_data_ptr 1 + AS temp_ptr
+    *temp_ptr AS new_color
+    replace_data_ptr 2 + AS temp_ptr
+    *temp_ptr AS new_reaction
+
+    # Write the new properties into the tile object
+    tile_obj_ptr TILE_DATA + AS temp_ptr
+    new_data_ptr AS *temp_ptr
+    tile_obj_ptr TILE_COLOR + AS temp_ptr
+    new_color AS *temp_ptr
+    tile_obj_ptr TILE_REACTION + AS temp_ptr
+    new_reaction AS *temp_ptr
+
+    # Mark the tile as moved so it gets redrawn with its new look
+    tile_obj_ptr TILE_IS_MOVED + AS temp_ptr
+    1 AS *temp_ptr
+}
+
 # Draws all tiles at their current position, regardless of moved status.
 # Useful for the initial screen draw.
 DEF draw_all_tiles {
@@ -433,13 +491,6 @@ DEF draw_all_tiles {
     IO 2 FLIP # Flip the buffer to make the initial drawing visible
 }
 
-# ------------------------------------------------------------------
-# The Event Manager / Game Mechanics Engine
-# It reads the raw physics report from EVENT_* variables,
-# executes the mechanics (moving/deleting tiles),
-# and returns a factual mechanical report to main.
-# Returns: game_event_code, interacted_tile_id
-# ------------------------------------------------------------------
 DEF process_events {
     EVENT_TYPE 1 negate != IF # Check if an event occurred
         # --- BLOCK REACTION ---
@@ -472,8 +523,8 @@ DEF process_events {
 
         # --- REPLACE REACTION ---
         EVENT_TYPE REACT_REPLACE == IF
-            # A switch was hit. Replace it.
-            # TODO: Implement replace_tile function
+            # Mechanic: Replace the target tile.
+            EVENT_TARGET replace_tile
             # For now, report a REPLACE action.
             GAME_EVENT_REPLACE_ACTION EVENT_TARGET
             GOTO process_events_end
@@ -498,6 +549,18 @@ DEF main {
     IO 2 NEW
     3 IO 2 MODE     # doublebuffer sprite mode
 
+    # --- Define Replacement Data ---
+    # This structure defines what a tile turns into when replaced.
+    # Format: [new_tile_data_ptr, new_color, new_reaction]
+    LIST locked_door_replacement 3 # new_data_ptr, new_color, new_reaction
+    0 AS temp_ptr
+    &locked_door_replacement AS temp_ptr
+    &tile_data2 AS *temp_ptr # Set the new sprite data
+    &locked_door_replacement 1 + AS temp_ptr
+    green AS *temp_ptr       # Set the new color
+    &locked_door_replacement 2 + AS temp_ptr
+    REACT_BLOCK AS *temp_ptr # Set the new reaction
+
     # Initialize event variables to -1 (no event)
     1 negate AS EVENT_TYPE
     1 negate AS EVENT_TARGET
@@ -506,9 +569,12 @@ DEF main {
     1 negate AS EVENT_POTENTIAL_Y
 
     # Initialize our two tiles, expects argumnt on the stack
-    # [ tile_id, start_x, start_y, data_ptr, color, reaction ]
-    0 40 30 tile  foreground REACT_BLOCK init_single_tile    # Tile 0 is a wall
-    1 20 50 tile1 purple     REACT_BLOCK init_single_tile    # Tile 1 is the player
+    # [ tile_id, start_x, start_y, data_ptr, color, reaction, replace_ptr ]
+    0 40 30 tile  orange       REACT_REPLACE   &locked_door_replacement init_single_tile    # Tile 0 is a "locked door"
+    # 0 40 30 tile  orange       REACT_BLOCK     0 init_single_tile    
+    # 0 40 30 tile  orange       REACT_OVERWRITE 0 init_single_tile    # Tile 0 is a "locked door"
+
+    1 20 30 tile1 purple     REACT_BLOCK     0 init_single_tile    # Tile 1 is the player
 
     # Perform the initial draw of all tiles
     # draw_all_tiles
@@ -539,19 +605,28 @@ DEF main {
                 # It was the coin! Increment the score.
                 score 1 + AS score
             END
-        ELSE game_event GAME_EVENT_BLOCK_ACTION == IF
+        END
+
+        game_event GAME_EVENT_BLOCK_ACTION == IF
             # Rule: An object was blocked. What does this mean for the game?
             # The game developer knows that tile 0 is a wall.
             interacted_id 0 == IF
                 score 1 + AS score
             END
-        END END
+        END
 
+        game_event GAME_EVENT_REPLACE_ACTION == IF
+            # Rule: An object was replaced. What does this mean for the game?
+            # The game developer knows that tile 0 is a locked door.
+            interacted_id 0 == IF
+                score 1 + AS score
+            END
+        END
 
         redraw_all_moved_tiles # 4. Hands: Update the screen.
 
-        score PRINT
     DONE
 }
 
 main
+score PRINT
