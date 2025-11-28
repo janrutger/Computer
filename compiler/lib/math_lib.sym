@@ -1,10 +1,10 @@
 {
   "functions": [
-    "negate",
-    "abs",
     "factorial",
     "gcd",
-    "power"
+    "abs",
+    "power",
+    "negate"
   ],
   "variables": [
     {

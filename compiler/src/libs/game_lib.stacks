@@ -1,0 +1,793 @@
+# Stacks Game engine
+
+USE std_stern_io
+#USE std_time
+USE std_string
+
+# Some colors
+CONST purple 4
+CONST green 5
+CONST blue 6
+CONST yellow 7
+CONST orange 8
+
+CONST WIDTH  80
+CONST HEIGHT 60
+VALUE current_x 0
+VALUE current_y 0
+VALUE current_color 1
+CONST solid_block 203
+CONST star 42
+
+
+CONST up    56 ; key '8'
+CONST down  50 ; key '2'
+CONST left  52 ; key '4'
+CONST right 54 ; key '6'
+CONST exit  27 ; <esc> key
+
+
+
+VALUE background 0  ; black
+VALUE foreground 5  ; green
+VALUE score 0
+
+# to keep track of mulitple tiles we need some bookkeeping
+# We need to keep track of 7 items of tile information
+CONST TILE_X 0
+CONST TILE_Y 1
+CONST TILE_OLD_X 2
+CONST TILE_OLD_Y 3
+CONST TILE_IS_MOVED 4
+CONST TILE_COLOR 5
+CONST TILE_DATA 6
+CONST TILE_REACTION 7   # How this tile reacts to being hit
+CONST TILE_REPLACE_DATA_PTR 8 # Pointer to replacement data
+CONST TILE_OLD_W 9 # Old width for erasing
+CONST TILE_OLD_H 10 # Old height for erasing
+
+CONST NO_X 0
+CONST NO_Y 200
+CONST TILE_OBJ_SIZE 11     # The total size of one tile object structure
+
+# Reaction Codes
+CONST REACT_BLOCK 0
+CONST REACT_OVERWRITE 1
+CONST REACT_REPLACE 2
+
+# Gameplay Event Codes (the factual report from process_events)
+CONST GAME_EVENT_NONE 0
+CONST GAME_EVENT_BLOCK_ACTION 1
+CONST GAME_EVENT_OVERWRITE_ACTION 2
+CONST GAME_EVENT_REPLACE_ACTION 3
+
+; --- NEGATE ---
+; negate TOS
+; ( val -- res )
+DEF _negate {
+    0 SWAP -
+}
+
+
+# Create the TILE_INFO structure
+CONST MAX_TILES 8
+VALUE active_tile_count 0
+# Each Tile needs TILE_OBJ_SIZE items, and we have MAX_TILES tiles
+VALUE tile_info 0
+
+VALUE KEYBOARD_TILE 0       
+
+VALUE replace_ptr_new 0
+VALUE reaction_new 0
+VALUE color_new 0
+VALUE data_ptr_new 0
+VALUE start_y_new 0
+VALUE start_x_new 0
+VALUE tile_id 0
+
+VALUE temp_ptr 0
+VALUE temp_ptr2 0
+VALUE initial_w 0
+VALUE initial_h 0
+VALUE item_pointer 0
+VALUE tile_base_prt 0
+VALUE sprite_id 0
+VALUE shape_h 0
+VALUE shape_w 0
+VALUE start_y 0
+VALUE start_x 0
+VALUE rect_y 0
+VALUE rect_x 0
+VALUE tile_ptr 0
+VALUE tile_w 0
+VALUE tile_h 0
+VALUE loop_y 0
+VALUE loop_x 0
+VALUE moving_tile_id 0
+VALUE pot_y 0
+VALUE pot_x 0
+VALUE pot_w 0
+VALUE pot_h 0
+VALUE collision_found 0
+VALUE moving_data_ptr 0
+VALUE i 0
+VALUE other_tile_ptr 0
+VALUE other_data_ptr 0
+VALUE other_x 0
+VALUE other_y 0
+VALUE other_w 0
+VALUE other_h 0
+VALUE KEYvalue 0
+VALUE active_tile_ptr 0
+VALUE collided_id 0
+VALUE any_tile_moved 0
+VALUE tile_obj_ptr 0
+VALUE is_moved 0
+VALUE old_x 0
+VALUE old_y 0
+VALUE old_w 0
+VALUE old_h 0
+VALUE data_ptr 0
+VALUE new_x 0
+VALUE new_y 0
+VALUE current_h 0
+VALUE current_w 0
+VALUE replace_data_ptr 0
+VALUE new_data_ptr 0
+VALUE new_color 0
+VALUE new_reaction 0
+VALUE actor_ptr 0
+VALUE cooldown 0
+VALUE timer_ptr 0
+VALUE new_sprite_data_ptr 0
+VALUE replacement_data_ptr 0
+
+LIST TILE_INFO 88 # 8 * 11
+DEF init_game_lib {
+    &TILE_INFO AS tile_info     # Pointer to Tile Information structure
+    END
+}
+
+# Initializes a single tile object in the TILE_INFO list.
+# Expects on stack: tile_id, start_x, start_y, data_ptr, color, reaction, replace_ptr
+DEF init_single_tile {
+    AS replace_ptr_new
+    AS reaction_new
+    AS color_new
+    AS data_ptr_new
+    AS start_y_new
+    AS start_x_new
+    AS tile_id
+
+    # Get initial width and height from data pointer
+    0 AS temp_ptr
+    *data_ptr_new AS initial_w
+    data_ptr_new 1 + AS temp_ptr
+    *temp_ptr AS initial_h
+
+    0 AS item_pointer
+
+    # Calculate the base address for this tile object
+    tile_info tile_id TILE_OBJ_SIZE * + AS tile_base_prt
+
+    # Set values using the base pointer and field offsets
+    tile_base_prt TILE_X + AS item_pointer           # Current X.Y
+    start_x_new AS *item_pointer
+    tile_base_prt TILE_Y + AS item_pointer
+    start_y_new AS *item_pointer
+
+    tile_base_prt TILE_OLD_X + AS item_pointer       # Old X.Y
+    start_x_new AS *item_pointer
+    tile_base_prt TILE_OLD_Y + AS item_pointer
+    start_y_new AS *item_pointer
+
+    tile_base_prt TILE_OLD_W + AS item_pointer       # Old W/H
+    initial_w AS *item_pointer
+    tile_base_prt TILE_OLD_H + AS item_pointer
+    initial_h AS *item_pointer
+
+    tile_base_prt TILE_IS_MOVED + AS item_pointer    # Moving flag
+    0 AS *item_pointer
+
+    tile_base_prt TILE_COLOR + AS item_pointer       # Color flag
+    color_new AS *item_pointer
+
+    tile_base_prt TILE_DATA + AS item_pointer        # Data pointer to draw
+    data_ptr_new AS *item_pointer
+
+    tile_base_prt TILE_REACTION + AS item_pointer    # Reaction type
+    reaction_new AS *item_pointer
+
+    tile_base_prt TILE_REPLACE_DATA_PTR + AS item_pointer # Replacement data pointer
+    replace_ptr_new AS *item_pointer
+}
+
+# Draws a rectangular shape of sprites.
+# Expects on stack: start_x, start_y, width, height, sprite_id
+DEF clear_rect {
+    AS sprite_id
+    AS shape_h
+    AS shape_w
+    AS start_y
+    AS start_x
+
+    0 AS rect_y
+    start_y AS rect_y
+    WHILE rect_y start_y shape_h + < DO
+        rect_y IO 2 Y
+        0 AS rect_x
+        start_x AS rect_x
+        WHILE rect_x start_x shape_w + < DO
+            rect_x IO 2 X
+            sprite_id IO 2 DRAW
+            rect_x 1 + AS rect_x
+        DONE
+        rect_y 1 + AS rect_y
+    DONE
+}
+
+# Draws a tile defined in a LIST.
+# Expects on stack: start_x, start_y, tile_ptr
+DEF draw_tile_from_data {
+    AS tile_ptr
+    AS start_y
+    AS start_x
+
+    0 AS temp_ptr # Temporary pointer for calculations
+
+    # Read width and height from the tile data
+    *tile_ptr AS tile_w
+    tile_ptr 1 + AS temp_ptr
+    *temp_ptr AS tile_h
+
+    0 AS loop_y
+    WHILE loop_y tile_h < DO
+        0 AS loop_x
+        WHILE loop_x tile_w < DO
+            # Calculate index: data_offset = 2 + (y * width) + x
+            tile_ptr loop_y tile_w * loop_x + 2 + + AS temp_ptr
+            *temp_ptr AS sprite_id
+
+            sprite_id IF # Draw only if sprite_id is not 0 (transparent)
+                start_x loop_x + IO 2 X
+                start_y loop_y + IO 2 Y
+                sprite_id IO 2 DRAW
+            END
+            loop_x 1 + AS loop_x
+        DONE
+        loop_y 1 + AS loop_y
+    DONE
+}
+
+# Checks if a tile at a potential new position collides with any other tile.
+# Expects on stack: potential_x, potential_y, moving_tile_id
+# Returns: 1 if collision detected, 0 otherwise.
+# Returns: collided_tile_id if collision detected, -1 otherwise.
+DEF check_collision {
+    AS moving_tile_id
+    AS pot_y  # potential y
+    AS pot_x  # potential x
+
+    0 AS collision_found # Return value flag, default to 0 (no collision)
+    0 AS temp_ptr
+    # Get dimensions of the moving tile
+    tile_info moving_tile_id TILE_OBJ_SIZE * + TILE_DATA + AS temp_ptr
+    *temp_ptr AS moving_data_ptr
+    *moving_data_ptr AS pot_w # potential width
+    moving_data_ptr 1 + AS temp_ptr
+    *temp_ptr AS pot_h # potential height
+
+    0 AS i
+    WHILE i active_tile_count < DO # Loop through all active tiles
+        i moving_tile_id != IF # Don't check a tile against itself
+            # Get properties of the other tile
+            tile_info i TILE_OBJ_SIZE * + AS other_tile_ptr
+            other_tile_ptr TILE_X + AS temp_ptr
+            *temp_ptr AS other_x
+            other_tile_ptr TILE_Y + AS temp_ptr
+            *temp_ptr AS other_y
+            other_tile_ptr TILE_DATA + AS temp_ptr
+            *temp_ptr AS other_data_ptr
+            *other_data_ptr AS other_w
+            other_data_ptr 1 + AS temp_ptr
+            *temp_ptr AS other_h
+
+            # AABB Collision Check Logic:
+            # A collision does NOT exist if any of these are true:
+            # 1. Moving box is entirely to the left of the other box.
+            pot_x pot_w + 1 - other_x < IF GOTO no_collision_found END
+            # 2. Moving box is entirely to the right of the other box.
+            other_x other_w + 1 - pot_x < IF GOTO no_collision_found END
+            # 3. Moving box is entirely above the other box.
+            pot_y pot_h + 1 - other_y < IF GOTO no_collision_found END
+            # 4. Moving box is entirely below the other box.
+            other_y other_h + 1 - pot_y < IF GOTO no_collision_found END
+
+            # If none of the above are true, the boxes are overlapping.
+            # Return the ID of the tile we collided with.
+            i GOTO collision_check_end # Exit loop and function
+
+            :no_collision_found
+        END
+        i 1 + AS i
+    DONE
+
+    # No collision found after checking all tiles. Return -1.
+    1 _negate
+
+    :collision_check_end
+    # The return value (collided_id or -1) is now on the stack.
+}
+
+VALUE EVENT_TYPE 0
+VALUE EVENT_TARGET 0
+VALUE EVENT_ACTOR 0
+VALUE EVENT_POTENTIAL_X 0
+VALUE EVENT_POTENTIAL_Y 0
+
+# Handles keyboard input to move the active tile
+DEF handle_input {
+    KEYpressed IF
+        AS KEYvalue
+
+        tile_info KEYBOARD_TILE TILE_OBJ_SIZE * + AS active_tile_ptr
+        0 AS temp_ptr
+        active_tile_ptr TILE_X + AS temp_ptr
+        *temp_ptr AS current_x
+        active_tile_ptr TILE_Y + AS temp_ptr
+        *temp_ptr AS current_y
+
+        # Reset event from previous frame
+        1 _negate AS EVENT_TYPE
+
+        KEYvalue up    == IF current_y 1 - AS current_y END
+        KEYvalue down  == IF current_y 1 + AS current_y END
+        KEYvalue left  == IF current_x 1 - AS current_x END
+        KEYvalue right == IF current_x 1 + AS current_x END
+        KEYvalue exit  == IF 0 AS running END
+
+        # Check for collision at the potential new position
+        current_x current_y KEYBOARD_TILE check_collision
+        AS collided_id
+        collided_id 1 _negate == IF # If no collision...
+            # Commit the move
+            active_tile_ptr TILE_X + AS temp_ptr
+            current_x AS *temp_ptr
+            active_tile_ptr TILE_Y + AS temp_ptr
+            current_y AS *temp_ptr
+            active_tile_ptr TILE_IS_MOVED + AS temp_ptr
+            1 AS *temp_ptr
+        END
+        collided_id 1 _negate != IF # If a collision occurred...
+            # Post an event for the main loop to process.
+            # Do NOT move the tile.
+            KEYBOARD_TILE AS EVENT_ACTOR
+            collided_id AS EVENT_TARGET
+
+            # Get the reaction type from the tile that was hit
+            tile_info collided_id TILE_OBJ_SIZE * + TILE_REACTION + AS temp_ptr
+            *temp_ptr AS EVENT_TYPE
+            current_x AS EVENT_POTENTIAL_X
+            current_y AS EVENT_POTENTIAL_Y
+        END
+    END
+}
+
+# Redraws all tiles that have moved since the last frame
+DEF redraw_all_moved_tiles {
+    0 AS i
+    0 AS any_tile_moved
+    0 AS temp_ptr
+
+    # --- Erase all moved tiles first ---
+    WHILE i active_tile_count < DO # Loop through all active tiles
+        tile_info i TILE_OBJ_SIZE * + AS tile_obj_ptr
+        tile_obj_ptr TILE_IS_MOVED + AS temp_ptr
+        *temp_ptr AS is_moved
+
+        is_moved IF
+            1 AS any_tile_moved
+            background IO 2 COLOR
+            
+            0 AS temp_ptr2 # Use a separate temp variable to avoid corruption
+            tile_obj_ptr TILE_OLD_X + AS temp_ptr2
+            *temp_ptr2 AS old_x
+            tile_obj_ptr TILE_OLD_Y + AS temp_ptr2
+            *temp_ptr2 AS old_y
+            tile_obj_ptr TILE_OLD_W + AS temp_ptr2
+            *temp_ptr2 AS old_w
+            tile_obj_ptr TILE_OLD_H + AS temp_ptr2
+            *temp_ptr2 AS old_h
+            # Clear the old tile's rectangular area using its old dimensions
+            old_x old_y old_w old_h solid_block clear_rect
+        END
+        i 1 + AS i
+    DONE
+
+    # --- Draw all moved tiles in their new positions ---
+    0 AS i
+    WHILE i active_tile_count < DO # Loop through all active tiles
+        tile_info i TILE_OBJ_SIZE * + AS tile_obj_ptr
+        tile_obj_ptr TILE_IS_MOVED + AS temp_ptr
+        *temp_ptr AS is_moved
+
+        is_moved IF
+            tile_obj_ptr TILE_COLOR + AS temp_ptr
+            *temp_ptr IO 2 COLOR
+            
+            tile_obj_ptr TILE_DATA + AS temp_ptr
+            *temp_ptr AS data_ptr
+            
+            tile_obj_ptr TILE_X + AS temp_ptr
+            *temp_ptr AS new_x
+            tile_obj_ptr TILE_Y + AS temp_ptr
+            *temp_ptr AS new_y
+            new_x new_y data_ptr draw_tile_from_data
+
+            # Update old coords and reset flag
+            tile_obj_ptr TILE_OLD_X + AS temp_ptr
+            new_x AS *temp_ptr
+            tile_obj_ptr TILE_OLD_Y + AS temp_ptr
+            new_y AS *temp_ptr
+            tile_obj_ptr TILE_IS_MOVED + AS temp_ptr
+            0 AS *temp_ptr
+
+            # Get current width/height and store them as OLD for the next frame
+            0 AS temp_ptr2
+            *data_ptr AS current_w
+            data_ptr 1 + AS temp_ptr2
+            *temp_ptr2 AS current_h
+            tile_obj_ptr TILE_OLD_W + AS temp_ptr2
+            current_w AS *temp_ptr2
+            tile_obj_ptr TILE_OLD_H + AS temp_ptr2
+            current_h AS *temp_ptr2
+        END
+        i 1 + AS i
+    DONE
+
+    # --- Flip the buffer once if anything was redrawn ---
+    any_tile_moved IF
+        IO 2 FLIP
+    END
+}
+
+# Draws a single tile specified by its ID. Does NOT flip the buffer.
+# Expects on stack: tile_id
+DEF draw_tile_by_id {
+    AS tile_id
+    0 AS temp_ptr
+
+    # Get the base pointer for the specified tile object
+    tile_info tile_id TILE_OBJ_SIZE * + AS tile_obj_ptr
+
+    # Get color, data pointer, and coordinates, then draw.
+    tile_obj_ptr TILE_COLOR + AS temp_ptr
+    *temp_ptr IO 2 COLOR
+    tile_obj_ptr TILE_DATA + AS temp_ptr
+    *temp_ptr AS data_ptr
+    tile_obj_ptr TILE_X + AS temp_ptr
+    *temp_ptr AS current_x
+    tile_obj_ptr TILE_Y + AS temp_ptr
+    *temp_ptr AS current_y
+    
+    current_x current_y data_ptr draw_tile_from_data
+}
+
+
+# "Deletes" a tile by moving it off-screen.
+# This function marks the tile as moved and sets its coordinates
+# to a position outside the visible area.
+# Expects on stack: tile_id
+DEF delete_tile {
+    AS tile_id
+    0 AS temp_ptr
+
+    # Get the base pointer for the specified tile object
+    tile_info tile_id TILE_OBJ_SIZE * + AS tile_obj_ptr
+
+    # Set the new coordinates to be off-screen
+    tile_obj_ptr TILE_X + AS temp_ptr
+    NO_X AS *temp_ptr
+    tile_obj_ptr TILE_Y + AS temp_ptr
+    NO_Y AS *temp_ptr # Move far below the screen (HEIGHT is 60)
+
+    # Mark the tile as moved so it gets erased from its old position
+    tile_obj_ptr TILE_IS_MOVED + AS temp_ptr
+    1 AS *temp_ptr
+}
+
+# Replaces a tile's properties based on its replacement data pointer.
+# Expects on stack: tile_id
+DEF replace_tile {
+    AS tile_id
+    0 AS temp_ptr
+
+    # Get the base pointer for the tile to be replaced
+    tile_info tile_id TILE_OBJ_SIZE * + AS tile_obj_ptr
+
+    # Get the pointer to the replacement data structure
+    tile_obj_ptr TILE_REPLACE_DATA_PTR + AS temp_ptr
+    *temp_ptr AS replace_data_ptr
+
+    # Read new properties from the replacement data structure
+    *replace_data_ptr AS new_data_ptr
+    replace_data_ptr 1 + AS temp_ptr
+    *temp_ptr AS new_color
+    replace_data_ptr 2 + AS temp_ptr
+    *temp_ptr AS new_reaction
+
+    # Write the new properties into the tile object
+    tile_obj_ptr TILE_DATA + AS temp_ptr
+    new_data_ptr AS *temp_ptr
+    tile_obj_ptr TILE_COLOR + AS temp_ptr
+    new_color AS *temp_ptr
+    tile_obj_ptr TILE_REACTION + AS temp_ptr
+    new_reaction AS *temp_ptr
+
+    # Mark the tile as moved so it gets redrawn with its new look
+    tile_obj_ptr TILE_IS_MOVED + AS temp_ptr
+    1 AS *temp_ptr
+}
+
+# Draws all tiles at their current position, regardless of moved status.
+# Useful for the initial screen draw.
+DEF draw_all_tiles {
+    0 AS i
+    WHILE i active_tile_count < DO # Loop through all active tiles
+        i draw_tile_by_id
+        i 1 + AS i
+    DONE
+
+    IO 2 FLIP # Flip the buffer to make the initial drawing visible
+}
+
+DEF process_events {
+    EVENT_TYPE 1 _negate != IF # Check if an event occurred
+        # --- BLOCK REACTION ---
+        EVENT_TYPE REACT_BLOCK == IF
+            # Mechanic: Do nothing.
+            # Report: A BLOCK action occurred.
+            GAME_EVENT_BLOCK_ACTION EVENT_TARGET
+            GOTO process_events_end
+        END
+
+        # --- OVERWRITE REACTION ---
+        EVENT_TYPE REACT_OVERWRITE == IF
+            # Mechanic 1: Delete the target tile.
+            EVENT_TARGET delete_tile
+
+            # Mechanic 2: Move the actor tile into the new space.
+            0 AS temp_ptr
+            tile_info EVENT_ACTOR TILE_OBJ_SIZE * + AS actor_ptr
+            actor_ptr TILE_X + AS temp_ptr
+            EVENT_POTENTIAL_X AS *temp_ptr
+            actor_ptr TILE_Y + AS temp_ptr
+            EVENT_POTENTIAL_Y AS *temp_ptr
+            actor_ptr TILE_IS_MOVED + AS temp_ptr
+            1 AS *temp_ptr
+
+            # Report: An OVERWRITE action occurred.
+            GAME_EVENT_OVERWRITE_ACTION EVENT_TARGET
+            GOTO process_events_end
+        END
+
+        # --- REPLACE REACTION ---
+        EVENT_TYPE REACT_REPLACE == IF
+            # Mechanic: Replace the target tile.
+            EVENT_TARGET replace_tile
+            # For now, report a REPLACE action.
+            GAME_EVENT_REPLACE_ACTION EVENT_TARGET
+            GOTO process_events_end
+        END
+    END
+
+    # If we get here, no event was processed. Report NONE.
+    # Return NONE event and -1 for the tile ID.
+    GAME_EVENT_NONE 1 _negate
+
+    :process_events_end
+    # The two return values are now on the stack.
+}
+
+DEF refresh_tiles {
+    IO 2 FLIP
+}
+
+# Checks a global timer. Returns 1 (true) when the timer reaches zero,
+# and automatically resets it. Returns 0 otherwise.
+# Expects on stack: cooldown_duration, timer_variable_pointer
+DEF is_timer_ready {
+    AS cooldown
+    AS timer_ptr
+
+    *timer_ptr 0 > IF
+        # Timer is running, count it down.
+        *timer_ptr 1 - AS *timer_ptr
+        0 # Return 0 (not ready)
+    ELSE
+        # Timer is zero. It's time to act.
+        cooldown AS *timer_ptr # Reset the timer for the next cycle
+        1 # Return 1 (ready)
+    END
+}
+
+# Instantly moves a tile to a new position and marks it for redraw.
+# Expects on stack: new_x, new_y, tile_id
+DEF tile_move {
+    AS tile_id
+    AS new_y
+    AS new_x
+
+    # Get the base pointer for the specified tile object
+    tile_info tile_id TILE_OBJ_SIZE * + AS tile_obj_ptr
+    0 AS temp_ptr
+
+    # Update the tile's actual position
+    tile_obj_ptr TILE_X + AS temp_ptr
+    new_x AS *temp_ptr
+    tile_obj_ptr TILE_Y + AS temp_ptr
+    new_y AS *temp_ptr
+
+    # Mark it as moved so it gets redrawn in the next frame
+    tile_obj_ptr TILE_IS_MOVED + AS temp_ptr
+    1 AS *temp_ptr
+}
+
+# Initializes a replacement data structure.
+# Expects on stack: new_reaction, new_color, new_sprite_data_ptr, replacement_data_ptr
+DEF define_replacement {
+    AS new_reaction
+    AS new_color
+    AS new_sprite_data_ptr
+    AS replacement_data_ptr
+
+    0 AS temp_ptr
+
+    # Set the new sprite data pointer
+    replacement_data_ptr AS temp_ptr
+    new_sprite_data_ptr AS *temp_ptr
+
+    # Set the new color
+    replacement_data_ptr 1 + AS temp_ptr
+    new_color AS *temp_ptr
+
+    # Set the new reaction
+    replacement_data_ptr 2 + AS temp_ptr
+    new_reaction AS *temp_ptr
+}
+
+
+
+# #### From here game development starts ####
+
+
+
+
+
+# # First item : tile width
+# # Second item: tile height
+# # spritedata Width x Height, where value 0 is the transparent sprite
+# #   
+# LIST tile_data0 10      ; First tile data
+# ASM {
+#    # % $tile_data 1 4 56 50 0 54  ; where 0 is an transparant sprite
+#     % $tile_data0 2 4  129 130  91 93  91 93  203 203
+# }
+# &tile_data0 AS tile   ; the pointer to the tile 
+
+
+# LIST tile_data1 11      ; Second tile data
+# ASM {
+#     % $tile_data1 3 3 203 203 203 203 0 203 203 203 203
+# }
+# &tile_data1 AS tile1
+
+# LIST tile_data2 6      ; Third tile data
+# ASM {
+#     % $tile_data2 2 2 42 42 42 42 
+# }
+# &tile_data2 AS tile2
+
+# # Main function
+# DEF main {
+#     IO 2 ONLINE
+#     IO 2 NEW
+#     3 IO 2 MODE     # doublebuffer sprite mode
+
+#     # --- Define Replacement Data ---
+#     # This structure defines what a tile turns into when replaced.
+#     # Format: [new_tile_data_ptr, new_color, new_reaction]
+#     LIST locked_door_replacement 3
+#     &locked_door_replacement &tile_data2 green REACT_BLOCK define_replacement
+
+#     # Initialize event variables to -1 (no event)
+#     1 _negate AS EVENT_TYPE
+#     1 _negate AS EVENT_TARGET
+#     1 _negate AS EVENT_ACTOR
+#     1 _negate AS EVENT_POTENTIAL_X
+#     1 _negate AS EVENT_POTENTIAL_Y
+
+#     # Initialize our two tiles, expects argumnt on the stack
+#     # [ tile_id, start_x, start_y, data_ptr, color, reaction, replace_ptr ]
+#     0 40 30 tile  orange       REACT_REPLACE   &locked_door_replacement init_single_tile    # Tile 0 is a "locked door"
+#     # 0 40 30 tile  orange       REACT_BLOCK     0 init_single_tile    
+#     # 0 40 30 tile  orange       REACT_OVERWRITE 0 init_single_tile    # Tile 0 is a "locked door"
+
+#     1 20 30 tile1 purple       REACT_BLOCK     0                         init_single_tile    # Tile 1 is the player
+
+#     2 40 40 tile2 blue         REACT_OVERWRITE 0                         init_single_tile
+
+#     3 AS active_tile_count      ; We have initialized 2 tiles
+#     1 AS KEYBOARD_TILE          ; set the player Tile
+
+#     # Perform the initial draw of all tiles
+#     # draw_all_tiles
+#     0 draw_tile_by_id
+#     1 draw_tile_by_id
+#     2 draw_tile_by_id
+#     refresh_tiles
+    
+#     # Example of deleting tile 0
+#     # 0 delete_tile
+
+#     # --- Game Developer's variables for a patrol sequence ---
+#     750  AS timer_0_time      # Wait N frames between moves
+#     0    AS timer_0           # The state variable for our patrol timer
+#     0    AS timer_0_state     # 0 means 'even', 1 means means 'odd' (False/True)
+
+#     # ------------------------------------------------------------------
+#     # Main Game Loop (The "Game Developer's Script")
+#     # ------------------------------------------------------------------
+#     1 AS running
+#     WHILE running DO
+#         # Ask the timer function if it's time to make a move.
+#         # We pass a pointer to our specific timer variable.
+#         &timer_0 timer_0_time is_timer_ready IF
+#             # is_timer_ready returned 1, so we are "informed" it's time to act.
+#             # The game developer's logic to calculate the next move goes here.
+#             timer_0_state IF
+#                 # We are in state 1, move back to original position
+#                 40 30 0 tile_move
+#                 0 AS timer_0_state # Switch to state 0 for next time
+#             ELSE
+#                 # We are in state 0, move to a new position
+#                 10 10 0 tile_move
+#                 1 AS timer_0_state # Switch to state 1 for next time
+#             END
+#         END
+
+#         handle_input          # 1. Senses: Get a raw physics report.
+#         process_events        # 2. Mechanics: Execute mechanics and get a factual report.
+
+#         # 3. Logic: Apply game rules based on the factual report.
+#         AS interacted_id
+#         AS game_event
+
+#         game_event GAME_EVENT_OVERWRITE_ACTION == IF
+#             # Rule: An object was overwritten. What does this mean for the game?
+#             # The game developer knows that tile 0 is a coin.
+#             interacted_id 0 == IF
+#                 # It was the coin! Increment the score.
+#                 score 1 + AS score
+#             END
+#         ELSE game_event GAME_EVENT_BLOCK_ACTION == IF
+#             # Rule: An object was blocked. What does this mean for the game?
+#             # The game developer knows that tile 0 is a wall.
+#             interacted_id 0 == IF
+#                 score 1 + AS score
+#             END
+#         ELSE game_event GAME_EVENT_REPLACE_ACTION == IF
+#             # Rule: An object was replaced. What does this mean for the game?
+#             # The game developer knows that tile 0 is a locked door.
+#             interacted_id 0 == IF
+#                 score 1 + AS score
+#             END
+#         END END END
+
+#         redraw_all_moved_tiles # 4. Hands: Update the screen.
+
+#     DONE
+# }
+
+# main
+# score PRINT

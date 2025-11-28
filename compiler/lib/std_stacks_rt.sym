@@ -1,16 +1,16 @@
 {
   "functions": [
     "rt_over",
-    "rt_rnd",
-    "rt_eq",
+    "rt_swap",
     "rt_gt",
     "rt_dup",
     "rt_udc_control",
-    "rt_drop",
+    "rt_rnd",
+    "rt_eq",
     "rt_neq",
-    "rt_lt",
-    "rt_swap",
-    "rt_print_tos"
+    "rt_drop",
+    "rt_print_tos",
+    "rt_lt"
   ],
   "variables": [
     {
