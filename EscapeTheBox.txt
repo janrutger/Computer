@@ -1,0 +1,82 @@
+### Game Design Document: "Escape the Box"
+
+#### 1. Core Concept
+
+"Escape the Box" is a single-player arcade game. 
+The player is confined within a U-shaped arena and must collect coins to earn points. 
+These points can then be spent to break through sections of the arena's walls to escape.
+
+#### 2. Gameplay Loop
+
+The core gameplay loop is centered on risk and reward:
+1.  The player collects a moving coin to accumulate points.
+2.  The player can attempt to break through a wall segment by colliding with it.
+3.  If the player has enough points, the wall segment is destroyed, and the points are deducted from their score.
+4.  If the player does not have enough points, they are penalized by the full cost of the wall, potentially putting their score into a negative "debt" state.
+5.  The coin is reused, respawning in a new location each time it is collected.
+
+#### 3. Key Features
+
+*   **Dynamic Difficulty:** 
+    A dynamic difficulty system will be implemented. 
+    As the player collects more coins, the coin will begin to move faster, but it will also award more points upon collection, 
+    increasing both the challenge and the reward.
+*   **Variable Pricing:** 
+    Different wall segments will have different point costs to break, 
+    forcing the player to make strategic decisions about their escape route. 
+    The main "roof" tile will be the most expensive exit.
+*   **Random Movement:** 
+    The Stacks's `RND` (random) function will be used to determine the respawn location of the coin, 
+    and potentially the movement of a future "monster" tile, ensuring each playthrough feels slightly different.
+
+#### 4. Level Design and Asset Strategy
+
+*   **Layout:** 
+    The level will be designed as an open, upside-down U-shape, using the bottom of the screen as the "floor" of the box. 
+    This creates a defined play area without requiring tiles for all four sides.
+*   **Player and Coin:** 
+    For simplicity of design and collision, both the player and the coin will be represented by simple 1x1 tile sprites.
+*   **Special Tile:** 
+    The reserved tile (ID 7) for the "golden coin" or "monster" will use a larger 2x2 sprite. 
+    This makes the reward easier to find when in debt, and the monster a more significant obstacle to avoid when in credit.
+*   **Composite Walls:** 
+    To efficiently use the limited number of dynamic tiles, the walls will be constructed from composite sprites 
+    (e.g., 1xN or Nx1 shapes) rather than individual 1x1 blocks. The top wall will be a single tile with an 11x1 sprite, 
+    creating an effective 9-tile wide play area.
+*   **Segmented Walls:** 
+    To enhance gameplay, the vertical walls will each be composed of two separate tile segments 
+    (e.g., a small, cheap segment and a larger, more expensive one), providing multiple breakout options.
+
+#### 5. Resource Management (Tile Budget)
+
+The game will be designed within the engine's 8-tile limit. The planned allocation is as follows:
+*   **Total Tiles Used:** 7
+*   **Tiles Remaining:** 1 (goldencoin/monster)
+
+This leaves one tile available for a future feature, such as a hidden "golden coin" that appears after a certain score is reached, 
+or a "monster" tile that acts as a moving obstacle.
+
+#### 6. Tile ID Bookkeeping
+
+To ensure the game logic is clear and easy to manage, the following Tile ID allocation will be used:
+*   **ID 0:** Player
+*   **ID 1:** Coin
+*   **ID 2:** Top Wall (most expensive)
+*   **IDs 3, 4:** Left Wall segments
+*   **IDs 5, 6:** Right Wall segments
+*   **ID 7:** Reserved for the Monster or Golden Coin
+
+#### 7. User Interface (UI) and Player Feedback
+
+To provide essential feedback to the player, the current score will be displayed on-screen at all times.
+
+*   **Display Method:** 
+    As the engine operates in a sprite-based graphics mode, the score will not be rendered as text. 
+    Instead, it will be constructed from a set of dedicated digit sprites (0-9).
+*   **Layout:** 
+    The score will be displayed in a fixed position outside of the main play area 
+    (e.g., the top-left corner of the screen) to ensure it is always visible and does not interfere with gameplay.
+*   **Implementation:** 
+    This will require a new helper function that can take the numerical `score` variable, separate it into individual digits, 
+    and draw the corresponding sprite for each digit at the correct screen location. 
+    (we gonne ask the system architect where to put this helper function)

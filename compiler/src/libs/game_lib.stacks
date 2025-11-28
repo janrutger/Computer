@@ -145,7 +145,7 @@ VALUE replacement_data_ptr 0
 LIST TILE_INFO 88 # 8 * 11
 DEF init_game_lib {
     &TILE_INFO AS tile_info     # Pointer to Tile Information structure
-    END
+    
 }
 
 # Initializes a single tile object in the TILE_INFO list.

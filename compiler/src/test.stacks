@@ -6,11 +6,11 @@ INCLUDE game_lib
 
 # First item : tile width
 # Second item: tile height
-# spritedata Width x Height, where value 0 is the transparent sprite
-#   
+# spritedata Width x Height, where 0 is the no-sprite and so the transparant sprite
+# 
 LIST tile_data0 10      ; First tile data
 ASM {
-   # % $tile_data 1 4 56 50 0 54  ; where 0 is an transparant sprite
+   # % $tile_data 1 4 56 50 0 54  ; where 0 is transparent
     % $tile_data0 2 4  129 130  91 93  91 93  203 203
 }
 &tile_data0 AS tile   ; the pointer to the tile 
@@ -22,9 +22,11 @@ ASM {
 }
 &tile_data1 AS tile1
 
+
 LIST tile_data2 6      ; Third tile data
 ASM {
-    % $tile_data2 2 2 42 42 42 42 
+    # % $tile_data2 2 2 42 42 42 42 
+    % $tile_data2 1 1 42 
 }
 &tile_data2 AS tile2
 

@@ -93,16 +93,18 @@
 
 # .CODE
 
-   # % $tile_data 1 4 56 50 0 54  ; where 0 is an transparant sprite
+   # % $tile_data 1 4 56 50 0 54  ; where 0 is transparent
     % $tile_data0 2 4  129 130  91 93  91 93  203 203
     ldi A $tile_data0
     sto A $tile
 
-    % $tile_data1 3 3 203 203 203 203 0 203 203 203 203
+    % $tile_data1 3 3 -203 203 203 203 0 203 203 203 203
     ldi A $tile_data1
     sto A $tile1
+:b
 
-    % $tile_data2 2 2 42 42 42 42 
+    # % $tile_data2 2 2 42 42 42 42 
+    % $tile_data2 1 1 42 
     ldi A $tile_data2
     sto A $tile2
     call @main
@@ -1813,7 +1815,7 @@
     stack A $DATASTACK_PTR
     call @draw_tile_by_id
     call @refresh_tiles
-    ldi A 1
+    ldi A 750
     sto A $timer_0_time
     ldi A 0
     sto A $timer_0
