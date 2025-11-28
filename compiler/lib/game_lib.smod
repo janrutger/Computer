@@ -208,7 +208,7 @@
     add B A
     ld A B
     sto A $item_pointer
-    ldi A 0
+    ldi A 1
     ld B A
     ldm I $item_pointer
     stx B $_start_memory_

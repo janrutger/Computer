@@ -242,7 +242,7 @@
     add B A
     ld A B
     sto A $item_pointer
-    ldi A 0
+    ldi A 1
     ld B A
     ldm I $item_pointer
     stx B $_start_memory_
@@ -1813,7 +1813,7 @@
     stack A $DATASTACK_PTR
     call @draw_tile_by_id
     call @refresh_tiles
-    ldi A 750
+    ldi A 1
     sto A $timer_0_time
     ldi A 0
     sto A $timer_0
