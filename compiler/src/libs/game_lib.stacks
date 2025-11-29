@@ -4,12 +4,23 @@ USE std_stern_io
 #USE std_time
 USE std_string
 
-# Some colors
+# All colors
+CONST black 0
+CONST white 1
+CONST red 2
+CONST cyan 3
 CONST purple 4
 CONST green 5
 CONST blue 6
 CONST yellow 7
 CONST orange 8
+CONST brown 9
+CONST lightRed 10
+CONST darkGray 11
+CONST gray 12
+CONST lightGreen 13
+CONST lightBlue 14
+CONST lightGray 15
 
 CONST WIDTH  80
 CONST HEIGHT 60
@@ -18,6 +29,8 @@ VALUE current_y 0
 VALUE current_color 1
 CONST solid_block 203
 CONST star 42
+CONST pacman 200
+CONST wall 201
 
 
 CONST up    56 ; key '8'
@@ -143,14 +156,32 @@ VALUE new_sprite_data_ptr 0
 VALUE replacement_data_ptr 0
 
 LIST TILE_INFO 88 # 8 * 11
+
+VALUE EVENT_TYPE 0
+VALUE EVENT_TARGET 0
+VALUE EVENT_ACTOR 0
+VALUE EVENT_POTENTIAL_X 0
+VALUE EVENT_POTENTIAL_Y 0
+
+VALUE running 0
+
 DEF init_game_lib {
+    IO 2 ONLINE                 # HW screen configuration
+    IO 2 NEW
+    3 IO 2 MODE    
+
     &TILE_INFO AS tile_info     # Pointer to Tile Information structure
     
+    1 _negate AS EVENT_TYPE
+    1 _negate AS EVENT_TARGET
+    1 _negate AS EVENT_ACTOR
+    1 _negate AS EVENT_POTENTIAL_X
+    1 _negate AS EVENT_POTENTIAL_Y
 }
 
 # Initializes a single tile object in the TILE_INFO list.
 # Expects on stack: tile_id, start_x, start_y, data_ptr, color, reaction, replace_ptr
-DEF init_single_tile {
+DEF GAME.init_tile {
     AS replace_ptr_new
     AS reaction_new
     AS color_new
@@ -319,14 +350,14 @@ DEF check_collision {
     # The return value (collided_id or -1) is now on the stack.
 }
 
-VALUE EVENT_TYPE 0
-VALUE EVENT_TARGET 0
-VALUE EVENT_ACTOR 0
-VALUE EVENT_POTENTIAL_X 0
-VALUE EVENT_POTENTIAL_Y 0
+# VALUE EVENT_TYPE 0
+# VALUE EVENT_TARGET 0
+# VALUE EVENT_ACTOR 0
+# VALUE EVENT_POTENTIAL_X 0
+# VALUE EVENT_POTENTIAL_Y 0
 
 # Handles keyboard input to move the active tile
-DEF handle_input {
+DEF GAME.handle_input {
     KEYpressed IF
         AS KEYvalue
 
@@ -374,7 +405,7 @@ DEF handle_input {
 }
 
 # Redraws all tiles that have moved since the last frame
-DEF redraw_all_moved_tiles {
+DEF GAME.redraw_all_moved_tiles {
     0 AS i
     0 AS any_tile_moved
     0 AS temp_ptr
@@ -541,7 +572,7 @@ DEF draw_all_tiles {
     IO 2 FLIP # Flip the buffer to make the initial drawing visible
 }
 
-DEF process_events {
+DEF GAME.process_events {
     EVENT_TYPE 1 _negate != IF # Check if an event occurred
         # --- BLOCK REACTION ---
         EVENT_TYPE REACT_BLOCK == IF
@@ -589,7 +620,7 @@ DEF process_events {
     # The two return values are now on the stack.
 }
 
-DEF refresh_tiles {
+DEF GAME.refresh {
     IO 2 FLIP
 }
 

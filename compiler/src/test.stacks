@@ -32,9 +32,9 @@ ASM {
 
 # Main function
 DEF main {
-    IO 2 ONLINE
-    IO 2 NEW
-    3 IO 2 MODE     # doublebuffer sprite mode
+    # IO 2 ONLINE
+    # IO 2 NEW
+    # 3 IO 2 MODE     # doublebuffer sprite mode
 
     init_game_lib
 
@@ -45,21 +45,21 @@ DEF main {
     &locked_door_replacement &tile_data2 green REACT_BLOCK define_replacement
 
     # Initialize event variables to -1 (no event)
-    1 _negate AS EVENT_TYPE
-    1 _negate AS EVENT_TARGET
-    1 _negate AS EVENT_ACTOR
-    1 _negate AS EVENT_POTENTIAL_X
-    1 _negate AS EVENT_POTENTIAL_Y
+    # 1 _negate AS EVENT_TYPE
+    # 1 _negate AS EVENT_TARGET
+    # 1 _negate AS EVENT_ACTOR
+    # 1 _negate AS EVENT_POTENTIAL_X
+    # 1 _negate AS EVENT_POTENTIAL_Y
 
     # Initialize our two tiles, expects argumnt on the stack
     # [ tile_id, start_x, start_y, data_ptr, color, reaction, replace_ptr ]
-    0 40 30 tile  orange       REACT_REPLACE   &locked_door_replacement init_single_tile    # Tile 0 is a "locked door"
-    # 0 40 30 tile  orange       REACT_BLOCK     0 init_single_tile    
-    # 0 40 30 tile  orange       REACT_OVERWRITE 0 init_single_tile    # Tile 0 is a "locked door"
+    0 40 30 tile  orange       REACT_REPLACE   &locked_door_replacement GAME.init_tile    # Tile 0 is a "locked door"
+    # 0 40 30 tile  orange       REACT_BLOCK     0 GAME.init_tile    
+    # 0 40 30 tile  orange       REACT_OVERWRITE 0 GAME.init_tile    # Tile 0 is a "locked door"
 
-    1 20 30 tile1 purple       REACT_BLOCK     0                         init_single_tile    # Tile 1 is the player
+    1 20 30 tile1 purple       REACT_BLOCK     0                         GAME.init_tile    # Tile 1 is the player
 
-    2 40 40 tile2 blue         REACT_OVERWRITE 0                         init_single_tile
+    2 40 40 tile2 blue         REACT_OVERWRITE 0                         GAME.init_tile
 
     3 AS active_tile_count      ; We have initialized 2 tiles
     1 AS KEYBOARD_TILE          ; set the player Tile
@@ -69,7 +69,7 @@ DEF main {
     0 draw_tile_by_id
     1 draw_tile_by_id
     2 draw_tile_by_id
-    refresh_tiles
+    GAME.refresh
     
     # Example of deleting tile 0
     # 0 delete_tile
@@ -100,8 +100,8 @@ DEF main {
             END
         END
 
-        handle_input          # 1. Senses: Get a raw physics report.
-        process_events        # 2. Mechanics: Execute mechanics and get a factual report.
+        GAME.handle_input          # 1. Senses: Get a raw physics report.
+        GAME.process_events        # 2. Mechanics: Execute mechanics and get a factual report.
 
         # 3. Logic: Apply game rules based on the factual report.
         AS interacted_id
@@ -128,7 +128,7 @@ DEF main {
             END
         END END END
 
-        redraw_all_moved_tiles # 4. Hands: Update the screen.
+        GAME.redraw_all_moved_tiles # 4. Hands: Update the screen.
 
     DONE
 }

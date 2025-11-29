@@ -1,8 +1,8 @@
 {
   "functions": [
+    "STRcopy",
     "STRatoi",
     "STRlen",
-    "STRcopy",
     "STRfind",
     "STRcmp"
   ],

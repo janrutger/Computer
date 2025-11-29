@@ -1,8 +1,8 @@
 {
   "functions": [
     "factorial",
-    "gcd",
     "abs",
+    "gcd",
     "power",
     "negate"
   ],

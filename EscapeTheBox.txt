@@ -80,3 +80,24 @@ To provide essential feedback to the player, the current score will be displayed
     This will require a new helper function that can take the numerical `score` variable, separate it into individual digits, 
     and draw the corresponding sprite for each digit at the correct screen location. 
     (we gonne ask the system architect where to put this helper function)
+
+
+
+
+SOME IMPLEMENTATION NOTES TO REMEMBER
+
+Based on the positions of your walls and roof, we first need to define the boundaries of the playable area.
+
+The Roof is at Y=34.
+The Left Wall is at X=26.
+The Right Wall is at X=52.
+The Floor is the bottom of the screen at Y=59.
+This means the valid, playable area for a 1x1 tile is:
+
+X-Range: from 27 to 51
+Y-Range: from 35 to 58
+
+
+Calculation random X Y values
+RND 25 * 999 // 27 + AS newX
+RND 24 * 999 // 35 + AS newY
