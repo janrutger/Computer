@@ -69,7 +69,9 @@ CONST REACT_OVERWRITE 1
 CONST REACT_REPLACE 2
 
 # Gameplay Event Codes (the factual report from process_events)
-CONST GAME_EVENT_NONE 0
+#CONST GAME_EVENT_NONE 0
+VALUE GAME_EVENT_NONE 0
+#1 _negate AS GAME_EVENT_NONE
 CONST GAME_EVENT_BLOCK_ACTION 1
 CONST GAME_EVENT_OVERWRITE_ACTION 2
 CONST GAME_EVENT_REPLACE_ACTION 3
@@ -163,6 +165,7 @@ VALUE EVENT_ACTOR 0
 VALUE EVENT_POTENTIAL_X 0
 VALUE EVENT_POTENTIAL_Y 0
 
+VALUE PLAYER_IS_BLOCKED 0
 VALUE running 0
 
 DEF init_game_lib {
@@ -177,6 +180,8 @@ DEF init_game_lib {
     1 _negate AS EVENT_ACTOR
     1 _negate AS EVENT_POTENTIAL_X
     1 _negate AS EVENT_POTENTIAL_Y
+
+    1 _negate AS GAME_EVENT_NONE
 }
 
 # Initializes a single tile object in the TILE_INFO list.
@@ -383,6 +388,7 @@ DEF GAME.handle_input {
         collided_id 1 _negate == IF # If no collision...
             # Commit the move
             active_tile_ptr TILE_X + AS temp_ptr
+            0 AS PLAYER_IS_BLOCKED # Player is not blocked
             current_x AS *temp_ptr
             active_tile_ptr TILE_Y + AS temp_ptr
             current_y AS *temp_ptr
@@ -394,13 +400,27 @@ DEF GAME.handle_input {
             # Do NOT move the tile.
             KEYBOARD_TILE AS EVENT_ACTOR
             collided_id AS EVENT_TARGET
+            PLAYER_IS_BLOCKED 0 == IF # Only post event if we weren't already blocked
+                # Post an event for the main loop to process.
+                # Do NOT move the tile.
+                KEYBOARD_TILE AS EVENT_ACTOR
+                collided_id AS EVENT_TARGET
 
-            # Get the reaction type from the tile that was hit
-            tile_info collided_id TILE_OBJ_SIZE * + TILE_REACTION + AS temp_ptr
-            *temp_ptr AS EVENT_TYPE
-            current_x AS EVENT_POTENTIAL_X
-            current_y AS EVENT_POTENTIAL_Y
+            # # Get the reaction type from the tile that was hit
+            # tile_info collided_id TILE_OBJ_SIZE * + TILE_REACTION + AS temp_ptr
+            # *temp_ptr AS EVENT_TYPE
+            # current_x AS EVENT_POTENTIAL_X
+            # current_y AS EVENT_POTENTIAL_Y
+                # Get the reaction type from the tile that was hit
+                tile_info collided_id TILE_OBJ_SIZE * + TILE_REACTION + AS temp_ptr
+                *temp_ptr AS EVENT_TYPE
+                current_x AS EVENT_POTENTIAL_X
+                current_y AS EVENT_POTENTIAL_Y
+                1 AS PLAYER_IS_BLOCKED # Set the blocked flag
+            END
         END
+    ELSE
+        0 AS PLAYER_IS_BLOCKED # No key pressed, so player cannot be blocked
     END
 }
 
@@ -621,6 +641,7 @@ DEF GAME.process_events {
 
     # CRITICAL FIX: Consume the event so it is not processed again.
     GAME_EVENT_NONE AS EVENT_TYPE
+    #1 _negate AS EVENT_TYPE
 }
 
 DEF GAME.refresh {

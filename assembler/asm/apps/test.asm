@@ -5,6 +5,7 @@
 . $background 1
 . $foreground 1
 . $score 1
+. $GAME_EVENT_NONE 1
 . $active_tile_count 1
 . $tile_info 1
 . $KEYBOARD_TILE 1
@@ -77,6 +78,7 @@
 . $EVENT_ACTOR 1
 . $EVENT_POTENTIAL_X 1
 . $EVENT_POTENTIAL_Y 1
+. $PLAYER_IS_BLOCKED 1
 . $running 1
 . $tile_data0 10
 . $tile 1
@@ -172,6 +174,11 @@
     call @_negate
     ustack A $DATASTACK_PTR
     sto A $EVENT_POTENTIAL_Y
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @_negate
+    ustack A $DATASTACK_PTR
+    sto A $GAME_EVENT_NONE
     ret
 @GAME.init_tile
     ustack A $DATASTACK_PTR
@@ -752,7 +759,7 @@
     call @KEYpressed
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :GAME.handle_input_if_end_6
+    jmpt :GAME.handle_input_if_else_6
     ustack A $DATASTACK_PTR
     sto A $KEYvalue
     ldm A $tile_info
@@ -893,6 +900,8 @@
     add B A
     ld A B
     sto A $temp_ptr
+    ldi A 0
+    sto A $PLAYER_IS_BLOCKED
     ldm A $current_x
     ld B A
     ldm I $temp_ptr
@@ -933,6 +942,18 @@
     sto A $EVENT_ACTOR
     ldm A $collided_id
     sto A $EVENT_TARGET
+    ldm A $PLAYER_IS_BLOCKED
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :GAME.handle_input_if_end_14
+    ldm A $KEYBOARD_TILE
+    sto A $EVENT_ACTOR
+    ldm A $collided_id
+    sto A $EVENT_TARGET
     ldm A $tile_info
     stack A $DATASTACK_PTR
     ldm A $collided_id
@@ -956,7 +977,14 @@
     sto A $EVENT_POTENTIAL_X
     ldm A $current_y
     sto A $EVENT_POTENTIAL_Y
+    ldi A 1
+    sto A $PLAYER_IS_BLOCKED
+:GAME.handle_input_if_end_14
 :GAME.handle_input_if_end_13
+    jmp :GAME.handle_input_if_end_6
+:GAME.handle_input_if_else_6
+    ldi A 0
+    sto A $PLAYER_IS_BLOCKED
 :GAME.handle_input_if_end_6
     ret
 @GAME.redraw_all_moved_tiles
@@ -997,7 +1025,7 @@
     ldx A $_start_memory_
     sto A $is_moved
     tst A 0
-    jmpt :GAME.redraw_all_moved_tiles_if_end_14
+    jmpt :GAME.redraw_all_moved_tiles_if_end_15
     ldi A 1
     sto A $any_tile_moved
     ldm A $background
@@ -1060,7 +1088,7 @@
     ldi A 203
     stack A $DATASTACK_PTR
     call @clear_rect
-:GAME.redraw_all_moved_tiles_if_end_14
+:GAME.redraw_all_moved_tiles_if_end_15
     ldm A $i
     stack A $DATASTACK_PTR
     ldi A 1
@@ -1103,7 +1131,7 @@
     ldx A $_start_memory_
     sto A $is_moved
     tst A 0
-    jmpt :GAME.redraw_all_moved_tiles_if_end_15
+    jmpt :GAME.redraw_all_moved_tiles_if_end_16
     ldm A $tile_obj_ptr
     stack A $DATASTACK_PTR
     ldi A 5
@@ -1226,7 +1254,7 @@
     ld B A
     ldm I $temp_ptr2
     stx B $_start_memory_
-:GAME.redraw_all_moved_tiles_if_end_15
+:GAME.redraw_all_moved_tiles_if_end_16
     ldm A $i
     stack A $DATASTACK_PTR
     ldi A 1
@@ -1238,7 +1266,7 @@
 :GAME.redraw_all_moved_tiles_while_end_6
     ldm A $any_tile_moved
     tst A 0
-    jmpt :GAME.redraw_all_moved_tiles_if_end_16
+    jmpt :GAME.redraw_all_moved_tiles_if_end_17
     ldi A 0
     stack A $DATASTACK_PTR
     ldi A 2
@@ -1246,7 +1274,7 @@
     ldi A 18
     stack A $DATASTACK_PTR
     call @rt_udc_control
-:GAME.redraw_all_moved_tiles_if_end_16
+:GAME.redraw_all_moved_tiles_if_end_17
     ret
 @draw_tile_by_id
     ustack A $DATASTACK_PTR
@@ -1502,7 +1530,7 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :GAME.process_events_if_end_17
+    jmpt :GAME.process_events_if_end_18
     ldm A $EVENT_TYPE
     stack A $DATASTACK_PTR
     ldi A 0
@@ -1510,13 +1538,13 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :GAME.process_events_if_end_18
+    jmpt :GAME.process_events_if_end_19
     ldi A 1
     stack A $DATASTACK_PTR
     ldm A $EVENT_TARGET
     stack A $DATASTACK_PTR
     jmp :process_events_end
-:GAME.process_events_if_end_18
+:GAME.process_events_if_end_19
     ldm A $EVENT_TYPE
     stack A $DATASTACK_PTR
     ldi A 1
@@ -1524,7 +1552,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :GAME.process_events_if_end_19
+    jmpt :GAME.process_events_if_end_20
     ldm A $EVENT_TARGET
     stack A $DATASTACK_PTR
     call @delete_tile
@@ -1579,7 +1607,7 @@
     ldm A $EVENT_TARGET
     stack A $DATASTACK_PTR
     jmp :process_events_end
-:GAME.process_events_if_end_19
+:GAME.process_events_if_end_20
     ldm A $EVENT_TYPE
     stack A $DATASTACK_PTR
     ldi A 2
@@ -1587,7 +1615,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :GAME.process_events_if_end_20
+    jmpt :GAME.process_events_if_end_21
     ldm A $EVENT_TARGET
     stack A $DATASTACK_PTR
     call @replace_tile
@@ -1596,15 +1624,15 @@
     ldm A $EVENT_TARGET
     stack A $DATASTACK_PTR
     jmp :process_events_end
-:GAME.process_events_if_end_20
-:GAME.process_events_if_end_17
-    ldi A 0
+:GAME.process_events_if_end_21
+:GAME.process_events_if_end_18
+    ldm A $GAME_EVENT_NONE
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     call @_negate
 :process_events_end
-    ldi A 0
+    ldm A $GAME_EVENT_NONE
     sto A $EVENT_TYPE
     ret
 @GAME.refresh
@@ -1629,7 +1657,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :is_timer_ready_if_else_21
+    jmpt :is_timer_ready_if_else_22
     ldm I $timer_ptr
     ldx A $_start_memory_
     stack A $DATASTACK_PTR
@@ -1640,15 +1668,15 @@
     stx B $_start_memory_
     ldi A 0
     stack A $DATASTACK_PTR
-    jmp :is_timer_ready_if_end_21
-:is_timer_ready_if_else_21
+    jmp :is_timer_ready_if_end_22
+:is_timer_ready_if_else_22
     ldm A $cooldown
     ld B A
     ldm I $timer_ptr
     stx B $_start_memory_
     ldi A 1
     stack A $DATASTACK_PTR
-:is_timer_ready_if_end_21
+:is_timer_ready_if_end_22
     ret
 @tile_move
     ustack A $DATASTACK_PTR
@@ -1958,6 +1986,7 @@
 % $background 0
 % $foreground 5
 % $score 0
+% $GAME_EVENT_NONE 0
 % $active_tile_count 0
 % $tile_info 0
 % $KEYBOARD_TILE 0
@@ -2029,4 +2058,5 @@
 % $EVENT_ACTOR 0
 % $EVENT_POTENTIAL_X 0
 % $EVENT_POTENTIAL_Y 0
+% $PLAYER_IS_BLOCKED 0
 % $running 0

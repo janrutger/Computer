@@ -55,6 +55,10 @@ CONST SHORT_RIGHT 5
 CONST LONG_RIGHT  6
 CONST SPECIAL     7
 
+CONST COST_ROOF   5
+CONST COST_SHORT  2
+CONST COST_LONG   3
+
 
 # 2) Game setup & Patrol setup
 # initialize game engine
@@ -66,7 +70,7 @@ init_game_lib
 # 750  AS timer0_time      # Wait N frames between moves
 # 0    AS timer0_state     # 0 means 'even', 1 means means 'odd' (False/True)
 350    AS t_coin            # The coin tile timer
-700    AS t_coin_time       # Duration of the timer
+750    AS t_coin_time       # Duration of the timer
 
 100    AS t_special         # the Special tile timer
 200    AS t_special_time    # Duration of the timer
@@ -183,13 +187,37 @@ WHILE running DO
         interacted_id COIN == IF
             score 1 + AS score
             1 AS _score_dirty
-            # 0 AS t_coin 
-            rnd_xy1 COIN tile_move
+            0 AS t_coin 
+            # rnd_xy1 COIN tile_move
         END
     ELSE game_event GAME_EVENT_BLOCK_ACTION == IF
-        interacted_id 0 == IF
-            score 1 + AS score
-            1 AS _score_dirty
+        0 AS _costs                 # reset the costs
+        interacted_id ROOF == IF
+            _costs COST_ROOF + AS _costs    # Update _costs
+            ROOF                            # Place ROOF on the stack
+        ELSE interacted_id SHORT_LEFT == IF
+            _costs COST_SHORT + AS _costs  # Update _costs
+            SHORT_LEFT                     # Place SHORT_LEFT on the stack
+        ELSE interacted_id LONG_LEFT == IF
+            _costs COST_LONG + AS _costs   # Update _costs
+            LONG_LEFT                      # Place LONG_LEFT on the stack
+        ELSE interacted_id SHORT_RIGHT == IF
+            _costs COST_SHORT + AS _costs  # Update _costs
+            SHORT_RIGHT                    # Place SHORT_RIGHT on the stack
+        ELSE interacted_id LONG_RIGHT == IF
+            _costs COST_LONG + AS _costs   # Update _costs
+            LONG_RIGHT                     # Place LONG_RIGHT on the stack
+        END END END END END
+        _costs IF
+            score _costs < IF              # No credits
+                score _costs - AS score
+                1 AS _score_dirty
+                DROP                       # Drop the tile ID
+            ELSE
+                score _costs + AS score
+                1 AS _score_dirty
+                delete_tile                # Delete the tile
+            END
         END
     ELSE game_event GAME_EVENT_REPLACE_ACTION == IF
         interacted_id 0 == IF
@@ -198,10 +226,10 @@ WHILE running DO
         END
     END END END
 
-    _score_dirty IF score print_score END
-
-    GAME.redraw_all_moved_tiles # Update the screen.
+    _score_dirty IF
+        score print_score
+        GAME.refresh
+    END
+    GAME.redraw_all_moved_tiles # Update screen for moving tiles
 
 DONE
-
-
