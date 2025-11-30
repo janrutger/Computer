@@ -71,6 +71,7 @@ DEF main {
     2 draw_tile_by_id
     GAME.refresh
     
+    
     # Example of deleting tile 0
     # 0 delete_tile
 

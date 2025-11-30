@@ -65,9 +65,15 @@ init_game_lib
 
 
 # --- Game Developer's variables for a patrol sequence ---
-0    AS timer0           # The state variable for our patrol timer
-750  AS timer0_time      # Wait N frames between moves
-0    AS timer0_state     # 0 means 'even', 1 means means 'odd' (False/True)
+# 0    AS timer0           # The state variable for our patrol timer
+# 750  AS timer0_time      # Wait N frames between moves
+# 0    AS timer0_state     # 0 means 'even', 1 means means 'odd' (False/True)
+350    AS t_coin            # The coin tile timer
+500    AS t_coin_time       # Duration of the timer
+
+100    AS t_special         # the Special tile timer
+100    AS t_special_time    # Duration of the timer
+
 
 
 # --- Game developer's replacement rules come here ---
@@ -85,31 +91,72 @@ SHORT_LEFT  26 35 ShortWall orange   REACT_BLOCK     0 GAME.init_tile
 LONG_LEFT   26 45 LongWall  orange   REACT_BLOCK     0 GAME.init_tile
 SHORT_RIGHT 52 50 ShortWall orange   REACT_BLOCK     0 GAME.init_tile
 LONG_RIGHT  52 35 LongWall  orange   REACT_BLOCK     0 GAME.init_tile
-SPECIAL     45 50 Special   darkGray REACT_OVERWRITE 0 GAME.init_tile
+SPECIAL     45 50 Special   darkGray REACT_BLOCK     0 GAME.init_tile
 
 8 AS active_tile_count      # We have initialized 8 Tiles
 PLAYER AS KEYBOARD_TILE     # Set the player tile
-GAME.refresh                # Update the screen
+#GAME.refresh                # Update the screen
 
 # more game setup here
-DEF rnd_xy {                # Helper for generating random coordinates
-    RND 25 % 27 +
+DEF rnd_xy1 {                # Helper for generating random coordinates
+    RND 25 % 27 +            # for an 1x1 tile
     RND 24 % 35 +
 }
+
+DEF rnd_xy2 {                # Helper for generating random coordinates
+    RND 24 % 27 +            # for an 2x2 tile
+    RND 23 % 35 +
+}
+
+VALUE _score_dirty 1
+DEF print_score {
+    red IO 2 COLOR
+    26 IO 2 X 
+    32 IO 2 Y 
+
+    AS _score
+
+    _score 0 < IF
+        45 IO 2 DRAW
+        _score _negate AS _score        # _negate is the game_lib negate function
+    ELSE
+        43 IO 2 DRAW
+    END
+
+    
+    _score 100 //      48 + AS _hunreds
+    _score 100 % 10 // 48 + AS _tens
+    _score 10 %        48 + AS _ones
+
+    27 IO 2 X _hunreds IO 2 DRAW
+    28 IO 2 X _tens    IO 2 DRAW
+    29 IO 2 X _ones    IO 2 DRAW
+
+    0 AS _score_dirty
+}
+
 
 # 3) Game loop
 1 AS running
 WHILE running DO
     # Ask the timer function if it's time to make a move.
     # We pass a pointer to our specific timer variable.
-    &timer0 timer0_time is_timer_ready IF
-        # is_timer_ready returned 1, so we are "informed" it's time to act.
-        timer0_state IF             # We are in state 1, move back to original position
-            0 AS timer_0_state      # Switch to state 0 for next time
-        ELSE                        # We are in state 0, move to a new position 
-            1 AS timer_0_state      # Switch to state 1 for next time
-        END
+    # &timer0 timer0_time is_timer_ready IF
+    #     # is_timer_ready returned 1, so we are "informed" it's time to act.
+    #     timer0_state IF             # We are in state 1, move back to original position
+    #         0 AS timer_0_state      # Switch to state 0 for next time
+    #     ELSE                        # We are in state 0, move to a new position 
+    #         1 AS timer_0_state      # Switch to state 1 for next time
+    #     END
+    # END
+    &t_coin t_coin_time is_timer_ready IF
+        rnd_xy1 COIN tile_move
     END
+
+    &t_special t_special_time is_timer_ready IF
+        rnd_xy2 SPECIAL tile_move
+    END
+
 
     # Run the gameengine logic
     GAME.handle_input          # Senses: Get a raw physics report.
@@ -123,17 +170,24 @@ WHILE running DO
     game_event GAME_EVENT_OVERWRITE_ACTION == IF
         interacted_id 0 == IF
             score 1 + AS score
+            1 AS _score_dirty
         END
     ELSE game_event GAME_EVENT_BLOCK_ACTION == IF
         interacted_id 0 == IF
             score 1 + AS score
+            1 AS _score_dirty
         END
     ELSE game_event GAME_EVENT_REPLACE_ACTION == IF
         interacted_id 0 == IF
             score 1 + AS score
+            1 AS _score_dirty
         END
     END END END
+
+    _score_dirty IF 99 print_score END
 
     GAME.redraw_all_moved_tiles # Update the screen.
 
 DONE
+
+

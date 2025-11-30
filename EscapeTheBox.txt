@@ -101,3 +101,43 @@ Y-Range: from 35 to 58
 Calculation random X Y values
 RND 25 * 999 // 27 + AS newX
 RND 24 * 999 // 35 + AS newY
+
+
+RND 25 % 27 + AS newX
+RND 24 % 35 + AS newY
+
+
+* SCORE BOARD
+    Prints at location 10,10 the current credits of the player
+    This can be an positive or negative number
+    i reserve 4 position for the score one-sign and 3 digits
+    The routine must overwtrite all 4 because the number can be smaller
+
+    for the programmer: <current credit> print_score
+    must be fast, its all overhead for the game experiance
+
+
+    DEF print_score {
+        # Expects score on the stack
+
+        # 1. Handle the Sign
+        IF score < 0 {
+            Draw the "minus" sprite at X=10.
+            Make the score positive (e.g., score * -1).
+        } ELSE {
+            Draw a "blank" or "plus" sprite at X=10.
+        }
+
+        # 2. Directly Calculate Each Digit
+        hundreds_digit = score / 100
+        tens_digit = (score % 100) / 10
+        ones_digit = score % 10
+
+        # 3. Draw All Three Digits
+        # (This assumes you have a way to get the sprite for a digit,
+        #  like a lookup list) (the sprite has his ASCII value as sprie_id)
+        Draw the sprite for hundreds_digit at X=11.
+        Draw the sprite for tens_digit at X=12.
+        Draw the sprite for ones_digit at X=13.
+}
+
