@@ -1569,6 +1569,8 @@
     stack A $DATASTACK_PTR
     call @_negate
 :process_events_end
+    ldi A 0
+    sto A $EVENT_TYPE
     ret
 @GAME.refresh
     ldi A 0

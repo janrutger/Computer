@@ -618,6 +618,9 @@ DEF GAME.process_events {
 
     :process_events_end
     # The two return values are now on the stack.
+
+    # CRITICAL FIX: Consume the event so it is not processed again.
+    GAME_EVENT_NONE AS EVENT_TYPE
 }
 
 DEF GAME.refresh {
@@ -686,4 +689,3 @@ DEF define_replacement {
     replacement_data_ptr 2 + AS temp_ptr
     new_reaction AS *temp_ptr
 }
-

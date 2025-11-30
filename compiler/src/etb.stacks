@@ -56,9 +56,6 @@ CONST LONG_RIGHT  6
 CONST SPECIAL     7
 
 
-
-
-
 # 2) Game setup & Patrol setup
 # initialize game engine
 init_game_lib
@@ -69,10 +66,10 @@ init_game_lib
 # 750  AS timer0_time      # Wait N frames between moves
 # 0    AS timer0_state     # 0 means 'even', 1 means means 'odd' (False/True)
 350    AS t_coin            # The coin tile timer
-500    AS t_coin_time       # Duration of the timer
+700    AS t_coin_time       # Duration of the timer
 
 100    AS t_special         # the Special tile timer
-100    AS t_special_time    # Duration of the timer
+200    AS t_special_time    # Duration of the timer
 
 
 
@@ -110,12 +107,15 @@ DEF rnd_xy2 {                # Helper for generating random coordinates
 
 VALUE _score_dirty 1
 DEF print_score {
-    red IO 2 COLOR
+    #red IO 2 COLOR
     26 IO 2 X 
     32 IO 2 Y 
 
     AS _score
-
+    
+    background IO 2 COLOR
+    solid_block IO 2 DRAW
+    red IO 2 COLOR
     _score 0 < IF
         45 IO 2 DRAW
         _score _negate AS _score        # _negate is the game_lib negate function
@@ -128,9 +128,21 @@ DEF print_score {
     _score 100 % 10 // 48 + AS _tens
     _score 10 %        48 + AS _ones
 
-    27 IO 2 X _hunreds IO 2 DRAW
-    28 IO 2 X _tens    IO 2 DRAW
-    29 IO 2 X _ones    IO 2 DRAW
+    27 IO 2 X 
+        background IO 2 COLOR
+        solid_block IO 2 DRAW
+        red IO 2 COLOR
+        _hunreds   IO 2 DRAW
+    28 IO 2 X 
+        background IO 2 COLOR
+        solid_block IO 2 DRAW
+        red IO 2 COLOR
+        _tens      IO 2 DRAW
+    29 IO 2 X 
+        background IO 2 COLOR
+        solid_block IO 2 DRAW
+        red IO 2 COLOR
+        _ones      IO 2 DRAW
 
     0 AS _score_dirty
 }
@@ -168,9 +180,11 @@ WHILE running DO
 
     #check the events ant act on it
     game_event GAME_EVENT_OVERWRITE_ACTION == IF
-        interacted_id 0 == IF
+        interacted_id COIN == IF
             score 1 + AS score
             1 AS _score_dirty
+            # 0 AS t_coin 
+            rnd_xy1 COIN tile_move
         END
     ELSE game_event GAME_EVENT_BLOCK_ACTION == IF
         interacted_id 0 == IF
@@ -184,7 +198,7 @@ WHILE running DO
         END
     END END END
 
-    _score_dirty IF 99 print_score END
+    _score_dirty IF score print_score END
 
     GAME.redraw_all_moved_tiles # Update the screen.
 

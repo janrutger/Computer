@@ -130,11 +130,11 @@
     call @init_game_lib
     ldi A 350
     sto A $t_coin
-    ldi A 500
+    ldi A 700
     sto A $t_coin_time
     ldi A 100
     sto A $t_special
-    ldi A 100
+    ldi A 200
     sto A $t_special_time
     ldi A 0
     stack A $DATASTACK_PTR
@@ -307,7 +307,7 @@
     jmpt :_main_if_else_3
     ldm A $interacted_id
     stack A $DATASTACK_PTR
-    ldi A 0
+    ldi A 1
     stack A $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
@@ -322,6 +322,10 @@
     sto A $score
     ldi A 1
     sto A $_score_dirty
+    call @rnd_xy1
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @tile_move
 :_main_if_end_4
     jmp :_main_if_end_3
 :_main_if_else_3
@@ -385,7 +389,7 @@
     ldm A $_score_dirty
     tst A 0
     jmpt :_main_if_end_9
-    ldi A 99
+    ldm A $score
     stack A $DATASTACK_PTR
     call @print_score
 :_main_if_end_9
@@ -1886,6 +1890,8 @@
     stack A $DATASTACK_PTR
     call @_negate
 :process_events_end
+    ldi A 0
+    sto A $EVENT_TYPE
     ret
 @GAME.refresh
     ldi A 0
@@ -2067,13 +2073,6 @@
     stack B $DATASTACK_PTR
     ret
 @print_score
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 13
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
     ldi A 26
     stack A $DATASTACK_PTR
     ldi A 2
@@ -2090,6 +2089,28 @@
     call @rt_udc_control
     ustack A $DATASTACK_PTR
     sto A $_score
+    ldm A $background
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 203
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $_score
     stack A $DATASTACK_PTR
     ldi A 0
     stack A $DATASTACK_PTR
@@ -2163,6 +2184,27 @@
     ldi A 15
     stack A $DATASTACK_PTR
     call @rt_udc_control
+    ldm A $background
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 203
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
     ldm A $_hunreds
     stack A $DATASTACK_PTR
     ldi A 2
@@ -2177,6 +2219,27 @@
     ldi A 15
     stack A $DATASTACK_PTR
     call @rt_udc_control
+    ldm A $background
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 203
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
     ldm A $_tens
     stack A $DATASTACK_PTR
     ldi A 2
@@ -2189,6 +2252,27 @@
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 15
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $background
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 203
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
     stack A $DATASTACK_PTR
     call @rt_udc_control
     ldm A $_ones
