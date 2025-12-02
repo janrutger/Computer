@@ -66,6 +66,10 @@
       {
         "file": "asm/apps/bubble.asm",
         "output": "../bin/apps/bubble.bin"
+      },
+      {
+        "file": "asm/apps/etb.asm",
+        "output": "../bin/apps/etb.bin"
       }
     ]
   }

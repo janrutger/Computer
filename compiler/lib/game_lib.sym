@@ -1,39 +1,39 @@
 {
   "functions": [
     "io_lib_init",
-    "READline",
-    "STRatoi",
-    "GAME.refresh",
-    "PRTnum",
-    "draw_tile_by_id",
     "STRfind",
-    "PRTcls",
-    "KEYpressed",
-    "replace_tile",
-    "CURSORon",
-    "KEYchar",
-    "delete_tile",
-    "check_collision",
-    "PRTchar",
-    "clear_rect",
-    "CURSORoff",
-    "GAME.init_tile",
-    "GAME.handle_input",
-    "draw_tile_from_data",
-    "is_timer_ready",
-    "STRlen",
-    "init_game_lib",
-    "GAME.redraw_all_moved_tiles",
-    "GAME.process_events",
-    "_negate",
     "STRcmp",
-    "HALT",
-    "define_replacement",
     "draw_all_tiles",
+    "clear_rect",
+    "GAME.process_events",
+    "is_timer_ready",
+    "PRTcls",
+    "GAME.refresh",
+    "STRlen",
+    "STRatoi",
+    "draw_tile_by_id",
+    "GAME.check_overlap",
+    "READline",
+    "GAME.redraw_all_moved_tiles",
+    "KEYchar",
+    "HALT",
+    "CURSORon",
+    "check_collision",
+    "GAME.update_tile_props",
+    "PRTchar",
+    "PRTstring",
+    "_negate",
     "tile_move",
-    "STRcopy",
+    "KEYpressed",
     "TOS.check",
-    "PRTstring"
+    "CURSORoff",
+    "STRcopy",
+    "GAME.init_tile",
+    "init_game_lib",
+    "draw_tile_from_data",
+    "GAME.handle_input",
+    "delete_tile",
+    "PRTnum"
   ],
   "variables": [
     {
@@ -178,11 +178,6 @@
     },
     {
       "name": "KEYBOARD_TILE",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "replace_ptr_new",
       "type": "VALUE",
       "size": 1
     },
@@ -452,11 +447,6 @@
       "size": 1
     },
     {
-      "name": "replace_data_ptr",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
       "name": "new_data_ptr",
       "type": "VALUE",
       "size": 1
@@ -487,19 +477,9 @@
       "size": 1
     },
     {
-      "name": "new_sprite_data_ptr",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "replacement_data_ptr",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
       "name": "TILE_INFO",
       "type": "LIST",
-      "size": 88
+      "size": 80
     },
     {
       "name": "EVENT_TYPE",
@@ -580,18 +560,15 @@
     "TILE_COLOR": 5,
     "TILE_DATA": 6,
     "TILE_REACTION": 7,
-    "TILE_REPLACE_DATA_PTR": 8,
-    "TILE_OLD_W": 9,
-    "TILE_OLD_H": 10,
+    "TILE_OLD_W": 8,
+    "TILE_OLD_H": 9,
     "NO_X": 0,
     "NO_Y": 200,
-    "TILE_OBJ_SIZE": 11,
+    "TILE_OBJ_SIZE": 10,
     "REACT_BLOCK": 0,
     "REACT_OVERWRITE": 1,
-    "REACT_REPLACE": 2,
     "GAME_EVENT_BLOCK_ACTION": 1,
     "GAME_EVENT_OVERWRITE_ACTION": 2,
-    "GAME_EVENT_REPLACE_ACTION": 3,
     "MAX_TILES": 8
   }
 }

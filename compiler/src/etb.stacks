@@ -59,6 +59,7 @@ CONST COST_ROOF   5
 CONST COST_SHORT  2
 CONST COST_LONG   3
 
+VALUE interacted_id 0
 
 # 2) Game setup & Patrol setup
 # initialize game engine
@@ -77,22 +78,17 @@ init_game_lib
 
 
 
-# --- Game developer's replacement rules come here ---
-
-
-###  END replacement rules  ###
-
 
 # --- Create the initial Tiles ---
-# [ tile_id, start_x, start_y, data_ptr, color, reaction, replace_ptr ]
-PLAYER      39 46 Player    green    REACT_BLOCK     0 GAME.init_tile
-COIN        30 40 Coin      yellow   REACT_OVERWRITE 0 GAME.init_tile
-ROOF        26 34 Roof      orange   REACT_BLOCK     0 GAME.init_tile
-SHORT_LEFT  26 35 ShortWall orange   REACT_BLOCK     0 GAME.init_tile
-LONG_LEFT   26 45 LongWall  orange   REACT_BLOCK     0 GAME.init_tile
-SHORT_RIGHT 52 50 ShortWall orange   REACT_BLOCK     0 GAME.init_tile
-LONG_RIGHT  52 35 LongWall  orange   REACT_BLOCK     0 GAME.init_tile
-SPECIAL     45 50 Special   darkGray REACT_BLOCK     0 GAME.init_tile
+# [ tile_id, start_x, start_y, data_ptr, color, reaction ]
+PLAYER      39 46 Player    green    REACT_BLOCK     GAME.init_tile
+COIN        30 40 Coin      yellow   REACT_OVERWRITE GAME.init_tile
+ROOF        26 34 Roof      orange   REACT_BLOCK     GAME.init_tile
+SHORT_LEFT  26 35 ShortWall orange   REACT_BLOCK     GAME.init_tile
+LONG_LEFT   26 45 LongWall  orange   REACT_BLOCK     GAME.init_tile
+SHORT_RIGHT 52 50 ShortWall orange   REACT_BLOCK     GAME.init_tile
+LONG_RIGHT  52 35 LongWall  orange   REACT_BLOCK     GAME.init_tile
+SPECIAL     45 50 Special   darkGray REACT_BLOCK     GAME.init_tile
 
 8 AS active_tile_count      # We have initialized 8 Tiles
 PLAYER AS KEYBOARD_TILE     # Set the player tile
@@ -151,20 +147,77 @@ DEF print_score {
     0 AS _score_dirty
 }
 
+# Helper function to update wall colors based on player score
+DEF update_wall_visuals {
+    # This function checks each wall and updates its color if the player can afford it.
+    # It's optimized to only trigger a redraw if the color actually changes.
+
+    # ( tile_id, cost, data_ptr -- )
+    DEF check_and_update_color {
+        AS _data_ptr
+        AS _cost
+        AS _tile_id
+
+        # Get current color
+        tile_info _tile_id TILE_OBJ_SIZE * + TILE_COLOR + AS temp_ptr
+        *temp_ptr AS _current_color
+
+        # Determine target color
+        score _cost < IF orange ELSE lightGreen END
+        AS _target_color
+
+        # Only update if the color is different to prevent needless redraws
+        _current_color _target_color != IF
+            # Correct argument order: new_reaction, new_color, new_data_ptr, tile_id
+            REACT_BLOCK _target_color _data_ptr _tile_id GAME.update_tile_props
+        END
+    }
+
+    ROOF        COST_ROOF   Roof      check_and_update_color
+    SHORT_LEFT  COST_SHORT  ShortWall check_and_update_color
+    LONG_LEFT   COST_LONG   LongWall  check_and_update_color
+    SHORT_RIGHT COST_SHORT  ShortWall check_and_update_color
+    LONG_RIGHT  COST_LONG   LongWall  check_and_update_color
+}
+
+
+DEF check_the_walls {
+    0 AS _costs                 # reset the costs
+    interacted_id ROOF == IF
+        _costs COST_ROOF + AS _costs    # Update _costs
+        ROOF                            # Place ROOF on the stack
+    ELSE interacted_id SHORT_LEFT == IF
+        _costs COST_SHORT + AS _costs  # Update _costs
+        SHORT_LEFT                     # Place SHORT_LEFT on the stack
+    ELSE interacted_id LONG_LEFT == IF
+        _costs COST_LONG + AS _costs   # Update _costs
+        LONG_LEFT                      # Place LONG_LEFT on the stack
+    ELSE interacted_id SHORT_RIGHT == IF
+        _costs COST_SHORT + AS _costs  # Update _costs
+        SHORT_RIGHT                    # Place SHORT_RIGHT on the stack
+    ELSE interacted_id LONG_RIGHT == IF
+        _costs COST_LONG + AS _costs   # Update _costs
+        LONG_RIGHT                     # Place LONG_RIGHT on the stack
+    END END END END END
+    _costs IF
+        score _costs < IF              # No credits
+            score _costs - AS score
+            1 AS _score_dirty
+            DROP                       # Drop the tile ID
+        ELSE
+            score _costs + AS score
+            1 AS _score_dirty
+            delete_tile                # Delete the tile
+        END
+    END
+}
 
 # 3) Game loop
 1 AS running
 WHILE running DO
-    # Ask the timer function if it's time to make a move.
-    # We pass a pointer to our specific timer variable.
-    # &timer0 timer0_time is_timer_ready IF
-    #     # is_timer_ready returned 1, so we are "informed" it's time to act.
-    #     timer0_state IF             # We are in state 1, move back to original position
-    #         0 AS timer_0_state      # Switch to state 0 for next time
-    #     ELSE                        # We are in state 0, move to a new position 
-    #         1 AS timer_0_state      # Switch to state 1 for next time
-    #     END
-    # END
+    # --- Update Visuals ---
+    # Change wall colors to show if they are breakable
+    update_wall_visuals
 
     # --- Coin Movement ---
     &t_coin t_coin_time is_timer_ready IF
@@ -192,8 +245,19 @@ WHILE running DO
         player_y monster_y < IF monster_y 1 - AS monster_y END
 
         # Move the monster
+        # --- Engine-driven "Move then Resolve" Collision Logic ---
+        # 1. Move the monster blindly.
         monster_x monster_y SPECIAL tile_move
+
+
+        SPECIAL GAME.check_overlap 
+        PLAYER == IF
+            REACT_BLOCK red Special SPECIAL GAME.update_tile_props
+        END
     END
+
+    
+
 
 
     # Run the gameengine logic
@@ -203,8 +267,6 @@ WHILE running DO
     # Run the gamelogic: Apply game rules based on the factual report.
     AS interacted_id
     AS game_event
-
-    #check the events ant act on it
     game_event GAME_EVENT_OVERWRITE_ACTION == IF
         interacted_id COIN == IF
             score 1 + AS score
@@ -212,43 +274,17 @@ WHILE running DO
             0 AS t_coin # Reset coin timer to force respawn
             # Respawn the monster to a new random location
             rnd_xy1 SPECIAL tile_move
-            # rnd_xy1 COIN tile_move
         END
     ELSE game_event GAME_EVENT_BLOCK_ACTION == IF
-        0 AS _costs                 # reset the costs
-        interacted_id ROOF == IF
-            _costs COST_ROOF + AS _costs    # Update _costs
-            ROOF                            # Place ROOF on the stack
-        ELSE interacted_id SHORT_LEFT == IF
-            _costs COST_SHORT + AS _costs  # Update _costs
-            SHORT_LEFT                     # Place SHORT_LEFT on the stack
-        ELSE interacted_id LONG_LEFT == IF
-            _costs COST_LONG + AS _costs   # Update _costs
-            LONG_LEFT                      # Place LONG_LEFT on the stack
-        ELSE interacted_id SHORT_RIGHT == IF
-            _costs COST_SHORT + AS _costs  # Update _costs
-            SHORT_RIGHT                    # Place SHORT_RIGHT on the stack
-        ELSE interacted_id LONG_RIGHT == IF
-            _costs COST_LONG + AS _costs   # Update _costs
-            LONG_RIGHT                     # Place LONG_RIGHT on the stack
-        END END END END END
-        _costs IF
-            score _costs < IF              # No credits
-                score _costs - AS score
-                1 AS _score_dirty
-                DROP                       # Drop the tile ID
-            ELSE
-                score _costs + AS score
-                1 AS _score_dirty
-                delete_tile                # Delete the tile
-            END
+        # At this point, interacted_id is the PLAYER (keyboard) tile
+        
+        check_the_walls     # routine to check the walls and set color
+
+        interacted_id SPECIAL == IF
+            REACT_BLOCK red Special SPECIAL GAME.update_tile_props
         END
-    ELSE game_event GAME_EVENT_REPLACE_ACTION == IF
-        interacted_id 0 == IF
-            score 1 + AS score
-            1 AS _score_dirty
-        END
-    END END END
+            
+    END END
 
     _score_dirty IF
         score print_score

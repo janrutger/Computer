@@ -53,18 +53,20 @@ CONST TILE_OLD_X 2
 CONST TILE_OLD_Y 3
 CONST TILE_IS_MOVED 4
 CONST TILE_COLOR 5
-CONST TILE_DATA 6       # Pointer to sprite data
+CONST TILE_DATA 6
 CONST TILE_REACTION 7   # How this tile reacts to being hit
-CONST TILE_OLD_W 8      # Old width for erasing
-CONST TILE_OLD_H 9      # Old height for erasing
+CONST TILE_REPLACE_DATA_PTR 8 # Pointer to replacement data
+CONST TILE_OLD_W 9 # Old width for erasing
+CONST TILE_OLD_H 10 # Old height for erasing
 
 CONST NO_X 0
 CONST NO_Y 200
-CONST TILE_OBJ_SIZE 10     # The total size of one tile object structure
+CONST TILE_OBJ_SIZE 11     # The total size of one tile object structure
 
 # Reaction Codes
 CONST REACT_BLOCK 0
 CONST REACT_OVERWRITE 1
+CONST REACT_REPLACE 2
 
 # Gameplay Event Codes (the factual report from process_events)
 #CONST GAME_EVENT_NONE 0
@@ -72,6 +74,7 @@ VALUE GAME_EVENT_NONE 0
 #1 _negate AS GAME_EVENT_NONE
 CONST GAME_EVENT_BLOCK_ACTION 1
 CONST GAME_EVENT_OVERWRITE_ACTION 2
+CONST GAME_EVENT_REPLACE_ACTION 3
 
 ; --- NEGATE ---
 ; negate TOS
@@ -89,6 +92,7 @@ VALUE tile_info 0
 
 VALUE KEYBOARD_TILE 0       
 
+VALUE replace_ptr_new 0
 VALUE reaction_new 0
 VALUE color_new 0
 VALUE data_ptr_new 0
@@ -143,14 +147,17 @@ VALUE new_x 0
 VALUE new_y 0
 VALUE current_h 0
 VALUE current_w 0
+VALUE replace_data_ptr 0
 VALUE new_data_ptr 0
 VALUE new_color 0
 VALUE new_reaction 0
 VALUE actor_ptr 0
 VALUE cooldown 0
 VALUE timer_ptr 0
+VALUE new_sprite_data_ptr 0
+VALUE replacement_data_ptr 0
 
-LIST TILE_INFO 80 # 8 * 10
+LIST TILE_INFO 88 # 8 * 11
 
 VALUE EVENT_TYPE 0
 VALUE EVENT_TARGET 0
@@ -178,8 +185,9 @@ DEF init_game_lib {
 }
 
 # Initializes a single tile object in the TILE_INFO list.
-# Expects on stack: tile_id, start_x, start_y, data_ptr, color, reaction
+# Expects on stack: tile_id, start_x, start_y, data_ptr, color, reaction, replace_ptr
 DEF GAME.init_tile {
+    AS replace_ptr_new
     AS reaction_new
     AS color_new
     AS data_ptr_new
@@ -225,6 +233,9 @@ DEF GAME.init_tile {
 
     tile_base_prt TILE_REACTION + AS item_pointer    # Reaction type
     reaction_new AS *item_pointer
+
+    tile_base_prt TILE_REPLACE_DATA_PTR + AS item_pointer # Replacement data pointer
+    replace_ptr_new AS *item_pointer
 }
 
 # Draws a rectangular shape of sprites.
@@ -344,59 +355,6 @@ DEF check_collision {
     # The return value (collided_id or -1) is now on the stack.
 }
 
-# Checks if a given tile is currently overlapping any other tile.
-# This is a "reactive" check, used after a tile has already moved.
-# Expects on stack: subject_tile_id
-# Returns: collided_tile_id if overlap detected, -1 otherwise.
-DEF GAME.check_overlap {
-    AS moving_tile_id
-
-    # Get current position and dimensions of the subject tile
-    0 AS temp_ptr
-    tile_info moving_tile_id TILE_OBJ_SIZE * + AS tile_base_prt
-
-    tile_base_prt TILE_X + AS temp_ptr
-    *temp_ptr AS pot_x
-    tile_base_prt TILE_Y + AS temp_ptr
-    *temp_ptr AS pot_y
-
-    tile_base_prt TILE_DATA + AS temp_ptr
-    *temp_ptr AS moving_data_ptr
-    *moving_data_ptr AS pot_w
-    moving_data_ptr 1 + AS temp_ptr
-    *temp_ptr AS pot_h
-
-    0 AS i
-    WHILE i active_tile_count < DO
-        i moving_tile_id != IF
-            tile_info i TILE_OBJ_SIZE * + AS other_tile_ptr
-            other_tile_ptr TILE_X + AS temp_ptr
-            *temp_ptr AS other_x
-            other_tile_ptr TILE_Y + AS temp_ptr
-            *temp_ptr AS other_y
-            other_tile_ptr TILE_DATA + AS temp_ptr
-            *temp_ptr AS other_data_ptr
-            *other_data_ptr AS other_w
-            other_data_ptr 1 + AS temp_ptr
-            *temp_ptr AS other_h
-
-            pot_x pot_w     + 1 - other_x < IF GOTO overlap_not_found END
-            other_x other_w + 1 - pot_x   < IF GOTO overlap_not_found END
-            pot_y pot_h     + 1 - other_y < IF GOTO overlap_not_found END
-            other_y other_h + 1 - pot_y   < IF GOTO overlap_not_found END
-
-            i GOTO overlap_check_end
-            :overlap_not_found
-        END
-        i 1 + AS i
-    DONE
-
-    1 _negate
-    :overlap_check_end
-}
-
-
-
 # VALUE EVENT_TYPE 0
 # VALUE EVENT_TARGET 0
 # VALUE EVENT_ACTOR 0
@@ -448,6 +406,11 @@ DEF GAME.handle_input {
                 KEYBOARD_TILE AS EVENT_ACTOR
                 collided_id AS EVENT_TARGET
 
+            # # Get the reaction type from the tile that was hit
+            # tile_info collided_id TILE_OBJ_SIZE * + TILE_REACTION + AS temp_ptr
+            # *temp_ptr AS EVENT_TYPE
+            # current_x AS EVENT_POTENTIAL_X
+            # current_y AS EVENT_POTENTIAL_Y
                 # Get the reaction type from the tile that was hit
                 tile_info collided_id TILE_OBJ_SIZE * + TILE_REACTION + AS temp_ptr
                 *temp_ptr AS EVENT_TYPE
@@ -584,6 +547,39 @@ DEF delete_tile {
     1 AS *temp_ptr
 }
 
+# Replaces a tile's properties based on its replacement data pointer.
+# Expects on stack: tile_id
+DEF replace_tile {
+    AS tile_id
+    0 AS temp_ptr
+
+    # Get the base pointer for the tile to be replaced
+    tile_info tile_id TILE_OBJ_SIZE * + AS tile_obj_ptr
+
+    # Get the pointer to the replacement data structure
+    tile_obj_ptr TILE_REPLACE_DATA_PTR + AS temp_ptr
+    *temp_ptr AS replace_data_ptr
+
+    # Read new properties from the replacement data structure
+    *replace_data_ptr AS new_data_ptr
+    replace_data_ptr 1 + AS temp_ptr
+    *temp_ptr AS new_color
+    replace_data_ptr 2 + AS temp_ptr
+    *temp_ptr AS new_reaction
+
+    # Write the new properties into the tile object
+    tile_obj_ptr TILE_DATA + AS temp_ptr
+    new_data_ptr AS *temp_ptr
+    tile_obj_ptr TILE_COLOR + AS temp_ptr
+    new_color AS *temp_ptr
+    tile_obj_ptr TILE_REACTION + AS temp_ptr
+    new_reaction AS *temp_ptr
+
+    # Mark the tile as moved so it gets redrawn with its new look
+    tile_obj_ptr TILE_IS_MOVED + AS temp_ptr
+    1 AS *temp_ptr
+}
+
 # Draws all tiles at their current position, regardless of moved status.
 # Useful for the initial screen draw.
 DEF draw_all_tiles {
@@ -625,6 +621,15 @@ DEF GAME.process_events {
             GAME_EVENT_OVERWRITE_ACTION EVENT_TARGET
             GOTO process_events_end
         END
+
+        # --- REPLACE REACTION ---
+        EVENT_TYPE REACT_REPLACE == IF
+            # Mechanic: Replace the target tile.
+            EVENT_TARGET replace_tile
+            # For now, report a REPLACE action.
+            GAME_EVENT_REPLACE_ACTION EVENT_TARGET
+            GOTO process_events_end
+        END
     END
 
     # If we get here, no event was processed. Report NONE.
@@ -635,10 +640,8 @@ DEF GAME.process_events {
     # The two return values are now on the stack.
 
     # CRITICAL FIX: Consume the event so it is not processed again.
-    # Reset all event variables to ensure a clean state for the next frame.
-    1 _negate AS EVENT_TYPE
-    1 _negate AS EVENT_TARGET
-    1 _negate AS EVENT_ACTOR
+    GAME_EVENT_NONE AS EVENT_TYPE
+    #1 _negate AS EVENT_TYPE
 }
 
 DEF GAME.refresh {
@@ -685,26 +688,25 @@ DEF tile_move {
     1 AS *temp_ptr
 }
 
-# Updates a tile's core properties and marks it for redraw.
-# Expects on stack: tile_id, new_data_ptr, new_color, new_reaction
-DEF GAME.update_tile_props {
-    AS tile_id
-    AS new_data_ptr
-    AS new_color
+# Initializes a replacement data structure.
+# Expects on stack: new_reaction, new_color, new_sprite_data_ptr, replacement_data_ptr
+DEF define_replacement {
     AS new_reaction
+    AS new_color
+    AS new_sprite_data_ptr
+    AS replacement_data_ptr
 
-    # Get the base pointer for the tile object
-    tile_info tile_id TILE_OBJ_SIZE * + AS tile_obj_ptr
+    0 AS temp_ptr
 
-    # Write the new properties into the tile object
-    tile_obj_ptr TILE_DATA + AS temp_ptr
-    new_data_ptr AS *temp_ptr
-    tile_obj_ptr TILE_COLOR + AS temp_ptr
+    # Set the new sprite data pointer
+    replacement_data_ptr AS temp_ptr
+    new_sprite_data_ptr AS *temp_ptr
+
+    # Set the new color
+    replacement_data_ptr 1 + AS temp_ptr
     new_color AS *temp_ptr
-    tile_obj_ptr TILE_REACTION + AS temp_ptr
-    new_reaction AS *temp_ptr
 
-    # Mark the tile as moved so it gets redrawn with its new look
-    tile_obj_ptr TILE_IS_MOVED + AS temp_ptr
-    1 AS *temp_ptr
+    # Set the new reaction
+    replacement_data_ptr 2 + AS temp_ptr
+    new_reaction AS *temp_ptr
 }
