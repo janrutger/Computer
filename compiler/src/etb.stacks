@@ -76,6 +76,8 @@ init_game_lib
 100    AS t_special         # the Special tile timer
 100    AS t_special_time    # Duration of the timer
 
+0      AS t_monster_cooldown    # Cooldown timer/counter
+
 
 
 
@@ -224,35 +226,48 @@ WHILE running DO
         rnd_xy1 COIN tile_move
     END
 
+    t_monster_cooldown IF
+        t_monster_cooldown 1 - AS t_monster_cooldown
+    ELSE
     # --- Hunter Monster AI ---
-    &t_special t_special_time is_timer_ready IF
-        # Get Player's coords
-        tile_info PLAYER TILE_OBJ_SIZE * TILE_X + + AS temp_ptr
-        *temp_ptr AS player_x
-        tile_info PLAYER TILE_OBJ_SIZE * TILE_Y + + AS temp_ptr
-        *temp_ptr AS player_y
+        &t_special t_special_time is_timer_ready IF
+            # Get Player's coords
+            tile_info PLAYER TILE_OBJ_SIZE * TILE_X + + AS temp_ptr
+            *temp_ptr AS player_x
+            tile_info PLAYER TILE_OBJ_SIZE * TILE_Y + + AS temp_ptr
+            *temp_ptr AS player_y
 
-        # Get Monster's coords
-        tile_info SPECIAL TILE_OBJ_SIZE * TILE_X + + AS temp_ptr
-        *temp_ptr AS monster_x
-        tile_info SPECIAL TILE_OBJ_SIZE * TILE_Y + + AS temp_ptr
-        *temp_ptr AS monster_y
+            # Get Monster's coords
+            tile_info SPECIAL TILE_OBJ_SIZE * TILE_X + + AS temp_ptr
+            *temp_ptr AS monster_x
+            tile_info SPECIAL TILE_OBJ_SIZE * TILE_Y + + AS temp_ptr
+            *temp_ptr AS monster_y
 
-        # Calculate one step closer to the player
-        player_x monster_x > IF monster_x 1 + AS monster_x END
-        player_x monster_x < IF monster_x 1 - AS monster_x END
-        player_y monster_y > IF monster_y 1 + AS monster_y END
-        player_y monster_y < IF monster_y 1 - AS monster_y END
+            # Calculate one step closer to the player
+            player_x monster_x > IF monster_x 1 + AS monster_x END
+            player_x monster_x < IF monster_x 1 - AS monster_x END
+            player_y monster_y > IF monster_y 1 + AS monster_y END
+            player_y monster_y < IF monster_y 1 - AS monster_y END
 
-        # Move the monster
-        # --- Engine-driven "Move then Resolve" Collision Logic ---
-        # 1. Move the monster blindly.
-        monster_x monster_y SPECIAL tile_move
+            # Move the monster
 
-
-        SPECIAL GAME.check_overlap 
-        PLAYER == IF
-            REACT_BLOCK red Special SPECIAL GAME.update_tile_props
+            # Move the monster blindly.
+            monster_x monster_y SPECIAL tile_move
+            # Check for overlap other tiles
+            SPECIAL GAME.check_overlap 
+            PLAYER == IF
+                REACT_BLOCK red Special SPECIAL GAME.update_tile_props
+                score 0 > IF
+                    score 2 // AS score 
+                    score print_score
+                END
+                t_special_time 90 > IF
+                    t_special_time 1 - AS t_special_time
+                END
+                100 AS t_monster_cooldown
+            ELSE
+                REACT_BLOCK lightGray Special SPECIAL GAME.update_tile_props
+            END
         END
     END
 
@@ -281,7 +296,8 @@ WHILE running DO
         check_the_walls     # routine to check the walls and set color
 
         interacted_id SPECIAL == IF
-            REACT_BLOCK red Special SPECIAL GAME.update_tile_props
+            REACT_BLOCK lightRed Special SPECIAL GAME.update_tile_props
+            200 AS t_monster_cooldown
         END
             
     END END
