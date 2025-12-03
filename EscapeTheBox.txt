@@ -141,3 +141,55 @@ RND 24 % 35 + AS newY
         Draw the sprite for ones_digit at X=13.
 }
 
+
+
+### Game Plot & Mechanics
+
+The player's goal is to escape the box by breaking through a wall segment. 
+The path to victory is paved with coins, risk, and a lurking monster.
+
+#### The Core Loop: Earning and Spending
+
+1.  **Earning Credits:** The player collects coins to increase their `score`. 
+    Each coin is worth 1 credit.
+
+2.  **"Powering Up" Walls:** Each wall segment has a `cost`. 
+    When the player's `score` is greater than or equal to a wall's `cost`, 
+    that wall segment turns **green**. 
+    This visually signals that a "Safe Breakout" is possible through that segment.
+
+#### The Escape: The Final Breakout
+
+The player can attempt to break any wall segment by colliding with it. 
+The outcome depends on whether **all** walls have been powered up.
+
+*   **Safe Breakout (Win Condition):**
+    *   **Condition:** **All** wall segments are green, and the player collides with any one of them.
+    *   **Outcome:** The wall is destroyed. The game ends in a **victory**. 
+        The player's final score is their current `score`.
+
+*   **Failed Attempt (Penalty):**
+    *   **Condition:** The player collides with any wall segment before **all** segments are green.
+    *   **Outcome:** The wall remains, but the player is penalized. 
+        The full `cost` of the wall is subtracted from the `score`, 
+        potentially resulting in a negative "debt". 
+        This does **not** end the game. 
+        This penalty applies even if the specific wall collided with was already green.
+
+#### The Monster: A Dynamic Threat
+
+The monster (Tile ID 7) adds a dynamic challenge and a path to redemption.
+
+*   **The Hunt:** The monster becomes active and starts hunting the player whenever the player's `score` is positive.
+
+*   **Getting Caught (Penalty):**
+    *   **Condition:** The monster catches the player while the `score` is positive.
+    *   **Outcome:** The player's `score` is halved (`score / 2`). The monster becomes dormant for a short period before hunting again.
+
+*   **Fighting Back (Redemption):**
+    *   **Condition:** The player, while having a negative `score` (in "debt"), catches the dormant monster.
+    *   **Outcome:** The player's `score` is reset to **0**. The monster remains dormant for a short period.
+
+#### Game Over
+
+The game concludes when the player achieves a "Safe Breakout". At this point, all tiles (player, coin, monster, walls) are removed from the screen, and the final score is displayed.

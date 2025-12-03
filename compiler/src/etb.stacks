@@ -44,6 +44,12 @@ ASM {
 }
 &long_wall_data AS LongWall
 
+LIST game_over_data 11 ; 8 chars + width/height
+ASM {
+    % $game_over_data 9 1 71 65 77 69 32 79 86 69 82 ; "GAME OVER"
+}
+&game_over_data AS GameOverSprite
+
 
 
 CONST PLAYER      0
@@ -55,9 +61,11 @@ CONST SHORT_RIGHT 5
 CONST LONG_RIGHT  6
 CONST SPECIAL     7
 
-CONST COST_ROOF   5
-CONST COST_SHORT  2
-CONST COST_LONG   3
+CONST COST_SHORT_LEFT  2
+CONST COST_LONG_LEFT   3
+CONST COST_SHORT_RIGHT 5
+CONST COST_LONG_RIGHT  8
+CONST COST_ROOF        10
 
 VALUE interacted_id 0
 
@@ -175,41 +183,75 @@ DEF update_wall_visuals {
         END
     }
 
-    ROOF        COST_ROOF   Roof      check_and_update_color
-    SHORT_LEFT  COST_SHORT  ShortWall check_and_update_color
-    LONG_LEFT   COST_LONG   LongWall  check_and_update_color
-    SHORT_RIGHT COST_SHORT  ShortWall check_and_update_color
-    LONG_RIGHT  COST_LONG   LongWall  check_and_update_color
+    ROOF        COST_ROOF        Roof      check_and_update_color
+    SHORT_LEFT  COST_SHORT_LEFT  ShortWall check_and_update_color
+    LONG_LEFT   COST_LONG_LEFT   LongWall  check_and_update_color
+    SHORT_RIGHT COST_SHORT_RIGHT ShortWall check_and_update_color
+    LONG_RIGHT  COST_LONG_RIGHT  LongWall  check_and_update_color
 }
 
+# Helper function to check if a specific wall tile is currently green.
+# ( tile_id -- boolean )
+DEF _is_wall_is_green {
+    AS _tile_id
+    # Get current color of the tile
+    tile_info _tile_id TILE_OBJ_SIZE * + TILE_COLOR + AS temp_ptr
+    *temp_ptr lightGreen == # Returns 1 if lightGreen, 0 otherwise
+}
+
+# Checks if all wall segments are currently green.
+# ( -- boolean )
+DEF are_all_walls_green {
+    # We will check each wall. If any wall is NOT green, we immediately
+    # return 0 (false). If we get through all checks, we return 1 (true).
+
+    ROOF        _is_wall_is_green 0 == IF 0 GOTO all_walls_are_not_green END
+    SHORT_LEFT  _is_wall_is_green 0 == IF 0 GOTO all_walls_are_not_green END
+    LONG_LEFT   _is_wall_is_green 0 == IF 0 GOTO all_walls_are_not_green END
+    SHORT_RIGHT _is_wall_is_green 0 == IF 0 GOTO all_walls_are_not_green END
+    LONG_RIGHT  _is_wall_is_green 0 == IF 0 GOTO all_walls_are_not_green END
+
+    # If we made it here, all walls must be green.
+    1 GOTO check_walls_done
+
+    :all_walls_are_not_green
+    0
+    :check_walls_done
+    # The return value (1 or 0) is now on the stack.
+}
 
 DEF check_the_walls {
-    0 AS _costs                 # reset the costs
+    0 AS _wall_cost # Initialize to 0. This will hold the cost of the wall the player collided with.
+
+    # Determine the cost of the specific wall that was interacted with.
+    # The 'interacted_id' is the ID of the tile the player (KEYBOARD_TILE) collided with.
     interacted_id ROOF == IF
-        _costs COST_ROOF + AS _costs    # Update _costs
-        ROOF                            # Place ROOF on the stack
+        COST_ROOF AS _wall_cost
     ELSE interacted_id SHORT_LEFT == IF
-        _costs COST_SHORT + AS _costs  # Update _costs
-        SHORT_LEFT                     # Place SHORT_LEFT on the stack
+        COST_SHORT_LEFT AS _wall_cost
     ELSE interacted_id LONG_LEFT == IF
-        _costs COST_LONG + AS _costs   # Update _costs
-        LONG_LEFT                      # Place LONG_LEFT on the stack
+        COST_LONG_LEFT AS _wall_cost
     ELSE interacted_id SHORT_RIGHT == IF
-        _costs COST_SHORT + AS _costs  # Update _costs
-        SHORT_RIGHT                    # Place SHORT_RIGHT on the stack
+        COST_SHORT_RIGHT AS _wall_cost
     ELSE interacted_id LONG_RIGHT == IF
-        _costs COST_LONG + AS _costs   # Update _costs
-        LONG_RIGHT                     # Place LONG_RIGHT on the stack
+        COST_LONG_RIGHT AS _wall_cost
     END END END END END
-    _costs IF
-        score _costs < IF              # No credits
-            score _costs - AS score
+
+    _wall_cost 0 != IF # Check if the interacted_id was actually a wall (i.e., _wall_cost is non-zero)
+        are_all_walls_green IF
+            # --- SAFE BREAKOUT (WIN CONDITION) ---
+            # All walls are green, and the player collided with one.
+            interacted_id delete_tile # Destroy the wall the player hit
+            score _wall_cost + AS score # Add the cost of the wall to the score
             1 AS _score_dirty
-            DROP                       # Drop the tile ID
+            0 AS running              # Set 'running' to 0 to end the game loop
+            # The current 'score' is the final score, no modification needed here.
         ELSE
-            score _costs + AS score
+            # --- FAILED ATTEMPT (PENALTY) ---
+            # Not all walls are green, so this is a penalty.
+            score _wall_cost - AS score # Subtract the full cost of the wall
             1 AS _score_dirty
-            delete_tile                # Delete the tile
+            # The wall is NOT deleted; it remains as a barrier.
         END
     END
 }
@@ -230,6 +272,7 @@ WHILE running DO
         t_monster_cooldown 1 - AS t_monster_cooldown
     ELSE
     # --- Hunter Monster AI ---
+        # The monster now always hunts when not in cooldown.
         &t_special t_special_time is_timer_ready IF
             # Get Player's coords
             tile_info PLAYER TILE_OBJ_SIZE * TILE_X + + AS temp_ptr
@@ -250,30 +293,34 @@ WHILE running DO
             player_y monster_y < IF monster_y 1 - AS monster_y END
 
             # Move the monster
-
-            # Move the monster blindly.
             monster_x monster_y SPECIAL tile_move
-            # Check for overlap other tiles
+
+            # --- GETTING CAUGHT (PENALTY) ---
+            # Check if the monster has caught the player
             SPECIAL GAME.check_overlap 
             PLAYER == IF
                 REACT_BLOCK red Special SPECIAL GAME.update_tile_props
+                # The score is positive, so apply the penalty
+                # score 2 // AS score 
+                # 1 AS _score_dirty
                 score 0 > IF
                     score 2 // AS score 
-                    score print_score
+                    1 AS _score_dirty
                 END
+                
+                # Speed up the monster to increase difficulty
                 t_special_time 90 > IF
                     t_special_time 1 - AS t_special_time
                 END
-                100 AS t_monster_cooldown
+                100 AS t_monster_cooldown # Monster becomes dormant
             ELSE
+                # Monster is hunting, but hasn't caught the player yet
                 REACT_BLOCK lightGray Special SPECIAL GAME.update_tile_props
             END
         END
     END
 
     
-
-
 
     # Run the gameengine logic
     GAME.handle_input          # Senses: Get a raw physics report.
@@ -295,9 +342,15 @@ WHILE running DO
         
         check_the_walls     # routine to check the walls and set color
 
+        # --- FIGHTING BACK (REDEMPTION) ---
+        # Player collides with the monster
         interacted_id SPECIAL == IF
-            REACT_BLOCK lightRed Special SPECIAL GAME.update_tile_props
-            200 AS t_monster_cooldown
+            score 0 < IF # Player is in "debt"
+                0 AS score # Reset score to 0
+                1 AS _score_dirty
+                REACT_BLOCK lightRed Special SPECIAL GAME.update_tile_props
+                200 AS t_monster_cooldown # Monster becomes dormant
+            END
         END
             
     END END
@@ -308,4 +361,26 @@ WHILE running DO
     END
     GAME.redraw_all_moved_tiles # Update screen for moving tiles
 
-DONE
+DONE        # End of th gameloop
+
+# --- Game Over Sequence ---
+# This code runs after the main loop (running == 0) has finished.
+DEF game_over_sequence {
+    # 1. Delete all tiles by moving them off-screen
+    0 AS i
+    WHILE i active_tile_count < DO
+        i delete_tile
+        i 1 + AS i
+    DONE
+
+    REACT_BLOCK cyan GameOverSprite SPECIAL GAME.update_tile_props
+    35 47 SPECIAL tile_move
+
+    GAME.redraw_all_moved_tiles
+
+    # 3. Optional: A final flip to ensure the screen is blank
+    GAME.refresh
+}
+
+# Call the game over sequence
+game_over_sequence
