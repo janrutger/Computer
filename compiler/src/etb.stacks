@@ -68,10 +68,11 @@ CONST COST_LONG_RIGHT  8
 CONST COST_ROOF        10
 
 VALUE interacted_id 0
+VALUE score 0
 
 # 2) Game setup & Patrol setup
 # initialize game engine
-init_game_lib
+GAME.init_game_lib
 
 
 # --- Game Developer's variables for a patrol sequence ---
@@ -169,8 +170,7 @@ DEF update_wall_visuals {
         AS _tile_id
 
         # Get current color
-        tile_info _tile_id TILE_OBJ_SIZE * + TILE_COLOR + AS temp_ptr
-        *temp_ptr AS _current_color
+        _tile_id GAME.get_color AS _current_color
 
         # Determine target color
         score _cost < IF orange ELSE lightGreen END
@@ -194,9 +194,8 @@ DEF update_wall_visuals {
 # ( tile_id -- boolean )
 DEF _is_wall_is_green {
     AS _tile_id
-    # Get current color of the tile
-    tile_info _tile_id TILE_OBJ_SIZE * + TILE_COLOR + AS temp_ptr
-    *temp_ptr lightGreen == # Returns 1 if lightGreen, 0 otherwise
+    # Get current color of the tile using the new getter
+    _tile_id GAME.get_color lightGreen ==
 }
 
 # Checks if all wall segments are currently green.
@@ -241,10 +240,10 @@ DEF check_the_walls {
         are_all_walls_green IF
             # --- SAFE BREAKOUT (WIN CONDITION) ---
             # All walls are green, and the player collided with one.
-            interacted_id delete_tile # Destroy the wall the player hit
-            score _wall_cost + AS score # Add the cost of the wall to the score
+            interacted_id GAME.delete_tile  # Destroy the wall the player hit
+            score _wall_cost + AS score     # Add the cost of the wall to the score
             1 AS _score_dirty
-            0 AS running              # Set 'running' to 0 to end the game loop
+            0 AS GAME.running               # Set 'running' to 0 to end the game loop
             # The current 'score' is the final score, no modification needed here.
         ELSE
             # --- FAILED ATTEMPT (PENALTY) ---
@@ -257,15 +256,15 @@ DEF check_the_walls {
 }
 
 # 3) Game loop
-1 AS running
-WHILE running DO
+1 AS GAME.running
+WHILE GAME.running DO
     # --- Update Visuals ---
     # Change wall colors to show if they are breakable
     update_wall_visuals
 
     # --- Coin Movement ---
-    &t_coin t_coin_time is_timer_ready IF
-        rnd_xy1 COIN tile_move
+    &t_coin t_coin_time GAME.is_timer_ready IF
+        rnd_xy1 COIN GAME.tile_move
     END
 
     t_monster_cooldown IF
@@ -273,18 +272,12 @@ WHILE running DO
     ELSE
     # --- Hunter Monster AI ---
         # The monster now always hunts when not in cooldown.
-        &t_special t_special_time is_timer_ready IF
+        &t_special t_special_time GAME.is_timer_ready IF
             # Get Player's coords
-            tile_info PLAYER TILE_OBJ_SIZE * TILE_X + + AS temp_ptr
-            *temp_ptr AS player_x
-            tile_info PLAYER TILE_OBJ_SIZE * TILE_Y + + AS temp_ptr
-            *temp_ptr AS player_y
+            PLAYER GAME.get_xy AS player_y AS player_x
 
             # Get Monster's coords
-            tile_info SPECIAL TILE_OBJ_SIZE * TILE_X + + AS temp_ptr
-            *temp_ptr AS monster_x
-            tile_info SPECIAL TILE_OBJ_SIZE * TILE_Y + + AS temp_ptr
-            *temp_ptr AS monster_y
+            SPECIAL GAME.get_xy AS monster_y AS monster_x
 
             # Calculate one step closer to the player
             player_x monster_x > IF monster_x 1 + AS monster_x END
@@ -293,7 +286,7 @@ WHILE running DO
             player_y monster_y < IF monster_y 1 - AS monster_y END
 
             # Move the monster
-            monster_x monster_y SPECIAL tile_move
+            monster_x monster_y SPECIAL GAME.tile_move
 
             # --- GETTING CAUGHT (PENALTY) ---
             # Check if the monster has caught the player
@@ -312,7 +305,7 @@ WHILE running DO
                 t_special_time 90 > IF
                     t_special_time 1 - AS t_special_time
                 END
-                100 AS t_monster_cooldown # Monster becomes dormant
+                100 AS t_monster_cooldown   # Monster becomes dormant
             ELSE
                 # Monster is hunting, but hasn't caught the player yet
                 REACT_BLOCK lightGray Special SPECIAL GAME.update_tile_props
@@ -333,9 +326,9 @@ WHILE running DO
         interacted_id COIN == IF
             score 1 + AS score
             1 AS _score_dirty
-            0 AS t_coin # Reset coin timer to force respawn
+            0 AS t_coin        # Reset coin timer to force respawn
             # Respawn the monster to a new random location
-            rnd_xy1 SPECIAL tile_move
+            rnd_xy1 SPECIAL GAME.tile_move
         END
     ELSE game_event GAME_EVENT_BLOCK_ACTION == IF
         # At this point, interacted_id is the PLAYER (keyboard) tile
@@ -345,11 +338,11 @@ WHILE running DO
         # --- FIGHTING BACK (REDEMPTION) ---
         # Player collides with the monster
         interacted_id SPECIAL == IF
-            score 0 < IF # Player is in "debt"
-                0 AS score # Reset score to 0
+            score 0 < IF            # Player is in "debt"
+                0 AS score          # Reset score to 0
                 1 AS _score_dirty
                 REACT_BLOCK lightRed Special SPECIAL GAME.update_tile_props
-                200 AS t_monster_cooldown # Monster becomes dormant
+                200 AS t_monster_cooldown   # Monster becomes dormant
             END
         END
             
@@ -359,9 +352,9 @@ WHILE running DO
         score print_score
         GAME.refresh
     END
-    GAME.redraw_all_moved_tiles # Update screen for moving tiles
+    GAME.redraw_all_moved_tiles     # Update screen for moving tiles
 
-DONE        # End of th gameloop
+DONE        # End of the gameloop
 
 # --- Game Over Sequence ---
 # This code runs after the main loop (running == 0) has finished.
@@ -369,15 +362,13 @@ DEF game_over_sequence {
     # 1. Delete all tiles by moving them off-screen
     0 AS i
     WHILE i active_tile_count < DO
-        i delete_tile
+        i GAME.delete_tile
         i 1 + AS i
     DONE
 
     REACT_BLOCK cyan GameOverSprite SPECIAL GAME.update_tile_props
-    35 47 SPECIAL tile_move
-
+    35 47 SPECIAL GAME.tile_move
     GAME.redraw_all_moved_tiles
-
     # 3. Optional: A final flip to ensure the screen is blank
     GAME.refresh
 }

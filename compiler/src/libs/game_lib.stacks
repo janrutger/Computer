@@ -43,7 +43,7 @@ CONST exit  27 ; <esc> key
 
 VALUE background 0  ; black
 VALUE foreground 5  ; green
-VALUE score 0
+
 
 # to keep track of mulitple tiles we need some bookkeeping
 # We need to keep track of 7 items of tile information
@@ -159,9 +159,9 @@ VALUE EVENT_POTENTIAL_X 0
 VALUE EVENT_POTENTIAL_Y 0
 
 VALUE PLAYER_IS_BLOCKED 0
-VALUE running 0
+VALUE GAME.running 0
 
-DEF init_game_lib {
+DEF GAME.init_game_lib {
     IO 2 ONLINE                 # HW screen configuration
     IO 2 NEW
     3 IO 2 MODE    
@@ -422,7 +422,7 @@ DEF GAME.handle_input {
         KEYvalue down  == IF current_y 1 + AS current_y END
         KEYvalue left  == IF current_x 1 - AS current_x END
         KEYvalue right == IF current_x 1 + AS current_x END
-        KEYvalue exit  == IF 0 AS running END
+        KEYvalue exit  == IF 0 AS GAME.running END
 
         # Check for collision at the potential new position
         current_x current_y KEYBOARD_TILE check_collision
@@ -566,7 +566,7 @@ DEF draw_tile_by_id {
 # This function marks the tile as moved and sets its coordinates
 # to a position outside the visible area.
 # Expects on stack: tile_id
-DEF delete_tile {
+DEF GAME.delete_tile {
     AS tile_id
     0 AS temp_ptr
 
@@ -584,9 +584,41 @@ DEF delete_tile {
     1 AS *temp_ptr
 }
 
+# Gets the color of a given tile.
+# Expects on stack: tile_id
+# Returns: color
+DEF GAME.get_color {
+    AS tile_id
+    0 AS temp_ptr
+
+    # Calculate address: tile_info + (tile_id * TILE_OBJ_SIZE) + TILE_COLOR
+    tile_info tile_id TILE_OBJ_SIZE * + TILE_COLOR + AS temp_ptr
+    *temp_ptr # Push the value at the address to the stack
+}
+
+# Gets the X and Y coordinates of a given tile.
+# Expects on stack: tile_id
+# Returns: x, y (y is on top of the stack)
+DEF GAME.get_xy {
+    AS tile_id
+    0 AS temp_ptr
+    0 AS tile_base_prt
+
+    # Calculate base address for the tile object
+    tile_info tile_id TILE_OBJ_SIZE * + AS tile_base_prt
+
+    # Get X coordinate and push it to the stack
+    tile_base_prt TILE_X + AS temp_ptr
+    *temp_ptr
+
+    # Get Y coordinate and push it to the stack
+    tile_base_prt TILE_Y + AS temp_ptr
+    *temp_ptr
+}
+
 # Draws all tiles at their current position, regardless of moved status.
 # Useful for the initial screen draw.
-DEF draw_all_tiles {
+DEF GAME.draw_all_tiles {
     0 AS i
     WHILE i active_tile_count < DO # Loop through all active tiles
         i draw_tile_by_id
@@ -609,7 +641,7 @@ DEF GAME.process_events {
         # --- OVERWRITE REACTION ---
         EVENT_TYPE REACT_OVERWRITE == IF
             # Mechanic 1: Delete the target tile.
-            EVENT_TARGET delete_tile
+            EVENT_TARGET GAME.delete_tile
 
             # Mechanic 2: Move the actor tile into the new space.
             0 AS temp_ptr
@@ -648,7 +680,7 @@ DEF GAME.refresh {
 # Checks a global timer. Returns 1 (true) when the timer reaches zero,
 # and automatically resets it. Returns 0 otherwise.
 # Expects on stack: cooldown_duration, timer_variable_pointer
-DEF is_timer_ready {
+DEF GAME.is_timer_ready {
     AS cooldown
     AS timer_ptr
 
@@ -665,7 +697,7 @@ DEF is_timer_ready {
 
 # Instantly moves a tile to a new position and marks it for redraw.
 # Expects on stack: new_x, new_y, tile_id
-DEF tile_move {
+DEF GAME.tile_move {
     AS tile_id
     AS new_y
     AS new_x
