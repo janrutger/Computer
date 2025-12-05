@@ -1,7 +1,7 @@
 # Bubbelesort example in the Stacks language
 USE std_stern_io
 USE std_time
-INCLUDE heaper_lib
+USE std_heap
 
 VALUE listlen 0
 VALUE N 0

@@ -193,3 +193,4 @@ The monster (Tile ID 7) adds a dynamic challenge and a path to redemption.
 #### Game Over
 
 The game concludes when the player achieves a "Safe Breakout". At this point, all tiles (player, coin, monster, walls) are removed from the screen, and the final score is displayed.
+

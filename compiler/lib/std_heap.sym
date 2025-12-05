@@ -1,24 +1,26 @@
 {
   "functions": [
-    "io_lib_init",
-    "HEAP.init",
     "KEYchar",
-    "PRTstring",
-    "PRTnum",
-    "ARRAY.get",
-    "ARRAY.append",
-    "READline",
-    "TOS.check",
-    "ARRAY.put",
-    "CURSORon",
-    "KEYpressed",
-    "HALT",
-    "NEW.array",
-    "PRTcls",
-    "ARRAY.size",
-    "CURSORoff",
     "ARRAY.len",
-    "PRTchar"
+    "NEW.array",
+    "PRTstring",
+    "PRTchar",
+    "ARRAY.put",
+    "READline",
+    "ARRAY.get",
+    "KEYpressed",
+    "CURSORon",
+    "ARRAY.append",
+    "PRTnum",
+    "io_lib_init",
+    "PRTcls",
+    "NEW.list",
+    "CURSORoff",
+    "HEAP.init",
+    "ARRAY.size",
+    "TOS.check",
+    "NEW.matrix",
+    "HALT"
   ],
   "variables": [
     {
@@ -77,6 +79,36 @@
       "size": 1
     },
     {
+      "name": "_MAT_TEMP_PTR",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_MAT_X_DIM",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_MAT_Y_DIM",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_MAT_VALUE",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_MAT_PTR",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_MAT_LOOP_COUNTER",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
       "name": "error_mesg0",
       "type": "STRING",
       "size": 29
@@ -95,6 +127,31 @@
       "name": "error_mesg3",
       "type": "STRING",
       "size": 32
+    },
+    {
+      "name": "error_mesg4",
+      "type": "STRING",
+      "size": 28
+    },
+    {
+      "name": "error_mesg5",
+      "type": "STRING",
+      "size": 30
+    },
+    {
+      "name": "error_mesg6",
+      "type": "STRING",
+      "size": 38
+    },
+    {
+      "name": "_list_size",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_list_ptr",
+      "type": "VALUE",
+      "size": 1
     },
     {
       "name": "requested_capacity",
@@ -143,6 +200,16 @@
     },
     {
       "name": "read_addr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_total_data_elements",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_total_matrix_size",
       "type": "VALUE",
       "size": 1
     }

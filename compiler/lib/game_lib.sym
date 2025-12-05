@@ -1,41 +1,50 @@
 {
   "functions": [
-    "GAME.delete_tile",
-    "STRcmp",
-    "PRTnum",
+    "HEAP.init",
     "HALT",
-    "CURSORoff",
-    "draw_tile_from_data",
     "STRfind",
-    "CURSORon",
-    "GAME.init_game_lib",
+    "ARRAY.size",
     "io_lib_init",
-    "GAME.get_color",
-    "GAME.is_timer_ready",
-    "KEYchar",
-    "PRTchar",
-    "PRTstring",
-    "clear_rect",
-    "check_collision",
-    "PRTcls",
-    "STRlen",
-    "GAME.update_tile_props",
-    "GAME.get_xy",
-    "GAME.process_events",
-    "STRcopy",
-    "TOS.check",
-    "GAME.check_overlap",
+    "ARRAY.put",
+    "draw_tile_from_data",
     "_negate",
+    "PRTnum",
     "GAME.refresh",
-    "draw_tile_by_id",
-    "GAME.tile_move",
-    "GAME.draw_all_tiles",
-    "STRatoi",
-    "GAME.handle_input",
+    "PRTstring",
+    "GAME.is_timer_ready",
+    "GAME.get_xy",
     "GAME.redraw_all_moved_tiles",
+    "PRTchar",
+    "STRcmp",
+    "GAME.process_events",
+    "STRlen",
+    "GAME.handle_input",
+    "PRTcls",
+    "STRcopy",
+    "NEW.array",
+    "ARRAY.get",
+    "CURSORon",
+    "KEYchar",
     "GAME.init_tile",
+    "GAME.get_color",
+    "clear_rect",
+    "TOS.check",
+    "ARRAY.append",
+    "GAME.delete_tile",
+    "STRatoi",
+    "READline",
+    "GAME.update_tile_props",
+    "GAME.check_overlap",
+    "draw_tile_by_id",
     "KEYpressed",
-    "READline"
+    "NEW.list",
+    "GAME.tile_move",
+    "NEW.matrix",
+    "ARRAY.len",
+    "GAME.draw_all_tiles",
+    "check_collision",
+    "CURSORoff",
+    "GAME.init_game_lib"
   ],
   "variables": [
     {
@@ -130,6 +139,166 @@
     },
     {
       "name": "_strfind_idx",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "HEAP_START",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "HEAP_SIZE",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "HEAP_FREE",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_ARR_TEMP_PTR",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_ARR_VALUE_PTR",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_MAT_TEMP_PTR",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_MAT_X_DIM",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_MAT_Y_DIM",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_MAT_VALUE",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_MAT_PTR",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_MAT_LOOP_COUNTER",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "error_mesg0",
+      "type": "LIB_VAR",
+      "size": 29
+    },
+    {
+      "name": "error_mesg1",
+      "type": "LIB_VAR",
+      "size": 29
+    },
+    {
+      "name": "error_mesg2",
+      "type": "LIB_VAR",
+      "size": 32
+    },
+    {
+      "name": "error_mesg3",
+      "type": "LIB_VAR",
+      "size": 32
+    },
+    {
+      "name": "error_mesg4",
+      "type": "LIB_VAR",
+      "size": 28
+    },
+    {
+      "name": "error_mesg5",
+      "type": "LIB_VAR",
+      "size": 30
+    },
+    {
+      "name": "error_mesg6",
+      "type": "LIB_VAR",
+      "size": 38
+    },
+    {
+      "name": "_list_size",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_list_ptr",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "requested_capacity",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "total_size",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "new_array_pointer",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "array_ptr",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_value",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_capacity",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_count",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "dest_addr",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_index",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "read_addr",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_total_data_elements",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_total_matrix_size",
       "type": "LIB_VAR",
       "size": 1
     },
@@ -472,11 +641,6 @@
       "name": "timer_ptr",
       "type": "VALUE",
       "size": 1
-    },
-    {
-      "name": "TILE_INFO",
-      "type": "LIST",
-      "size": 80
     },
     {
       "name": "EVENT_TYPE",

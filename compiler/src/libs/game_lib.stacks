@@ -1,8 +1,8 @@
 # Stacks Game engine
 
 USE std_stern_io
-#USE std_time
 USE std_string
+USE std_heap
 
 # All colors
 CONST black 0
@@ -150,8 +150,6 @@ VALUE actor_ptr 0
 VALUE cooldown 0
 VALUE timer_ptr 0
 
-LIST TILE_INFO 80 # 8 * 10
-
 VALUE EVENT_TYPE 0
 VALUE EVENT_TARGET 0
 VALUE EVENT_ACTOR 0
@@ -166,8 +164,8 @@ DEF GAME.init_game_lib {
     IO 2 NEW
     3 IO 2 MODE    
 
-    &TILE_INFO AS tile_info     # Pointer to Tile Information structure
-    
+    MAX_TILES TILE_OBJ_SIZE * NEW.list AS tile_info
+
     1 _negate AS EVENT_TYPE
     1 _negate AS EVENT_TARGET
     1 _negate AS EVENT_ACTOR

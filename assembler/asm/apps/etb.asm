@@ -67,7 +67,6 @@
 . $actor_ptr 1
 . $cooldown 1
 . $timer_ptr 1
-. $TILE_INFO 80
 . $EVENT_TYPE 1
 . $EVENT_TARGET 1
 . $EVENT_ACTOR 1
@@ -75,23 +74,14 @@
 . $EVENT_POTENTIAL_Y 1
 . $PLAYER_IS_BLOCKED 1
 . $GAME.running 1
-. $player_data 3
 . $Player 1
-. $coin_data 3
 . $Coin 1
-. $special_data 3
 . $Special 1
-. $roof_data 29
 . $Roof 1
-. $short_wall_data 12
 . $ShortWall 1
-. $long_wall_data 17
 . $LongWall 1
-. $game_over_data 11
 . $GameOverSprite 1
-. $you_won_data 9
 . $YouWonSprite 1
-. $you_lost_data 10
 . $YouLostSprite 1
 . $interacted_id 1
 . $score 1
@@ -122,41 +112,224 @@
 . $game_event 1
 
 # .CODE
-
-    % $player_data 1 1 200      ; Pacman sprite
-    ldi A $player_data
+    ldi A 200
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
     sto A $Player
-
-    % $coin_data 1 1 42         ; Star (*) sprite
-    ldi A $coin_data
+    ldi A 42
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
     sto A $Coin
-
-    % $special_data  1 1 204    ; 1x1 Monster sprite
-    ldi A $special_data
+    ldi A 204
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
     sto A $Special
-
-    % $roof_data 27 1 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201
-    ldi A $roof_data
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 27
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
     sto A $Roof
-
-    % $short_wall_data 1 10 201 201 201 201 201 201 201 201 201 201
-    ldi A $short_wall_data
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
     sto A $ShortWall
-
-    % $long_wall_data 1 15 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201
-    ldi A $long_wall_data
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 201
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
     sto A $LongWall
-
-    % $game_over_data 9 1 71 65 77 69 32 79 86 69 82 ; "GAME OVER"
-    ldi A $game_over_data
+    ldi A 82
+    stack A $DATASTACK_PTR
+    ldi A 69
+    stack A $DATASTACK_PTR
+    ldi A 86
+    stack A $DATASTACK_PTR
+    ldi A 79
+    stack A $DATASTACK_PTR
+    ldi A 32
+    stack A $DATASTACK_PTR
+    ldi A 69
+    stack A $DATASTACK_PTR
+    ldi A 77
+    stack A $DATASTACK_PTR
+    ldi A 65
+    stack A $DATASTACK_PTR
+    ldi A 71
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 9
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
     sto A $GameOverSprite
-
-    % $you_won_data 7 1 89 79 85 32 87 79 78 ; "YOU WON"
-    ldi A $you_won_data
+    ldi A 78
+    stack A $DATASTACK_PTR
+    ldi A 79
+    stack A $DATASTACK_PTR
+    ldi A 87
+    stack A $DATASTACK_PTR
+    ldi A 32
+    stack A $DATASTACK_PTR
+    ldi A 85
+    stack A $DATASTACK_PTR
+    ldi A 79
+    stack A $DATASTACK_PTR
+    ldi A 89
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 7
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
     sto A $YouWonSprite
-
-    % $you_lost_data 8 1 89 79 85 32 76 79 83 84 ; "YOU LOST"
-    ldi A $you_lost_data
+    ldi A 84
+    stack A $DATASTACK_PTR
+    ldi A 83
+    stack A $DATASTACK_PTR
+    ldi A 79
+    stack A $DATASTACK_PTR
+    ldi A 76
+    stack A $DATASTACK_PTR
+    ldi A 32
+    stack A $DATASTACK_PTR
+    ldi A 85
+    stack A $DATASTACK_PTR
+    ldi A 79
+    stack A $DATASTACK_PTR
+    ldi A 89
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 8
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
     sto A $YouLostSprite
     call @GAME.init_game_lib
     ldi A 350
@@ -625,7 +798,14 @@
     ldi A 14
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldi A $TILE_INFO
+    ldi A 8
+    stack A $DATASTACK_PTR
+    ldi A 10
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    call @NEW.list
+    ustack A $DATASTACK_PTR
     sto A $tile_info
     ldi A 1
     stack A $DATASTACK_PTR

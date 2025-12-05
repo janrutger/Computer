@@ -67,7 +67,6 @@
 . $actor_ptr 1
 . $cooldown 1
 . $timer_ptr 1
-. $TILE_INFO 80
 . $EVENT_TYPE 1
 . $EVENT_TARGET 1
 . $EVENT_ACTOR 1
@@ -107,7 +106,14 @@
     ldi A 14
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldi A $TILE_INFO
+    ldi A 8
+    stack A $DATASTACK_PTR
+    ldi A 10
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    call @NEW.list
+    ustack A $DATASTACK_PTR
     sto A $tile_info
     ldi A 1
     stack A $DATASTACK_PTR

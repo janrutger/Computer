@@ -24,6 +24,38 @@
 . $_strfind_p 1
 . $_strfind_char 1
 . $_strfind_idx 1
+. $HEAP_START 1
+. $HEAP_SIZE 1
+. $HEAP_FREE 1
+. $_ARR_TEMP_PTR 1
+. $_ARR_VALUE_PTR 1
+. $_MAT_TEMP_PTR 1
+. $_MAT_X_DIM 1
+. $_MAT_Y_DIM 1
+. $_MAT_VALUE 1
+. $_MAT_PTR 1
+. $_MAT_LOOP_COUNTER 1
+. $error_mesg0 29
+. $error_mesg1 29
+. $error_mesg2 32
+. $error_mesg3 32
+. $error_mesg4 28
+. $error_mesg5 30
+. $error_mesg6 38
+. $_list_size 1
+. $_list_ptr 1
+. $requested_capacity 1
+. $total_size 1
+. $new_array_pointer 1
+. $array_ptr 1
+. $_value 1
+. $_capacity 1
+. $_count 1
+. $dest_addr 1
+. $_index 1
+. $read_addr 1
+. $_total_data_elements 1
+. $_total_matrix_size 1
 
 # .CODE
 
@@ -42,6 +74,11 @@
     ldi A $SYSCALL_RETURN_VALUE
     stack A $DATASTACK_PTR
     call @io_lib_init
+    ldi A 10240
+    stack A $DATASTACK_PTR
+    ldi A 2048
+    stack A $DATASTACK_PTR
+    call @HEAP.init
     call @start_kernel
 
     :HALT    ; Breakpointg before halt
@@ -631,6 +668,469 @@
         ret
 
 
+@HEAP.init
+    ustack A $DATASTACK_PTR
+    sto A $HEAP_SIZE
+    ustack A $DATASTACK_PTR
+    sto A $HEAP_START
+    sto A $HEAP_FREE
+    ret
+@NEW.list
+    ustack A $DATASTACK_PTR
+    sto A $_list_size
+    ldm A $HEAP_FREE
+    stack A $DATASTACK_PTR
+    ldm A $_list_size
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $HEAP_START
+    stack A $DATASTACK_PTR
+    ldm A $HEAP_SIZE
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :NEW.list_if_end_0
+    ldi A $error_mesg4
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @HALT
+:NEW.list_if_end_0
+    ldm A $HEAP_FREE
+    sto A $_list_ptr
+    ldm A $HEAP_FREE
+    stack A $DATASTACK_PTR
+    ldm A $_list_size
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $HEAP_FREE
+    ldm A $_list_ptr
+    stack A $DATASTACK_PTR
+    ret
+@NEW.array
+    ustack A $DATASTACK_PTR
+    sto A $requested_capacity
+    stack A $DATASTACK_PTR
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $total_size
+    ldm A $HEAP_FREE
+    stack A $DATASTACK_PTR
+    ldm A $total_size
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $HEAP_START
+    stack A $DATASTACK_PTR
+    ldm A $HEAP_SIZE
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :NEW.array_if_end_1
+    ldi A $error_mesg0
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @HALT
+:NEW.array_if_end_1
+    ldm A $HEAP_FREE
+    sto A $new_array_pointer
+    ldm A $HEAP_FREE
+    stack A $DATASTACK_PTR
+    ldm A $total_size
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $HEAP_FREE
+    ldm A $new_array_pointer
+    sto A $_ARR_TEMP_PTR
+    ldm A $requested_capacity
+    ld B A
+    ldm I $_ARR_TEMP_PTR
+    stx B $_start_memory_
+    ldm A $new_array_pointer
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_ARR_TEMP_PTR
+    ldi A 0
+    ld B A
+    ldm I $_ARR_TEMP_PTR
+    stx B $_start_memory_
+    ldm A $new_array_pointer
+    stack A $DATASTACK_PTR
+    ret
+@ARRAY.append
+    ustack A $DATASTACK_PTR
+    sto A $array_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_value
+    ldm A $array_ptr
+    sto A $_ARR_TEMP_PTR
+    ldm I $_ARR_TEMP_PTR
+    ldx A $_start_memory_
+    sto A $_capacity
+    ldm A $array_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_ARR_TEMP_PTR
+    ldm I $_ARR_TEMP_PTR
+    ldx A $_start_memory_
+    sto A $_count
+    stack A $DATASTACK_PTR
+    ldm A $_capacity
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :ARRAY.append_if_end_2
+    ldi A $error_mesg1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @HALT
+:ARRAY.append_if_end_2
+    ldm A $_count
+    stack A $DATASTACK_PTR
+    ldm A $_capacity
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :ARRAY.append_if_end_3
+    ldi A $error_mesg1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @HALT
+:ARRAY.append_if_end_3
+    ldm A $array_ptr
+    stack A $DATASTACK_PTR
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $_count
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $dest_addr
+    sto A $_ARR_TEMP_PTR
+    ldm A $_value
+    ld B A
+    ldm I $_ARR_TEMP_PTR
+    stx B $_start_memory_
+    ldm A $array_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_ARR_TEMP_PTR
+    ldm A $_count
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ldm I $_ARR_TEMP_PTR
+    stx B $_start_memory_
+    ret
+@ARRAY.put
+    ustack A $DATASTACK_PTR
+    sto A $array_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_index
+    ustack A $DATASTACK_PTR
+    sto A $_value
+    ldm A $array_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_ARR_TEMP_PTR
+    ldm I $_ARR_TEMP_PTR
+    ldx A $_start_memory_
+    sto A $_count
+    ldm A $_index
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :ARRAY.put_if_end_4
+    ldi A $error_mesg2
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @HALT
+:ARRAY.put_if_end_4
+    ldm A $_index
+    stack A $DATASTACK_PTR
+    ldm A $_count
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :ARRAY.put_if_end_5
+    ldi A $error_mesg2
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @HALT
+:ARRAY.put_if_end_5
+    ldm A $_index
+    stack A $DATASTACK_PTR
+    ldm A $_count
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :ARRAY.put_if_end_6
+    ldi A $error_mesg2
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @HALT
+:ARRAY.put_if_end_6
+    ldm A $array_ptr
+    stack A $DATASTACK_PTR
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $_index
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $dest_addr
+    sto A $_ARR_TEMP_PTR
+    ldm A $_value
+    ld B A
+    ldm I $_ARR_TEMP_PTR
+    stx B $_start_memory_
+    ret
+@ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $array_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_index
+    ldm A $array_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_ARR_TEMP_PTR
+    ldm I $_ARR_TEMP_PTR
+    ldx A $_start_memory_
+    sto A $_count
+    ldm A $_index
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :ARRAY.get_if_end_7
+    ldi A $error_mesg3
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @HALT
+:ARRAY.get_if_end_7
+    ldm A $_index
+    stack A $DATASTACK_PTR
+    ldm A $_count
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :ARRAY.get_if_end_8
+    ldi A $error_mesg3
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @HALT
+:ARRAY.get_if_end_8
+    ldm A $_index
+    stack A $DATASTACK_PTR
+    ldm A $_count
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :ARRAY.get_if_end_9
+    ldi A $error_mesg3
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @HALT
+:ARRAY.get_if_end_9
+    ldm A $array_ptr
+    stack A $DATASTACK_PTR
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $_index
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $read_addr
+    sto A $_ARR_TEMP_PTR
+    ldm I $_ARR_TEMP_PTR
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ret
+@ARRAY.size
+    ustack A $DATASTACK_PTR
+    sto A $array_ptr
+    sto A $_ARR_TEMP_PTR
+    ldm I $_ARR_TEMP_PTR
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ret
+@ARRAY.len
+    ustack A $DATASTACK_PTR
+    sto A $array_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_ARR_TEMP_PTR
+    ldm I $_ARR_TEMP_PTR
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ret
+@NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_MAT_X_DIM
+    ustack A $DATASTACK_PTR
+    sto A $_MAT_Y_DIM
+    ldm A $_MAT_X_DIM
+    stack A $DATASTACK_PTR
+    ldm A $_MAT_Y_DIM
+    ustack B $DATASTACK_PTR
+    mul B A
+    ld A B
+    sto A $_total_data_elements
+    stack A $DATASTACK_PTR
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_total_matrix_size
+    ldm A $HEAP_FREE
+    stack A $DATASTACK_PTR
+    ldm A $_total_matrix_size
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $HEAP_START
+    stack A $DATASTACK_PTR
+    ldm A $HEAP_SIZE
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :NEW.matrix_if_end_10
+    ldi A $error_mesg5
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @HALT
+:NEW.matrix_if_end_10
+    ldm A $HEAP_FREE
+    sto A $_MAT_PTR
+    ldm A $HEAP_FREE
+    stack A $DATASTACK_PTR
+    ldm A $_total_matrix_size
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $HEAP_FREE
+    ldm A $_MAT_PTR
+    sto A $_MAT_TEMP_PTR
+    ldm A $_MAT_X_DIM
+    ld B A
+    ldm I $_MAT_TEMP_PTR
+    stx B $_start_memory_
+    ldm A $_MAT_PTR
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_MAT_TEMP_PTR
+    ldm A $_MAT_Y_DIM
+    ld B A
+    ldm I $_MAT_TEMP_PTR
+    stx B $_start_memory_
+    ldm A $_MAT_PTR
+    stack A $DATASTACK_PTR
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_MAT_TEMP_PTR
+    ldi A 0
+    sto A $_MAT_LOOP_COUNTER
+:matrix_populate_loop
+    ldm A $_MAT_LOOP_COUNTER
+    stack A $DATASTACK_PTR
+    ldm A $_total_data_elements
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :NEW.matrix_if_end_11
+    call @TOS.check
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :NEW.matrix_if_end_12
+    ldi A $error_mesg6
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @HALT
+:NEW.matrix_if_end_12
+    ustack A $DATASTACK_PTR
+    sto A $_MAT_VALUE
+    ld B A
+    ldm I $_MAT_TEMP_PTR
+    stx B $_start_memory_
+    ldm A $_MAT_TEMP_PTR
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_MAT_TEMP_PTR
+    ldm A $_MAT_LOOP_COUNTER
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_MAT_LOOP_COUNTER
+    jmp :matrix_populate_loop
+:NEW.matrix_if_end_11
+    ldm A $_MAT_PTR
+    stack A $DATASTACK_PTR
+    ret
+
+
 # .DATA
 
 % $p_epoc 0
@@ -658,3 +1158,36 @@
 % $_strfind_p 0
 % $_strfind_char 0
 % $_strfind_idx 0
+
+% $HEAP_START 0
+% $HEAP_SIZE 0
+% $HEAP_FREE 0
+% $_ARR_TEMP_PTR 0
+% $_ARR_VALUE_PTR 0
+% $_MAT_TEMP_PTR 0
+% $_MAT_X_DIM 0
+% $_MAT_Y_DIM 0
+% $_MAT_VALUE 0
+% $_MAT_PTR 0
+% $_MAT_LOOP_COUNTER 0
+% $error_mesg0 \N \E \W \. \a \r \r \a \y \: \space \N \o \space \s \p \a \c \e \space \o \n \space \h \e \a \p \Return \null
+% $error_mesg1 \A \R \R \A \Y \. \a \p \p \e \n \d \: \space \A \r \r \a \y \space \i \s \space \f \u \l \l \Return \null
+% $error_mesg2 \A \R \R \A \Y \. \p \u \t \: \space \I \n \d \e \x \space \o \u \t \space \o \f \space \b \o \u \n \d \s \Return \null
+% $error_mesg3 \A \R \R \A \Y \. \g \e \t \: \space \I \n \d \e \x \space \o \u \t \space \o \f \space \b \o \u \n \d \s \Return \null
+% $error_mesg4 \N \E \W \. \l \i \s \t \: \space \N \o \space \s \p \a \c \e \space \o \n \space \h \e \a \p \Return \null
+% $error_mesg5 \N \E \W \. \m \a \t \r \i \x \: \space \N \o \space \s \p \a \c \e \space \o \n \space \h \e \a \p \Return \null
+% $error_mesg6 \N \E \W \. \m \a \t \r \i \x \: \space \N \o \t \space \e \n \o \u \g \h \space \d \a \t \a \space \o \n \space \s \t \a \c \k \Return \null
+% $_list_size 0
+% $_list_ptr 0
+% $requested_capacity 0
+% $total_size 0
+% $new_array_pointer 0
+% $array_ptr 0
+% $_value 0
+% $_capacity 0
+% $_count 0
+% $dest_addr 0
+% $_index 0
+% $read_addr 0
+% $_total_data_elements 0
+% $_total_matrix_size 0

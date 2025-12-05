@@ -4,64 +4,41 @@
 ##
 
 # 0) Include and helpers routines
+USE std_heap
 INCLUDE game_lib
 
 
 # 1) define the Tile data
-LIST player_data 3              ; Define player
-ASM {
-    % $player_data 1 1 200      ; Pacman sprite
-}
-&player_data AS Player
+200 1 1 NEW.matrix AS Player
+42  1 1 NEW.matrix AS Coin
+204 1 1 NEW.matrix AS Special
 
-LIST coin_data 3                ; Define coin
-ASM {
-    % $coin_data 1 1 42         ; Star (*) sprite
-}
-&coin_data AS Coin
 
-LIST special_data  3            ; define Monster
-ASM {
-    % $special_data  1 1 204    ; 1x1 Monster sprite
-}
-&special_data AS Special
+# Roof sprite (27x1)
+201 201 201 201 201 201 201 201 201 # 9
+201 201 201 201 201 201 201 201 201 # 18
+201 201 201 201 201 201 201 201 201 # 27
+1 27 NEW.matrix AS Roof
 
-LIST roof_data 29               ; Define roof (27 wide)
-ASM {
-    % $roof_data 27 1 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201
-}
-&roof_data AS Roof
+# Short wall sprite (1x10)
+201 201 201 201 201 201 201 201 201 201
+10 1 NEW.matrix AS ShortWall
 
-LIST short_wall_data 12         ; Define short wall (10 high)
-ASM {
-    % $short_wall_data 1 10 201 201 201 201 201 201 201 201 201 201
-}
-&short_wall_data AS ShortWall
+# Long wall sprite (1x15)
+201 201 201 201 201 201 201 201 201 201 201 201 201 201 201
+15 1 NEW.matrix AS LongWall
 
-LIST long_wall_data 17          ; Define long wall (15 high)
-ASM {
-    % $long_wall_data 1 15 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201
-}
-&long_wall_data AS LongWall
+# "GAME OVER" sprite (9x1)
+82 69 86 79 32 69 77 65 71
+1 9 NEW.matrix AS GameOverSprite
 
-LIST game_over_data 11 ; 8 chars + width/height
-ASM {
-    % $game_over_data 9 1 71 65 77 69 32 79 86 69 82 ; "GAME OVER"
-}
-&game_over_data AS GameOverSprite
+# "YOU WON" sprite (7x1)
+78 79 87 32 85 79 89
+1 7 NEW.matrix AS YouWonSprite
 
-LIST you_won_data 9 ; 7 chars + width/height
-ASM {
-    % $you_won_data 7 1 89 79 85 32 87 79 78 ; "YOU WON"
-}
-&you_won_data AS YouWonSprite
-
-LIST you_lost_data 10 ; 8 chars + width/height
-ASM {
-    % $you_lost_data 8 1 89 79 85 32 76 79 83 84 ; "YOU LOST"
-}
-&you_lost_data AS YouLostSprite
-
+# "YOU LOST" sprite (8x1)
+84 83 79 76 32 85 79 89
+1 8 NEW.matrix AS YouLostSprite
 
 CONST PLAYER      0
 CONST COIN        1
@@ -179,7 +156,7 @@ DEF print_coins {
 
     AS _coins
     
-    background IO 2 COLOR
+    background  IO 2 COLOR
     solid_block IO 2 DRAW
     yellow IO 2 COLOR
     42 IO 2 DRAW # Draw a star for the coin symbol

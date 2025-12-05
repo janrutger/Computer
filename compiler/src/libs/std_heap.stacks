@@ -16,12 +16,23 @@ VALUE HEAP_FREE 0
 VALUE _ARR_TEMP_PTR 0
 VALUE _ARR_VALUE_PTR 0
 
+; --- Internal state for Matrix operations ---
+VALUE _MAT_TEMP_PTR 0
+VALUE _MAT_X_DIM 0
+VALUE _MAT_Y_DIM 0
+VALUE _MAT_VALUE 0
+VALUE _MAT_PTR 0
+VALUE _MAT_LOOP_COUNTER 0
+
 
 STRING error_mesg0 "NEW.array: No space on heap\n"
 STRING error_mesg1 "ARRAY.append: Array is full\n"
 STRING error_mesg2 "ARRAY.put: Index out of bounds\n"
 STRING error_mesg3 "ARRAY.get: Index out of bounds\n"
 
+STRING error_mesg4 "NEW.list: No space on heap\n"
+STRING error_mesg5 "NEW.matrix: No space on heap\n"
+STRING error_mesg6 "NEW.matrix: Not enough data on stack\n"
 
 ; --- HEAP.init ---
 ; Initializes the heap allocator. This must be called once before any
@@ -33,6 +44,28 @@ DEF HEAP.init {
     HEAP_START AS HEAP_FREE
 }
 
+; --- NEW.list ---
+; Allocates a raw block of memory from the heap (like malloc).
+; No header is created.
+; ( size_in_words -- pointer_to_block )
+VALUE _list_size 0
+VALUE _list_ptr 0
+DEF NEW.list {
+    AS _list_size
+
+    ; Check if there is enough space on the heap
+    HEAP_FREE _list_size + HEAP_START HEAP_SIZE + > IF
+        &error_mesg4 PRTstring
+        HALT
+    END
+
+    HEAP_FREE AS _list_ptr
+
+    ; Update next_free_space
+    HEAP_FREE _list_size + AS HEAP_FREE
+
+    _list_ptr     ; return pointer to allocated block
+}
 
 ; --- NEW.array ---
 ; Creates a new array. Halts on failure.
@@ -190,4 +223,55 @@ DEF ARRAY.len {
     AS array_ptr
     array_ptr 1 + AS _ARR_TEMP_PTR
     *_ARR_TEMP_PTR
+}
+
+; --- NEW.matrix ---
+; Creates a new matrix and initializes it with data from the stack.
+; Halts on failure.
+; ( data_N ... data_0 y_dim x_dim -- new_matrix_pointer )
+VALUE _total_data_elements 0
+VALUE _total_matrix_size 0
+DEF NEW.matrix {
+    AS _MAT_X_DIM
+    AS _MAT_Y_DIM
+
+    _MAT_X_DIM _MAT_Y_DIM * AS _total_data_elements ; Calculate total data elements
+    _total_data_elements 2 + AS _total_matrix_size  ; Add 2 for header (x_dim, y_dim)
+
+    ; Check if there is enough space on the heap
+    HEAP_FREE _total_matrix_size + HEAP_START HEAP_SIZE + > IF
+        &error_mesg5 PRTstring
+        HALT
+    END
+
+    HEAP_FREE AS _MAT_PTR ; This will be the pointer to the new matrix
+
+    ; Update next_free_space
+    HEAP_FREE _total_matrix_size + AS HEAP_FREE
+
+    ; Write header
+    _MAT_PTR AS _MAT_TEMP_PTR
+    _MAT_X_DIM AS *_MAT_TEMP_PTR   ; X Dimension
+    _MAT_PTR 1 + AS _MAT_TEMP_PTR
+    _MAT_Y_DIM AS *_MAT_TEMP_PTR   ; Y Dimension
+
+    ; Populate data elements from stack
+    _MAT_PTR 2 + AS _MAT_TEMP_PTR ; Start writing data after header
+    0 AS _MAT_LOOP_COUNTER        ; Use as loop counter
+
+    :matrix_populate_loop
+        _MAT_LOOP_COUNTER _total_data_elements < IF
+            TOS.check 0 == IF
+                &error_mesg6 PRTstring
+                HALT
+            END
+
+            AS _MAT_VALUE          ; Pop data element from stack
+            _MAT_VALUE AS *_MAT_TEMP_PTR ; Write value to the address in _MAT_TEMP_PTR
+            _MAT_TEMP_PTR 1 + AS _MAT_TEMP_PTR ; Move to next memory location
+            _MAT_LOOP_COUNTER 1 + AS _MAT_LOOP_COUNTER
+            GOTO matrix_populate_loop
+        END
+
+    _MAT_PTR     ; return new matrix pointer
 }
