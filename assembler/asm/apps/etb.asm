@@ -89,8 +89,14 @@
 . $LongWall 1
 . $game_over_data 11
 . $GameOverSprite 1
+. $you_won_data 9
+. $YouWonSprite 1
+. $you_lost_data 10
+. $YouLostSprite 1
 . $interacted_id 1
 . $score 1
+. $coins_remaining 1
+. $player_won 1
 . $t_coin 1
 . $t_coin_time 1
 . $t_special 1
@@ -101,6 +107,8 @@
 . $_hunreds 1
 . $_tens 1
 . $_ones 1
+. $_coins_dirty 1
+. $_coins 1
 . $_data_ptr 1
 . $_cost 1
 . $_tile_id 1
@@ -142,6 +150,14 @@
     % $game_over_data 9 1 71 65 77 69 32 79 86 69 82 ; "GAME OVER"
     ldi A $game_over_data
     sto A $GameOverSprite
+
+    % $you_won_data 7 1 89 79 85 32 87 79 78 ; "YOU WON"
+    ldi A $you_won_data
+    sto A $YouWonSprite
+
+    % $you_lost_data 8 1 89 79 85 32 76 79 83 84 ; "YOU LOST"
+    ldi A $you_lost_data
+    sto A $YouLostSprite
     call @GAME.init_game_lib
     ldi A 350
     sto A $t_coin
@@ -268,6 +284,17 @@
     tst A 0
     jmpt :_main_while_end_0
     call @update_wall_visuals
+    ldm A $coins_remaining
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_main_if_end_15
+    ldi A 0
+    sto A $GAME.running
+:_main_if_end_15
     ldi A $t_coin
     stack A $DATASTACK_PTR
     ldm A $t_coin_time
@@ -275,15 +302,24 @@
     call @GAME.is_timer_ready
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_15
+    jmpt :_main_if_end_16
     call @rnd_xy1
     ldi A 1
     stack A $DATASTACK_PTR
     call @GAME.tile_move
-:_main_if_end_15
+    ldm A $coins_remaining
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $coins_remaining
+    ldi A 1
+    sto A $_coins_dirty
+:_main_if_end_16
     ldm A $t_monster_cooldown
     tst A 0
-    jmpt :_main_if_else_16
+    jmpt :_main_if_else_17
     ldm A $t_monster_cooldown
     stack A $DATASTACK_PTR
     ldi A 1
@@ -291,8 +327,8 @@
     sub B A
     ld A B
     sto A $t_monster_cooldown
-    jmp :_main_if_end_16
-:_main_if_else_16
+    jmp :_main_if_end_17
+:_main_if_else_17
     ldi A $t_special
     stack A $DATASTACK_PTR
     ldm A $t_special_time
@@ -300,7 +336,7 @@
     call @GAME.is_timer_ready
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_17
+    jmpt :_main_if_end_18
     ldi A 0
     stack A $DATASTACK_PTR
     call @GAME.get_xy
@@ -322,7 +358,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_18
+    jmpt :_main_if_end_19
     ldm A $monster_x
     stack A $DATASTACK_PTR
     ldi A 1
@@ -330,7 +366,7 @@
     add B A
     ld A B
     sto A $monster_x
-:_main_if_end_18
+:_main_if_end_19
     ldm A $player_x
     stack A $DATASTACK_PTR
     ldm A $monster_x
@@ -338,7 +374,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_19
+    jmpt :_main_if_end_20
     ldm A $monster_x
     stack A $DATASTACK_PTR
     ldi A 1
@@ -346,7 +382,7 @@
     sub B A
     ld A B
     sto A $monster_x
-:_main_if_end_19
+:_main_if_end_20
     ldm A $player_y
     stack A $DATASTACK_PTR
     ldm A $monster_y
@@ -354,7 +390,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_20
+    jmpt :_main_if_end_21
     ldm A $monster_y
     stack A $DATASTACK_PTR
     ldi A 1
@@ -362,7 +398,7 @@
     add B A
     ld A B
     sto A $monster_y
-:_main_if_end_20
+:_main_if_end_21
     ldm A $player_y
     stack A $DATASTACK_PTR
     ldm A $monster_y
@@ -370,7 +406,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_21
+    jmpt :_main_if_end_22
     ldm A $monster_y
     stack A $DATASTACK_PTR
     ldi A 1
@@ -378,7 +414,7 @@
     sub B A
     ld A B
     sto A $monster_y
-:_main_if_end_21
+:_main_if_end_22
     ldm A $monster_x
     stack A $DATASTACK_PTR
     ldm A $monster_y
@@ -394,7 +430,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_else_22
+    jmpt :_main_if_else_23
     ldi A 0
     stack A $DATASTACK_PTR
     ldi A 2
@@ -411,7 +447,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_23
+    jmpt :_main_if_end_24
     ldm A $score
     stack A $DATASTACK_PTR
     ldi A 2
@@ -421,7 +457,7 @@
     sto A $score
     ldi A 1
     sto A $_score_dirty
-:_main_if_end_23
+:_main_if_end_24
     ldm A $t_special_time
     stack A $DATASTACK_PTR
     ldi A 90
@@ -429,7 +465,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_24
+    jmpt :_main_if_end_25
     ldm A $t_special_time
     stack A $DATASTACK_PTR
     ldi A 1
@@ -437,11 +473,11 @@
     sub B A
     ld A B
     sto A $t_special_time
-:_main_if_end_24
+:_main_if_end_25
     ldi A 100
     sto A $t_monster_cooldown
-    jmp :_main_if_end_22
-:_main_if_else_22
+    jmp :_main_if_end_23
+:_main_if_else_23
     ldi A 0
     stack A $DATASTACK_PTR
     ldi A 15
@@ -451,9 +487,9 @@
     ldi A 7
     stack A $DATASTACK_PTR
     call @GAME.update_tile_props
-:_main_if_end_22
+:_main_if_end_23
+:_main_if_end_18
 :_main_if_end_17
-:_main_if_end_16
     call @GAME.handle_input
     call @GAME.process_events
     ustack A $DATASTACK_PTR
@@ -466,7 +502,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_else_25
+    jmpt :_main_if_else_26
     ldm A $interacted_id
     stack A $DATASTACK_PTR
     ldi A 1
@@ -474,7 +510,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_26
+    jmpt :_main_if_end_27
     ldm A $score
     stack A $DATASTACK_PTR
     ldi A 1
@@ -486,13 +522,9 @@
     sto A $_score_dirty
     ldi A 0
     sto A $t_coin
-    call @rnd_xy1
-    ldi A 7
-    stack A $DATASTACK_PTR
-    call @GAME.tile_move
-:_main_if_end_26
-    jmp :_main_if_end_25
-:_main_if_else_25
+:_main_if_end_27
+    jmp :_main_if_end_26
+:_main_if_else_26
     ldm A $game_event
     stack A $DATASTACK_PTR
     ldi A 1
@@ -500,7 +532,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_27
+    jmpt :_main_if_end_28
     call @check_the_walls
     ldm A $interacted_id
     stack A $DATASTACK_PTR
@@ -509,7 +541,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_28
+    jmpt :_main_if_end_29
     ldm A $score
     stack A $DATASTACK_PTR
     ldi A 0
@@ -517,7 +549,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_29
+    jmpt :_main_if_end_30
     ldi A 0
     sto A $score
     ldi A 1
@@ -533,18 +565,26 @@
     call @GAME.update_tile_props
     ldi A 200
     sto A $t_monster_cooldown
+:_main_if_end_30
 :_main_if_end_29
 :_main_if_end_28
-:_main_if_end_27
-:_main_if_end_25
+:_main_if_end_26
     ldm A $_score_dirty
     tst A 0
-    jmpt :_main_if_end_30
+    jmpt :_main_if_end_31
     ldm A $score
     stack A $DATASTACK_PTR
     call @print_score
     call @GAME.refresh
-:_main_if_end_30
+:_main_if_end_31
+    ldm A $_coins_dirty
+    tst A 0
+    jmpt :_main_if_end_32
+    ldm A $coins_remaining
+    stack A $DATASTACK_PTR
+    call @print_coins
+    call @GAME.refresh
+:_main_if_end_32
     call @GAME.redraw_all_moved_tiles
     jmp :_main_while_start_0
 :_main_while_end_0
@@ -2665,6 +2705,196 @@
     ldi A 0
     sto A $_score_dirty
     ret
+@print_coins
+    ldi A 49
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 32
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 16
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ustack A $DATASTACK_PTR
+    sto A $_coins
+    ldm A $background
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 203
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 7
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 42
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $_coins
+    stack A $DATASTACK_PTR
+    ldi A 100
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack B $DATASTACK_PTR
+    ldi A 48
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_hunreds
+    ldm A $_coins
+    stack A $DATASTACK_PTR
+    ldi A 100
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
+    ldi A 10
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack B $DATASTACK_PTR
+    ldi A 48
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_tens
+    ldm A $_coins
+    stack A $DATASTACK_PTR
+    ldi A 10
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
+    ldi A 48
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_ones
+    ldi A 50
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $background
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 203
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 7
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $_hunreds
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 51
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $background
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 203
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 7
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $_tens
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 52
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $background
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 203
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 7
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $_ones
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 0
+    sto A $_coins_dirty
+    ret
 @check_and_update_color
     ustack A $DATASTACK_PTR
     sto A $_data_ptr
@@ -2750,9 +2980,6 @@
     call @check_and_update_color
     ret
 @_is_wall_is_green
-    ustack A $DATASTACK_PTR
-    sto A $_tile_id
-    stack A $DATASTACK_PTR
     call @GAME.get_color
     ldi A 13
     stack A $DATASTACK_PTR
@@ -2910,6 +3137,8 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :check_the_walls_if_else_14
+    ldi A 1
+    sto A $player_won
     ldm A $interacted_id
     stack A $DATASTACK_PTR
     call @GAME.delete_tile
@@ -2962,22 +3191,44 @@
     sto A $i
     jmp :game_over_sequence_while_start_1
 :game_over_sequence_while_end_1
+    ldm A $player_won
+    tst A 0
+    jmpt :game_over_sequence_if_else_33
     ldi A 0
     stack A $DATASTACK_PTR
-    ldi A 3
+    ldi A 13
     stack A $DATASTACK_PTR
-    ldm A $GameOverSprite
+    ldm A $YouWonSprite
     stack A $DATASTACK_PTR
     ldi A 7
     stack A $DATASTACK_PTR
     call @GAME.update_tile_props
-    ldi A 35
+    ldi A 36
     stack A $DATASTACK_PTR
     ldi A 47
     stack A $DATASTACK_PTR
     ldi A 7
     stack A $DATASTACK_PTR
     call @GAME.tile_move
+    jmp :game_over_sequence_if_end_33
+:game_over_sequence_if_else_33
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $YouLostSprite
+    stack A $DATASTACK_PTR
+    ldi A 7
+    stack A $DATASTACK_PTR
+    call @GAME.update_tile_props
+    ldi A 36
+    stack A $DATASTACK_PTR
+    ldi A 47
+    stack A $DATASTACK_PTR
+    ldi A 7
+    stack A $DATASTACK_PTR
+    call @GAME.tile_move
+:game_over_sequence_if_end_33
     call @GAME.redraw_all_moved_tiles
     call @GAME.refresh
     ret
@@ -3061,4 +3312,7 @@
 % $GAME.running 0
 % $interacted_id 0
 % $score 0
+% $coins_remaining 20
+% $player_won 0
 % $_score_dirty 1
+% $_coins_dirty 1

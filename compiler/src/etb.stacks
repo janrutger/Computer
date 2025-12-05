@@ -50,6 +50,17 @@ ASM {
 }
 &game_over_data AS GameOverSprite
 
+LIST you_won_data 9 ; 7 chars + width/height
+ASM {
+    % $you_won_data 7 1 89 79 85 32 87 79 78 ; "YOU WON"
+}
+&you_won_data AS YouWonSprite
+
+LIST you_lost_data 10 ; 8 chars + width/height
+ASM {
+    % $you_lost_data 8 1 89 79 85 32 76 79 83 84 ; "YOU LOST"
+}
+&you_lost_data AS YouLostSprite
 
 
 CONST PLAYER      0
@@ -69,6 +80,8 @@ CONST COST_ROOF        10
 
 VALUE interacted_id 0
 VALUE score 0
+VALUE coins_remaining 20
+VALUE player_won 0
 
 # 2) Game setup & Patrol setup
 # initialize game engine
@@ -158,6 +171,42 @@ DEF print_score {
     0 AS _score_dirty
 }
 
+VALUE _coins_dirty 1
+DEF print_coins {
+    #red IO 2 COLOR
+    49 IO 2 X 
+    32 IO 2 Y 
+
+    AS _coins
+    
+    background IO 2 COLOR
+    solid_block IO 2 DRAW
+    yellow IO 2 COLOR
+    42 IO 2 DRAW # Draw a star for the coin symbol
+
+    _coins 100 //      48 + AS _hunreds
+    _coins 100 % 10 // 48 + AS _tens
+    _coins 10 %        48 + AS _ones
+
+    50 IO 2 X 
+        background IO 2 COLOR
+        solid_block IO 2 DRAW
+        yellow IO 2 COLOR
+        _hunreds   IO 2 DRAW
+    51 IO 2 X 
+        background IO 2 COLOR
+        solid_block IO 2 DRAW
+        yellow IO 2 COLOR
+        _tens      IO 2 DRAW
+    52 IO 2 X 
+        background IO 2 COLOR
+        solid_block IO 2 DRAW
+        yellow IO 2 COLOR
+        _ones      IO 2 DRAW
+
+    0 AS _coins_dirty
+}
+
 # Helper function to update wall colors based on player score
 DEF update_wall_visuals {
     # This function checks each wall and updates its color if the player can afford it.
@@ -193,10 +242,12 @@ DEF update_wall_visuals {
 # Helper function to check if a specific wall tile is currently green.
 # ( tile_id -- boolean )
 DEF _is_wall_is_green {
-    AS _tile_id
+    #AS _tile_id
     # Get current color of the tile using the new getter
-    _tile_id GAME.get_color lightGreen ==
+    #_tile_id GAME.get_color lightGreen ==
+    GAME.get_color lightGreen ==
 }
+
 
 # Checks if all wall segments are currently green.
 # ( -- boolean )
@@ -240,8 +291,9 @@ DEF check_the_walls {
         are_all_walls_green IF
             # --- SAFE BREAKOUT (WIN CONDITION) ---
             # All walls are green, and the player collided with one.
-            interacted_id GAME.delete_tile  # Destroy the wall the player hit
-            score _wall_cost + AS score     # Add the cost of the wall to the score
+            1 AS player_won                 # Set the win flag
+            interacted_id GAME.delete_tile  # Destroy the wall
+            score _wall_cost + AS score     # The escape has a cost!
             1 AS _score_dirty
             0 AS GAME.running               # Set 'running' to 0 to end the game loop
             # The current 'score' is the final score, no modification needed here.
@@ -262,9 +314,22 @@ WHILE GAME.running DO
     # Change wall colors to show if they are breakable
     update_wall_visuals
 
-    # --- Coin Movement ---
+    # --- Game Over Check ---
+    # If we are out of coins and haven't won, it's game over.
+    coins_remaining 0 == IF
+        0 AS GAME.running
+    END
+
+    # --- Coin Respawn Logic ---
+    # The coin timer is now used to respawn the coin after it's collected.
     &t_coin t_coin_time GAME.is_timer_ready IF
         rnd_xy1 COIN GAME.tile_move
+        coins_remaining 1 - AS coins_remaining
+        1 AS _coins_dirty
+
+        # coins_remaining 0 == IF
+        #     0 AS GAME.running
+        # END
     END
 
     t_monster_cooldown IF
@@ -325,10 +390,11 @@ WHILE GAME.running DO
     game_event GAME_EVENT_OVERWRITE_ACTION == IF
         interacted_id COIN == IF
             score 1 + AS score
+            # coins_remaining 1 - AS coins_remaining
             1 AS _score_dirty
-            0 AS t_coin        # Reset coin timer to force respawn
-            # Respawn the monster to a new random location
-            rnd_xy1 SPECIAL GAME.tile_move
+            # 1 AS _coins_dirty
+            # Force the coin timer to 0 to trigger an immediate respawn on the next cycle
+            0 AS t_coin
         END
     ELSE game_event GAME_EVENT_BLOCK_ACTION == IF
         # At this point, interacted_id is the PLAYER (keyboard) tile
@@ -352,6 +418,11 @@ WHILE GAME.running DO
         score print_score
         GAME.refresh
     END
+
+    _coins_dirty IF
+        coins_remaining print_coins
+        GAME.refresh
+    END
     GAME.redraw_all_moved_tiles     # Update screen for moving tiles
 
 DONE        # End of the gameloop
@@ -365,10 +436,19 @@ DEF game_over_sequence {
         i GAME.delete_tile
         i 1 + AS i
     DONE
+    
+    player_won IF
+        # --- Player Won ---
+        REACT_BLOCK lightGreen YouWonSprite SPECIAL GAME.update_tile_props
+        36 47 SPECIAL GAME.tile_move
+    ELSE
+        # --- Player Lost ---
+        REACT_BLOCK red YouLostSprite SPECIAL GAME.update_tile_props # This will update the sprite for SPECIAL
+        36 47 SPECIAL GAME.tile_move
+    END
 
-    REACT_BLOCK cyan GameOverSprite SPECIAL GAME.update_tile_props
-    35 47 SPECIAL GAME.tile_move
     GAME.redraw_all_moved_tiles
+
     # 3. Optional: A final flip to ensure the screen is blank
     GAME.refresh
 }
