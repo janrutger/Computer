@@ -16,13 +16,13 @@ ASM {
 
 LIST coin_data 3                ; Define coin
 ASM {
-    % $coin_data 1 1 42         ; Start (*) sprite
+    % $coin_data 1 1 42         ; Star (*) sprite
 }
 &coin_data AS Coin
 
 LIST special_data  3            ; define Monster
 ASM {
-    % $special_data  1 1 204    ; 1x1 Monster 
+    % $special_data  1 1 204    ; 1x1 Monster sprite
 }
 &special_data AS Special
 
@@ -93,7 +93,7 @@ GAME.init_game_lib
 # 750  AS timer0_time      # Wait N frames between moves
 # 0    AS timer0_state     # 0 means 'even', 1 means means 'odd' (False/True)
 350    AS t_coin            # The coin tile timer
-800    AS t_coin_time       # Duration of the timer
+700    AS t_coin_time       # Duration of the timer
 
 100    AS t_special         # the Special tile timer
 100    AS t_special_time    # Duration of the timer
@@ -153,17 +153,17 @@ DEF print_score {
     _score 10 %        48 + AS _ones
 
     27 IO 2 X 
-        background IO 2 COLOR
+        background  IO 2 COLOR
         solid_block IO 2 DRAW
         red IO 2 COLOR
         _hunreds   IO 2 DRAW
     28 IO 2 X 
-        background IO 2 COLOR
+        background  IO 2 COLOR
         solid_block IO 2 DRAW
         red IO 2 COLOR
         _tens      IO 2 DRAW
     29 IO 2 X 
-        background IO 2 COLOR
+        background  IO 2 COLOR
         solid_block IO 2 DRAW
         red IO 2 COLOR
         _ones      IO 2 DRAW
@@ -189,17 +189,17 @@ DEF print_coins {
     _coins 10 %        48 + AS _ones
 
     50 IO 2 X 
-        background IO 2 COLOR
+        background  IO 2 COLOR
         solid_block IO 2 DRAW
         yellow IO 2 COLOR
         _hunreds   IO 2 DRAW
     51 IO 2 X 
-        background IO 2 COLOR
+        background  IO 2 COLOR
         solid_block IO 2 DRAW
         yellow IO 2 COLOR
         _tens      IO 2 DRAW
     52 IO 2 X 
-        background IO 2 COLOR
+        background  IO 2 COLOR
         solid_block IO 2 DRAW
         yellow IO 2 COLOR
         _ones      IO 2 DRAW
@@ -316,7 +316,7 @@ WHILE GAME.running DO
 
     # --- Game Over Check ---
     # If we are out of coins and haven't won, it's game over.
-    coins_remaining 0 == IF
+    coins_remaining 1 _negate == IF
         0 AS GAME.running
     END
 

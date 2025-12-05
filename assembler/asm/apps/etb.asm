@@ -127,11 +127,11 @@
     ldi A $player_data
     sto A $Player
 
-    % $coin_data 1 1 42         ; Start (*) sprite
+    % $coin_data 1 1 42         ; Star (*) sprite
     ldi A $coin_data
     sto A $Coin
 
-    % $special_data  1 1 204    ; 1x1 Monster 
+    % $special_data  1 1 204    ; 1x1 Monster sprite
     ldi A $special_data
     sto A $Special
 
@@ -161,7 +161,7 @@
     call @GAME.init_game_lib
     ldi A 350
     sto A $t_coin
-    ldi A 800
+    ldi A 700
     sto A $t_coin_time
     ldi A 100
     sto A $t_special
@@ -286,8 +286,9 @@
     call @update_wall_visuals
     ldm A $coins_remaining
     stack A $DATASTACK_PTR
-    ldi A 0
+    ldi A 1
     stack A $DATASTACK_PTR
+    call @_negate
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
