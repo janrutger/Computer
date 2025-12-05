@@ -22,7 +22,7 @@ ASM {
 
 LIST special_data  3            ; define Monster
 ASM {
-    % $special_data  1 1 200    ; 1x1 Monster (pacman sprite for now)
+    % $special_data  1 1 204    ; 1x1 Monster 
 }
 &special_data AS Special
 

@@ -131,7 +131,7 @@
     ldi A $coin_data
     sto A $Coin
 
-    % $special_data  1 1 200    ; 1x1 Monster (pacman sprite for now)
+    % $special_data  1 1 204    ; 1x1 Monster 
     ldi A $special_data
     sto A $Special
 
