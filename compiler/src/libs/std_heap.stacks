@@ -44,6 +44,11 @@ DEF HEAP.init {
     HEAP_START AS HEAP_FREE
 }
 
+DEF HEAP.free {
+    HEAP_START AS HEAP_FREE
+}
+
+
 ; --- NEW.list ---
 ; Allocates a raw block of memory from the heap (like malloc).
 ; No header is created.

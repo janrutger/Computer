@@ -12,10 +12,10 @@ VALUE sortlist 0
 
 
 # Create the heap
-VAR array_heap 6144 ; allocate 1k for the heap at adres
-&array_heap 1024 HEAP.init
+# VAR array_heap 6144 ; allocate 1k for the heap at adres
+# &array_heap 1024 HEAP.init
 
-
+HEAP.free
 
 
 

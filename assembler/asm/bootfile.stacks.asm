@@ -675,6 +675,10 @@
     sto A $HEAP_START
     sto A $HEAP_FREE
     ret
+@HEAP.free
+    ldm A $HEAP_START
+    sto A $HEAP_FREE
+    ret
 @NEW.list
     ustack A $DATASTACK_PTR
     sto A $_list_size

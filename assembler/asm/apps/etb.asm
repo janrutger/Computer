@@ -112,6 +112,7 @@
 . $game_event 1
 
 # .CODE
+    call @HEAP.free
     ldi A 200
     stack A $DATASTACK_PTR
     ldi A 1
@@ -139,6 +140,8 @@
     call @NEW.matrix
     ustack A $DATASTACK_PTR
     sto A $Special
+    ldi A 201
+    stack A $DATASTACK_PTR
     ldi A 201
     stack A $DATASTACK_PTR
     ldi A 201

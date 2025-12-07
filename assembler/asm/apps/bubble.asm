@@ -5,7 +5,6 @@
 . $val2 1
 . $sorting 1
 . $sortlist 1
-MALLOC $array_heap 6144
 . $listlenn 1
 . $NN 1
 . $n_limit 1
@@ -18,11 +17,7 @@ MALLOC $array_heap 6144
 . $_main_str_3 47
 
 # .CODE
-    ldi A $array_heap
-    stack A $DATASTACK_PTR
-    ldi A 1024
-    stack A $DATASTACK_PTR
-    call @HEAP.init
+    call @HEAP.free
     call @TOS.check
     ustack A $DATASTACK_PTR
     tst A 0
