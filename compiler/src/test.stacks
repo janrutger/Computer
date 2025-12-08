@@ -1,1 +1,208 @@
-# File for something new
+# ============================================================================
+# Perceptron Separator Task
+#
+# This program trains a single perceptron to classify points in a 2D space.
+# It demonstrates the functionality of the nn_lib.
+#
+# The "truth" is a simple linear function: y > x.
+# - Points where y > x are in class 1.
+# - Points where y <= x are in class 0.
+# ============================================================================
+
+USE std_heap
+USE std_stern_io
+# USE fixed_point_lib
+# USE nn_lib
+INCLUDE math_lib
+INCLUDE fixed_point_lib
+
+INCLUDE nn_lib
+
+# --- Constants ---
+# VALUE PLOTTER_CHANNEL 1
+# VALUE HEAP_MEM_START 8192 # Reserve memory for the heap after program code
+# VALUE HEAP_MEM_SIZE 2048
+
+# --- Training Parameters ---
+VALUE TRAINING_ITERATIONS 100
+VALUE TESTING_ITERATIONS 500
+VALUE LEARNING_RATE 100 # 0.1 as a fixed-point number (100 / 1000)
+
+# --- Global Variables ---
+VALUE perceptron 0
+VALUE input_array 0
+VALUE x_fp 0
+VALUE y_fp 0
+VALUE x_int 0
+VALUE y_int 0
+VALUE guess 0
+VALUE true_label 0
+# VALUE error 0
+VALUE itter 0
+
+# --- Plotting Colors (from screen.txt) ---
+VALUE COLOR_GREEN 5
+VALUE COLOR_RED 2
+VALUE COLOR_BLUE 6
+VALUE COLOR_ORANGE 8
+
+DEF Function {
+    # Simple
+    # y_int x_int >
+
+    # More complex
+    # y_int 2 x_int * 5 + >
+
+    # Other
+    y_int x_int 2 // 1 + >
+
+}
+
+# ============================================================================
+# Main Program
+# ============================================================================
+
+# --- 1. Initialization ---
+# HEAP_MEM_START HEAP_MEM_SIZE HEAP.init
+# HEAP.free
+
+IO 2 ONLINE
+0 IO 2 MODE # Set to Pixel Mode, single Buffering
+IO 2 NEW
+
+"Creating Perceptron..." PRTstring
+2 NN.new_perceptron AS perceptron # 2 inputs: x and y
+" Done.\n" PRTstring
+
+"Creating input array..." PRTstring
+2 NEW.array AS input_array # To hold [x, y] for each data point
+" Done.\n" PRTstring
+
+# Initialize the input array with two zero values.
+# This sets its count to 2, allowing ARRAY.put to be used later.
+0 input_array ARRAY.append
+0 input_array ARRAY.append
+
+"--- Phase 0: Untrained Model ---\n" PRTstring
+IO 2 NEW
+0 AS itter
+WHILE itter TESTING_ITERATIONS < DO
+    # Generate a random data point
+    RND 50 % AS x_int
+    RND 50 % AS y_int
+
+    x_int FP.from_int AS x_fp
+    y_int FP.from_int AS y_fp
+    x_fp 0 input_array ARRAY.put
+    y_fp 1 input_array ARRAY.put
+
+    # Get the model's prediction (NO TRAINING)
+    input_array perceptron NN.predict AS guess
+
+    # Determine the true label and error
+    Function IF 1 ELSE 0 END AS true_label
+    true_label guess - AS error
+
+
+    # Visualize with a different color scheme
+    error 0 == IF COLOR_GREEN ELSE COLOR_RED END
+    AS this_color
+
+    # Plot the point (scale coords for visibility)
+
+    x_int 5 + 10 * IO 2 X
+    y_int 5 + 8 * IO 2 Y
+    this_color IO 2 DRAW
+
+    itter 1 + AS itter
+DONE
+
+
+# --- 2. Phase 1: Training Loop ---
+"--- Phase 1: Training ---\n" PRTstring
+0 AS itter
+WHILE itter TRAINING_ITERATIONS < DO
+    # 2a. Generate a random data point (x, y) between 0 and 50
+    RND 50 % AS x_int
+    RND 50 % AS y_int
+
+    # Convert to fixed-point and store in input_array
+    x_int FP.from_int AS x_fp
+    y_int FP.from_int AS y_fp
+    x_fp 0 input_array ARRAY.put
+    y_fp 1 input_array ARRAY.put
+
+    # 2b. Get the model's prediction
+    input_array perceptron NN.predict AS guess
+
+    # 2c. Determine the true label and the error
+    # The Function iss the rule
+    Function IF 1 ELSE 0 END AS true_label
+    true_label guess - AS error
+
+    # 2d. If the guess was wrong, train the model
+    error 0 != IF
+        # Push arguments in the correct order for NN.train_step:
+        # (learning_rate(fp), error(int), input_ptr, perceptron_ptr -- )
+        LEARNING_RATE FP.from_int   # The learning rate
+        error                       # The error
+        input_array                 # The input data
+        perceptron                  # The model
+        NN.train_step               # Call the function
+    END
+
+    # 2e. Visualize the point
+    # Set color: Green for correct, Red for incorrect
+    error 0 == IF COLOR_GREEN ELSE COLOR_RED END
+    AS this_color
+
+    # Plot the point (scale coords for visibility)
+    # x_int 5 + 10 * IO 2 X
+    # y_int 5 + 8 * IO 2 Y
+    x_int IO 2 X
+    y_int IO 2 Y
+
+    this_color IO 2 DRAW
+
+    itter 1 + AS itter
+
+DONE
+
+
+# --- 3. Phase 2: Testing Loop ---
+"--- Phase 2: Testing ---\n" PRTstring
+0 AS itter
+IO 2 NEW
+WHILE itter TESTING_ITERATIONS < DO
+    # 3a. Generate a new random data point
+    RND 50 % AS x_int
+    RND 50 % AS y_int
+
+    x_int FP.from_int AS x_fp
+    y_int FP.from_int AS y_fp
+    x_fp 0 input_array ARRAY.put
+    y_fp 1 input_array ARRAY.put
+
+    # 3b. Get the model's prediction (NO TRAINING)
+    input_array perceptron NN.predict AS guess
+
+    # 3c. Determine the true label
+    Function IF 1 ELSE 0 END AS true_label
+    true_label guess - AS error
+
+    # 3d. Visualize with different colors
+    # Blue for correct, Orange for incorrect
+    error 0 == IF COLOR_GREEN ELSE COLOR_RED END
+    AS this_color
+
+    # Plot the point (scale coords for visibility)
+
+    x_int 5 + 10 * IO 2 X
+    y_int 5 + 8 * IO 2 Y
+    this_color IO 2 DRAW
+
+    itter 1 + AS itter
+DONE
+
+"--- All Done ---\n" PRTstring
+

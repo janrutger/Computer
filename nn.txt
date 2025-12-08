@@ -1,0 +1,89 @@
+building an single perceptron for an seperator task
+in a way the code can be reused for an lager neural network
+
+goal: prove its working on my Stern-XT/Stacks project
+
+
+for reusebility we neet an neural network libray: nn_lib.stack
+Functions of that library:
+    - a train function
+    - a predict function (which performs a weighted sum / dot product)
+    - a constructor function (e.g., new_perceptron)
+    - ......
+
+The nn_lib is using other libraries:
+    - Fixed_point_lib
+    - We are gonne use the heap array type, with the following structure:
+        - A `weights_array` (capacity 2) to hold the two fixed-point weights (one for x, one for y).
+        - A `perceptron_array` (capacity 2) to represent a single neuron/perceptron:
+            - Index 0: The fixed-point `bias` value.
+            - Index 1: The `pointer` to the weights_array.
+        - An `input_array` (capacity 2) to hold the x,y coordinates of a data point.
+
+    Total heap usage:
+        - 3 arrays
+        - 12 words of memory
+        - This is sufficient for the entire training process, as training updates data in-place.
+
+
+### Application Main Loop (Training Process)
+
+The application will run in two distinct phases: a Training Phase and a Testing Phase.
+
+#### Phase 1: Training Loop
+This loop runs for a fixed number of iterations (e.g., 1000) to teach the model.
+1.  **Generate Data:** Create a random point (`x`, `y`).
+2.  **Predict:** Get the model's `guess` using `NN.predict`.
+3.  **Calculate Truth & Error:** Determine the `true_label` and the `error`.
+4.  **Train (Adjust):** If `error` is not zero, call `NN.train_step` to update weights and bias.
+5.  **Visualize:** Plot the point (e.g., green for correct, red for incorrect).
+
+#### Phase 2: Testing Loop ("New Plot")
+This loop runs after training is complete to evaluate the "frozen" model.
+1.  **Generate Data:** Create a new random point (`x`, `y`).
+2.  **Predict:** Get the model's `guess` using `NN.predict`.
+3.  **(No Training):** Do NOT call `NN.train_step`. The model's weights are no longer changed.
+4.  **Visualize:** Plot the point using a different color scheme (e.g., blue for correct, orange for incorrect) to show how the trained model performs on new data.
+
+
+
+
+
+
+
+### Future Expansion to a Multi-Layer Network
+
+To expand this project into a larger model, the following features/modifications would be needed:
+
+1.  **Hierarchical Data Structures:** Introduce `Layer` (an array of neuron pointers) and `Network` (an array of layer pointers) concepts.
+2.  **Backpropagation Algorithm:** Implement a new `train_network` function that uses backpropagation to adjust weights in hidden layers. This is the most significant change.
+3.  **New Activation Functions:** The simple Step function is not enough. Implement differentiable functions like Sigmoid or ReLU using the `fixed_point_lib`.
+4.  **Matrix Operations:** For performance, enhance `std_heap.stacks` with `MATRIX.get` and `MATRIX.put` to allow storing a layer's weights in a single, efficient matrix.
+
+
+### Feasibility on the Stern-XT Platform
+
+This project, while ambitious, is entirely feasible on the Stern-XT platform due to a combination of clever software design and foundational libraries.
+
+*   **Integer-Only Math is Sufficient:** The Stern-XT CPU performs integer arithmetic. The `fixed_point_lib` brilliantly bridges the gap by simulating fractional numbers, allowing us to represent weights, biases, and learning rates accurately.
+*   **Dynamic Memory Allocation:** A neural network requires dynamic data structures. The `std_heap` library, with its `ARRAY` functionality, provides the crucial ability to allocate memory for neurons and their weights on the heap as the program runs.
+*   **High-Level Abstraction:** The Stacks language and its compiler allow us to write complex logic (like the training loop and prediction functions) in a structured, readable way, abstracting away the low-level machine instructions.
+*   **Essential Primitives:** Core functions like `RND` are available for necessary tasks like initializing the perceptron's weights with small random values to break symmetry and start the learning process.
+
+In essence, while the hardware is simple, the software ecosystem built on top of it is powerful enough to tackle advanced concepts like neural networks.
+
+
+
+### Progress report
+
+* Created a nn_lib source file 
+* Created application file called test.stack
+
+
+### Lets discusse the visuals, 
+
+The program is plotting pixels on the screen, in single buffer mode
+The screen size is 640x480 pixels (X/Y)
+
+the generated data is 50x50
+

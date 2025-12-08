@@ -1,0 +1,302 @@
+# .HEADER
+. $num_inputs 1
+. $weights_ptr 1
+. $perceptron_ptr 1
+. $i 1
+. $input_val 1
+. $input_ptr 1
+. $weight_val 1
+. $product 1
+. $weighted_sum 1
+. $bias 1
+. $error 1
+. $error_fp 1
+. $learning_rate 1
+. $old_bias 1
+. $old_weight 1
+. $adjustment 1
+. $weight_delta 1
+. $new_bias 1
+. $new_weight 1
+# .FUNCTIONS
+@NN.new_perceptron
+    ustack A $DATASTACK_PTR
+    sto A $num_inputs
+    stack A $DATASTACK_PTR
+    call @NEW.array
+    ustack A $DATASTACK_PTR
+    sto A $weights_ptr
+    ldi A 0
+    sto A $i
+:NN.new_perceptron_while_start_0
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldm A $num_inputs
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :NN.new_perceptron_while_end_0
+    call @rt_rnd
+    ldi A 200
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
+    ldi A 100
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    call @FP.from_int
+    ldi A 1000
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    call @FP.div
+    ldm A $weights_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $i
+    jmp :NN.new_perceptron_while_start_0
+:NN.new_perceptron_while_end_0
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @NEW.array
+    ustack A $DATASTACK_PTR
+    sto A $perceptron_ptr
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    ldm A $perceptron_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $weights_ptr
+    stack A $DATASTACK_PTR
+    ldm A $perceptron_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $perceptron_ptr
+    stack A $DATASTACK_PTR
+    ret
+@NN.predict
+    ustack A $DATASTACK_PTR
+    sto A $perceptron_ptr
+    ustack A $DATASTACK_PTR
+    sto A $input_ptr
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $perceptron_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $bias
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $perceptron_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $weights_ptr
+    ldm A $bias
+    sto A $weighted_sum
+    ldi A 0
+    sto A $i
+    ldm A $input_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.len
+    ustack A $DATASTACK_PTR
+    sto A $num_inputs
+:NN.predict_while_start_1
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldm A $num_inputs
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :NN.predict_while_end_1
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldm A $input_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $input_val
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldm A $weights_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $weight_val
+    ldm A $input_val
+    stack A $DATASTACK_PTR
+    ldm A $weight_val
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    ustack A $DATASTACK_PTR
+    sto A $product
+    ldm A $weighted_sum
+    stack A $DATASTACK_PTR
+    ldm A $product
+    stack A $DATASTACK_PTR
+    call @FP.add
+    ustack A $DATASTACK_PTR
+    sto A $weighted_sum
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $i
+    jmp :NN.predict_while_start_1
+:NN.predict_while_end_1
+    ldm A $weighted_sum
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :NN.predict_if_else_0
+    ldi A 1
+    stack A $DATASTACK_PTR
+    jmp :NN.predict_if_end_0
+:NN.predict_if_else_0
+    ldi A 0
+    stack A $DATASTACK_PTR
+:NN.predict_if_end_0
+    ret
+@NN.train_step
+    ustack A $DATASTACK_PTR
+    sto A $perceptron_ptr
+    ustack A $DATASTACK_PTR
+    sto A $input_ptr
+    ustack A $DATASTACK_PTR
+    sto A $error
+    ustack A $DATASTACK_PTR
+    sto A $learning_rate
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $perceptron_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $old_bias
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $perceptron_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $weights_ptr
+    ldm A $error
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    ustack A $DATASTACK_PTR
+    sto A $error_fp
+    ldm A $learning_rate
+    stack A $DATASTACK_PTR
+    ldm A $error_fp
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    ustack A $DATASTACK_PTR
+    sto A $adjustment
+    ldm A $old_bias
+    stack A $DATASTACK_PTR
+    ldm A $adjustment
+    stack A $DATASTACK_PTR
+    call @FP.add
+    ustack A $DATASTACK_PTR
+    sto A $new_bias
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $perceptron_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.put
+    ldi A 0
+    sto A $i
+    ldm A $input_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.len
+    ustack A $DATASTACK_PTR
+    sto A $num_inputs
+:NN.train_step_while_start_2
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldm A $num_inputs
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :NN.train_step_while_end_2
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldm A $input_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $input_val
+    ldm A $adjustment
+    stack A $DATASTACK_PTR
+    ldm A $input_val
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    ustack A $DATASTACK_PTR
+    sto A $weight_delta
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldm A $weights_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $old_weight
+    stack A $DATASTACK_PTR
+    ldm A $weight_delta
+    stack A $DATASTACK_PTR
+    call @FP.add
+    ustack A $DATASTACK_PTR
+    sto A $new_weight
+    stack A $DATASTACK_PTR
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldm A $weights_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.put
+    ldm A $i
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $i
+    jmp :NN.train_step_while_start_2
+:NN.train_step_while_end_2
+    ret
+
+# .DATA
+% $num_inputs 0
+% $weights_ptr 0
+% $perceptron_ptr 0
+% $i 0
+% $input_val 0
+% $input_ptr 0
+% $weight_val 0
+% $product 0
+% $weighted_sum 0
+% $bias 0
+% $error 0
+% $error_fp 0
+% $learning_rate 0
+% $old_bias 0
+% $old_weight 0
+% $adjustment 0
+% $weight_delta 0
+% $new_bias 0
+% $new_weight 0

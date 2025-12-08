@@ -73,8 +73,8 @@ GAME.init_game_lib
 350    AS t_coin            # The coin tile timer
 700    AS t_coin_time       # Duration of the timer
 
-100    AS t_special         # the Special tile timer
-100    AS t_special_time    # Duration of the timer
+50    AS t_special         # the Special tile timer
+50    AS t_special_time    # Duration of the timer
 
 0      AS t_monster_cooldown    # Cooldown timer/counter
 
@@ -315,20 +315,44 @@ WHILE GAME.running DO
     ELSE
     # --- Hunter Monster AI ---
         # The monster now always hunts when not in cooldown.
+        # NEW STRATEGY: Calculate distance to player vs. distance to the
+        # halfway point between player and coin. Move to the closer target.
         &t_special t_special_time GAME.is_timer_ready IF
-            # Get Player's coords
+            # 1. Get all coordinates
             PLAYER GAME.get_xy AS player_y AS player_x
-
-            # Get Monster's coords
+            COIN GAME.get_xy AS coin_y AS coin_x
             SPECIAL GAME.get_xy AS monster_y AS monster_x
 
-            # Calculate one step closer to the player
-            player_x monster_x > IF monster_x 1 + AS monster_x END
-            player_x monster_x < IF monster_x 1 - AS monster_x END
-            player_y monster_y > IF monster_y 1 + AS monster_y END
-            player_y monster_y < IF monster_y 1 - AS monster_y END
+            # 2. Calculate the midpoint between player and coin
+            player_x coin_x + 2 // AS mid_x
+            player_y coin_y + 2 // AS mid_y
 
-            # Move the monster
+            # 3. Calculate Manhattan distance to player
+            monster_x player_x - DUP 0 < IF _negate END
+            monster_y player_y - DUP 0 < IF _negate END
+            + AS dist_to_player
+
+            # 4. Calculate Manhattan distance to midpoint
+            monster_x mid_x - DUP 0 < IF _negate END
+            monster_y mid_y - DUP 0 < IF _negate END
+            + AS dist_to_midpoint
+
+            # 5. Choose target coordinates based on shorter distance
+            dist_to_midpoint dist_to_player < IF
+                mid_x AS target_x
+                mid_y AS target_y
+            ELSE
+                player_x AS target_x
+                player_y AS target_y
+            END
+
+            # 6. Calculate one step towards the chosen target
+            target_x monster_x > IF monster_x 1 + AS monster_x END
+            target_x monster_x < IF monster_x 1 - AS monster_x END
+            target_y monster_y > IF monster_y 1 + AS monster_y END
+            target_y monster_y < IF monster_y 1 - AS monster_y END
+
+            # 7. Move the monster
             monster_x monster_y SPECIAL GAME.tile_move
 
             # --- GETTING CAUGHT (PENALTY) ---
@@ -345,9 +369,9 @@ WHILE GAME.running DO
                 END
                 
                 # Speed up the monster to increase difficulty
-                t_special_time 90 > IF
-                    t_special_time 1 - AS t_special_time
-                END
+                # t_special_time 75
+                #     t_special_time 1 - AS t_special_time
+                # END
                 100 AS t_monster_cooldown   # Monster becomes dormant
             ELSE
                 # Monster is hunting, but hasn't caught the player yet

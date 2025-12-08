@@ -1,0 +1,174 @@
+-- ============================================================================
+# Neural Network Library (nn_lib)
+#
+# Provides basic building blocks for neural networks, starting with a
+# single perceptron.
+#
+# Depends on:
+#   - array_lib: For dynamic data structures on the heap.
+#   - fixed_point_lib: For handling fractional numbers (weights, bias).
+# ============================================================================
+
+USE std_heap
+USE fixed_point_lib
+
+VALUE num_inputs 0
+VALUE weights_ptr 0
+VALUE perceptron_ptr 0
+VALUE i 0
+VALUE input_val 0
+VALUE input_ptr 0
+VALUE weight_val 0
+VALUE product 0
+VALUE weighted_sum 0
+VALUE bias 0
+VALUE error 0
+VALUE error_fp 0
+VALUE learning_rate 0
+VALUE old_bias 0
+VALUE old_weight 0
+VALUE adjustment 0
+VALUE weight_delta 0
+VALUE new_bias 0
+VALUE new_weight 0
+
+# ============================================================================
+# Perceptron Data Structure
+#
+# A perceptron is represented by a pointer to an array with 2 elements:
+#   - Index 0: The bias (fixed-point).
+#   - Index 1: A pointer to its weights array.
+#
+# The weights array has N elements, where N is the number of inputs.
+# For this project, N=2 (for x and y coordinates).
+# ============================================================================
+
+
+# ----------------------------------------------------------------------------
+# DEF NN.new_perceptron
+# Creates a new perceptron with a given number of inputs.
+#
+# @param num_inputs The number of weights to create.
+# @returns perceptron_ptr A pointer to the newly created perceptron structure.
+# ----------------------------------------------------------------------------
+DEF NN.new_perceptron {
+    AS num_inputs
+
+    # 1. Create the weights array and initialize with small random values
+    num_inputs NEW.array AS weights_ptr
+    0 AS i
+    WHILE i num_inputs < DO
+        # 1. Convert both integers to fixed-point before dividing
+        RND 200 % 100 - FP.from_int # Convert random integer to fp
+        1000 FP.from_int            # Convert 1000 to fp
+        FP.div                      # Now divide the two fp numbers
+        # 2. Append to array (stack is already in correct order: value, ptr)
+        weights_ptr
+        ARRAY.append
+        i 1 + AS i
+    DONE
+
+    # 2. Create the main perceptron array (capacity 2: bias, weights_ptr)
+    2 NEW.array AS perceptron_ptr
+
+    # 3. Initialize bias to 0 and append to perceptron array
+    0 FP.from_int perceptron_ptr ARRAY.append
+
+    # 4. Append the pointer to the weights array
+    weights_ptr perceptron_ptr ARRAY.append
+
+    perceptron_ptr # Return the pointer to the new perceptron
+}
+
+
+# ----------------------------------------------------------------------------
+# DEF NN.predict
+# Calculates the weighted sum of inputs and returns the activated output.
+# output = step( (w1*i1 + w2*i2 + ... + wN*iN) + bias )
+#
+# @param input_ptr Pointer to an array of fixed-point input values.
+# @param perceptron_ptr Pointer to the perceptron to use for prediction.
+# @returns guess The output of the activation function (1 or 0).
+# ----------------------------------------------------------------------------
+DEF NN.predict {
+    AS perceptron_ptr
+    AS input_ptr
+
+    # 1. Get bias and weights_ptr from the perceptron structure
+    0 perceptron_ptr ARRAY.get AS bias
+    1 perceptron_ptr ARRAY.get AS weights_ptr
+
+    # 2. Calculate the dot product (weighted sum)
+    # Start with the bias
+    bias AS weighted_sum
+    0 AS i
+    input_ptr ARRAY.len AS num_inputs
+    WHILE i num_inputs < DO
+        i input_ptr   ARRAY.get AS input_val
+        i weights_ptr ARRAY.get AS weight_val
+
+        input_val weight_val FP.mul AS product
+        weighted_sum product FP.add AS weighted_sum
+
+        i 1 + AS i
+    DONE
+
+    # 3. Apply the Step activation function
+    # If weighted_sum > 0, output 1, else output 0
+    weighted_sum 0 > IF 1 ELSE 0 END
+}
+
+
+# ----------------------------------------------------------------------------
+# DEF NN.train_step
+# Adjusts the perceptron's weights and bias based on the error.
+# new_weight = old_weight + learning_rate * error * input
+# new_bias = old_bias + learning_rate * error
+#
+# @param learning_rate A fixed-point value for the learning step size.
+# @param error The calculated error (true_label - guess).
+# @param input_ptr Pointer to the array of input values.
+# @param perceptron_ptr Pointer to the perceptron to be trained.
+# ----------------------------------------------------------------------------
+DEF NN.train_step {
+    AS perceptron_ptr
+    AS input_ptr
+    AS error
+    AS learning_rate
+
+    # 1. Get pointers and data from the perceptron structure
+    0 perceptron_ptr ARRAY.get AS old_bias
+    1 perceptron_ptr ARRAY.get AS weights_ptr
+
+    # 2. Calculate the update for the bias and apply it
+    # new_bias = old_bias + learning_rate * error
+    # Convert integer error to fixed-point before multiplication
+    error FP.from_int AS error_fp # error_fp is now a fixed-point number
+    
+    # Calculate the core adjustment: learning_rate * error
+    learning_rate error_fp FP.mul AS adjustment
+    
+    old_bias adjustment FP.add AS new_bias
+    new_bias 0 perceptron_ptr ARRAY.put
+
+    # 3. Loop through weights and update each one
+    # new_weight = old_weight + learning_rate * error * input
+    0 AS i
+    input_ptr ARRAY.len AS num_inputs
+    WHILE i num_inputs < DO
+        # Get the corresponding input value
+        i input_ptr ARRAY.get AS input_val
+
+        # Calculate the weight delta: learning_rate * error * input
+        adjustment input_val FP.mul AS weight_delta
+
+        # Get the old weight
+        i weights_ptr ARRAY.get AS old_weight
+
+        # Calculate and store the new weight
+        old_weight weight_delta FP.add AS new_weight
+        new_weight i weights_ptr ARRAY.put
+
+        i 1 + AS i
+    DONE
+}
