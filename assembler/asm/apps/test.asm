@@ -43,7 +43,7 @@
 . $product 1
 . $weighted_sum 1
 . $bias 1
-. $error 1
+. $_error 1
 . $error_fp 1
 . $learning_rate 1
 . $old_bias 1
@@ -63,10 +63,13 @@
 . $y_int 1
 . $guess 1
 . $true_label 1
+. $error 1
 . $itter 1
+. $error_count 1
 . $COLOR_GREEN 1
 . $COLOR_RED 1
 . $COLOR_BLUE 1
+. $COLOR_YELLOW 1
 . $COLOR_ORANGE 1
 . $_main_str_0 23
 . $_main_str_1 8
@@ -75,9 +78,14 @@
 . $this_color 1
 . $_main_str_4 27
 . $_main_str_5 26
-. $_main_str_6 18
+. $_main_str_6 21
+. $_main_str_7 9
+. $_main_str_8 9
+. $_main_str_9 14
+. $_main_str_10 18
 
 # .CODE
+    call @HEAP.free
     ldi A 0
     stack A $DATASTACK_PTR
     ldi A 2
@@ -425,6 +433,8 @@
     ldi A 10
     stack A $DATASTACK_PTR
     call @rt_udc_control
+    ldi A 0
+    sto A $error_count
 :_main_while_start_2
     ldm A $itter
     stack A $DATASTACK_PTR
@@ -497,17 +507,46 @@
     stack A $DATASTACK_PTR
     ldi A 0
     stack A $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_main_if_end_6
+    ldm A $error_count
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $error_count
+:_main_if_end_6
+    ldm A $error
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_main_if_else_7
+    ldm A $COLOR_RED
+    stack A $DATASTACK_PTR
+    jmp :_main_if_end_7
+:_main_if_else_7
+    ldm A $guess
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_else_6
-    ldm A $COLOR_GREEN
+    jmpt :_main_if_else_8
+    ldm A $COLOR_BLUE
     stack A $DATASTACK_PTR
-    jmp :_main_if_end_6
-:_main_if_else_6
-    ldm A $COLOR_RED
+    jmp :_main_if_end_8
+:_main_if_else_8
+    ldm A $COLOR_YELLOW
     stack A $DATASTACK_PTR
-:_main_if_end_6
+:_main_if_end_8
+:_main_if_end_7
     ustack A $DATASTACK_PTR
     sto A $this_color
     ldm A $x_int
@@ -557,6 +596,24 @@
     jmp :_main_while_start_2
 :_main_while_end_2
     ldi A $_main_str_6
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_7
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldm A $error_count
+    stack A $DATASTACK_PTR
+    call @PRTnum
+    ldi A $_main_str_8
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldm A $TESTING_ITERATIONS
+    stack A $DATASTACK_PTR
+    call @PRTnum
+    ldi A $_main_str_9
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_10
     stack A $DATASTACK_PTR
     call @PRTstring
     ret
@@ -1411,7 +1468,7 @@
     ustack A $DATASTACK_PTR
     sto A $input_ptr
     ustack A $DATASTACK_PTR
-    sto A $error
+    sto A $_error
     ustack A $DATASTACK_PTR
     sto A $learning_rate
     ldi A 0
@@ -1428,7 +1485,7 @@
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $weights_ptr
-    ldm A $error
+    ldm A $_error
     stack A $DATASTACK_PTR
     call @FP.from_int
     ustack A $DATASTACK_PTR
@@ -1518,14 +1575,6 @@
     stack A $DATASTACK_PTR
     ldm A $x_int
     stack A $DATASTACK_PTR
-    ldi A 2
-    ustack B $DATASTACK_PTR
-    dmod B A
-    stack B $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
     call @rt_gt
     ret
 
@@ -1577,7 +1626,7 @@
 % $product 0
 % $weighted_sum 0
 % $bias 0
-% $error 0
+% $_error 0
 % $error_fp 0
 % $learning_rate 0
 % $old_bias 0
@@ -1586,8 +1635,8 @@
 % $weight_delta 0
 % $new_bias 0
 % $new_weight 0
-% $TRAINING_ITERATIONS 100
-% $TESTING_ITERATIONS 500
+% $TRAINING_ITERATIONS 200
+% $TESTING_ITERATIONS 1000
 % $LEARNING_RATE 100
 % $perceptron 0
 % $input_array 0
@@ -1597,10 +1646,13 @@
 % $y_int 0
 % $guess 0
 % $true_label 0
+% $error 0
 % $itter 0
+% $error_count 0
 % $COLOR_GREEN 5
 % $COLOR_RED 2
 % $COLOR_BLUE 6
+% $COLOR_YELLOW 7
 % $COLOR_ORANGE 8
 % $_main_str_0 \C \r \e \a \t \i \n \g \space \P \e \r \c \e \p \t \r \o \n \. \. \. \null
 % $_main_str_1 \space \D \o \n \e \. \Return \null
@@ -1608,4 +1660,8 @@
 % $_main_str_3 \- \- \- \space \P \h \a \s \e \space \0 \: \space \U \n \t \r \a \i \n \e \d \space \M \o \d \e \l \space \- \- \- \Return \null
 % $_main_str_4 \- \- \- \space \P \h \a \s \e \space \1 \: \space \T \r \a \i \n \i \n \g \space \- \- \- \Return \null
 % $_main_str_5 \- \- \- \space \P \h \a \s \e \space \2 \: \space \T \e \s \t \i \n \g \space \- \- \- \Return \null
-% $_main_str_6 \- \- \- \space \A \l \l \space \D \o \n \e \space \- \- \- \Return \null
+% $_main_str_6 \- \- \- \space \T \e \s \t \space \R \e \p \o \r \t \space \- \- \- \Return \null
+% $_main_str_7 \E \r \r \o \r \s \: \space \null
+% $_main_str_8 \space \o \u \t \space \o \f \space \null
+% $_main_str_9 \space \t \e \s \t \space \c \a \s \e \s \. \Return \null
+% $_main_str_10 \- \- \- \space \A \l \l \space \D \o \n \e \space \- \- \- \Return \null

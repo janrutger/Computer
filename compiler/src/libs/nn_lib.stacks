@@ -22,7 +22,7 @@ VALUE weight_val 0
 VALUE product 0
 VALUE weighted_sum 0
 VALUE bias 0
-VALUE error 0
+VALUE _error 0
 VALUE error_fp 0
 VALUE learning_rate 0
 VALUE old_bias 0
@@ -133,7 +133,7 @@ DEF NN.predict {
 DEF NN.train_step {
     AS perceptron_ptr
     AS input_ptr
-    AS error
+    AS _error
     AS learning_rate
 
     # 1. Get pointers and data from the perceptron structure
@@ -143,7 +143,7 @@ DEF NN.train_step {
     # 2. Calculate the update for the bias and apply it
     # new_bias = old_bias + learning_rate * error
     # Convert integer error to fixed-point before multiplication
-    error FP.from_int AS error_fp # error_fp is now a fixed-point number
+    _error FP.from_int AS error_fp # error_fp is now a fixed-point number
     
     # Calculate the core adjustment: learning_rate * error
     learning_rate error_fp FP.mul AS adjustment

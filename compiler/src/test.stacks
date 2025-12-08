@@ -24,8 +24,8 @@ INCLUDE nn_lib
 # VALUE HEAP_MEM_SIZE 2048
 
 # --- Training Parameters ---
-VALUE TRAINING_ITERATIONS 100
-VALUE TESTING_ITERATIONS 500
+VALUE TRAINING_ITERATIONS 500
+VALUE TESTING_ITERATIONS 1000
 VALUE LEARNING_RATE 100 # 0.1 as a fixed-point number (100 / 1000)
 
 # --- Global Variables ---
@@ -37,24 +37,26 @@ VALUE x_int 0
 VALUE y_int 0
 VALUE guess 0
 VALUE true_label 0
-# VALUE error 0
+VALUE error 0
 VALUE itter 0
+VALUE error_count 0
 
 # --- Plotting Colors (from screen.txt) ---
 VALUE COLOR_GREEN 5
 VALUE COLOR_RED 2
 VALUE COLOR_BLUE 6
+VALUE COLOR_YELLOW 7
 VALUE COLOR_ORANGE 8
 
 DEF Function {
     # Simple
-    # y_int x_int >
+    y_int x_int >
 
     # More complex
     # y_int 2 x_int * 5 + >
 
     # Other
-    y_int x_int 2 // 1 + >
+    # y_int x_int 2 // 1 + >
 
 }
 
@@ -64,7 +66,7 @@ DEF Function {
 
 # --- 1. Initialization ---
 # HEAP_MEM_START HEAP_MEM_SIZE HEAP.init
-# HEAP.free
+HEAP.free
 
 IO 2 ONLINE
 0 IO 2 MODE # Set to Pixel Mode, single Buffering
@@ -173,6 +175,7 @@ DONE
 "--- Phase 2: Testing ---\n" PRTstring
 0 AS itter
 IO 2 NEW
+0 AS error_count
 WHILE itter TESTING_ITERATIONS < DO
     # 3a. Generate a new random data point
     RND 50 % AS x_int
@@ -190,10 +193,19 @@ WHILE itter TESTING_ITERATIONS < DO
     Function IF 1 ELSE 0 END AS true_label
     true_label guess - AS error
 
+    # Count the error if there is one
+    error 0 != IF error_count 1 + AS error_count END
+
     # 3d. Visualize with different colors
     # Blue for correct, Orange for incorrect
-    error 0 == IF COLOR_GREEN ELSE COLOR_RED END
-    AS this_color
+    # error 0 == IF COLOR_GREEN ELSE COLOR_RED END
+    # AS this_color
+
+    error 0 != IF
+        COLOR_RED
+    ELSE
+        guess 1 == IF COLOR_BLUE ELSE COLOR_YELLOW END
+    END AS this_color
 
     # Plot the point (scale coords for visibility)
 
@@ -204,5 +216,9 @@ WHILE itter TESTING_ITERATIONS < DO
     itter 1 + AS itter
 DONE
 
-"--- All Done ---\n" PRTstring
+"--- Test Report ---\n" PRTstring
+"Errors: " PRTstring error_count PRTnum
+" out of " PRTstring TESTING_ITERATIONS PRTnum
+" test cases.\n" PRTstring
 
+"--- All Done ---\n" PRTstring
