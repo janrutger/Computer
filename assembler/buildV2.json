@@ -9,7 +9,7 @@
         "restore_symbols": false
       },
       {
-        "file": "asm/apps/test.asm",
+        "file": "asm/apps/main.asm",
         "base_address": 4096,
         "restore_symbols": true
       }
@@ -70,6 +70,10 @@
       {
         "file": "asm/apps/etb.asm",
         "output": "../bin/apps/etb.bin"
+      },
+      {
+        "file": "asm/apps/perceptron.asm",
+        "output": "../bin/apps/perceptron.bin"
       }
     ]
   }

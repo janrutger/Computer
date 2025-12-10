@@ -347,9 +347,9 @@
     sto A $t_coin
     ldi A 700
     sto A $t_coin_time
-    ldi A 50
+    ldi A 90
     sto A $t_special
-    ldi A 50
+    ldi A 40
     sto A $t_special_time
     ldi A 0
     sto A $t_monster_cooldown
@@ -635,29 +635,31 @@
     add B A
     ld A B
     sto A $dist_to_midpoint
-    stack A $DATASTACK_PTR
-    ldm A $dist_to_player
-    stack A $DATASTACK_PTR
-    call @rt_lt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_if_else_23
     ldm A $mid_x
     sto A $target_x
     ldm A $mid_y
     sto A $target_y
-    jmp :_main_if_end_23
-:_main_if_else_23
-    ldm A $player_x
-    sto A $target_x
-    ldm A $player_y
-    sto A $target_y
-:_main_if_end_23
     ldm A $target_x
     stack A $DATASTACK_PTR
     ldm A $monster_x
     stack A $DATASTACK_PTR
     call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_main_if_end_23
+    ldm A $monster_x
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $monster_x
+:_main_if_end_23
+    ldm A $target_x
+    stack A $DATASTACK_PTR
+    ldm A $monster_x
+    stack A $DATASTACK_PTR
+    call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :_main_if_end_24
@@ -665,26 +667,10 @@
     stack A $DATASTACK_PTR
     ldi A 1
     ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $monster_x
-:_main_if_end_24
-    ldm A $target_x
-    stack A $DATASTACK_PTR
-    ldm A $monster_x
-    stack A $DATASTACK_PTR
-    call @rt_lt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_if_end_25
-    ldm A $monster_x
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $monster_x
-:_main_if_end_25
+:_main_if_end_24
     ldm A $target_y
     stack A $DATASTACK_PTR
     ldm A $monster_y
@@ -692,7 +678,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_26
+    jmpt :_main_if_end_25
     ldm A $monster_y
     stack A $DATASTACK_PTR
     ldi A 1
@@ -700,7 +686,7 @@
     add B A
     ld A B
     sto A $monster_y
-:_main_if_end_26
+:_main_if_end_25
     ldm A $target_y
     stack A $DATASTACK_PTR
     ldm A $monster_y
@@ -708,7 +694,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_27
+    jmpt :_main_if_end_26
     ldm A $monster_y
     stack A $DATASTACK_PTR
     ldi A 1
@@ -716,7 +702,7 @@
     sub B A
     ld A B
     sto A $monster_y
-:_main_if_end_27
+:_main_if_end_26
     ldm A $monster_x
     stack A $DATASTACK_PTR
     ldm A $monster_y
@@ -732,7 +718,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_else_28
+    jmpt :_main_if_else_27
     ldi A 0
     stack A $DATASTACK_PTR
     ldi A 2
@@ -749,7 +735,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_29
+    jmpt :_main_if_end_28
     ldm A $score
     stack A $DATASTACK_PTR
     ldi A 2
@@ -759,11 +745,11 @@
     sto A $score
     ldi A 1
     sto A $_score_dirty
-:_main_if_end_29
+:_main_if_end_28
     ldi A 100
     sto A $t_monster_cooldown
-    jmp :_main_if_end_28
-:_main_if_else_28
+    jmp :_main_if_end_27
+:_main_if_else_27
     ldi A 0
     stack A $DATASTACK_PTR
     ldi A 15
@@ -773,7 +759,7 @@
     ldi A 7
     stack A $DATASTACK_PTR
     call @GAME.update_tile_props
-:_main_if_end_28
+:_main_if_end_27
 :_main_if_end_18
 :_main_if_end_17
     call @GAME.handle_input
@@ -788,7 +774,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_else_30
+    jmpt :_main_if_else_29
     ldm A $interacted_id
     stack A $DATASTACK_PTR
     ldi A 1
@@ -796,7 +782,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_31
+    jmpt :_main_if_end_30
     ldm A $score
     stack A $DATASTACK_PTR
     ldi A 1
@@ -808,9 +794,9 @@
     sto A $_score_dirty
     ldi A 0
     sto A $t_coin
-:_main_if_end_31
-    jmp :_main_if_end_30
-:_main_if_else_30
+:_main_if_end_30
+    jmp :_main_if_end_29
+:_main_if_else_29
     ldm A $game_event
     stack A $DATASTACK_PTR
     ldi A 1
@@ -818,7 +804,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_32
+    jmpt :_main_if_end_31
     call @check_the_walls
     ldm A $interacted_id
     stack A $DATASTACK_PTR
@@ -827,7 +813,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_33
+    jmpt :_main_if_end_32
     ldm A $score
     stack A $DATASTACK_PTR
     ldi A 0
@@ -835,7 +821,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_34
+    jmpt :_main_if_end_33
     ldi A 0
     sto A $score
     ldi A 1
@@ -851,26 +837,26 @@
     call @GAME.update_tile_props
     ldi A 200
     sto A $t_monster_cooldown
-:_main_if_end_34
 :_main_if_end_33
 :_main_if_end_32
-:_main_if_end_30
+:_main_if_end_31
+:_main_if_end_29
     ldm A $_score_dirty
     tst A 0
-    jmpt :_main_if_end_35
+    jmpt :_main_if_end_34
     ldm A $score
     stack A $DATASTACK_PTR
     call @print_score
     call @GAME.refresh
-:_main_if_end_35
+:_main_if_end_34
     ldm A $_coins_dirty
     tst A 0
-    jmpt :_main_if_end_36
+    jmpt :_main_if_end_35
     ldm A $coins_remaining
     stack A $DATASTACK_PTR
     call @print_coins
     call @GAME.refresh
-:_main_if_end_36
+:_main_if_end_35
     call @GAME.redraw_all_moved_tiles
     jmp :_main_while_start_0
 :_main_while_end_0
@@ -3486,7 +3472,7 @@
 :game_over_sequence_while_end_1
     ldm A $player_won
     tst A 0
-    jmpt :game_over_sequence_if_else_37
+    jmpt :game_over_sequence_if_else_36
     ldi A 0
     stack A $DATASTACK_PTR
     ldi A 13
@@ -3503,8 +3489,8 @@
     ldi A 7
     stack A $DATASTACK_PTR
     call @GAME.tile_move
-    jmp :game_over_sequence_if_end_37
-:game_over_sequence_if_else_37
+    jmp :game_over_sequence_if_end_36
+:game_over_sequence_if_else_36
     ldi A 0
     stack A $DATASTACK_PTR
     ldi A 2
@@ -3521,7 +3507,7 @@
     ldi A 7
     stack A $DATASTACK_PTR
     call @GAME.tile_move
-:game_over_sequence_if_end_37
+:game_over_sequence_if_end_36
     call @GAME.redraw_all_moved_tiles
     call @GAME.refresh
     ret

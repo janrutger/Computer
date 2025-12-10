@@ -73,8 +73,8 @@ GAME.init_game_lib
 350    AS t_coin            # The coin tile timer
 700    AS t_coin_time       # Duration of the timer
 
-50    AS t_special         # the Special tile timer
-50    AS t_special_time    # Duration of the timer
+90    AS t_special         # the Special tile timer
+40    AS t_special_time    # Duration of the timer
 
 0      AS t_monster_cooldown    # Cooldown timer/counter
 
@@ -338,13 +338,13 @@ WHILE GAME.running DO
             + AS dist_to_midpoint
 
             # 5. Choose target coordinates based on shorter distance
-            dist_to_midpoint dist_to_player < IF
+            # dist_to_midpoint dist_to_player < IF
                 mid_x AS target_x
                 mid_y AS target_y
-            ELSE
-                player_x AS target_x
-                player_y AS target_y
-            END
+            # ELSE
+            #     player_x AS target_x
+            #     player_y AS target_y
+            # END
 
             # 6. Calculate one step towards the chosen target
             target_x monster_x > IF monster_x 1 + AS monster_x END
