@@ -166,6 +166,8 @@
         ldi A ~HOST_WAITING     ; Set status buffer
         sto A $status_register
 
+        nop         ; nop, to yield to the disk proces in the main thread
+
         call @_check_return_status  ; returns status = true when succesfull
                                     ; returns false at file error
                                     ; Halts on disk error

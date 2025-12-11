@@ -48,8 +48,7 @@ MALLOC $next_board 10416
     ldi A 14
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    call @test_glider_pattern
-    call @test_pulsar_pattern
+    call @test_gosper_glider_gun_pattern
     call @copy_board2
 :_main_while_start_5
     ldi A 1

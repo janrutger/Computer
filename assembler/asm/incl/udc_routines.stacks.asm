@@ -119,7 +119,8 @@
             tst M ~UDC_ERROR_DEVICE
             jmpt :udc_send_error            ; call an fatal error for now
             
-            # nop                             ; nop yields by sleep(0) an gives time to the main thread
+            nop                             ; nop yields by sleep(0) an gives time to the main thread
+                                            ; And does really matter for a good performance
 
             jmp :udc_send_wait_loop
         

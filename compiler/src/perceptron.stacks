@@ -21,7 +21,7 @@ INCLUDE nn_lib
 
 
 # --- Training Parameters ---
-CONST TRAINING_ITERATIONS 900
+CONST TRAINING_ITERATIONS 600
 CONST TESTING_ITERATIONS 1000
 CONST LEARNING_RATE 100 # 0.1 as a fixed-point number (100 / 1000)
 
@@ -63,14 +63,14 @@ DEF random_xy {
 
 DEF Function {
     # Simple
-    # y_int x_int <
+    y_int x_int <
 
 
     # More complex
     # y_int 2 x_int *  >
 
     # Other
-    y_int x_int 2 // >
+    # y_int x_int 2 // >
 
 }
 

@@ -261,7 +261,7 @@
 :_main_while_start_1
     ldm A $itter
     stack A $DATASTACK_PTR
-    ldi A 900
+    ldi A 600
     stack A $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
@@ -1559,11 +1559,7 @@
     stack A $DATASTACK_PTR
     ldm A $x_int
     stack A $DATASTACK_PTR
-    ldi A 2
-    ustack B $DATASTACK_PTR
-    dmod B A
-    stack B $DATASTACK_PTR
-    call @rt_gt
+    call @rt_lt
     ret
 
 # .DATA

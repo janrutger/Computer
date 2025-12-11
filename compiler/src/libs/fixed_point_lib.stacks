@@ -21,7 +21,7 @@ DEF FP.set_scale {
 }
 
 
-# print TOS and no neweline
+# print TOS and no newline
 DEF TOS_nnl {
     ASM {
         ustack A $DATASTACK_PTR
