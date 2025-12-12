@@ -74,16 +74,106 @@ In essence, while the hardware is simple, the software ecosystem built on top of
 
 
 
-### Progress report
+The Future starts here:
 
-* Created a nn_lib source file 
-* Created application file called test.stack
+    Creating an multilayer Neural Network
+
+    Neural Network dimensions
+     2 to 8         input neurons
+     4              hidden neurons
+     4              output neurons
+
+    To not to break the past we create an new libray, called mlnn_lib.stacks
 
 
-### Lets discusse the visuals, 
 
-The program is plotting pixels on the screen, in single buffer mode
-The screen size is 640x480 pixels (X/Y)
+    # Design Document: Multi-Layer Neural Network Library (mlnn_lib)
 
-the generated data is 50x50
+## 1. Project Goal
 
+To create a new library, `mlnn_lib.stacks`, capable of constructing, training, and running a multi-layer perceptron (MLP) on the Stern-XT platform. This library will be the foundation for creating a game AI with an 8-input, 4-output neural network.
+
+The project will be divided into two main parts:
+1.  **The Library (`mlnn_lib.stacks`):** Provides the core MLP functionality.
+2.  **The Trainer Application:** A separate program to train the network and save its weights.
+
+
+## 2. Hierarchical Data Structures
+
+The network will be built using nested arrays from the `std_heap` library. This extends the design of the single perceptron.
+
+*   **`Perceptron`:** Unchanged. A pointer to an array of `[bias, weights_ptr]`.
+*   **`Layer`:** A new structure. A pointer to an array of `perceptron_ptr`s.
+*   **`Network`:** The top-level structure. A pointer to an array of `layer_ptr`s.
+
+This structure allows for flexible network architectures.
+
+
+## 3. Core Algorithms
+
+### 3.1. Forward Pass (Prediction)
+
+The `MLNN.predict` function will perform a forward pass through the entire network.
+
+1.  The initial `input_array` is fed into the first hidden layer.
+2.  For each subsequent layer, the *output* (activations) of the previous layer becomes the *input*.
+3.  The final output of the last layer is the network's prediction.
+
+### 3.2. Backward Pass (Training - Backpropagation)
+
+This is the most significant new development. The `MLNN.train` function will implement the backpropagation algorithm.
+
+1.  **Perform a Forward Pass:** Execute a full forward pass, but critically, **store the output (activation) of every neuron in every layer**. These intermediate values are required for the backward pass.
+2.  **Calculate Output Layer Error:** For the final output layer, calculate the error gradient. This is `(target - actual) * derivative_of_activation(output)`.
+3.  **Propagate Error Backwards:** For each hidden layer (moving from back to front):
+    *   Calculate the error gradient for each neuron based on the weighted sum of the errors from the layer *in front* of it.
+    *   The formula involves the derivative of the activation function.
+4.  **Update All Weights:** Once all error gradients are calculated, loop through every neuron in the network and update its weights and bias using the standard rule: `new_weight = old_weight + learning_rate * gradient * input`.
+
+
+## 4. Activation Functions
+
+The simple step function is not sufficient for backpropagation. We need a differentiable activation function.
+
+*   **Proposed Function: ReLU (Rectified Linear Unit)**
+    *   **Formula:** `f(x) = max(0, x)`
+    *   **Implementation:** `DUP 0 < IF 0 END`
+    *   **Derivative:** `f'(x) = 1 if x > 0, else 0`
+    *   **Reasoning:** ReLU is computationally very cheap (no exponentials or divisions) and performs well, making it ideal for the Stern-XT's CPU.
+
+We will need to create two new helper functions in the library: `_relu` and `_relu_derivative`.
+
+
+## 5. Proposed Library API (`mlnn_lib.stacks`)
+
+The new library will have a clear, high-level API.
+
+*   `DEF MLNN.new_network { (input_size, hidden_layer_sizes_ptr, output_size -- network_ptr) }`
+    *   A powerful constructor that takes the number of inputs, a pointer to an array of hidden layer sizes (e.g., `[8, 8]`), and the number of outputs. It will allocate the entire network structure on the heap.
+
+*   `DEF MLNN.predict { (network_ptr, input_array_ptr -- output_array_ptr) }`
+    *   Performs the forward pass and returns a pointer to an array containing the final output values.
+
+*   `DEF MLNN.train { (network_ptr, input_array_ptr, target_array_ptr, learning_rate -- ) }`
+    *   Executes one full step of the backpropagation algorithm.
+
+
+## 6. Proof of Concept: Trainer Application
+
+To prove that the `mlnn_lib` is working correctly, the current project will focus on creating a trainer application that solves a classic non-linear problem, such as XOR. This is a task that a single perceptron cannot learn, making it an ideal test case for a multi-layer network.
+
+The trainer application (`mlnn_xor_trainer.stacks`) will:
+1.  **Build the Network:** Use `MLNN.new_network` to create a small network suitable for the task, such as a `2-4-1` architecture (2 inputs, 1 hidden layer of 4 neurons, 1 output).
+2.  **Train the Network:** Run a training loop for a fixed number of iterations. In each iteration, it will:
+    *   Randomly pick one of the four XOR data points (e.g., `[0, 1]`).
+    *   Provide the corresponding target output (e.g., `[1]`).
+    *   Call `MLNN.train` to adjust the network's weights.
+3.  **Test the Network:** After training is complete, run a separate testing loop. This loop will feed all four XOR inputs into the trained network using `MLNN.predict` and report on the accuracy of the outputs.
+
+This focused approach removes the need for `export_weights` and `import_weights` functions for the current project, simplifying the scope. Successfully training a network to solve XOR will be a definitive demonstration of the library's power and correctness.
+
+This design provides a clear roadmap. The next step would be to start implementing the data structure constructors (`MLNN.new_network`) and the ReLU activation function, as they are the first building blocks required for the rest of the library.
+
+<!--
+[PROMPT_SUGGESTION]Can you outline the Stacks code for the `MLNN.new_network` constructor function?[/PROMPT_SUGGESTION]
+[PROMPT_SUGGESTION]Show me how to implement the ReLU activation function and its derivative in Stacks using the fixed-point library.[/PROMPT_SUGGESTION]

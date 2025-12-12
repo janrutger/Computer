@@ -96,26 +96,6 @@
     ldm A $res
     stack A $DATASTACK_PTR
     ret
-@negate
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_swap
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    sub B A
-    stack B $DATASTACK_PTR
-    ret
-@abs
-    call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_lt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :abs_if_end_1
-    call @negate
-:abs_if_end_1
-    ret
 
 # .DATA
 % $_power_base 0

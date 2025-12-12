@@ -1,0 +1,812 @@
+{
+  "functions": [
+    "NEW.list",
+    "FP.set_scale",
+    "_predict_layer",
+    "CURSORoff",
+    "power",
+    "_new_perceptron",
+    "TOS_nnl",
+    "READline",
+    "PRTstring",
+    "STRatoi",
+    "NN.predict",
+    "NN.train",
+    "FP.to_int",
+    "_relu",
+    "KEYpressed",
+    "FP.div",
+    "FP.print",
+    "ARRAY.size",
+    "CURSORon",
+    "PRTnum",
+    "ARRAY.put",
+    "ARRAY.len",
+    "FP.from_int",
+    "HEAP.free",
+    "ARRAY.append",
+    "_STRNatoi",
+    "ARRAY.get",
+    "FP.sub",
+    "NEW.matrix",
+    "STRcopy",
+    "FP.fprint",
+    "STRcmp",
+    "factorial",
+    "io_lib_init",
+    "FP.power",
+    "NN.new_network",
+    "HALT",
+    "PRTchar",
+    "FP.from_string",
+    "_relu_derivative",
+    "TOS.check",
+    "FP.mul",
+    "STRlen",
+    "STRfind",
+    "gcd",
+    "PRTcls",
+    "HEAP.init",
+    "FP.add",
+    "NEW.array",
+    "KEYchar"
+  ],
+  "variables": [
+    {
+      "name": "p_syscall_status",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "p_syscall_value",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "input_buffer",
+      "type": "LIB_VAR",
+      "size": 80
+    },
+    {
+      "name": "p_input_buffer",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "input_buffer_index",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "info_mesg0",
+      "type": "LIB_VAR",
+      "size": 61
+    },
+    {
+      "name": "HEAP_START",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "HEAP_SIZE",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "HEAP_FREE",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_ARR_TEMP_PTR",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_ARR_VALUE_PTR",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_MAT_TEMP_PTR",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_MAT_X_DIM",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_MAT_Y_DIM",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_MAT_VALUE",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_MAT_PTR",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_MAT_LOOP_COUNTER",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "error_mesg0",
+      "type": "LIB_VAR",
+      "size": 29
+    },
+    {
+      "name": "error_mesg1",
+      "type": "LIB_VAR",
+      "size": 29
+    },
+    {
+      "name": "error_mesg2",
+      "type": "LIB_VAR",
+      "size": 32
+    },
+    {
+      "name": "error_mesg3",
+      "type": "LIB_VAR",
+      "size": 32
+    },
+    {
+      "name": "error_mesg4",
+      "type": "LIB_VAR",
+      "size": 28
+    },
+    {
+      "name": "error_mesg5",
+      "type": "LIB_VAR",
+      "size": 30
+    },
+    {
+      "name": "error_mesg6",
+      "type": "LIB_VAR",
+      "size": 38
+    },
+    {
+      "name": "_list_size",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_list_ptr",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "requested_capacity",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "total_size",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "new_array_pointer",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "array_ptr",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_value",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_capacity",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_count",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "dest_addr",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_index",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "read_addr",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_total_data_elements",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_total_matrix_size",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_power_base",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_power_exp",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_power_res",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "n",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "res",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_strcmp_p1",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_strcmp_p2",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_strcmp_c1",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_strcmp_c2",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_atoi_s_ptr",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_atoi_p",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_atoi_c",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_atoi_result",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_strlen_p",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_strlen_len",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_strfind_p",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_strfind_char",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_strfind_idx",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "SCALE_FACTOR",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "FP_DOT_STR",
+      "type": "LIB_VAR",
+      "size": 2
+    },
+    {
+      "name": "div_error",
+      "type": "LIB_VAR",
+      "size": 38
+    },
+    {
+      "name": "fp_b",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "fp_a",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "result_sign",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "abs_numerator",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "abs_denominator",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "raw_result",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "exponent",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "base",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "result",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "frac",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "num_digits",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "MAX_VALID_DIGITS",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "temp_scale",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "__natoi_p",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "__natoi_len",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "__natoi_res",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "str_ptr",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "dot_index",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "dot_found",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "int_part_fp",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "frac_ptr",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "frac_len",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "total_len",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "frac_as_int",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "divisor",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "sign",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "name": "_temp_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    }
+  ],
+  "constants": {
+    "space": 32,
+    "backspace": 8,
+    "return": 13,
+    "newline": 10,
+    "null": 0,
+    "_ASCII_0": 48,
+    "_ASCII_9": 57,
+    "FP_DOT": 46
+  }
+}

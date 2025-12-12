@@ -641,11 +641,13 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_23
+    jmpt :_main_if_else_23
     ldm A $mid_x
     sto A $target_x
     ldm A $mid_y
     sto A $target_y
+    jmp :_main_if_end_23
+:_main_if_else_23
     ldm A $player_x
     sto A $target_x
     ldm A $player_y

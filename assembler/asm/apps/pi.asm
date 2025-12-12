@@ -177,26 +177,6 @@
     ldm A $res
     stack A $DATASTACK_PTR
     ret
-@negate
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_swap
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    sub B A
-    stack B $DATASTACK_PTR
-    ret
-@abs
-    call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_lt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :abs_if_end_1
-    call @negate
-:abs_if_end_1
-    ret
 
 
 @FP.set_scale
@@ -291,9 +271,9 @@
     ldm A $result_sign
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    call @negate
-    ustack A $DATASTACK_PTR
+    ldi B 0
+    sub B A
+    ld A B
     ustack B $DATASTACK_PTR
     mul B A
     ld A B
@@ -310,23 +290,29 @@
     ldm A $result_sign
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    call @negate
-    ustack A $DATASTACK_PTR
+    ldi B 0
+    sub B A
+    ld A B
     ustack B $DATASTACK_PTR
     mul B A
     ld A B
     sto A $result_sign
 :FP.div_if_end_2
     ldm A $fp_a
-    stack A $DATASTACK_PTR
-    call @abs
-    ustack A $DATASTACK_PTR
+    tstg A Z
+    jmpt :FP.div_abs_pos_3
+    ldi B 0
+    sub B A
+    ld A B
+:FP.div_abs_pos_3
     sto A $abs_numerator
     ldm A $fp_b
-    stack A $DATASTACK_PTR
-    call @abs
-    ustack A $DATASTACK_PTR
+    tstg A Z
+    jmpt :FP.div_abs_pos_4
+    ldi B 0
+    sub B A
+    ld A B
+:FP.div_abs_pos_4
     sto A $abs_denominator
     stack A $DATASTACK_PTR
     ldi A 0
@@ -334,14 +320,14 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.div_if_else_3
+    jmpt :FP.div_if_else_5
     ldm A $div_error
     stack A $DATASTACK_PTR
     call @PRTstring
     ldi A 0
     stack A $DATASTACK_PTR
-    jmp :FP.div_if_end_3
-:FP.div_if_else_3
+    jmp :FP.div_if_end_5
+:FP.div_if_else_5
     ldm A $abs_numerator
     stack A $DATASTACK_PTR
     ldm A $SCALE_FACTOR
@@ -356,7 +342,7 @@
     ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
-:FP.div_if_end_3
+:FP.div_if_end_5
     ret
 @FP.power
     ustack A $DATASTACK_PTR
@@ -375,11 +361,11 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.power_if_end_4
+    jmpt :FP.power_if_end_6
     ldm A $result
     stack A $DATASTACK_PTR
     jmp :_fp_power_end
-:FP.power_if_end_4
+:FP.power_if_end_6
 :loop_power
     ldm A $exponent
     stack A $DATASTACK_PTR
@@ -388,7 +374,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.power_if_end_5
+    jmpt :FP.power_if_end_7
     ldm A $result
     stack A $DATASTACK_PTR
     ldm A $base
@@ -404,7 +390,7 @@
     ld A B
     sto A $exponent
     jmp :loop_power
-:FP.power_if_end_5
+:FP.power_if_end_7
     ldm A $result
     stack A $DATASTACK_PTR
 :_fp_power_end
@@ -416,12 +402,15 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.print_if_end_6
+    jmpt :FP.print_if_end_8
     ldi A 45
     stack A $DATASTACK_PTR
     call @PRTchar
-    call @negate
-:FP.print_if_end_6
+    ustack A $DATASTACK_PTR
+    ldi B 0
+    sub B A
+    stack B $DATASTACK_PTR
+:FP.print_if_end_8
     call @rt_dup
     ldm A $SCALE_FACTOR
     ustack B $DATASTACK_PTR
@@ -493,12 +482,15 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.fprint_if_end_7
+    jmpt :FP.fprint_if_end_9
     ldi A 45
     stack A $DATASTACK_PTR
     call @PRTchar
-    call @negate
-:FP.fprint_if_end_7
+    ustack A $DATASTACK_PTR
+    ldi B 0
+    sub B A
+    stack B $DATASTACK_PTR
+:FP.fprint_if_end_9
     ldi A 0
     sto A $MAX_VALID_DIGITS
     ldi A 1
@@ -511,7 +503,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.fprint_if_end_8
+    jmpt :FP.fprint_if_end_10
     ldm A $temp_scale
     stack A $DATASTACK_PTR
     ldi A 10
@@ -527,7 +519,7 @@
     ld A B
     sto A $MAX_VALID_DIGITS
     jmp :loop_calc_valid_digits
-:FP.fprint_if_end_8
+:FP.fprint_if_end_10
     ldm A $num_digits
     stack A $DATASTACK_PTR
     ldm A $MAX_VALID_DIGITS
@@ -535,10 +527,10 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.fprint_if_end_9
+    jmpt :FP.fprint_if_end_11
     ldm A $MAX_VALID_DIGITS
     sto A $num_digits
-:FP.fprint_if_end_9
+:FP.fprint_if_end_11
     call @rt_dup
     ldm A $SCALE_FACTOR
     ustack B $DATASTACK_PTR
@@ -560,7 +552,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.fprint_if_end_10
+    jmpt :FP.fprint_if_end_12
     ldm A $frac
     stack A $DATASTACK_PTR
     ldi A 10
@@ -588,7 +580,7 @@
     ld A B
     sto A $num_digits
     jmp :loop_print_digits
-:FP.fprint_if_end_10
+:FP.fprint_if_end_12
     ret
 @_STRNatoi
     ustack A $DATASTACK_PTR
@@ -605,11 +597,11 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_STRNatoi_if_end_11
+    jmpt :_STRNatoi_if_end_13
     ldm A $__natoi_res
     stack A $DATASTACK_PTR
     jmp :_natoi_end
-:_STRNatoi_if_end_11
+:_STRNatoi_if_end_13
     ldm I $__natoi_p
     ldx A $_start_memory_
     stack A $DATASTACK_PTR
@@ -657,11 +649,11 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.from_string_if_end_12
+    jmpt :FP.from_string_if_end_14
     ldi A 1
-    stack A $DATASTACK_PTR
-    call @negate
-    ustack A $DATASTACK_PTR
+    ldi B 0
+    sub B A
+    ld A B
     sto A $sign
     ldm A $str_ptr
     stack A $DATASTACK_PTR
@@ -670,7 +662,7 @@
     add B A
     ld A B
     sto A $str_ptr
-:FP.from_string_if_end_12
+:FP.from_string_if_end_14
     ldm A $str_ptr
     stack A $DATASTACK_PTR
     ldi A 46
@@ -687,7 +679,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.from_string_if_end_13
+    jmpt :FP.from_string_if_end_15
     ldm A $str_ptr
     stack A $DATASTACK_PTR
     call @STRlen
@@ -704,7 +696,7 @@
     mul B A
     stack B $DATASTACK_PTR
     jmp :_fp_from_string_end
-:FP.from_string_if_end_13
+:FP.from_string_if_end_15
     ldm A $str_ptr
     stack A $DATASTACK_PTR
     ldm A $dot_index

@@ -478,6 +478,22 @@ class CodeGenerator:
         if op == '%': # Modulo
             return "    ustack A $DATASTACK_PTR\n    ustack B $DATASTACK_PTR\n    dmod B A\n    stack A $DATASTACK_PTR\n" # Remainder is in A
 
+        if op.upper() == 'NEGATE':
+            return "    ustack A $DATASTACK_PTR\n    ldi B 0\n    sub B A\n    stack B $DATASTACK_PTR\n"
+
+        if op.upper() == 'ABS':
+            abs_id = self.if_label_count
+            self.if_label_count += 1
+            return (
+                f"    ustack A $DATASTACK_PTR\n"
+                f"    tstg A Z\n"
+                f"    jmpt :{self.current_context}_abs_pos_{abs_id}\n"
+                f"    ldi B 0\n    sub B A\n    ld A B\n"
+                f":{self.current_context}_abs_pos_{abs_id}\n"
+                f"    stack A $DATASTACK_PTR\n"
+            )
+
+
         # Fallback to runtime calls for other operations
         rt_call_map = {
             '==':   '@rt_eq',

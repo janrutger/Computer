@@ -247,7 +247,8 @@ class Parser:
             TokenType.DUP, TokenType.SWAP, TokenType.DROP, TokenType.OVER,
             TokenType.PRINT,
             TokenType.PLUS, TokenType.MINUS, TokenType.MUL, TokenType.IDIV, TokenType.MOD,
-            TokenType.EQ, TokenType.NEQ, TokenType.LT, TokenType.GT, TokenType.RND,
+            TokenType.EQ, TokenType.NEQ, TokenType.LT, TokenType.GT, TokenType.RND, TokenType.NEGATE,
+            TokenType.ABS,
         ]:
             return WordNode(token)
 

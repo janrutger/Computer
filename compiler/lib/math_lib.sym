@@ -2,9 +2,7 @@
   "functions": [
     "factorial",
     "gcd",
-    "abs",
-    "power",
-    "negate"
+    "power"
   ],
   "variables": [
     {

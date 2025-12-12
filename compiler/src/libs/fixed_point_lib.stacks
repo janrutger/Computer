@@ -91,12 +91,12 @@ DEF FP.div {
     AS fp_a ; Stack: []
 
     ; Determine result sign
-    fp_a 0 < IF result_sign 1 negate * AS result_sign END
-    fp_b 0 < IF result_sign 1 negate * AS result_sign END
+    fp_a 0 < IF result_sign 1 NEGATE * AS result_sign END
+    fp_b 0 < IF result_sign 1 NEGATE * AS result_sign END
 
     ; Take absolute values
-    fp_a abs AS abs_numerator
-    fp_b abs AS abs_denominator
+    fp_a ABS AS abs_numerator
+    fp_b ABS AS abs_denominator
 
     # ; Perform division on absolute values
     # abs_numerator SCALE_FACTOR * AS abs_numerator ; This is the numerator for the division
@@ -158,7 +158,7 @@ DEF FP.print {
     ; Print integer part
     DUP 0 < IF
         45 PRTchar
-        negate
+        NEGATE
     END
 
     DUP SCALE_FACTOR // TOS_nnl
@@ -198,7 +198,7 @@ DEF FP.fprint {
 
     DUP 0 < IF
         45 PRTchar
-        negate
+        NEGATE
     END
 
     ; Calculate MAX_VALID_DIGITS dynamically
@@ -283,7 +283,7 @@ DEF FP.from_string {
 
     ; Handle negative sign
     *str_ptr 45 == IF
-        1 negate AS sign
+        1 NEGATE AS sign
         str_ptr 1+ AS str_ptr
     END
 

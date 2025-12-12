@@ -341,7 +341,7 @@ WHILE GAME.running DO
             dist_to_midpoint dist_to_player < IF
                 mid_x AS target_x
                 mid_y AS target_y
-            # ELSE
+            ELSE
                 player_x AS target_x
                 player_y AS target_y
             END

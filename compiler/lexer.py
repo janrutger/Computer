@@ -31,6 +31,8 @@ class TokenType(Enum):
     ASM_BLOCK = "ASM_BLOCK" # A special token for the raw assembly code
     AS = "AS"
     GOTO = "GOTO"
+    NEGATE = "NEGATE"
+    ABS = "ABS"
 
 
     # Declaration Keywords
@@ -81,6 +83,8 @@ KEYWORDS = {
     "INCLUDE": TokenType.INCLUDE,
     "ASM": TokenType.ASM,
     "PRINT": TokenType.PRINT,
+    "NEGATE": TokenType.NEGATE,
+    "ABS": TokenType.ABS,
     "AS": TokenType.AS,
     # Declaration Keywords
     "VAR": TokenType.KEYWORD_VAR,
