@@ -1,0 +1,112 @@
+# ============================================================================
+# Multi layer perceptron test code
+# ============================================================================
+
+USE std_heap
+USE std_stern_io
+USE std_time
+USE std_stacks_rt
+
+INCLUDE math_lib
+INCLUDE fixed_point_lib
+
+INCLUDE mlnn_lib
+
+
+
+
+
+DEF SRAND {
+    *p_currentime rand_m % AS random_seed
+    "New random seed: " PRTstring
+    random_seed PRINT
+}
+
+
+# ============================================================================
+# Main Program
+# ============================================================================
+
+# --- 1. Initialization ---
+# HEAP_MEM_START HEAP_MEM_SIZE HEAP.init
+HEAP.free
+SRAND      
+
+# --- 2. Create Network ---
+"--- Creating 2-4-1 Network for XOR test ---\n" PRTstring
+
+# Define network architecture parameters
+VALUE net_input_size 2
+VALUE net_output_size 1
+VALUE my_network_ptr 0
+
+# Create an array for the hidden layer sizes: [4]
+1 NEW.array AS hidden_layers_ptr
+4 hidden_layers_ptr ARRAY.append
+
+# Create the network using the library function
+# Stack order for NN.new_network: ( input_size hidden_layer_sizes_ptr output_size -- network_ptr )
+net_input_size
+hidden_layers_ptr
+net_output_size
+NN.new_network AS my_network_ptr
+
+"Network created. Pointer: " PRTstring
+my_network_ptr PRINT
+
+# --- 3. Create XOR Dataset ---
+"\n--- Creating XOR training data ---\n" PRTstring
+
+# Create the four input arrays for XOR
+2 NEW.array AS input_00_ptr 0 FP.from_int input_00_ptr ARRAY.append 0 FP.from_int input_00_ptr ARRAY.append
+2 NEW.array AS input_01_ptr 0 FP.from_int input_01_ptr ARRAY.append 1 FP.from_int input_01_ptr ARRAY.append
+2 NEW.array AS input_10_ptr 1 FP.from_int input_10_ptr ARRAY.append 0 FP.from_int input_10_ptr ARRAY.append
+2 NEW.array AS input_11_ptr 1 FP.from_int input_11_ptr ARRAY.append 1 FP.from_int input_11_ptr ARRAY.append
+
+# Create the two target output arrays for XOR
+1 NEW.array AS target_0_ptr 0 FP.from_int target_0_ptr ARRAY.append
+1 NEW.array AS target_1_ptr 1 FP.from_int target_1_ptr ARRAY.append
+
+# Create master arrays to hold pointers to the data for easy looping
+4 NEW.array AS xor_inputs_ptr
+input_00_ptr xor_inputs_ptr ARRAY.append
+input_01_ptr xor_inputs_ptr ARRAY.append
+input_10_ptr xor_inputs_ptr ARRAY.append
+input_11_ptr xor_inputs_ptr ARRAY.append
+
+4 NEW.array AS xor_targets_ptr
+target_0_ptr xor_targets_ptr ARRAY.append
+target_1_ptr xor_targets_ptr ARRAY.append
+target_1_ptr xor_targets_ptr ARRAY.append
+target_0_ptr xor_targets_ptr ARRAY.append
+
+"XOR data created.\n" PRTstring
+
+
+# --- 4. Train the Network ---
+
+
+# --- 5. Test Trained Network ---
+"\n--- Predictions from Untrained Network ---\n" PRTstring
+
+VALUE final_output_ptr 0
+
+# Test case 1: Input [0, 0]
+input_00_ptr my_network_ptr NN.predict AS final_output_ptr
+#"Input [0,0] -> " PRTstring 0 final_output_ptr ARRAY.get FP.print "\n" PRTstring
+:break
+
+# Test case 2: Input [0, 1]
+input_01_ptr my_network_ptr NN.predict AS final_output_ptr
+#"Input [0,1] -> " PRTstring 0 final_output_ptr ARRAY.get FP.print "\n" PRTstring
+
+# Test case 3: Input [1, 0]
+input_10_ptr my_network_ptr NN.predict AS final_output_ptr
+#"Input [1,0] -> " PRTstring 0 final_output_ptr ARRAY.get FP.print "\n" PRTstring
+
+# Test case 4: Input [1, 1]
+input_11_ptr my_network_ptr NN.predict AS final_output_ptr
+#"Input [1,1] -> " PRTstring 0 final_output_ptr ARRAY.get FP.print "\n" PRTstring
+
+
+"--- All Done ---\n" PRTstring

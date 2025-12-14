@@ -1,11 +1,11 @@
 {
   "functions": [
-    "TIME.read",
-    "TIME.wait",
+    "TIME.init",
     "TIME.start",
     "TIME.uptime",
-    "TIME.init",
-    "TIME.as_string"
+    "TIME.as_string",
+    "TIME.wait",
+    "TIME.read"
   ],
   "variables": [
     {

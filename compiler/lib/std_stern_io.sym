@@ -1,17 +1,17 @@
 {
   "functions": [
-    "HALT",
-    "KEYchar",
-    "KEYpressed",
-    "io_lib_init",
-    "READline",
-    "TOS.check",
-    "CURSORon",
-    "CURSORoff",
-    "PRTcls",
     "PRTstring",
+    "io_lib_init",
+    "PRTcls",
+    "CURSORon",
+    "KEYpressed",
     "PRTnum",
-    "PRTchar"
+    "CURSORoff",
+    "KEYchar",
+    "TOS.check",
+    "PRTchar",
+    "HALT",
+    "READline"
   ],
   "variables": [
     {

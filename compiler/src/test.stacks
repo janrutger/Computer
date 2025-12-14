@@ -1,12 +1,5 @@
 # ============================================================================
-# Perceptron Separator Task
-#
-# This program trains a single perceptron to classify points in a 2D space.
-# It demonstrates the functionality of the nn_lib.
-#
-# The "truth" is a simple linear function: y > x.
-# - Points where y > x are in class 1.
-# - Points where y <= x are in class 0.
+# Multi layer perceptron test code
 # ============================================================================
 
 USE std_heap
@@ -17,34 +10,16 @@ USE std_stacks_rt
 INCLUDE math_lib
 INCLUDE fixed_point_lib
 
-INCLUDE nn_lib
+INCLUDE mlnn_lib
+
+VALUE network_ptr 0
+VALUE hidden_layer_ptr 0
+VALUE output_layer_ptr 0
+VALUE input_array_ptr 0
+VALUE output_array_ptr 0
 
 
-# --- Training Parameters ---
-CONST TRAINING_ITERATIONS 700
-CONST TESTING_ITERATIONS 1000
-CONST LEARNING_RATE 100 # 0.1 as a fixed-point number (100 / 1000)
 
-# --- Global Variables ---
-VALUE perceptron 0
-VALUE input_array 0
-VALUE x_fp 0
-VALUE y_fp 0
-VALUE x_int 0
-VALUE y_int 0
-VALUE guess 0
-VALUE true_label 0
-VALUE error 0
-VALUE itter 0
-VALUE error_count 0
-
-# --- Plotting Colors (from screen.txt) ---
-CONST COLOR_GREEN 5
-CONST COLOR_RED 2
-CONST COLOR_BLUE 6
-CONST COLOR_YELLOW 7
-CONST COLOR_ORANGE 8
-CONST COLOR_lightGREEN 13
 
 
 DEF SRAND {
@@ -54,25 +29,6 @@ DEF SRAND {
 }
 
 
-DEF random_xy {
-    # RND 50 % AS x_int
-    # RND 50 % AS y_int
-    RND 50 * 999 // AS x_int
-    RND 50 * 999 // AS y_int
-}
-
-DEF Function {
-    # Simple
-    y_int x_int <
-
-
-    # More complex
-    # y_int 2 x_int *  >
-
-    # Other
-    # y_int x_int 2 // >
-
-}
 
 # ============================================================================
 # Main Program
@@ -81,153 +37,97 @@ DEF Function {
 # --- 1. Initialization ---
 # HEAP_MEM_START HEAP_MEM_SIZE HEAP.init
 HEAP.free
-SRAND      
+SRAND    
 
-IO 2 ONLINE
-0 IO 2 MODE # Set to Pixel Mode, single Buffering (0 is signle buffering)
-IO 2 NEW
+"--- Phase 1: Testing NN.new_network ---\n" PRTstring
+"Creating a 2-2-1 network...\n" PRTstring
 
-"Creating Perceptron..." PRTstring
-2 NN.new_perceptron AS perceptron # 2 inputs: x and y
-" Done.\n" PRTstring
+2 2 1 NN.new_network AS network_ptr
 
-"Creating input array..." PRTstring
-2 NEW.array AS input_array # To hold [x, y] for each data point
-" Done.\n" PRTstring
+"Network created at address: " PRTstring
+network_ptr PRINT
 
-# Initialize the input array with two zero values.
-# This sets its count to 2, allowing ARRAY.put to be used later.
-0 input_array ARRAY.append
-0 input_array ARRAY.append
+"Verifying network structure...\n" PRTstring
 
-"--- Phase 0: Untrained Model ---\n" PRTstring
-IO 2 NEW
-0 AS itter
-WHILE itter TESTING_ITERATIONS < DO
-    # Generate a random data point
-    random_xy
+# Get pointers from the main network array
+network_ptr 1 ARRAY.get AS hidden_layer_ptr
+network_ptr 2 ARRAY.get AS output_layer_ptr
 
-    # x_int FP.from_int AS x_fp
-    # y_int FP.from_int AS y_fp
-    # x_fp 0 input_array ARRAY.put
-    # y_fp 1 input_array ARRAY.put
-    x_int FP.from_int 0 input_array ARRAY.put
-    y_int FP.from_int 1 input_array ARRAY.put
+"  Input size: " PRTstring
+network_ptr 0 ARRAY.get PRINT
 
-    # Get the model's prediction (NO TRAINING)
-    input_array perceptron NN.predict AS guess
+"  Hidden layer pointer: " PRTstring
+hidden_layer_ptr PRINT
 
-    # Determine the true label and error
-    Function IF 1 ELSE 0 END AS true_label
-    true_label guess - AS error
+"  Output layer pointer: " PRTstring
+output_layer_ptr PRINT
 
+"  Hidden layer neuron count: " PRTstring
+hidden_layer_ptr ARRAY.len PRINT
 
-    # Visualize with a different color scheme
-    error 0 == IF COLOR_GREEN ELSE COLOR_RED END
-    # AS this_color
+"  Output layer neuron count: " PRTstring
+output_layer_ptr ARRAY.len PRINT
 
-    # Plot the point (scale coords for visibility)
-    x_int 5 + 5 * IO 2 X
-    y_int 5 + 4 * IO 2 Y
-    #this_color IO 2 DRAW
-    IO 2 DRAW   # the required color is still on the stack
+"\n--- Phase 2: Testing NN.predict ---\n" PRTstring
 
+"Creating input array [1.0, 0.0]...\n" PRTstring
+2 NEW.array AS input_array_ptr
+1 FP.from_int input_array_ptr ARRAY.append
+0 FP.from_int input_array_ptr ARRAY.append
 
-    itter 1 + AS itter
-DONE
+"Running prediction...\n" PRTstring
+network_ptr input_array_ptr NN.predict AS output_array_ptr
+
+"Prediction finished. Output pointer: " PRTstring
+output_array_ptr PRINT
+
+"Output array length: " PRTstring
+output_array_ptr ARRAY.len PRINT
+
+"Predicted value (random weights): " PRTstring
+# Since our network has 1 output neuron, the result is at index 0
+0 output_array_ptr ARRAY.get FP.print
 
 
-# --- 2. Phase 1: Training Loop ---
-"--- Phase 1: Training ---\n" PRTstring
-0 AS itter
-WHILE itter TRAINING_ITERATIONS < DO
-    # 2a. Generate a random data point (x, y) between 0 and 50
-    random_xy
-
-    x_int FP.from_int 0 input_array ARRAY.put
-    y_int FP.from_int 1 input_array ARRAY.put    
-    
-
-    # 2b. Get the model's prediction
-    input_array perceptron NN.predict AS guess
-
-    # 2c. Determine the true label and the error
-    # The Function iss the rule
-    Function IF 1 ELSE 0 END AS true_label
-    true_label guess - AS error
-
-    # 2d. If the guess was wrong, train the model
-    error 0 != IF
-        # Push arguments in the correct order for NN.train_step:
-        # (learning_rate(fp), error(int), input_ptr, perceptron_ptr -- )
-        LEARNING_RATE FP.from_int   # The learning rate
-        error                       # The error
-        input_array                 # The input data
-        perceptron                  # The model
-        NN.train_step               # Call the function
-    END
-
-    # 2e. Visualize the point
-    # Set color: Green for correct, Red for incorrect
-    error 0 == IF COLOR_GREEN ELSE COLOR_RED END
-    # AS this_color
-
-    # Plot the point (scale coords for visibility)
-    x_int 5 + 5 * 320 + IO 2 X
-    y_int 5 + 4 *       IO 2 Y
-    # this_color IO 2 DRAW
-    IO 2 DRAW
-
-    itter 1 + AS itter
-
-DONE
+"\nALL DONE... \n" PRTstring
 
 
-# --- 3. Phase 2: Testing Loop ---
-"--- Phase 2: Testing ---\n" PRTstring
-0 AS itter
-# IO 2 NEW
-0 AS error_count
-WHILE itter TESTING_ITERATIONS < DO
-    # 3a. Generate a new random data point
-    random_xy
+"\n--- Phase 2b: Deterministic Prediction Test ---\n" PRTstring
 
-    x_int FP.from_int 0 input_array ARRAY.put
-    y_int FP.from_int 1 input_array ARRAY.put
+# Manually set weights and biases for predictable output
+# All weights = 0.5 (500), all biases = 0.1 (100)
 
-    # 3b. Get the model's prediction (NO TRAINING)
-    input_array perceptron NN.predict AS guess
+"Setting weights to 0.5 and biases to 0.1...\n" PRTstring
 
-    # 3c. Determine the true label
-    Function IF 1 ELSE 0 END AS true_label
-    true_label guess - AS error
+# Hidden Layer (2 neurons)
+0 hidden_layer_ptr ARRAY.get AS _nn_perceptron_ptr
+100 0 _nn_perceptron_ptr ARRAY.put # Set bias for H0
+500 0 _nn_perceptron_ptr _NN.set_weight
+500 1 _nn_perceptron_ptr _NN.set_weight
 
-    # Count the error if there is one
-    error 0 != IF error_count 1 + AS error_count END
+1 hidden_layer_ptr ARRAY.get AS _nn_perceptron_ptr
+100 0 _nn_perceptron_ptr ARRAY.put # Set bias for H1
+500 0 _nn_perceptron_ptr _NN.set_weight
+500 1 _nn_perceptron_ptr _NN.set_weight
 
-    # 3d. Visualize with different colors
-    # Blue/Orange for correct, red for incorrect
+# Output Layer (1 neuron)
+0 output_layer_ptr ARRAY.get AS _nn_perceptron_ptr
+100 0 _nn_perceptron_ptr ARRAY.put # Set bias for O0
+500 0 _nn_perceptron_ptr _NN.set_weight
+500 1 _nn_perceptron_ptr _NN.set_weight
 
-    error 0 != IF
-        COLOR_RED
-    ELSE
-        guess 1 == IF COLOR_lightGREEN ELSE COLOR_YELLOW END
-    END 
-    # AS this_color
+"Running prediction with known weights...\n" PRTstring
+network_ptr input_array_ptr NN.predict AS output_array_ptr
 
-    # Plot the point (scale coords for visibility)
+"Predicted value (known weights): " PRTstring
+0 output_array_ptr ARRAY.get FP.print
 
-    x_int 5 + 5 * 320 + IO 2 X
-    y_int 5 + 4 * 240 + IO 2 Y
-    # this_color IO 2 DRAW
-    IO 2 DRAW
+"\nExpected output calculation:\n" PRTstring
+"  Input: [1.0, 0.0]\n" PRTstring
+"  H0_out = relu(1.0*0.5 + 0.0*0.5 + 0.1) = relu(0.6) = 0.6\n" PRTstring
+"  H1_out = relu(1.0*0.5 + 0.0*0.5 + 0.1) = relu(0.6) = 0.6\n" PRTstring
+"  O0_out = relu(0.6*0.5 + 0.6*0.5 + 0.1) = relu(0.3 + 0.3 + 0.1)\n" PRTstring
+"         = relu(0.7) = 0.7\n \n Expected prediction: 0.700\n" PRTstring
 
-    itter 1 + AS itter
-DONE
 
-"--- Test Report ---\n" PRTstring
-error_count PRTnum
-" errors out of " PRTstring TESTING_ITERATIONS PRTnum
-" test cases.\n" PRTstring
-
-"--- All Done ---\n" PRTstring
+"\nALL DONE... \n" PRTstring

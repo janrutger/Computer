@@ -1,55 +1,56 @@
 {
   "functions": [
-    "NEW.list",
-    "FP.set_scale",
-    "_predict_layer",
-    "CURSORoff",
-    "power",
-    "_new_perceptron",
-    "TOS_nnl",
-    "READline",
-    "PRTstring",
-    "STRatoi",
-    "NN.predict",
-    "NN.train",
-    "FP.to_int",
-    "_relu",
-    "KEYpressed",
-    "FP.div",
-    "FP.print",
-    "ARRAY.size",
-    "CURSORon",
-    "PRTnum",
-    "ARRAY.put",
-    "ARRAY.len",
-    "FP.from_int",
-    "HEAP.free",
-    "ARRAY.append",
-    "_STRNatoi",
-    "ARRAY.get",
-    "FP.sub",
     "NEW.matrix",
+    "HEAP.init",
+    "NN.predict",
+    "ARRAY.size",
+    "PRTstring",
+    "_NN.new_layer",
+    "NEW.list",
+    "PRTcls",
+    "PRTchar",
+    "HEAP.free",
+    "_STRNatoi",
     "STRcopy",
     "FP.fprint",
-    "STRcmp",
-    "factorial",
-    "io_lib_init",
-    "FP.power",
-    "NN.new_network",
-    "HALT",
-    "PRTchar",
+    "_NN.relu",
     "FP.from_string",
-    "_relu_derivative",
+    "factorial",
+    "READline",
+    "FP.to_int",
+    "FP.from_int",
+    "ARRAY.len",
+    "FP.div",
     "TOS.check",
-    "FP.mul",
+    "ARRAY.clear",
+    "PRTnum",
+    "KEYchar",
+    "CURSORon",
+    "FP.power",
+    "_NN.forward_pass_layer",
+    "gcd",
+    "power",
+    "KEYpressed",
+    "FP.print",
+    "FP.add",
+    "_NN.set_weight",
+    "CURSORoff",
+    "STRcmp",
+    "ARRAY.get",
+    "TOS_nnl",
+    "ARRAY.append",
     "STRlen",
     "STRfind",
-    "gcd",
-    "PRTcls",
-    "HEAP.init",
-    "FP.add",
+    "FP.set_scale",
+    "_NN.relu_derivative",
+    "io_lib_init",
+    "FP.sub",
+    "STRatoi",
+    "NN.new_network",
+    "HALT",
     "NEW.array",
-    "KEYchar"
+    "FP.mul",
+    "ARRAY.put"
   ],
   "variables": [
     {
@@ -478,324 +479,93 @@
       "size": 1
     },
     {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "name": "_temp_ptr",
+      "name": "_nn_temp_ptr",
       "type": "VALUE",
       "size": 1
     },
     {
-      "type": "VAR",
+      "name": "_nn_num_neurons",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "type": "VAR",
+      "name": "_nn_input_size",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "type": "VAR",
+      "name": "_nn_hidden_size",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "type": "VAR",
+      "name": "_nn_output_size",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "type": "VAR",
+      "name": "_nn_predict_layer_ptr",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "type": "VAR",
+      "name": "_nn_predict_input_ptr",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "type": "VAR",
+      "name": "_nn_predict_output_ptr",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "type": "VAR",
+      "name": "_nn_predict_neuron_idx",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "type": "VAR",
+      "name": "_nn_predict_input_idx",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "type": "VAR",
+      "name": "_nn_predict_weighted_sum",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "type": "VAR",
+      "name": "_nn_fill_counter",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "type": "VAR",
+      "name": "_nn_perceptron_ptr",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "type": "VAR",
+      "name": "_nn_weights_ptr",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "type": "VAR",
+      "name": "_nn_network_ptr",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "type": "VAR",
+      "name": "_nn_hidden_layer_ptr",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "type": "VAR",
+      "name": "_nn_output_layer_ptr",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
-      "size": 1
-    },
-    {
-      "type": "VAR",
+      "name": "_nn_input_idx",
+      "type": "VALUE",
       "size": 1
     }
   ],

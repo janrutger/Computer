@@ -33,534 +33,319 @@
 . $frac_as_int 1
 . $divisor 1
 . $sign 1
-. $num_inputs 1
-. $weights_ptr 1
-. $perceptron_ptr 1
-. $i 1
-. $input_val 1
-. $input_ptr 1
-. $weight_val 1
-. $product 1
-. $weighted_sum 1
-. $bias 1
-. $_error 1
-. $error_fp 1
-. $learning_rate 1
-. $old_bias 1
-. $old_weight 1
-. $adjustment 1
-. $weight_delta 1
-. $new_bias 1
-. $new_weight 1
-. $perceptron 1
-. $input_array 1
-. $x_fp 1
-. $y_fp 1
-. $x_int 1
-. $y_int 1
-. $guess 1
-. $true_label 1
-. $error 1
-. $itter 1
-. $error_count 1
+. $_nn_temp_ptr 1
+. $_nn_num_neurons 1
+. $_nn_input_size 1
+. $_nn_hidden_size 1
+. $_nn_output_size 1
+. $_nn_predict_layer_ptr 1
+. $_nn_predict_input_ptr 1
+. $_nn_predict_output_ptr 1
+. $_nn_predict_neuron_idx 1
+. $_nn_predict_input_idx 1
+. $_nn_predict_weighted_sum 1
+. $_nn_fill_counter 1
+. $_nn_perceptron_ptr 1
+. $_nn_weights_ptr 1
+. $_nn_network_ptr 1
+. $_nn_hidden_layer_ptr 1
+. $_nn_output_layer_ptr 1
+. $_nn_input_idx 1
+. $network_ptr 1
+. $hidden_layer_ptr 1
+. $output_layer_ptr 1
+. $input_array_ptr 1
+. $output_array_ptr 1
 . $SRAND_str_0 18
-. $_main_str_1 23
-. $_main_str_2 8
-. $_main_str_3 24
-. $_main_str_4 34
-. $_main_str_5 27
-. $_main_str_6 26
-. $_main_str_7 21
-. $_main_str_8 16
-. $_main_str_9 14
-. $_main_str_10 18
+. $_main_str_1 41
+. $_main_str_2 29
+. $_main_str_3 29
+. $_main_str_4 32
+. $_main_str_5 15
+. $_main_str_6 25
+. $_main_str_7 25
+. $_main_str_8 30
+. $_main_str_9 30
+. $_main_str_10 38
+. $_main_str_11 36
+. $_main_str_12 23
+. $_main_str_13 38
+. $_main_str_14 22
+. $_main_str_15 35
+. $_main_str_16 15
+. $_main_str_17 50
+. $_main_str_18 45
+. $_main_str_19 42
+. $_main_str_20 34
+. $_main_str_21 31
+. $_main_str_22 21
+. $_main_str_23 60
+. $_main_str_24 60
+. $_main_str_25 66
+. $_main_str_26 58
 
 # .CODE
     call @HEAP.free
     call @SRAND
-    ldi A 0
+    ldi A $_main_str_1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_2
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A 2
     stack A $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @rt_udc_control
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 14
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 10
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-    ldi A $_main_str_1
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 2
-    stack A $DATASTACK_PTR
-    call @NN.new_perceptron
+    call @NN.new_network
     ustack A $DATASTACK_PTR
-    sto A $perceptron
-    ldi A $_main_str_2
+    sto A $network_ptr
+    ldi A $_main_str_3
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A $_main_str_3
+    ldm A $network_ptr
+    stack A $DATASTACK_PTR
+    call @rt_print_tos
+    ldi A $_main_str_4
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldm A $network_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $hidden_layer_ptr
+    ldm A $network_ptr
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $output_layer_ptr
+    ldi A $_main_str_5
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldm A $network_ptr
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    call @rt_print_tos
+    ldi A $_main_str_6
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldm A $hidden_layer_ptr
+    stack A $DATASTACK_PTR
+    call @rt_print_tos
+    ldi A $_main_str_7
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldm A $output_layer_ptr
+    stack A $DATASTACK_PTR
+    call @rt_print_tos
+    ldi A $_main_str_8
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldm A $hidden_layer_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.len
+    call @rt_print_tos
+    ldi A $_main_str_9
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldm A $output_layer_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.len
+    call @rt_print_tos
+    ldi A $_main_str_10
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_11
     stack A $DATASTACK_PTR
     call @PRTstring
     ldi A 2
     stack A $DATASTACK_PTR
     call @NEW.array
     ustack A $DATASTACK_PTR
-    sto A $input_array
-    ldi A $_main_str_2
+    sto A $input_array_ptr
+    ldi A 1
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldm A $input_array
+    call @FP.from_int
+    ldm A $input_array_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.append
     ldi A 0
     stack A $DATASTACK_PTR
-    ldm A $input_array
+    call @FP.from_int
+    ldm A $input_array_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.append
-    ldi A $_main_str_4
+    ldi A $_main_str_12
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldm A $network_ptr
+    stack A $DATASTACK_PTR
+    ldm A $input_array_ptr
+    stack A $DATASTACK_PTR
+    call @NN.predict
+    ustack A $DATASTACK_PTR
+    sto A $output_array_ptr
+    ldi A $_main_str_13
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldm A $output_array_ptr
+    stack A $DATASTACK_PTR
+    call @rt_print_tos
+    ldi A $_main_str_14
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldm A $output_array_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.len
+    call @rt_print_tos
+    ldi A $_main_str_15
     stack A $DATASTACK_PTR
     call @PRTstring
     ldi A 0
     stack A $DATASTACK_PTR
-    ldi A 2
+    ldm A $output_array_ptr
     stack A $DATASTACK_PTR
-    ldi A 10
+    call @ARRAY.get
+    call @FP.print
+    ldi A $_main_str_16
     stack A $DATASTACK_PTR
-    call @rt_udc_control
-    ldi A 0
-    sto A $itter
-:_main_while_start_0
-    ldm A $itter
+    call @PRTstring
+    ldi A $_main_str_17
     stack A $DATASTACK_PTR
-    ldi A 1000
-    stack A $DATASTACK_PTR
-    call @rt_lt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_while_end_0
-    call @random_xy
-    ldm A $x_int
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldm A $input_array
-    stack A $DATASTACK_PTR
-    call @ARRAY.put
-    ldm A $y_int
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldm A $input_array
-    stack A $DATASTACK_PTR
-    call @ARRAY.put
-    ldm A $input_array
-    stack A $DATASTACK_PTR
-    ldm A $perceptron
-    stack A $DATASTACK_PTR
-    call @NN.predict
-    ustack A $DATASTACK_PTR
-    sto A $guess
-    call @Function
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_if_else_0
-    ldi A 1
-    stack A $DATASTACK_PTR
-    jmp :_main_if_end_0
-:_main_if_else_0
-    ldi A 0
-    stack A $DATASTACK_PTR
-:_main_if_end_0
-    ustack A $DATASTACK_PTR
-    sto A $true_label
-    stack A $DATASTACK_PTR
-    ldm A $guess
-    ustack B $DATASTACK_PTR
-    sub B A
-    ld A B
-    sto A $error
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_if_else_1
-    ldi A 5
-    stack A $DATASTACK_PTR
-    jmp :_main_if_end_1
-:_main_if_else_1
-    ldi A 2
-    stack A $DATASTACK_PTR
-:_main_if_end_1
-    ldm A $x_int
-    stack A $DATASTACK_PTR
-    ldi A 5
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ldi A 5
-    ustack B $DATASTACK_PTR
-    mul B A
-    stack B $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 15
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-    ldm A $y_int
-    stack A $DATASTACK_PTR
-    ldi A 5
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ldi A 4
-    ustack B $DATASTACK_PTR
-    mul B A
-    stack B $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 16
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 17
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-    ldm A $itter
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $itter
-    jmp :_main_while_start_0
-:_main_while_end_0
-    ldi A $_main_str_5
+    call @PRTstring
+    ldi A $_main_str_18
     stack A $DATASTACK_PTR
     call @PRTstring
     ldi A 0
-    sto A $itter
-:_main_while_start_1
-    ldm A $itter
     stack A $DATASTACK_PTR
-    ldi A 700
+    ldm A $hidden_layer_ptr
     stack A $DATASTACK_PTR
-    call @rt_lt
+    call @ARRAY.get
     ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_while_end_1
-    call @random_xy
-    ldm A $x_int
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldm A $input_array
-    stack A $DATASTACK_PTR
-    call @ARRAY.put
-    ldm A $y_int
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldm A $input_array
-    stack A $DATASTACK_PTR
-    call @ARRAY.put
-    ldm A $input_array
-    stack A $DATASTACK_PTR
-    ldm A $perceptron
-    stack A $DATASTACK_PTR
-    call @NN.predict
-    ustack A $DATASTACK_PTR
-    sto A $guess
-    call @Function
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_if_else_2
-    ldi A 1
-    stack A $DATASTACK_PTR
-    jmp :_main_if_end_2
-:_main_if_else_2
-    ldi A 0
-    stack A $DATASTACK_PTR
-:_main_if_end_2
-    ustack A $DATASTACK_PTR
-    sto A $true_label
-    stack A $DATASTACK_PTR
-    ldm A $guess
-    ustack B $DATASTACK_PTR
-    sub B A
-    ld A B
-    sto A $error
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_neq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_if_end_3
+    sto A $_nn_perceptron_ptr
     ldi A 100
     stack A $DATASTACK_PTR
-    call @FP.from_int
-    ldm A $error
+    ldi A 0
     stack A $DATASTACK_PTR
-    ldm A $input_array
+    ldm A $_nn_perceptron_ptr
     stack A $DATASTACK_PTR
-    ldm A $perceptron
-    stack A $DATASTACK_PTR
-    call @NN.train_step
-:_main_if_end_3
-    ldm A $error
+    call @ARRAY.put
+    ldi A 500
     stack A $DATASTACK_PTR
     ldi A 0
     stack A $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_if_else_4
-    ldi A 5
+    ldm A $_nn_perceptron_ptr
     stack A $DATASTACK_PTR
-    jmp :_main_if_end_4
-:_main_if_else_4
-    ldi A 2
-    stack A $DATASTACK_PTR
-:_main_if_end_4
-    ldm A $x_int
-    stack A $DATASTACK_PTR
-    ldi A 5
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ldi A 5
-    ustack B $DATASTACK_PTR
-    mul B A
-    stack B $DATASTACK_PTR
-    ldi A 320
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 15
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-    ldm A $y_int
-    stack A $DATASTACK_PTR
-    ldi A 5
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ldi A 4
-    ustack B $DATASTACK_PTR
-    mul B A
-    stack B $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 16
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 17
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-    ldm A $itter
+    call @_NN.set_weight
+    ldi A 500
     stack A $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $itter
-    jmp :_main_while_start_1
-:_main_while_end_1
-    ldi A $_main_str_6
+    stack A $DATASTACK_PTR
+    ldm A $_nn_perceptron_ptr
+    stack A $DATASTACK_PTR
+    call @_NN.set_weight
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $hidden_layer_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $_nn_perceptron_ptr
+    ldi A 100
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $_nn_perceptron_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.put
+    ldi A 500
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $_nn_perceptron_ptr
+    stack A $DATASTACK_PTR
+    call @_NN.set_weight
+    ldi A 500
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_perceptron_ptr
+    stack A $DATASTACK_PTR
+    call @_NN.set_weight
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $output_layer_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $_nn_perceptron_ptr
+    ldi A 100
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $_nn_perceptron_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.put
+    ldi A 500
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $_nn_perceptron_ptr
+    stack A $DATASTACK_PTR
+    call @_NN.set_weight
+    ldi A 500
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_perceptron_ptr
+    stack A $DATASTACK_PTR
+    call @_NN.set_weight
+    ldi A $_main_str_19
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 0
-    sto A $itter
-    ldi A 0
-    sto A $error_count
-:_main_while_start_2
-    ldm A $itter
+    ldm A $network_ptr
     stack A $DATASTACK_PTR
-    ldi A 1000
-    stack A $DATASTACK_PTR
-    call @rt_lt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_while_end_2
-    call @random_xy
-    ldm A $x_int
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldm A $input_array
-    stack A $DATASTACK_PTR
-    call @ARRAY.put
-    ldm A $y_int
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldm A $input_array
-    stack A $DATASTACK_PTR
-    call @ARRAY.put
-    ldm A $input_array
-    stack A $DATASTACK_PTR
-    ldm A $perceptron
+    ldm A $input_array_ptr
     stack A $DATASTACK_PTR
     call @NN.predict
     ustack A $DATASTACK_PTR
-    sto A $guess
-    call @Function
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_if_else_5
-    ldi A 1
-    stack A $DATASTACK_PTR
-    jmp :_main_if_end_5
-:_main_if_else_5
-    ldi A 0
-    stack A $DATASTACK_PTR
-:_main_if_end_5
-    ustack A $DATASTACK_PTR
-    sto A $true_label
-    stack A $DATASTACK_PTR
-    ldm A $guess
-    ustack B $DATASTACK_PTR
-    sub B A
-    ld A B
-    sto A $error
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_neq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_if_end_6
-    ldm A $error_count
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $error_count
-:_main_if_end_6
-    ldm A $error
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_neq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_if_else_7
-    ldi A 2
-    stack A $DATASTACK_PTR
-    jmp :_main_if_end_7
-:_main_if_else_7
-    ldm A $guess
-    stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_main_if_else_8
-    ldi A 13
-    stack A $DATASTACK_PTR
-    jmp :_main_if_end_8
-:_main_if_else_8
-    ldi A 7
-    stack A $DATASTACK_PTR
-:_main_if_end_8
-:_main_if_end_7
-    ldm A $x_int
-    stack A $DATASTACK_PTR
-    ldi A 5
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ldi A 5
-    ustack B $DATASTACK_PTR
-    mul B A
-    stack B $DATASTACK_PTR
-    ldi A 320
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 15
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-    ldm A $y_int
-    stack A $DATASTACK_PTR
-    ldi A 5
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ldi A 4
-    ustack B $DATASTACK_PTR
-    mul B A
-    stack B $DATASTACK_PTR
-    ldi A 240
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 16
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 17
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-    ldm A $itter
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $itter
-    jmp :_main_while_start_2
-:_main_while_end_2
-    ldi A $_main_str_7
+    sto A $output_array_ptr
+    ldi A $_main_str_20
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldm A $error_count
+    ldi A 0
     stack A $DATASTACK_PTR
-    call @PRTnum
-    ldi A $_main_str_8
+    ldm A $output_array_ptr
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 1000
-    stack A $DATASTACK_PTR
-    call @PRTnum
-    ldi A $_main_str_9
+    call @ARRAY.get
+    call @FP.print
+    ldi A $_main_str_21
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A $_main_str_10
+    ldi A $_main_str_22
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_23
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_24
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_25
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_26
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $_main_str_16
     stack A $DATASTACK_PTR
     call @PRTstring
     ret
@@ -1248,24 +1033,56 @@
     ret
 
 
-@NN.new_perceptron
+@ARRAY.clear
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_nn_temp_ptr
+    ldi A 0
+    ld B A
+    ldm I $_nn_temp_ptr
+    stx B $_start_memory_
+    ret
+@_NN.new_layer
     ustack A $DATASTACK_PTR
-    sto A $num_inputs
+    sto A $_nn_input_size
+    ustack A $DATASTACK_PTR
+    sto A $_nn_num_neurons
     stack A $DATASTACK_PTR
     call @NEW.array
     ustack A $DATASTACK_PTR
-    sto A $weights_ptr
-    ldi A 0
-    sto A $i
-:NN.new_perceptron_while_start_0
-    ldm A $i
+    sto A $_nn_temp_ptr
+:_NN.new_layer_while_start_0
+    ldm A $_nn_num_neurons
     stack A $DATASTACK_PTR
-    ldm A $num_inputs
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_NN.new_layer_while_end_0
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @NEW.array
+    ustack A $DATASTACK_PTR
+    sto A $_nn_perceptron_ptr
+    ldm A $_nn_input_size
+    stack A $DATASTACK_PTR
+    call @NEW.array
+    ustack A $DATASTACK_PTR
+    sto A $_nn_weights_ptr
+    ldi A 0
+    sto A $_nn_fill_counter
+:_NN.new_layer_while_start_1
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldm A $_nn_input_size
     stack A $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :NN.new_perceptron_while_end_0
+    jmpt :_NN.new_layer_while_end_1
     call @rt_rnd
     ldi A 200
     ustack B $DATASTACK_PTR
@@ -1280,233 +1097,272 @@
     stack A $DATASTACK_PTR
     call @FP.from_int
     call @FP.div
-    ldm A $weights_ptr
+    ldm A $_nn_weights_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.append
-    ldm A $i
+    ldm A $_nn_fill_counter
     stack A $DATASTACK_PTR
     ldi A 1
     ustack B $DATASTACK_PTR
     add B A
     ld A B
-    sto A $i
-    jmp :NN.new_perceptron_while_start_0
-:NN.new_perceptron_while_end_0
-    ldi A 2
-    stack A $DATASTACK_PTR
-    call @NEW.array
-    ustack A $DATASTACK_PTR
-    sto A $perceptron_ptr
+    sto A $_nn_fill_counter
+    jmp :_NN.new_layer_while_start_1
+:_NN.new_layer_while_end_1
     ldi A 0
     stack A $DATASTACK_PTR
     call @FP.from_int
-    ldm A $perceptron_ptr
+    ldm A $_nn_perceptron_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.append
-    ldm A $weights_ptr
+    ldm A $_nn_weights_ptr
     stack A $DATASTACK_PTR
-    ldm A $perceptron_ptr
+    ldm A $_nn_perceptron_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.append
-    ldm A $perceptron_ptr
+    ldm A $_nn_perceptron_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_temp_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $_nn_num_neurons
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $_nn_num_neurons
+    jmp :_NN.new_layer_while_start_0
+:_NN.new_layer_while_end_0
+    ldm A $_nn_temp_ptr
     stack A $DATASTACK_PTR
     ret
-@NN.predict
+@NN.new_network
     ustack A $DATASTACK_PTR
-    sto A $perceptron_ptr
+    sto A $_nn_output_size
     ustack A $DATASTACK_PTR
-    sto A $input_ptr
+    sto A $_nn_hidden_size
+    ustack A $DATASTACK_PTR
+    sto A $_nn_input_size
+    ldi A 3
+    stack A $DATASTACK_PTR
+    call @NEW.array
+    ustack A $DATASTACK_PTR
+    sto A $_nn_network_ptr
+    ldm A $_nn_hidden_size
+    stack A $DATASTACK_PTR
+    ldm A $_nn_input_size
+    stack A $DATASTACK_PTR
+    call @_NN.new_layer
+    ustack A $DATASTACK_PTR
+    sto A $_nn_hidden_layer_ptr
+    ldm A $_nn_output_size
+    stack A $DATASTACK_PTR
+    ldm A $_nn_hidden_size
+    stack A $DATASTACK_PTR
+    call @_NN.new_layer
+    ustack A $DATASTACK_PTR
+    sto A $_nn_output_layer_ptr
+    ldm A $_nn_input_size
+    stack A $DATASTACK_PTR
+    ldm A $_nn_network_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $_nn_hidden_layer_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_network_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $_nn_output_layer_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_network_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $_nn_network_ptr
+    stack A $DATASTACK_PTR
+    ret
+@_NN.relu
+    call @rt_dup
     ldi A 0
-    stack A $DATASTACK_PTR
-    ldm A $perceptron_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    ustack A $DATASTACK_PTR
-    sto A $bias
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldm A $perceptron_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    ustack A $DATASTACK_PTR
-    sto A $weights_ptr
-    ldm A $bias
-    sto A $weighted_sum
-    ldi A 0
-    sto A $i
-    ldm A $input_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.len
-    ustack A $DATASTACK_PTR
-    sto A $num_inputs
-:NN.predict_while_start_1
-    ldm A $i
-    stack A $DATASTACK_PTR
-    ldm A $num_inputs
     stack A $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :NN.predict_while_end_1
-    ldm A $i
+    jmpt :_NN.relu_if_end_0
+    call @rt_drop
+    ldi A 0
     stack A $DATASTACK_PTR
-    ldm A $input_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    ustack A $DATASTACK_PTR
-    sto A $input_val
-    ldm A $i
-    stack A $DATASTACK_PTR
-    ldm A $weights_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    ustack A $DATASTACK_PTR
-    sto A $weight_val
-    ldm A $input_val
-    stack A $DATASTACK_PTR
-    ldm A $weight_val
-    stack A $DATASTACK_PTR
-    call @FP.mul
-    ustack A $DATASTACK_PTR
-    sto A $product
-    ldm A $weighted_sum
-    stack A $DATASTACK_PTR
-    ldm A $product
-    stack A $DATASTACK_PTR
-    call @FP.add
-    ustack A $DATASTACK_PTR
-    sto A $weighted_sum
-    ldm A $i
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $i
-    jmp :NN.predict_while_start_1
-:NN.predict_while_end_1
-    ldm A $weighted_sum
-    stack A $DATASTACK_PTR
+    call @FP.from_int
+:_NN.relu_if_end_0
+    ret
+@_NN.relu_derivative
     ldi A 0
     stack A $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :NN.predict_if_else_0
+    jmpt :_NN.relu_derivative_if_else_1
     ldi A 1
-    stack A $DATASTACK_PTR
-    jmp :NN.predict_if_end_0
-:NN.predict_if_else_0
-    ldi A 0
-    stack A $DATASTACK_PTR
-:NN.predict_if_end_0
-    ret
-@NN.train_step
-    ustack A $DATASTACK_PTR
-    sto A $perceptron_ptr
-    ustack A $DATASTACK_PTR
-    sto A $input_ptr
-    ustack A $DATASTACK_PTR
-    sto A $_error
-    ustack A $DATASTACK_PTR
-    sto A $learning_rate
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldm A $perceptron_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    ustack A $DATASTACK_PTR
-    sto A $old_bias
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldm A $perceptron_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    ustack A $DATASTACK_PTR
-    sto A $weights_ptr
-    ldm A $_error
     stack A $DATASTACK_PTR
     call @FP.from_int
-    ustack A $DATASTACK_PTR
-    sto A $error_fp
-    ldm A $learning_rate
-    stack A $DATASTACK_PTR
-    ldm A $error_fp
-    stack A $DATASTACK_PTR
-    call @FP.mul
-    ustack A $DATASTACK_PTR
-    sto A $adjustment
-    ldm A $old_bias
-    stack A $DATASTACK_PTR
-    ldm A $adjustment
-    stack A $DATASTACK_PTR
-    call @FP.add
-    ustack A $DATASTACK_PTR
-    sto A $new_bias
-    stack A $DATASTACK_PTR
+    jmp :_NN.relu_derivative_if_end_1
+:_NN.relu_derivative_if_else_1
     ldi A 0
     stack A $DATASTACK_PTR
-    ldm A $perceptron_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.put
-    ldi A 0
-    sto A $i
-    ldm A $input_ptr
+    call @FP.from_int
+:_NN.relu_derivative_if_end_1
+    ret
+@_NN.forward_pass_layer
+    ustack A $DATASTACK_PTR
+    sto A $_nn_predict_input_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_nn_predict_layer_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.len
+    call @NEW.array
     ustack A $DATASTACK_PTR
-    sto A $num_inputs
-:NN.train_step_while_start_2
-    ldm A $i
+    sto A $_nn_predict_output_ptr
+    ldi A 0
+    sto A $_nn_predict_neuron_idx
+:_NN.forward_pass_layer_while_start_2
+    ldm A $_nn_predict_neuron_idx
     stack A $DATASTACK_PTR
-    ldm A $num_inputs
+    ldm A $_nn_predict_layer_ptr
     stack A $DATASTACK_PTR
+    call @ARRAY.len
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :NN.train_step_while_end_2
-    ldm A $i
+    jmpt :_NN.forward_pass_layer_while_end_2
+    ldm A $_nn_predict_layer_ptr
     stack A $DATASTACK_PTR
-    ldm A $input_ptr
+    ldm A $_nn_predict_neuron_idx
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
-    sto A $input_val
-    ldm A $adjustment
+    sto A $_nn_perceptron_ptr
     stack A $DATASTACK_PTR
-    ldm A $input_val
+    ldi A 0
     stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $_nn_predict_weighted_sum
+    ldm A $_nn_perceptron_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $_nn_weights_ptr
+    ldi A 0
+    sto A $_nn_predict_input_idx
+:_NN.forward_pass_layer_while_start_3
+    ldm A $_nn_predict_input_idx
+    stack A $DATASTACK_PTR
+    ldm A $_nn_predict_input_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.len
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_NN.forward_pass_layer_while_end_3
+    ldm A $_nn_weights_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_predict_input_idx
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ldm A $_nn_predict_input_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_predict_input_idx
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
     call @FP.mul
-    ustack A $DATASTACK_PTR
-    sto A $weight_delta
-    ldm A $i
-    stack A $DATASTACK_PTR
-    ldm A $weights_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    ustack A $DATASTACK_PTR
-    sto A $old_weight
-    stack A $DATASTACK_PTR
-    ldm A $weight_delta
+    ldm A $_nn_predict_weighted_sum
     stack A $DATASTACK_PTR
     call @FP.add
     ustack A $DATASTACK_PTR
-    sto A $new_weight
-    stack A $DATASTACK_PTR
-    ldm A $i
-    stack A $DATASTACK_PTR
-    ldm A $weights_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.put
-    ldm A $i
+    sto A $_nn_predict_weighted_sum
+    ldm A $_nn_predict_input_idx
     stack A $DATASTACK_PTR
     ldi A 1
     ustack B $DATASTACK_PTR
     add B A
     ld A B
-    sto A $i
-    jmp :NN.train_step_while_start_2
-:NN.train_step_while_end_2
+    sto A $_nn_predict_input_idx
+    jmp :_NN.forward_pass_layer_while_start_3
+:_NN.forward_pass_layer_while_end_3
+    ldm A $_nn_predict_weighted_sum
+    stack A $DATASTACK_PTR
+    call @_NN.relu
+    ldm A $_nn_predict_output_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $_nn_predict_neuron_idx
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_nn_predict_neuron_idx
+    jmp :_NN.forward_pass_layer_while_start_2
+:_NN.forward_pass_layer_while_end_2
+    ldm A $_nn_predict_output_ptr
+    stack A $DATASTACK_PTR
+    ret
+@NN.predict
+    ustack A $DATASTACK_PTR
+    sto A $_nn_predict_input_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_nn_network_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $_nn_hidden_layer_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_predict_input_ptr
+    stack A $DATASTACK_PTR
+    call @_NN.forward_pass_layer
+    ustack A $DATASTACK_PTR
+    sto A $_nn_predict_output_ptr
+    sto A $_nn_predict_input_ptr
+    ldm A $_nn_network_ptr
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $_nn_output_layer_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_predict_input_ptr
+    stack A $DATASTACK_PTR
+    call @_NN.forward_pass_layer
+    ustack A $DATASTACK_PTR
+    sto A $_nn_predict_output_ptr
+    stack A $DATASTACK_PTR
+    ret
+@_NN.set_weight
+    ustack A $DATASTACK_PTR
+    sto A $_nn_perceptron_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_nn_input_idx
+    ustack A $DATASTACK_PTR
+    sto A $_nn_temp_ptr
+    ldm A $_nn_perceptron_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $_nn_weights_ptr
+    ldm A $_nn_temp_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_input_idx
+    stack A $DATASTACK_PTR
+    ldm A $_nn_weights_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.put
     ret
 
 @SRAND
@@ -1523,35 +1379,6 @@
     ldm A $random_seed
     stack A $DATASTACK_PTR
     call @rt_print_tos
-    ret
-@random_xy
-    call @rt_rnd
-    ldi A 50
-    ustack B $DATASTACK_PTR
-    mul B A
-    stack B $DATASTACK_PTR
-    ldi A 999
-    ustack B $DATASTACK_PTR
-    dmod B A
-    ld A B
-    sto A $x_int
-    call @rt_rnd
-    ldi A 50
-    ustack B $DATASTACK_PTR
-    mul B A
-    stack B $DATASTACK_PTR
-    ldi A 999
-    ustack B $DATASTACK_PTR
-    dmod B A
-    ld A B
-    sto A $y_int
-    ret
-@Function
-    ldm A $y_int
-    stack A $DATASTACK_PTR
-    ldm A $x_int
-    stack A $DATASTACK_PTR
-    call @rt_lt
     ret
 
 # .DATA
@@ -1592,44 +1419,53 @@
 % $divisor 0
 % $sign 1
 
-% $num_inputs 0
-% $weights_ptr 0
-% $perceptron_ptr 0
-% $i 0
-% $input_val 0
-% $input_ptr 0
-% $weight_val 0
-% $product 0
-% $weighted_sum 0
-% $bias 0
-% $_error 0
-% $error_fp 0
-% $learning_rate 0
-% $old_bias 0
-% $old_weight 0
-% $adjustment 0
-% $weight_delta 0
-% $new_bias 0
-% $new_weight 0
-% $perceptron 0
-% $input_array 0
-% $x_fp 0
-% $y_fp 0
-% $x_int 0
-% $y_int 0
-% $guess 0
-% $true_label 0
-% $error 0
-% $itter 0
-% $error_count 0
+% $_nn_temp_ptr 0
+% $_nn_num_neurons 0
+% $_nn_input_size 0
+% $_nn_hidden_size 0
+% $_nn_output_size 0
+% $_nn_predict_layer_ptr 0
+% $_nn_predict_input_ptr 0
+% $_nn_predict_output_ptr 0
+% $_nn_predict_neuron_idx 0
+% $_nn_predict_input_idx 0
+% $_nn_predict_weighted_sum 0
+% $_nn_fill_counter 0
+% $_nn_perceptron_ptr 0
+% $_nn_weights_ptr 0
+% $_nn_network_ptr 0
+% $_nn_hidden_layer_ptr 0
+% $_nn_output_layer_ptr 0
+% $_nn_input_idx 0
+% $network_ptr 0
+% $hidden_layer_ptr 0
+% $output_layer_ptr 0
+% $input_array_ptr 0
+% $output_array_ptr 0
 % $SRAND_str_0 \N \e \w \space \r \a \n \d \o \m \space \s \e \e \d \: \space \null
-% $_main_str_1 \C \r \e \a \t \i \n \g \space \P \e \r \c \e \p \t \r \o \n \. \. \. \null
-% $_main_str_2 \space \D \o \n \e \. \Return \null
-% $_main_str_3 \C \r \e \a \t \i \n \g \space \i \n \p \u \t \space \a \r \r \a \y \. \. \. \null
-% $_main_str_4 \- \- \- \space \P \h \a \s \e \space \0 \: \space \U \n \t \r \a \i \n \e \d \space \M \o \d \e \l \space \- \- \- \Return \null
-% $_main_str_5 \- \- \- \space \P \h \a \s \e \space \1 \: \space \T \r \a \i \n \i \n \g \space \- \- \- \Return \null
-% $_main_str_6 \- \- \- \space \P \h \a \s \e \space \2 \: \space \T \e \s \t \i \n \g \space \- \- \- \Return \null
-% $_main_str_7 \- \- \- \space \T \e \s \t \space \R \e \p \o \r \t \space \- \- \- \Return \null
-% $_main_str_8 \space \e \r \r \o \r \s \space \o \u \t \space \o \f \space \null
-% $_main_str_9 \space \t \e \s \t \space \c \a \s \e \s \. \Return \null
-% $_main_str_10 \- \- \- \space \A \l \l \space \D \o \n \e \space \- \- \- \Return \null
+% $_main_str_1 \- \- \- \space \P \h \a \s \e \space \1 \: \space \T \e \s \t \i \n \g \space \N \N \. \n \e \w \_ \n \e \t \w \o \r \k \space \- \- \- \Return \null
+% $_main_str_2 \C \r \e \a \t \i \n \g \space \a \space \2 \- \2 \- \1 \space \n \e \t \w \o \r \k \. \. \. \Return \null
+% $_main_str_3 \N \e \t \w \o \r \k \space \c \r \e \a \t \e \d \space \a \t \space \a \d \d \r \e \s \s \: \space \null
+% $_main_str_4 \V \e \r \i \f \y \i \n \g \space \n \e \t \w \o \r \k \space \s \t \r \u \c \t \u \r \e \. \. \. \Return \null
+% $_main_str_5 \space \space \I \n \p \u \t \space \s \i \z \e \: \space \null
+% $_main_str_6 \space \space \H \i \d \d \e \n \space \l \a \y \e \r \space \p \o \i \n \t \e \r \: \space \null
+% $_main_str_7 \space \space \O \u \t \p \u \t \space \l \a \y \e \r \space \p \o \i \n \t \e \r \: \space \null
+% $_main_str_8 \space \space \H \i \d \d \e \n \space \l \a \y \e \r \space \n \e \u \r \o \n \space \c \o \u \n \t \: \space \null
+% $_main_str_9 \space \space \O \u \t \p \u \t \space \l \a \y \e \r \space \n \e \u \r \o \n \space \c \o \u \n \t \: \space \null
+% $_main_str_10 \Return \- \- \- \space \P \h \a \s \e \space \2 \: \space \T \e \s \t \i \n \g \space \N \N \. \p \r \e \d \i \c \t \space \- \- \- \Return \null
+% $_main_str_11 \C \r \e \a \t \i \n \g \space \i \n \p \u \t \space \a \r \r \a \y \space \[ \1 \. \0 \, \space \0 \. \0 \] \. \. \. \Return \null
+% $_main_str_12 \R \u \n \n \i \n \g \space \p \r \e \d \i \c \t \i \o \n \. \. \. \Return \null
+% $_main_str_13 \P \r \e \d \i \c \t \i \o \n \space \f \i \n \i \s \h \e \d \. \space \O \u \t \p \u \t \space \p \o \i \n \t \e \r \: \space \null
+% $_main_str_14 \O \u \t \p \u \t \space \a \r \r \a \y \space \l \e \n \g \t \h \: \space \null
+% $_main_str_15 \P \r \e \d \i \c \t \e \d \space \v \a \l \u \e \space \( \r \a \n \d \o \m \space \w \e \i \g \h \t \s \) \: \space \null
+% $_main_str_16 \Return \A \L \L \space \D \O \N \E \. \. \. \space \Return \null
+% $_main_str_17 \Return \- \- \- \space \P \h \a \s \e \space \2 \b \: \space \D \e \t \e \r \m \i \n \i \s \t \i \c \space \P \r \e \d \i \c \t \i \o \n \space \T \e \s \t \space \- \- \- \Return \null
+% $_main_str_18 \S \e \t \t \i \n \g \space \w \e \i \g \h \t \s \space \t \o \space \0 \. \5 \space \a \n \d \space \b \i \a \s \e \s \space \t \o \space \0 \. \1 \. \. \. \Return \null
+% $_main_str_19 \R \u \n \n \i \n \g \space \p \r \e \d \i \c \t \i \o \n \space \w \i \t \h \space \k \n \o \w \n \space \w \e \i \g \h \t \s \. \. \. \Return \null
+% $_main_str_20 \P \r \e \d \i \c \t \e \d \space \v \a \l \u \e \space \( \k \n \o \w \n \space \w \e \i \g \h \t \s \) \: \space \null
+% $_main_str_21 \Return \E \x \p \e \c \t \e \d \space \o \u \t \p \u \t \space \c \a \l \c \u \l \a \t \i \o \n \: \Return \null
+% $_main_str_22 \space \space \I \n \p \u \t \: \space \[ \1 \. \0 \, \space \0 \. \0 \] \Return \null
+% $_main_str_23 \space \space \H \0 \_ \o \u \t \space \= \space \r \e \l \u \( \1 \. \0 \* \0 \. \5 \space \+ \space \0 \. \0 \* \0 \. \5 \space \+ \space \0 \. \1 \) \space \= \space \r \e \l \u \( \0 \. \6 \) \space \= \space \0 \. \6 \Return \null
+% $_main_str_24 \space \space \H \1 \_ \o \u \t \space \= \space \r \e \l \u \( \1 \. \0 \* \0 \. \5 \space \+ \space \0 \. \0 \* \0 \. \5 \space \+ \space \0 \. \1 \) \space \= \space \r \e \l \u \( \0 \. \6 \) \space \= \space \0 \. \6 \Return \null
+% $_main_str_25 \space \space \O \0 \_ \o \u \t \space \= \space \r \e \l \u \( \0 \. \6 \* \0 \. \5 \space \+ \space \0 \. \6 \* \0 \. \5 \space \+ \space \0 \. \1 \) \space \= \space \r \e \l \u \( \0 \. \3 \space \+ \space \0 \. \3 \space \+ \space \0 \. \1 \) \Return \null
+% $_main_str_26 \space \space \space \space \space \space \space \space \space \= \space \r \e \l \u \( \0 \. \7 \) \space \= \space \0 \. \7 \Return \space \Return \space \E \x \p \e \c \t \e \d \space \p \r \e \d \i \c \t \i \o \n \: \space \0 \. \7 \0 \0 \Return \null

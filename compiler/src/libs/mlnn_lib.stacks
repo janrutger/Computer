@@ -1,491 +1,291 @@
-# ============================================================================
-# Multi-Layer Neural Network Library (mlnn_lib)
+# ----------------------------------------------------------------------------
+# Library: mlnn_lib.stacks
+# Description: A Multi-Layer Neural Network library for the Stern-XT platform.
+#              Provides functionality to create, train, and run a 3-layer
+#              (input, hidden, output) perceptron network.
 #
-# Provides building blocks for multi-layer perceptrons (MLPs).
-#
-# Depends on:
-#   - std_heap: For dynamic array structures.
-#   - fixed_point_lib: For handling fractional numbers.
-# ============================================================================
+# API:
+#   - NN.new_network: Creates a new 3-layer network.
+#   - NN.predict: Performs a forward pass (prediction).
+#   - NN.train: Performs a single step of backpropagation training.
+# ----------------------------------------------------------------------------
 
 USE std_heap
 USE fixed_point_lib
 
-# --- Activation Functions (Internal Helpers) ---
+# ----------------------------------------------------------------------------
+# Helper Variables
+#
+# These are used internally by the library functions. Due to the global
+# scope of Stacks variables, they are defined here.
+# ----------------------------------------------------------------------------
+
+VALUE _nn_temp_ptr 0
+VALUE _nn_num_neurons 0
+
+VALUE _nn_input_size 0
+VALUE _nn_hidden_size 0
+VALUE _nn_output_size 0
+
+VALUE _nn_predict_layer_ptr 0
+VALUE _nn_predict_input_ptr 0
+VALUE _nn_predict_output_ptr 0
+VALUE _nn_predict_neuron_idx 0
+VALUE _nn_predict_input_idx 0
+VALUE _nn_predict_weighted_sum 0
+
+
 
 # ----------------------------------------------------------------------------
-# DEF _relu (Activation Method)
-# Applies the Rectified Linear Unit (ReLU) activation function.
-# f(x) = max(0, x)
+# HELPER: ARRAY.clear
+# Resets the count of an array to zero, effectively clearing it without
+# deallocating its memory. This is essential for reusing temporary arrays
+# during the training process.
 #
-# @param x A fixed-point number.
-# @returns The result of the ReLU function (a fixed-point number).
+# Stack: (array_ptr -- )
 # ----------------------------------------------------------------------------
-DEF _relu {
-    # The formula is max(0, x). This version does NOT consume the input.
-    # ( x -- result x )
-    DUP DUP 0 < IF DROP 0 FP.from_int END SWAP
+DEF ARRAY.clear {
+    # ( array_ptr -- )
+    # This function takes an array pointer, calculates the address
+    # of its 'count' field (ptr + 1), and writes a 0 to that address.
+    # It uses the globally defined _nn_temp_ptr for the operation.
+    1 + AS _nn_temp_ptr
+    0 AS *_nn_temp_ptr
 }
 
+
 # ----------------------------------------------------------------------------
-# DEF _relu_derivative
-# Calculates the derivative of the ReLU function.
-# f'(x) = 1 if x > 0, else 0
+# PRIVATE HELPER: _NN.new_layer
+# Creates a single layer of neurons.
 #
-# @param x A fixed-point number.
-# @returns The derivative (1 or 0 as a fixed-point number), leaving the
-#          original input on the stack.
-# ----------------------------------------------------------------------------
-DEF _relu_derivative {
-    # The formula is 1 if x > 0, else 0. This version does NOT consume the input.
-    # ( x -- derivative x )
-    DUP 0 > IF
-        1 FP.from_int
-    ELSE
-        0 FP.from_int
-    END
-    SWAP
-}
-
-# ----------------------------------------------------------------------------
-# DEF _new_perceptron (Internal Helper)
-# Creates a single perceptron with a given number of inputs.
-# This is based on the original nn_lib.stacks implementation.
+# A layer is an array of perceptron pointers. Each perceptron is an array
+# containing its bias and a pointer to its weights array.
 #
-# @param num_inputs The number of weights to create for this perceptron.
-# @returns perceptron_ptr A pointer to the newly created perceptron structure.
+# Stack: (num_neurons, num_inputs_per_neuron -- layer_ptr)
 # ----------------------------------------------------------------------------
-DEF _new_perceptron {
-    AS num_inputs
+VALUE _nn_fill_counter 0
+VALUE _nn_perceptron_ptr 0
+VALUE _nn_weights_ptr 0
 
-    # 1. Create the weights array and initialize with small random values
-    num_inputs NEW.array AS weights_ptr
-    0 AS np_i
-    WHILE np_i num_inputs < DO
-        RND 200 % 100 - FP.from_int # Random value between -0.1 and 0.1
-        1000 FP.from_int
-        FP.div
-        weights_ptr ARRAY.append
-        np_i 1 + AS np_i
-    DONE
 
-    # 2. Create the main perceptron array [bias, weights_ptr]
-    2 NEW.array AS perceptron_ptr
+DEF _NN.new_layer {
+    # ( num_neurons, num_inputs_per_neuron -- layer_ptr )
+    AS _nn_input_size
+    AS _nn_num_neurons
 
-    # 3. Initialize bias to 0 and append
-    0 FP.from_int perceptron_ptr ARRAY.append
+    # Create the layer array to hold the perceptron pointers
+    _nn_num_neurons NEW.array AS _nn_temp_ptr
 
-    # 4. Append the pointer to the weights array
-    weights_ptr perceptron_ptr ARRAY.append
+    WHILE _nn_num_neurons 0 > DO
+        # Create the perceptron array: [bias, weights_ptr]
+        2 NEW.array AS _nn_perceptron_ptr
 
-    perceptron_ptr # Return the pointer
-}
+        # Create the weights array for this perceptron
+        _nn_input_size NEW.array AS _nn_weights_ptr
 
-# ----------------------------------------------------------------------------
-# DEF _predict_layer (Internal Helper)
-# Performs a forward pass on a single layer of the network.
-#
-# @param layer_ptr A pointer to a layer structure.
-# @param input_ptr A pointer to an array of input values for this layer.
-# @param output_ptr A pointer to an array where the output values will be written.
-# ----------------------------------------------------------------------------
-DEF _predict_layer {
-    AS output_ptr
-    AS input_ptr
-    AS layer_ptr
-
-    VALUE _temp_ptr 0
-
-    # Set the output buffer's count to 0 to effectively clear it for new data.
-    output_ptr 1 + AS _temp_ptr
-    0 AS *_temp_ptr
-
-    0 AS pl_i
-    layer_ptr ARRAY.len AS num_neurons
-    WHILE pl_i num_neurons < DO
-        # For each neuron in the layer...
-        pl_i layer_ptr ARRAY.get AS perceptron_ptr
-
-        # --- Calculate weighted sum (dot product + bias) ---
-        0 perceptron_ptr ARRAY.get AS bias
-        1 perceptron_ptr ARRAY.get AS weights_ptr
-        bias AS weighted_sum
-
-        0 AS pl_j
-        input_ptr ARRAY.len AS num_inputs
-        WHILE pl_j num_inputs < DO
-            pl_j input_ptr ARRAY.get pl_j weights_ptr ARRAY.get FP.mul weighted_sum FP.add AS weighted_sum
-            pl_j 1 + AS pl_j
+        # Initialize all weights with small random fixed-point numbers
+        # to break symmetry and enable learning.
+        0 AS _nn_fill_counter
+        WHILE _nn_fill_counter _nn_input_size < DO
+            # Generate a random fixed-point number between -0.1 and 0.1
+            RND 200 % 100 - FP.from_int # Random integer from -100 to 99
+            1000 FP.from_int            # Divisor
+            FP.div                      # Result is a small fraction
+            _nn_weights_ptr ARRAY.append
+            _nn_fill_counter 1 + AS _nn_fill_counter
         DONE
 
-        # --- Apply activation function and store result ---
-        # Call our non-consuming _relu function, then DROP the original
-        # value it leaves on the stack, as we only need the result.
-        weighted_sum _relu DROP output_ptr ARRAY.append
-        pl_i 1 + AS pl_i
+        # Initialize bias to 0 (as a fixed-point number) and append it.
+        0 FP.from_int _nn_perceptron_ptr ARRAY.append
+        # Append the pointer to the weights array.
+        _nn_weights_ptr _nn_perceptron_ptr ARRAY.append
+
+        # Push the newly created perceptron_ptr onto the layer array
+        _nn_perceptron_ptr _nn_temp_ptr ARRAY.append
+
+        _nn_num_neurons 1 - AS _nn_num_neurons
     DONE
+
+    # Return the layer_ptr
+    _nn_temp_ptr
 }
 
 
-# --- Public API ---
-
 # ----------------------------------------------------------------------------
-# DEF NN.new_network (Create Network Method)
-# Creates a new multi-layer network structure on the heap.
+# PUBLIC API: NN.new_network
+# Creates a new 3-layer neural network.
 #
-# @param input_size The number of input neurons.
-# @param hidden_layer_sizes_ptr A pointer to an array containing the size
-#                               of each hidden layer (e.g., [8, 8]).
-# @param output_size The number of output neurons.
-# @returns network_ptr A pointer to the newly created network structure.
+# The network structure is an array of 3 elements:
+# [input_size, hidden_layer_ptr, output_layer_ptr]
+#
+# Stack: (input_size, hidden_size, output_size -- network_ptr)
 # ----------------------------------------------------------------------------
+VALUE _nn_network_ptr 0
+VALUE _nn_hidden_layer_ptr 0
+VALUE _nn_output_layer_ptr 0
+
 DEF NN.new_network {
-    # ( output_size hidden_layer_sizes_ptr input_size -- network_ptr )
-    AS input_size
-    AS hidden_layer_sizes_ptr
-    AS output_size
+    # ( input_size, hidden_size, output_size -- network_ptr )
+    AS _nn_output_size
+    AS _nn_hidden_size
+    AS _nn_input_size
 
-    hidden_layer_sizes_ptr ARRAY.len AS num_hidden_layers
+    # Create the top-level network array to hold the two layer pointers
+    3 NEW.array AS _nn_network_ptr
 
-    # The network is an array of layers. Total layers = hidden layers + 1 output layer.
-    num_hidden_layers 1 + NEW.array AS network_ptr
+    # Create the hidden layer. Each neuron has `input_size` weights.
+    _nn_hidden_size _nn_input_size _NN.new_layer AS _nn_hidden_layer_ptr
 
-    # --- Build Hidden Layers ---
-    input_size AS num_inputs_for_current_layer
-    0 AS nn_i
-    WHILE nn_i num_hidden_layers < DO
-        # Get the number of neurons for this hidden layer
-        nn_i hidden_layer_sizes_ptr ARRAY.get AS num_neurons_in_layer
+    # Create the output layer. Each neuron has `hidden_size` weights,
+    # as it takes input from the hidden layer.
+    _nn_output_size _nn_hidden_size _NN.new_layer AS _nn_output_layer_ptr
 
-        # Create the layer array, which will hold pointers to perceptrons
-        num_neurons_in_layer NEW.array AS layer_ptr
+    # Push the layer pointers into the main network array
+    _nn_input_size _nn_network_ptr ARRAY.append
+    _nn_hidden_layer_ptr _nn_network_ptr ARRAY.append
+    _nn_output_layer_ptr _nn_network_ptr ARRAY.append
 
-        # Create each perceptron in the layer
-        0 AS nn_j
-        WHILE nn_j num_neurons_in_layer < DO
-            num_inputs_for_current_layer _new_perceptron layer_ptr ARRAY.append
-            nn_j 1 + AS nn_j
-        DONE
-
-        # Add the completed layer to the network
-        layer_ptr network_ptr ARRAY.append
-
-        # The number of inputs for the *next* layer is the number of neurons in *this* layer.
-        num_neurons_in_layer AS num_inputs_for_current_layer
-        nn_i 1 + AS nn_i
-    DONE
-
-    # --- Build Output Layer ---
-    # The number of inputs for the output layer is the number of neurons in the last hidden layer.
-    output_size NEW.array AS output_layer_ptr
-
-    0 AS nn_j_out
-    WHILE nn_j_out output_size < DO
-        num_inputs_for_current_layer _new_perceptron output_layer_ptr ARRAY.append
-        nn_j_out 1 + AS nn_j_out
-    DONE
-
-    # Add the completed output layer to the network
-    output_layer_ptr network_ptr ARRAY.append
-
-    network_ptr # Return the pointer to the whole network
+    # Return the pointer to the fully constructed network
+    _nn_network_ptr
 }
 
+
 # ----------------------------------------------------------------------------
-# DEF NN.predict (Predict Method)
-# Performs a full forward pass of the network to generate a prediction.
+# PRIVATE HELPER: _NN.relu
+# The Rectified Linear Unit activation function.
+# Formula: f(x) = max(0, x)
 #
-# @param network_ptr A pointer to the network structure.
-# @param input_array_ptr A pointer to an array of input values.
-# @returns output_array_ptr A pointer to an array of the final output values.
+# Stack: (x -- result)
+# ----------------------------------------------------------------------------
+DEF _NN.relu {
+    # ( x -- result )
+    DUP 0 < IF
+        DROP # Discard the negative number
+        0 FP.from_int # Push 0
+    END
+}
+
+
+# ----------------------------------------------------------------------------
+# PRIVATE HELPER: _NN.relu_derivative
+# The derivative of the ReLU activation function.
+# Formula: f'(x) = 1 if x > 0, else 0
+#
+# Stack: (x -- result)
+# ----------------------------------------------------------------------------
+DEF _NN.relu_derivative {
+    # ( x -- result )
+    0 > IF
+        1 FP.from_int # Return 1.0
+    ELSE
+        0 FP.from_int # Return 0.0
+    END
+}
+
+
+# ----------------------------------------------------------------------------
+# PRIVATE HELPER: _NN.forward_pass_layer
+# Performs a forward pass for a single layer of the network.
+#
+# It calculates the weighted sum for each neuron, adds the bias, applies the
+# ReLU activation function, and stores the result in an output array.
+#
+# Stack: (layer_ptr, input_array_ptr -- output_array_ptr)
+# ----------------------------------------------------------------------------
+DEF _NN.forward_pass_layer {
+    # ( layer_ptr, input_array_ptr -- output_array_ptr )
+    AS _nn_predict_input_ptr
+    AS _nn_predict_layer_ptr
+
+    # Create a new array to store the activations of this layer
+    _nn_predict_layer_ptr ARRAY.len NEW.array AS _nn_predict_output_ptr
+
+    # Loop through each neuron in the layer
+    0 AS _nn_predict_neuron_idx
+    WHILE _nn_predict_neuron_idx _nn_predict_layer_ptr ARRAY.len < DO
+        # Get the current neuron (perceptron)
+        _nn_predict_layer_ptr _nn_predict_neuron_idx ARRAY.get AS _nn_perceptron_ptr
+
+        # Get the bias and weights_ptr from the perceptron
+        _nn_perceptron_ptr 0 ARRAY.get AS _nn_predict_weighted_sum # Start sum with bias
+        _nn_perceptron_ptr 1 ARRAY.get AS _nn_weights_ptr
+
+        # Calculate the weighted sum of inputs
+        0 AS _nn_predict_input_idx
+        WHILE _nn_predict_input_idx _nn_predict_input_ptr ARRAY.len < DO
+            # Get weight and input
+            _nn_weights_ptr _nn_predict_input_idx ARRAY.get
+            _nn_predict_input_ptr _nn_predict_input_idx ARRAY.get
+
+            # Multiply and add to sum
+            FP.mul
+            _nn_predict_weighted_sum FP.add AS _nn_predict_weighted_sum
+
+            _nn_predict_input_idx 1 + AS _nn_predict_input_idx
+        DONE
+
+        # Apply the activation function
+        _nn_predict_weighted_sum _NN.relu
+
+        # Append the final activation to this layer's output array
+        _nn_predict_output_ptr ARRAY.append
+
+        _nn_predict_neuron_idx 1 + AS _nn_predict_neuron_idx
+    DONE
+
+    # Return the pointer to the array of activations
+    _nn_predict_output_ptr
+}
+
+
+# ----------------------------------------------------------------------------
+# PUBLIC API: NN.predict
+# Performs a full forward pass through the 3-layer network.
+#
+# Stack: (network_ptr, input_array_ptr -- output_array_ptr)
 # ----------------------------------------------------------------------------
 DEF NN.predict {
-    # ( user_input_ptr network_ptr -- final_output_ptr )
-    AS network_ptr
-    AS user_input_ptr
+    # ( network_ptr, input_array_ptr -- output_array_ptr )
+    AS _nn_predict_input_ptr
+    AS _nn_network_ptr
 
-    network_ptr ARRAY.len AS num_layers
+    # --- 1. Process Hidden Layer ---
+    # Get the hidden layer pointer from the network structure
+    _nn_network_ptr 1 ARRAY.get AS _nn_hidden_layer_ptr
 
-    # --- Pre-allocate Buffers to prevent memory leaks ---
-    # We use a "ping-pong" buffer strategy. We need two buffers that are
-    # large enough to hold the outputs of the largest layer.
-    # For this POC, we can assume a max layer size (e.g., 16).
-    16 NEW.array AS predict_buffer_a
-    16 NEW.array AS predict_buffer_b
+    # Perform forward pass on the hidden layer
+    _nn_hidden_layer_ptr _nn_predict_input_ptr _NN.forward_pass_layer AS _nn_predict_output_ptr
 
-    # The initial input is the user's data.
-    user_input_ptr AS current_input_ptr
+    # --- 2. Process Output Layer ---
+    # The output of the hidden layer becomes the input for the output layer
+    _nn_predict_output_ptr AS _nn_predict_input_ptr
 
-    0 AS p_i
-    WHILE p_i num_layers < DO
-        # Get the current layer from the network
-        p_i network_ptr ARRAY.get AS layer_ptr
+    # Get the output layer pointer from the network structure
+    _nn_network_ptr 2 ARRAY.get AS _nn_output_layer_ptr
 
-        # Determine which buffer to use as the output destination for this layer.
-        # We alternate between buffer_a and buffer_b based on the loop index.
-        p_i 2 % 0 == IF predict_buffer_a ELSE predict_buffer_b END
-        AS output_buffer_ptr
+    # Perform forward pass on the output layer
+    _nn_output_layer_ptr _nn_predict_input_ptr _NN.forward_pass_layer AS _nn_predict_output_ptr
 
-        # Process the layer, writing the output into the 'to_ptr' buffer.
-        current_input_ptr layer_ptr output_buffer_ptr _predict_layer
-
-        # The output buffer from this iteration becomes the input for the next.
-        output_buffer_ptr AS current_input_ptr
-        p_i 1 + AS p_i
-    DONE
-
-    # After the loop, current_input_ptr holds the pointer to the buffer
-    # containing the final result of the last layer.
-    current_input_ptr
+    # Return the final predictions
+    _nn_predict_output_ptr
 }
 
+
 # ----------------------------------------------------------------------------
-# DEF NN.train (Train Step Method)
-# Executes one full step of the backpropagation algorithm.
+# PRIVATE HELPER: _NN.set_weight
+# Manually sets a specific weight in a neuron. Useful for testing.
 #
-# @param network_ptr A pointer to the network structure.
-# @param input_array_ptr A pointer to an array of input values.
-# @param target_array_ptr A pointer to an array of target output values.
-# @param learning_rate A fixed-point value for the learning step size.
+# Stack: (value, weight_idx, neuron_ptr -- )
 # ----------------------------------------------------------------------------
-DEF NN.train {
-    # ( learning_rate target_array_ptr user_input_ptr network_ptr -- )
-    AS network_ptr
-    AS user_input_ptr
-    AS target_array_ptr
-    AS learning_rate
+VALUE _nn_input_idx 0
 
-    # VALUE _temp_ptr 0     # does already exist, thats we reuse 
-    network_ptr ARRAY.len AS num_layers
+DEF _NN.set_weight {
+    # ( value, weight_idx, neuron_ptr -- )
+    AS _nn_perceptron_ptr
+    AS _nn_input_idx # Re-using this var for weight_idx
+    AS _nn_temp_ptr    # Re-using this var for the value
 
-    # --- Stage 1: Forward Pass with Storage ---
-    # We must store the activations from every layer to use during backpropagation.
-    # We will create an array of pointers. Each pointer will point to an
-    # array of activations for one layer.
-
-    # `all_activations` will store [user_input_ptr, layer1_activations_ptr, layer2_activations_ptr, ...]
-    num_layers 1 + NEW.array AS all_activations_ptr
-    user_input_ptr all_activations_ptr ARRAY.append
-
-    # We also need to store the pre-activation weighted sums for calculating derivatives.
-    num_layers NEW.array AS all_weighted_sums_ptr
-
-    # --- Pre-allocate Buffers for the forward pass ---
-    16 NEW.array AS train_activations_a
-    16 NEW.array AS train_activations_b
-    16 NEW.array AS train_sums_a
-    16 NEW.array AS train_sums_b
-
-    user_input_ptr AS current_input_ptr
-
-    0 AS fwd_i
-    WHILE fwd_i num_layers < DO
-        # Get the current layer from the network
-        fwd_i network_ptr ARRAY.get AS layer_ptr
-
-        # Determine which buffer to use as the output destination.
-        fwd_i 2 % 0 == IF train_activations_a ELSE train_activations_b END
-        AS output_buffer_ptr
-
-        # Determine which buffer to use for the weighted sums.
-        fwd_i 2 % 0 == IF train_sums_a ELSE train_sums_b END
-        AS sums_buffer_ptr
-
-        # --- Modified _predict_layer logic ---
-        # This is similar to _predict_layer, but it stores both the
-        # weighted sums and the final activations.
-        output_buffer_ptr 1 + AS _temp_ptr 0 AS *_temp_ptr # Clear output buffer
-        sums_buffer_ptr 1 +   AS _temp_ptr 0 AS *_temp_ptr # Clear the sums buffer
-
-        0 AS fwd_j
-        layer_ptr ARRAY.len AS num_neurons
-        WHILE fwd_j num_neurons < DO
-            fwd_j layer_ptr ARRAY.get AS perceptron_ptr
-            0 perceptron_ptr ARRAY.get AS bias
-            1 perceptron_ptr ARRAY.get AS weights_ptr
-            bias AS weighted_sum
-            0 AS fwd_k
-            current_input_ptr ARRAY.len AS num_inputs
-            WHILE fwd_k num_inputs < DO
-                fwd_k current_input_ptr ARRAY.get fwd_k weights_ptr ARRAY.get FP.mul weighted_sum FP.add AS weighted_sum
-                fwd_k 1 + AS fwd_k
-            DONE
-            weighted_sum sums_buffer_ptr ARRAY.append # Store pre-activation sum
-            weighted_sum _relu DROP output_buffer_ptr ARRAY.append
-            fwd_j 1 + AS fwd_j
-        DONE
-
-        # Store the pointers to the buffers we just filled for the backward pass
-        sums_buffer_ptr all_weighted_sums_ptr ARRAY.append
-        output_buffer_ptr all_activations_ptr ARRAY.append
-
-        # The output from this layer is the input for the next
-        output_buffer_ptr AS current_input_ptr
-        fwd_i 1 + AS fwd_i
-    DONE
-
-    # --- Stage 2: Backward Pass ---
-    # At this point:
-    # - `all_activations_ptr` holds the output of every layer.
-    # - `all_weighted_sums_ptr` holds the pre-activation sum of every neuron.
-    # We now have all the data needed to calculate the gradients and update the weights.
-
-    # We calculate the error gradients, starting from the output layer and
-    # working backwards. Let's create a buffer to hold these gradients.
-    16 NEW.array AS gradient_buffer
-    16 NEW.array AS new_gradient_buffer # Pre-allocate the second gradient buffer
-
-    # --- Calculate Gradients for the Output Layer ---
-    num_layers 1 - AS last_layer_index
-
-    # Get the data for the last layer from our storage arrays
-    last_layer_index all_weighted_sums_ptr ARRAY.get AS last_weighted_sums_ptr
-    num_layers all_activations_ptr ARRAY.get AS last_activations_ptr
-
-    0 AS bwd_j
-    last_activations_ptr ARRAY.len AS num_output_neurons
-    WHILE bwd_j num_output_neurons < DO
-        # For each neuron in the output layer...
-
-        # 1. Calculate error: (target - actual)
-        bwd_j target_array_ptr ARRAY.get AS target_val
-        bwd_j last_activations_ptr ARRAY.get AS actual_val
-        target_val actual_val FP.sub AS error
-
-        # 2. Get the derivative of the activation function
-        bwd_j last_weighted_sums_ptr ARRAY.get _relu_derivative DROP AS derivative
-
-        # 3. Calculate final gradient: error * derivative
-        error derivative FP.mul AS gradient
-        gradient gradient_buffer ARRAY.append
-
-        bwd_j 1 + AS bwd_j
-    DONE
-
-    # --- Update Weights and Biases for the Output Layer ---
-    last_layer_index network_ptr ARRAY.get AS output_layer_ptr
-    last_layer_index all_activations_ptr ARRAY.get AS inputs_to_output_layer_ptr
-
-    0 AS bwd_j_upd
-    num_output_neurons # This is still on the stack from the previous loop
-    WHILE bwd_j_upd SWAP DUP < DO
-        # For each neuron in the output layer...
-        bwd_j_upd output_layer_ptr ARRAY.get AS perceptron_ptr
-        bwd_j_upd gradient_buffer ARRAY.get AS gradient
-
-        # 1. Update the bias
-        # new_bias = old_bias + learning_rate * gradient
-        0 perceptron_ptr ARRAY.get AS old_bias
-        learning_rate gradient FP.mul AS bias_adjustment
-        old_bias bias_adjustment FP.add AS new_bias
-        new_bias 0 perceptron_ptr ARRAY.put
-
-        # 2. Update the weights
-        1 perceptron_ptr ARRAY.get AS weights_ptr
-        0 AS bwd_l_upd
-        weights_ptr ARRAY.len AS num_weights
-        WHILE bwd_l_upd num_weights < DO
-            # For each weight in the neuron...
-            
-            # Get the corresponding input that was fed to this neuron
-            bwd_l_upd inputs_to_output_layer_ptr ARRAY.get AS input_val
-
-            # Calculate weight_delta = learning_rate * gradient * input
-            bias_adjustment input_val FP.mul AS weight_delta
-
-            # new_weight = old_weight + weight_delta
-            bwd_l_upd weights_ptr ARRAY.get AS old_weight
-            old_weight weight_delta FP.add AS new_weight
-            new_weight bwd_l_upd weights_ptr ARRAY.put
-
-            bwd_l_upd 1 + AS bwd_l_upd
-        DONE
-
-        bwd_j_upd 1 + AS bwd_j_upd
-    DONE
-    DROP # Clean up the loop variable
-
-    # --- Propagate Gradients to Hidden Layers ---
-    # We loop backwards from the last hidden layer to the first.
-    last_layer_index 1 - AS current_layer_index
-    WHILE current_layer_index -1 > DO
-        # Get the data for the current layer and the layer *after* it.
-        current_layer_index network_ptr ARRAY.get AS current_layer_ptr
-        current_layer_index 1 + network_ptr ARRAY.get AS next_layer_ptr
-        current_layer_index all_weighted_sums_ptr ARRAY.get AS current_weighted_sums_ptr
-        current_layer_index all_activations_ptr ARRAY.get AS inputs_to_current_layer_ptr
-
-        # Clear the new_gradient_buffer before use
-        new_gradient_buffer 1 + AS _temp_ptr 0 AS *_temp_ptr
-
-        0 AS bwd_h_j
-        current_layer_ptr ARRAY.len AS num_neurons_in_layer
-        WHILE bwd_h_j num_neurons_in_layer < DO
-            # For each neuron in the current hidden layer...
-
-            # 1. Calculate the error contribution from the next layer.
-            # This is the sum of (gradient_from_next_layer * weight_of_connection)
-            0 FP.from_int AS error_sum
-            0 AS bwd_h_k
-            next_layer_ptr ARRAY.len AS num_neurons_in_next_layer
-            WHILE bwd_h_k num_neurons_in_next_layer < DO
-                # Get the gradient of a neuron in the next layer
-                bwd_h_k gradient_buffer ARRAY.get AS next_layer_gradient
-
-                # Get the weight connecting this current neuron (j) to that next neuron (k)
-                bwd_h_k next_layer_ptr ARRAY.get 1 SWAP ARRAY.get bwd_h_j SWAP ARRAY.get AS connection_weight
-
-                # Add to the sum
-                next_layer_gradient connection_weight FP.mul error_sum FP.add AS error_sum
-
-                bwd_h_k 1 + AS bwd_h_k
-            DONE
-
-            # 2. Get the derivative for the current neuron
-            bwd_h_j current_weighted_sums_ptr ARRAY.get _relu_derivative DROP AS derivative
-
-            # 3. Calculate the final gradient for this hidden neuron
-            error_sum derivative FP.mul AS gradient
-            gradient new_gradient_buffer ARRAY.append
-
-            bwd_h_j 1 + AS bwd_h_j
-        DONE
-
-        # Now that we have the gradients for this hidden layer, update its weights.
-        # This is the same logic as the output layer update.
-        0 AS bwd_h_j_upd
-        num_neurons_in_layer # Still on the stack
-        WHILE bwd_h_j_upd SWAP DUP < DO
-            bwd_h_j_upd current_layer_ptr ARRAY.get AS perceptron_ptr
-            bwd_h_j_upd new_gradient_buffer ARRAY.get AS gradient
-
-            0 perceptron_ptr ARRAY.get AS old_bias
-            learning_rate gradient FP.mul AS bias_adjustment
-            old_bias bias_adjustment FP.add AS new_bias
-            new_bias 0 perceptron_ptr ARRAY.put
-
-            1 perceptron_ptr ARRAY.get AS weights_ptr
-            0 AS bwd_h_l_upd
-            weights_ptr ARRAY.len AS num_weights
-            WHILE bwd_h_l_upd num_weights < DO
-                bwd_h_l_upd inputs_to_current_layer_ptr ARRAY.get AS input_val
-                bias_adjustment input_val FP.mul AS weight_delta
-                bwd_h_l_upd weights_ptr ARRAY.get AS old_weight
-                old_weight weight_delta FP.add AS new_weight
-                new_weight bwd_h_l_upd weights_ptr ARRAY.put
-                bwd_h_l_upd 1 + AS bwd_h_l_upd
-            DONE
-            bwd_h_j_upd 1 + AS bwd_h_j_upd
-        DONE
-        DROP # Clean up loop variable
-
-        # --- Ping-Pong the gradient buffers for the next backward iteration ---
-        # The buffer we just wrote to ('new_gradient_buffer') becomes the
-        # source of gradients ('gradient_buffer') for the next layer back.
-        gradient_buffer AS temp_grad_ptr
-        new_gradient_buffer AS gradient_buffer
-        temp_grad_ptr AS new_gradient_buffer
-
-        current_layer_index 1 - AS current_layer_index
-    DONE
+    # Get the weights_ptr from the perceptron
+    _nn_perceptron_ptr 1 ARRAY.get AS _nn_weights_ptr
+    _nn_temp_ptr _nn_input_idx _nn_weights_ptr ARRAY.put
 }
