@@ -1,56 +1,61 @@
 {
   "functions": [
-    "NEW.matrix",
-    "HEAP.init",
-    "NN.predict",
-    "ARRAY.size",
-    "PRTstring",
+    "CURSORon",
+    "STRcmp",
+    "_NN.relu",
+    "STRcopy",
+    "FP.add",
     "_NN.new_layer",
-    "NEW.list",
+    "CURSORoff",
+    "STRfind",
+    "_NN.forward_pass_layer",
+    "NEW.matrix",
+    "FP.sub",
+    "FP.set_scale",
+    "FP.power",
+    "KEYpressed",
+    "ARRAY.put",
+    "_NN.relu_derivative",
+    "ARRAY.append",
+    "gcd",
+    "STRatoi",
     "PRTcls",
     "PRTchar",
-    "HEAP.free",
-    "_STRNatoi",
-    "STRcopy",
-    "FP.fprint",
-    "_NN.relu",
-    "FP.from_string",
-    "factorial",
-    "READline",
-    "FP.to_int",
-    "FP.from_int",
-    "ARRAY.len",
-    "FP.div",
-    "TOS.check",
-    "ARRAY.clear",
-    "PRTnum",
-    "KEYchar",
-    "CURSORon",
-    "FP.power",
-    "_NN.forward_pass_layer",
-    "gcd",
-    "power",
-    "KEYpressed",
-    "FP.print",
-    "FP.add",
-    "_NN.set_weight",
-    "CURSORoff",
-    "STRcmp",
-    "ARRAY.get",
-    "TOS_nnl",
-    "ARRAY.append",
-    "STRlen",
-    "STRfind",
-    "FP.set_scale",
-    "_NN.relu_derivative",
     "io_lib_init",
-    "FP.sub",
-    "STRatoi",
+    "NN.predict",
+    "ARRAY.clear",
+    "ARRAY.len",
+    "KEYchar",
+    "FP.print",
     "NN.new_network",
-    "HALT",
-    "NEW.array",
+    "PRTnum",
+    "TOS.check",
+    "READline",
+    "_NN.update_layer_weights",
+    "NN.train",
+    "PRTstring",
+    "ARRAY.size",
+    "FP.fprint",
+    "_NN.calculate_output_deltas",
     "FP.mul",
-    "ARRAY.put"
+    "FP.from_int",
+    "STRlen",
+    "power",
+    "NEW.list",
+    "ARRAY.get",
+    "_NN.train_forward_pass_layer",
+    "factorial",
+    "HEAP.free",
+    "NEW.array",
+    "FP.div",
+    "HEAP.init",
+    "_NN.calculate_hidden_deltas",
+    "_NN.set_weight",
+    "HALT",
+    "_STRNatoi",
+    "FP.to_int",
+    "FP.from_string",
+    "TOS_nnl"
   ],
   "variables": [
     {
@@ -534,6 +539,136 @@
       "size": 1
     },
     {
+      "name": "_nn_train_weighted_sum",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_train_learning_rate",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_train_input_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_train_target_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_train_hidden_activations_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_train_output_activations_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_train_hidden_pre_activations_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_train_output_pre_activations_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_train_output_deltas_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_train_hidden_deltas_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tmp_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_delta_idx",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_delta_error",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_delta_derivative",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_hidden_delta_idx",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_output_delta_idx",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_weighted_delta_sum",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_update_layer_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_update_deltas_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_update_inputs_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_update_neuron_idx",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_update_weight_idx",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_update_delta",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_update_input",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_update_weight_change",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_update_new_value",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
       "name": "_nn_fill_counter",
       "type": "VALUE",
       "size": 1
@@ -547,6 +682,11 @@
       "name": "_nn_weights_ptr",
       "type": "VALUE",
       "size": 1
+    },
+    {
+      "name": "bias",
+      "type": "STRING",
+      "size": 4
     },
     {
       "name": "_nn_network_ptr",
@@ -565,6 +705,16 @@
     },
     {
       "name": "_nn_input_idx",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_train_pre_activations_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_train_activations_ptr",
       "type": "VALUE",
       "size": 1
     }

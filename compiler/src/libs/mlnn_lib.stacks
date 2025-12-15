@@ -33,6 +33,39 @@ VALUE _nn_predict_output_ptr 0
 VALUE _nn_predict_neuron_idx 0
 VALUE _nn_predict_input_idx 0
 VALUE _nn_predict_weighted_sum 0
+VALUE _nn_train_weighted_sum 0
+#VALUE _nn_temp_input_ptr 0
+
+VALUE _nn_train_learning_rate 0
+VALUE _nn_train_input_ptr 0
+VALUE _nn_train_target_ptr 0
+VALUE _nn_train_hidden_activations_ptr 0
+VALUE _nn_train_output_activations_ptr 0
+VALUE _nn_train_hidden_pre_activations_ptr 0
+VALUE _nn_train_output_pre_activations_ptr 0
+VALUE _nn_train_output_deltas_ptr 0
+VALUE _nn_train_hidden_deltas_ptr 0
+VALUE _tmp_ptr 0
+ 
+VALUE _nn_delta_idx 0
+VALUE _nn_delta_error 0
+VALUE _nn_delta_derivative 0
+VALUE _nn_hidden_delta_idx 0
+VALUE _nn_output_delta_idx 0
+VALUE _nn_weighted_delta_sum 0
+
+VALUE _nn_update_layer_ptr 0
+VALUE _nn_update_deltas_ptr 0
+VALUE _nn_update_inputs_ptr 0
+VALUE _nn_update_neuron_idx 0
+VALUE _nn_update_weight_idx 0
+VALUE _nn_update_delta 0
+VALUE _nn_update_input 0
+VALUE _nn_update_weight_change 0
+VALUE _nn_update_new_value 0
+
+ 
+
 
 
 
@@ -48,9 +81,9 @@ DEF ARRAY.clear {
     # ( array_ptr -- )
     # This function takes an array pointer, calculates the address
     # of its 'count' field (ptr + 1), and writes a 0 to that address.
-    # It uses the globally defined _nn_temp_ptr for the operation.
-    1 + AS _nn_temp_ptr
-    0 AS *_nn_temp_ptr
+    # It uses the globally defined _tmp_ptr for the operation.
+    1 + AS _tmp_ptr
+    0 AS *_tmp_ptr
 }
 
 
@@ -67,6 +100,7 @@ VALUE _nn_fill_counter 0
 VALUE _nn_perceptron_ptr 0
 VALUE _nn_weights_ptr 0
 
+STRING bias "0.1"
 
 DEF _NN.new_layer {
     # ( num_neurons, num_inputs_per_neuron -- layer_ptr )
@@ -96,7 +130,8 @@ DEF _NN.new_layer {
         DONE
 
         # Initialize bias to 0 (as a fixed-point number) and append it.
-        0 FP.from_int _nn_perceptron_ptr ARRAY.append
+        # 0 FP.from_int _nn_perceptron_ptr ARRAY.append
+        &bias FP.from_string _nn_perceptron_ptr ARRAY.append
         # Append the pointer to the weights array.
         _nn_weights_ptr _nn_perceptron_ptr ARRAY.append
 
@@ -144,6 +179,14 @@ DEF NN.new_network {
     _nn_input_size _nn_network_ptr ARRAY.append
     _nn_hidden_layer_ptr _nn_network_ptr ARRAY.append
     _nn_output_layer_ptr _nn_network_ptr ARRAY.append
+
+    # Create the persistent temporary arrays needed for training, once.
+    _nn_hidden_size NEW.array AS _nn_train_hidden_pre_activations_ptr
+    _nn_hidden_size NEW.array AS _nn_train_hidden_activations_ptr
+    _nn_output_size NEW.array AS _nn_train_output_pre_activations_ptr
+    _nn_output_size NEW.array AS _nn_train_output_activations_ptr
+    _nn_output_size NEW.array AS _nn_train_output_deltas_ptr
+    _nn_hidden_size NEW.array AS _nn_train_hidden_deltas_ptr
 
     # Return the pointer to the fully constructed network
     _nn_network_ptr
@@ -288,4 +331,294 @@ DEF _NN.set_weight {
     # Get the weights_ptr from the perceptron
     _nn_perceptron_ptr 1 ARRAY.get AS _nn_weights_ptr
     _nn_temp_ptr _nn_input_idx _nn_weights_ptr ARRAY.put
+}
+
+
+# ----------------------------------------------------------------------------
+# PRIVATE HELPER: _NN.train_forward_pass_layer
+# Performs a forward pass for a single layer, but saves both the
+# pre-activation (weighted sum) and post-activation (ReLU output) values.
+# These are required for backpropagation.
+# This function fills the pre-allocated temporary arrays.
+#
+# Stack: (layer_ptr, input_array_ptr -- pre_activations_ptr, activations_ptr)
+# Stack: (layer_ptr, input_array_ptr, pre_activations_ptr, activations_ptr -- )
+# ----------------------------------------------------------------------------
+VALUE _nn_train_pre_activations_ptr 0
+VALUE _nn_train_activations_ptr 0
+
+DEF _NN.train_forward_pass_layer {
+    # ( layer_ptr, input_array_ptr -- pre_activations_ptr, activations_ptr )
+    # ( layer_ptr, input_ptr, pre_act_ptr, act_ptr -- )
+    AS _nn_train_activations_ptr
+    AS _nn_train_pre_activations_ptr
+    AS _nn_predict_input_ptr  # Re-using predict vars
+    AS _nn_predict_layer_ptr
+
+    0 AS _nn_predict_neuron_idx
+    WHILE _nn_predict_neuron_idx _nn_predict_layer_ptr ARRAY.len < DO
+        _nn_predict_layer_ptr _nn_predict_neuron_idx ARRAY.get AS _nn_perceptron_ptr # Get neuron
+        _nn_perceptron_ptr 0 ARRAY.get AS _nn_train_weighted_sum # Initialize sum with bias
+        _nn_perceptron_ptr 1 ARRAY.get AS _nn_weights_ptr        # Get weights array
+
+        # Calculate the weighted sum of inputs
+        0 AS _nn_predict_input_idx
+        WHILE _nn_predict_input_idx _nn_predict_input_ptr ARRAY.len < DO
+            _nn_weights_ptr _nn_predict_input_idx ARRAY.get
+            _nn_predict_input_ptr _nn_predict_input_idx ARRAY.get
+            FP.mul
+            _nn_train_weighted_sum FP.add AS _nn_train_weighted_sum
+            _nn_predict_input_idx 1 + AS _nn_predict_input_idx
+        DONE
+
+        # Save the pre-activation value
+        _nn_train_weighted_sum _nn_train_pre_activations_ptr ARRAY.append
+
+        # Apply activation and save the result
+        _nn_train_weighted_sum _NN.relu _nn_train_activations_ptr ARRAY.append
+
+        _nn_predict_neuron_idx 1 + AS _nn_predict_neuron_idx
+    DONE
+}
+
+# ----------------------------------------------------------------------------
+# PRIVATE HELPER: _NN.calculate_output_deltas
+# Calculates the error gradients (deltas) for the output layer.
+# This is the first step of the backward pass.
+#
+# Formula: delta = (target - actual) * relu_derivative(pre_activation)
+#
+# Stack: ( -- )
+# ----------------------------------------------------------------------------
+DEF _NN.calculate_output_deltas {
+    # This function uses the following global pointers populated by the forward pass:
+    # _nn_train_target_ptr, _nn_train_output_activations_ptr,
+    # _nn_train_output_pre_activations_ptr, _nn_train_output_deltas_ptr
+
+    # Loop through each neuron in the output layer
+    0 AS _nn_delta_idx
+    WHILE _nn_delta_idx _nn_train_target_ptr ARRAY.len < DO
+        # 1. Calculate error = target - actual
+        _nn_train_target_ptr _nn_delta_idx ARRAY.get
+        _nn_train_output_activations_ptr _nn_delta_idx ARRAY.get
+        FP.sub AS _nn_delta_error
+
+        # 2. Calculate derivative = relu_derivative(pre_activation)
+        _nn_train_output_pre_activations_ptr _nn_delta_idx ARRAY.get
+        _NN.relu_derivative AS _nn_delta_derivative
+
+        # 3. Calculate delta = error * derivative
+        _nn_delta_error _nn_delta_derivative FP.mul
+
+        # 4. Append the final delta to the output deltas array. This array
+        #    will be used to calculate the hidden layer deltas next.
+        _nn_train_output_deltas_ptr ARRAY.append
+
+        _nn_delta_idx 1 + AS _nn_delta_idx
+    DONE
+}
+
+# ----------------------------------------------------------------------------
+# PRIVATE HELPER: _NN.calculate_hidden_deltas
+# Calculates the error gradients (deltas) for the hidden layer.
+# This is the second step of the backward pass.
+#
+# Formula: delta_h = (SUM(delta_o * weight_ho)) * relu_derivative(pre_act_h)
+#
+# Stack: ( hidden_layer_ptr, output_layer_ptr -- )
+# ----------------------------------------------------------------------------
+DEF _NN.calculate_hidden_deltas {
+    # This function receives the layer pointers as arguments
+    AS _nn_output_layer_ptr
+    AS _nn_hidden_layer_ptr
+
+    # Loop through each neuron in the hidden layer (h_idx)
+    0 AS _nn_hidden_delta_idx
+    WHILE _nn_hidden_delta_idx _nn_hidden_layer_ptr ARRAY.len < DO
+
+        # Initialize the sum of weighted output deltas for this hidden neuron
+        0 FP.from_int AS _nn_weighted_delta_sum
+
+        # Loop through each neuron in the output layer (o_idx) to calculate the sum
+        0 AS _nn_output_delta_idx
+        WHILE _nn_output_delta_idx _nn_output_layer_ptr ARRAY.len < DO
+
+            # Get the current output neuron
+            _nn_output_layer_ptr _nn_output_delta_idx ARRAY.get AS _nn_perceptron_ptr
+
+            # Get the weights array of the current output neuron
+            _nn_perceptron_ptr 1 ARRAY.get AS _nn_weights_ptr
+
+            # Get the specific weight connecting hidden_neuron[h_idx] to output_neuron[o_idx].
+            # The index of this weight is h_idx.
+            _nn_weights_ptr _nn_hidden_delta_idx ARRAY.get
+
+            # Get the delta of the current output neuron
+            _nn_train_output_deltas_ptr _nn_output_delta_idx ARRAY.get
+
+            # Multiply them: delta_o * weight_ho
+            FP.mul
+
+            # Add to the running sum
+            _nn_weighted_delta_sum FP.add AS _nn_weighted_delta_sum
+
+            _nn_output_delta_idx 1 + AS _nn_output_delta_idx
+        DONE
+
+        # Get derivative for the current hidden neuron: relu_derivative(pre_activation_h)
+        _nn_train_hidden_pre_activations_ptr _nn_hidden_delta_idx ARRAY.get _NN.relu_derivative
+
+        # Final delta_h = weighted_delta_sum * derivative
+        _nn_weighted_delta_sum FP.mul _nn_train_hidden_deltas_ptr ARRAY.append
+
+        _nn_hidden_delta_idx 1 + AS _nn_hidden_delta_idx
+    DONE
+}
+
+# ----------------------------------------------------------------------------
+# PRIVATE HELPER: _NN.update_layer_weights
+# Updates all weights and biases for a single layer using the calculated
+# deltas. This is the final step of backpropagation.
+#
+# Stack: ( layer_ptr, deltas_ptr, inputs_ptr -- )
+# ----------------------------------------------------------------------------
+DEF _NN.update_layer_weights {
+    # ( layer_ptr, deltas_ptr, inputs_ptr -- )
+    AS _nn_update_inputs_ptr
+    AS _nn_update_deltas_ptr
+    AS _nn_update_layer_ptr
+
+    # Loop through each neuron in the layer
+    0 AS _nn_update_neuron_idx
+    WHILE _nn_update_neuron_idx _nn_update_layer_ptr ARRAY.len < DO
+        # Get the current neuron and its corresponding delta
+        _nn_update_layer_ptr _nn_update_neuron_idx ARRAY.get AS _nn_perceptron_ptr
+        _nn_update_deltas_ptr _nn_update_neuron_idx ARRAY.get AS _nn_update_delta
+
+        # --- 1. Update Weights ---
+        _nn_perceptron_ptr 1 ARRAY.get AS _nn_weights_ptr # Get weights array
+
+        # Loop through each weight in the neuron
+        0 AS _nn_update_weight_idx
+        WHILE _nn_update_weight_idx _nn_weights_ptr ARRAY.len < DO
+            # Get the input that corresponds to this weight
+            _nn_update_inputs_ptr _nn_update_weight_idx ARRAY.get AS _nn_update_input
+
+            # Calculate weight change: learning_rate * delta * input
+            _nn_train_learning_rate _nn_update_delta FP.mul
+            _nn_update_input FP.mul AS _nn_update_weight_change
+
+            # Get current weight and calculate new weight
+            _nn_weights_ptr _nn_update_weight_idx ARRAY.get
+            _nn_update_weight_change FP.add AS _nn_update_new_value
+
+            # Store the new weight back into the array
+            _nn_update_new_value _nn_update_weight_idx _nn_weights_ptr ARRAY.put
+
+            _nn_update_weight_idx 1 + AS _nn_update_weight_idx
+        DONE
+
+        # --- 2. Update Bias ---
+        # The "input" for the bias is always 1, so the rule is simpler.
+        # Calculate bias change: learning_rate * delta
+        _nn_train_learning_rate _nn_update_delta FP.mul AS _nn_update_weight_change
+
+        # Get current bias and calculate new bias
+        _nn_perceptron_ptr 0 ARRAY.get
+        _nn_update_weight_change FP.add AS _nn_update_new_value
+
+        # Store the new bias back into the perceptron array
+        _nn_update_new_value 0 _nn_perceptron_ptr ARRAY.put
+
+        _nn_update_neuron_idx 1 + AS _nn_update_neuron_idx
+    DONE
+}
+
+
+# ----------------------------------------------------------------------------
+# PUBLIC API: NN.train
+# Executes one full step of the backpropagation algorithm.
+#
+# Stack: (network_ptr, input_array_ptr, target_array_ptr, learning_rate -- )
+# ----------------------------------------------------------------------------
+# STRING forward_mess "  Forward pass..."
+# STRING backward_mess "  Backward pass..."
+# STRING update_mess "  Updating weights..."
+
+DEF NN.train {
+    # ( network_ptr, input_ptr, target_ptr, learning_rate -- )
+    AS _nn_train_learning_rate
+    AS _nn_train_target_ptr
+    AS _nn_train_input_ptr
+    AS _nn_network_ptr
+
+    # ========================================================================
+    # 1. FORWARD PASS
+    #
+    # Perform a full forward pass, but unlike NN.predict, we must store all
+    # intermediate values (pre-activations and activations) as they are
+    # needed for the backward pass calculations.
+    # ========================================================================
+
+    # forward_mess PRTstring
+
+    # Clear all temporary arrays to prepare for the new training step
+    _nn_train_hidden_pre_activations_ptr ARRAY.clear
+    _nn_train_hidden_activations_ptr ARRAY.clear
+    _nn_train_output_pre_activations_ptr ARRAY.clear
+    _nn_train_output_activations_ptr ARRAY.clear
+    _nn_train_output_deltas_ptr ARRAY.clear
+    _nn_train_hidden_deltas_ptr ARRAY.clear
+
+    # --- 1a. Hidden Layer Forward Pass ---
+    _nn_network_ptr 1 ARRAY.get AS _nn_hidden_layer_ptr
+    _nn_hidden_layer_ptr _nn_train_input_ptr _nn_train_hidden_pre_activations_ptr _nn_train_hidden_activations_ptr _NN.train_forward_pass_layer
+
+    # --- 1b. Output Layer Forward Pass ---
+    # The hidden layer's activations are the input to the output layer
+    _nn_network_ptr 2 ARRAY.get AS _nn_output_layer_ptr
+    _nn_output_layer_ptr _nn_train_hidden_activations_ptr _nn_train_output_pre_activations_ptr _nn_train_output_activations_ptr _NN.train_forward_pass_layer
+
+
+    # ========================================================================
+    # 2. BACKWARD PASS
+    #
+    # Calculate the error gradients (deltas) for each layer, starting from
+    # the output and working backwards.
+    # ========================================================================
+
+    # backward_mess PRTstring
+
+    # --- 2a. Calculate Output Layer Deltas ---
+    # The error gradient for the output layer is:
+    # delta = (target - actual) * relu_derivative(pre_activation)
+
+    _NN.calculate_output_deltas
+
+    # --- 2b. Calculate Hidden Layer Deltas ---
+    # The error gradient for the hidden layer is more complex, as it's based
+    # on the weighted sum of the deltas from the output layer.
+    # delta_h = (SUM(delta_o * weight_ho)) * relu_derivative(pre_activation_h)
+
+    _nn_hidden_layer_ptr _nn_output_layer_ptr _NN.calculate_hidden_deltas
+
+    # ========================================================================
+    # 3. UPDATE WEIGHTS
+    #
+    # Use the calculated deltas to update all weights and biases in the
+    # network according to the rule:
+    # new_weight = old_weight + learning_rate * delta * input_to_neuron
+    # ========================================================================
+
+    # update_mess PRTstring
+
+    # --- 3a. Update Output Layer ---
+    # The inputs to the output layer are the activations from the hidden layer.
+    _nn_output_layer_ptr _nn_train_output_deltas_ptr _nn_train_hidden_activations_ptr _NN.update_layer_weights
+
+    # --- 3b. Update Hidden Layer ---
+    # The inputs to the hidden layer are the original inputs to the network.
+    _nn_hidden_layer_ptr _nn_train_hidden_deltas_ptr _nn_train_input_ptr _NN.update_layer_weights
+
+
 }
