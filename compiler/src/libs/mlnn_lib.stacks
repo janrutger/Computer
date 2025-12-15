@@ -34,7 +34,6 @@ VALUE _nn_predict_neuron_idx 0
 VALUE _nn_predict_input_idx 0
 VALUE _nn_predict_weighted_sum 0
 VALUE _nn_train_weighted_sum 0
-#VALUE _nn_temp_input_ptr 0
 
 VALUE _nn_train_learning_rate 0
 VALUE _nn_train_input_ptr 0
@@ -45,7 +44,7 @@ VALUE _nn_train_hidden_pre_activations_ptr 0
 VALUE _nn_train_output_pre_activations_ptr 0
 VALUE _nn_train_output_deltas_ptr 0
 VALUE _nn_train_hidden_deltas_ptr 0
-VALUE _tmp_ptr 0
+# VALUE _tmp_ptr 0
  
 VALUE _nn_delta_idx 0
 VALUE _nn_delta_error 0
@@ -67,8 +66,6 @@ VALUE _nn_update_new_value 0
  
 
 
-
-
 # ----------------------------------------------------------------------------
 # HELPER: ARRAY.clear
 # Resets the count of an array to zero, effectively clearing it without
@@ -77,14 +74,14 @@ VALUE _nn_update_new_value 0
 #
 # Stack: (array_ptr -- )
 # ----------------------------------------------------------------------------
-DEF ARRAY.clear {
-    # ( array_ptr -- )
-    # This function takes an array pointer, calculates the address
-    # of its 'count' field (ptr + 1), and writes a 0 to that address.
-    # It uses the globally defined _tmp_ptr for the operation.
-    1 + AS _tmp_ptr
-    0 AS *_tmp_ptr
-}
+# DEF ARRAY.clear {     # REPLACED IN THE HEAP LIBRARY
+#     # ( array_ptr -- )
+#     # This function takes an array pointer, calculates the address
+#     # of its 'count' field (ptr + 1), and writes a 0 to that address.
+#     # It uses the globally defined _tmp_ptr for the operation.
+#     1 + AS _tmp_ptr
+#     0 AS *_tmp_ptr
+# }
 
 
 # ----------------------------------------------------------------------------
@@ -325,7 +322,7 @@ VALUE _nn_input_idx 0
 DEF _NN.set_weight {
     # ( value, weight_idx, neuron_ptr -- )
     AS _nn_perceptron_ptr
-    AS _nn_input_idx # Re-using this var for weight_idx
+    AS _nn_input_idx   # Re-using this var for weight_idx
     AS _nn_temp_ptr    # Re-using this var for the value
 
     # Get the weights_ptr from the perceptron

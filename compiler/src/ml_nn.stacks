@@ -13,9 +13,6 @@ INCLUDE fixed_point_lib
 INCLUDE mlnn_lib
 
 VALUE network_ptr 0
-# VALUE hidden_layer_ptr 0
-# VALUE output_layer_ptr 0
-# VALUE input_array_ptr 0
 VALUE output_array_ptr 0
 
 VALUE epochs 0
@@ -32,9 +29,6 @@ STRING fp_0_1 "0.1"
 STRING fp_0_5 "0.5"
 STRING fp_1_0 "1.0"
 STRING fp_0_01 "0.01"
-
-
-
 
 
 
@@ -66,85 +60,10 @@ SRAND
 "Network created at address: " PRTstring
 network_ptr PRINT
 
-# "Verifying network structure...\n" PRTstring
 
-# Get pointers from the main network array
-# network_ptr 1 ARRAY.get AS hidden_layer_ptr
-# network_ptr 2 ARRAY.get AS output_layer_ptr
-
-# "  Input size: " PRTstring
-# network_ptr 0 ARRAY.get PRINT
-
-# "  Hidden layer pointer: " PRTstring
-# hidden_layer_ptr PRINT
-
-# "  Output layer pointer: " PRTstring
-# output_layer_ptr PRINT
-
-# "  Hidden layer neuron count: " PRTstring
-# hidden_layer_ptr ARRAY.len PRINT
-
-# "  Output layer neuron count: " PRTstring
-# output_layer_ptr ARRAY.len PRINT
-
-# "\n--- Phase 2: Testing NN.predict ---\n" PRTstring
-
-# # "Creating input array [1.0, 0.0]...\n" PRTstring
-# 2 NEW.array AS input_array_ptr
-# 1 FP.from_int input_array_ptr ARRAY.append
-# 0 FP.from_int input_array_ptr ARRAY.append
-
-# "Running prediction...\n" PRTstring
-# network_ptr input_array_ptr NN.predict AS output_array_ptr
-
-# # "Prediction finished. Output pointer: " PRTstring
-# # output_array_ptr PRINT
-
-# # "Output array length: " PRTstring
-# # output_array_ptr ARRAY.len PRINT
-
-# "Predicted value (random weights): " PRTstring
-# # Since our network has 1 output neuron, the result is at index 0
-# 0 output_array_ptr ARRAY.get 4 FP.fprint
-
-
-# "\n--- Phase 2b: Deterministic Prediction Test ---\n" PRTstring
-
-# # Manually set weights and biases for predictable output
-# # All weights = 0.5, all biases = 0.1
-
-# "Setting weights to 0.5 and biases to 0.1...\n" PRTstring
-
-# # Hidden Layer (2 neurons)
-# 0 hidden_layer_ptr ARRAY.get AS _nn_perceptron_ptr
-# &fp_0_1 FP.from_string 0 _nn_perceptron_ptr ARRAY.put # Set bias for H0
-# &fp_0_5 FP.from_string 0 _nn_perceptron_ptr _NN.set_weight
-# &fp_0_5 FP.from_string 1 _nn_perceptron_ptr _NN.set_weight
-
-# 1 hidden_layer_ptr ARRAY.get AS _nn_perceptron_ptr
-# &fp_0_1 FP.from_string 0 _nn_perceptron_ptr ARRAY.put # Set bias for H1
-# &fp_0_5 FP.from_string 0 _nn_perceptron_ptr _NN.set_weight
-# &fp_0_5 FP.from_string 1 _nn_perceptron_ptr _NN.set_weight
-
-# # Output Layer (1 neuron)
-# 0 output_layer_ptr ARRAY.get AS _nn_perceptron_ptr
-# &fp_0_1 FP.from_string 0 _nn_perceptron_ptr ARRAY.put # Set bias for O0
-# &fp_0_5 FP.from_string 0 _nn_perceptron_ptr _NN.set_weight
-# &fp_0_5 FP.from_string 1 _nn_perceptron_ptr _NN.set_weight
-
-# # "Running prediction with known weights...\n" PRTstring
-# network_ptr input_array_ptr NN.predict AS output_array_ptr
-
-# "Predicted value (known weights): " PRTstring
-# 0 output_array_ptr ARRAY.get 4 FP.fprint
-
-# "\nExpected prediction: 0.700\n" PRTstring
 
 "\n--- Phase 2: Training the Network ---\n" PRTstring
-
-# We will re-use the 2-4-1 network created earlier.
 # First, let's create the XOR dataset.
-
 "Creating XOR dataset...\n" PRTstring
 
 # Create an array to hold pointers to the 4 input arrays

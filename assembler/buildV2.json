@@ -74,6 +74,10 @@
       {
         "file": "asm/apps/perceptron.asm",
         "output": "../bin/apps/perceptron.bin"
+      },
+      {
+        "file": "asm/apps/ml_nn.asm",
+        "output": "../bin/apps/ml_nn.bin"
       }
     ]
   }

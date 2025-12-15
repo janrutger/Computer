@@ -378,6 +378,17 @@
     ldx A $_start_memory_
     stack A $DATASTACK_PTR
     ret
+@ARRAY.clear
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $array_ptr
+    ldi A 0
+    ld B A
+    ldm I $array_ptr
+    stx B $_start_memory_
+    ret
 @NEW.matrix
     ustack A $DATASTACK_PTR
     sto A $_MAT_X_DIM

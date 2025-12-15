@@ -20,7 +20,6 @@
 . $_nn_train_output_pre_activations_ptr 1
 . $_nn_train_output_deltas_ptr 1
 . $_nn_train_hidden_deltas_ptr 1
-. $_tmp_ptr 1
 . $_nn_delta_idx 1
 . $_nn_delta_error 1
 . $_nn_delta_derivative 1
@@ -47,17 +46,6 @@
 . $_nn_train_pre_activations_ptr 1
 . $_nn_train_activations_ptr 1
 # .FUNCTIONS
-@ARRAY.clear
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $_tmp_ptr
-    ldi A 0
-    ld B A
-    ldm I $_tmp_ptr
-    stx B $_start_memory_
-    ret
 @_NN.new_layer
     ustack A $DATASTACK_PTR
     sto A $_nn_input_size
@@ -880,7 +868,6 @@
 % $_nn_train_output_pre_activations_ptr 0
 % $_nn_train_output_deltas_ptr 0
 % $_nn_train_hidden_deltas_ptr 0
-% $_tmp_ptr 0
 % $_nn_delta_idx 0
 % $_nn_delta_error 0
 % $_nn_delta_derivative 0

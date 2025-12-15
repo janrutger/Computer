@@ -230,6 +230,25 @@ DEF ARRAY.len {
     *_ARR_TEMP_PTR
 }
 
+
+# ----------------------------------------------------------------------------
+# HELPER: ARRAY.clear
+# Resets the count of an array to zero, effectively clearing it without
+# deallocating its memory. This is essential for reusing temporary arrays
+# during the training process.
+#
+# Stack: (array_ptr -- )
+# ----------------------------------------------------------------------------
+DEF ARRAY.clear {
+    # ( array_ptr -- )
+    # This function takes an array pointer, calculates the address
+    # of its 'count' field (ptr + 1), and writes a 0 to that address.
+    # It uses the globally defined _tmp_ptr for the operation.
+    1 + AS array_ptr
+    0 AS *array_ptr
+}
+
+
 ; --- NEW.matrix ---
 ; Creates a new matrix and initializes it with data from the stack.
 ; Halts on failure.
