@@ -28,7 +28,6 @@
 . $HEAP_SIZE 1
 . $HEAP_FREE 1
 . $_ARR_TEMP_PTR 1
-. $_ARR_VALUE_PTR 1
 . $_MAT_TEMP_PTR 1
 . $_MAT_X_DIM 1
 . $_MAT_Y_DIM 1
@@ -1019,13 +1018,13 @@
     ustack B $DATASTACK_PTR
     add B A
     ld A B
-    sto A $array_ptr
+    sto A $_ARR_TEMP_PTR
     ldi A 0
     ld B A
-    ldm I $array_ptr
+    ldm I $_ARR_TEMP_PTR
     stx B $_start_memory_
     ret
-@NEW.matrix
+@NEW.matrix_populate
     ustack A $DATASTACK_PTR
     sto A $_MAT_X_DIM
     ustack A $DATASTACK_PTR
@@ -1058,12 +1057,12 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :NEW.matrix_if_end_10
+    jmpt :NEW.matrix_populate_if_end_10
     ldi A $error_mesg5
     stack A $DATASTACK_PTR
     call @PRTstring
     call @HALT
-:NEW.matrix_if_end_10
+:NEW.matrix_populate_if_end_10
     ldm A $HEAP_FREE
     sto A $_MAT_PTR
     ldm A $HEAP_FREE
@@ -1107,19 +1106,19 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :NEW.matrix_if_end_11
+    jmpt :NEW.matrix_populate_if_end_11
     call @TOS.check
     ldi A 0
     stack A $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :NEW.matrix_if_end_12
+    jmpt :NEW.matrix_populate_if_end_12
     ldi A $error_mesg6
     stack A $DATASTACK_PTR
     call @PRTstring
     call @HALT
-:NEW.matrix_if_end_12
+:NEW.matrix_populate_if_end_12
     ustack A $DATASTACK_PTR
     sto A $_MAT_VALUE
     ld B A
@@ -1140,7 +1139,7 @@
     ld A B
     sto A $_MAT_LOOP_COUNTER
     jmp :matrix_populate_loop
-:NEW.matrix_if_end_11
+:NEW.matrix_populate_if_end_11
     ldm A $_MAT_PTR
     stack A $DATASTACK_PTR
     ret
@@ -1178,7 +1177,6 @@
 % $HEAP_SIZE 0
 % $HEAP_FREE 0
 % $_ARR_TEMP_PTR 0
-% $_ARR_VALUE_PTR 0
 % $_MAT_TEMP_PTR 0
 % $_MAT_X_DIM 0
 % $_MAT_Y_DIM 0

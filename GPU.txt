@@ -1,0 +1,159 @@
+# Stern_XT GPU Extension Design Specification
+
+## 1. Architecture Overview
+The GPU is implemented as a synchronous execution unit within the Stern_XT CPU. 
+It does not run on a separate thread. It is triggered by a specific CPU instruction 
+and operates on data structures in shared memory.
+
+## 2. CPU Instruction
+*   **Mnemonic:** `GPU`
+*   **Operand:** Implicitly pops the **Top of Stack (TOS)**. This value is treated as the pointer to the Task Descriptor List (TDL).
+*   **Behavior:** The CPU halts normal fetch/decode, passes control to the GPU unit, waits for completion, and then resumes.
+
+## 3. Memory Structures
+
+### Task Descriptor List (TDL)
+A contiguous block of 6 words in memory.
+
+| Offset | Field | Description |
+| :--- | :--- | :--- |
+| `0` | **PTR_A** | Pointer to the first source Matrix structure. |
+| `1` | **PTR_B** | Pointer to the second source Matrix structure. |
+| `2` | **PTR_RES** | Pointer to the destination/result Matrix structure. |
+| `3` | **SCALE** | Fixed-point divisor. <br> `0` or `1`: Integer math (no division). <br> `100`: Divide result by 100 (for 2 decimal fixed-point). |
+| `4` | **OPCODE** | The operation to perform (see below). |
+| `5` | **STATUS** | Return code written by GPU (0=OK, 0!=Error). |
+
+### Matrix Structure
+Standard heap-allocated array format.
+
+| Offset | Field | Description |
+| :--- | :--- | :--- |
+| `0` | **ROWS** | Number of rows ($M$). |
+| `1` | **COLS** | Number of columns ($N$). |
+| `2..` | **DATA** | Row-major data array of size $M \times N$. |
+
+## 4. GPU Operations (Opcode)
+
+| Opcode | Mnemonic | Logic |
+| :--- | :--- | :--- |
+| `0` | `ADD` | $Result = A + B$ (Element-wise) |
+| `1` | `SUB` | $Result = A - B$ (Element-wise) |
+| `2` | `MUL` | $Result = (A \times B) / Scale$ (Matrix Multiplication) |
+| `3` | `DOT` | $Result = (A \cdot B) / Scale$ (Dot Product) |
+| `4` | `RELU` | $Result = \max(0, A)$ (Element-wise, B ignored) |
+
+## 5. Error Handling (Status)
+*   `0`: Success
+*   `1`: Dimension Mismatch (e.g., A.cols != B.rows for MUL)
+*   `2`: Invalid Opcode
+*   `3`: Memory Access Violation (if implemented)
+
+## 6. Implementation Details (Emulator)
+To achieve the performance goals and simulate "silicon" speed within the Python emulator:
+
+1.  **Direct Memory Access (DMA):** The GPU unit will bypass the standard CPU read/write cycles. The `Memory` class must implement `read_block(addr, length)` and `write_block(addr, data)` to allow bulk transfer of matrix data.
+2.  **Numpy Integration:** The emulator will use Python's `numpy` library to perform the actual matrix arithmetic. This ensures the operation is instantaneous relative to the emulated CPU clock, mimicking a dedicated hardware accelerator.
+3.  **Data Flow:**
+    *   **Fetch:** GPU reads TDL -> Reads Matrix A & B headers -> Bulk reads A & B Data -> Converts to Numpy Arrays.
+    *   **Execute:** Numpy performs `matmul`, `add`, etc.
+    *   **Writeback:** GPU converts result to list -> Bulk writes to Matrix C Data area.
+
+
+
+#### On the Software side OS/Libraties etc
+
+Since the size of the TDL is known (6 words), we can use the current `NEW.list` implementation of the HEAP library to allocate it once.
+
+**1. Heap Library Extensions**
+We need to expand the HEAP library because the current `NEW.matrix` expects all data on the stack, which is impossible for large matrices.
+*   `MATRIX.new ( rows cols -- ptr )`: Reserves `rows * cols + 2` words on the heap. Writes `rows` to `ptr+0` and `cols` to `ptr+1`. The data area is left uninitialized (garbage).
+
+**2. GPU/Matrix Library (`gpu_lib`)**
+This library wraps the hardware calls.
+*   **Constants:** Define `GPU_OP_ADD` (0), `GPU_OP_MUL` (2), etc.
+*   `MATRIX.put ( value row col matrix_ptr -- )`: Calculates offset `2 + (row * cols) + col`. *Note: Needs to read `cols` from `matrix_ptr+1` first.*
+*   `MATRIX.get ( row col matrix_ptr -- value )`: Reads value at calculated offset.
+*   `GPU.tdl ( ptr_a ptr_b ptr_res scale opcode tdl_ptr -- )`: Populates the TDL structure.
+    Writes the parameters to the corresponding offsets (0..4) in the TDL pointed to by `tdl_ptr`.
+    It also writes `0` to the `STATUS` field (offset 5) to ensure a clean state.
+*   `GPU.exec ( tdl_ptr -- status )`: 
+    1.  Executes the `GPU` instruction (consuming `tdl_ptr`).
+    2.  Reads the `STATUS` field from `tdl_ptr + 5`.
+    3.  Returns the status code to the stack.
+
+**3. Software Usage Pattern: Memory Reuse**
+Because the TDL requires an explicit `PTR_RES` (Result Pointer), the programmer controls memory allocation.
+*   **Strategy:** Allocate result matrices once at startup. Pass these pointers to the GPU inside loops. This avoids heap exhaustion on the emulated CPU.
+
+**4. TDL Lifecycle & Optimization**
+*   **Reuse:** The TDL is designed to be reused. If a specific operation (e.g., "Layer 1 Forward Pass") is performed repeatedly, 
+the TDL should be initialized once outside the loop. The CPU then only needs to execute `GPU <tdl_ptr>` inside the loop, 
+saving the overhead of writing parameters to memory.
+*   **Multiple TDLs:** For complex pipelines, it is better to allocate multiple TDLs (e.g., `tdl_layer1`, `tdl_layer2`) rather 
+than reconfiguring a single TDL constantly.
+
+
+
+#### Deeper dive into the CPU side
+
+The ISA needs an instruction to fire the GPU. Since the TDL is dynamically allocated on the heap, the instruction should take a register containing the pointer:
+    `GPU <register>`
+
+The CPU has a microcode instruction definition, likely:
+    `def XX=GPU { .format one_reg ... }`
+    This passes `$1` (the register holding the TDL pointer) to the internal GPU handler.
+
+There is a special `GPU` class in the emulator. This class is initialized by the CPU and takes the `memory` object as an argument.
+
+The microcode instruction fires `GPU.execute(TDL_Pointer)`. The GPU class then:
+    1.  Reads the pointers (A, B, Result) from the TDL using `memory.read`.
+    2.  Reads the dimensions (Rows/Cols) from the Matrix headers.
+    3.  Calculates data sizes and retrieves the raw data using the new `memory.read_block` (DMA).
+    4.  Converts the lists to **Numpy** arrays.
+    5.  Performs the requested operation (MatMul, Add, etc.) using Numpy.
+    6.  Converts the result back to a list.
+    7.  Writes the result data back to the Result Matrix using `memory.write_block`.
+    8.  Updates the `STATUS` field in the TDL using `memory.write`.
+
+    Finally, it returns control to the CPU.
+    The CPU then executes `set_cpu_state(FETCH)` to proceed to the next instruction.
+
+
+
+*** To Do List for the first mile 
+
+1.  **Memory & Dependencies**
+    *   Ensure `numpy` is installed/available in the emulator environment.
+    *   Update `Memory` class: Add `read_block(addr, length)` and `write_block(addr, data)`.
+
+2.  **Emulator Core (Python)**
+    *   Create `GPU` class.
+        *   `__init__(memory)`
+        *   `execute(tdl_ptr)`: For now, just read TDL fields, print them to console, and return.
+    *   Modify `CPU` class:
+        *   Initialize `GPU` instance.
+        *   Add execution rule for the new microcode instruction. 
+        *   change the microcode assembler so it will reconize the new microcode instruction.
+
+3.  **Instruction Set Architecture (ISA)**
+    *   Update `base_rom.uasm`: Add `def 94=GPU { .format one_reg ... }`.
+    *   (This enables the Assembler and CPU decoder automatically).
+
+4.  **Software / Libraries (Stacks)**
+    *   **Refactor:** Rename current `NEW.matrix` to `NEW.matrix_populate` (Done).
+    *   **New Method:** Implement `MATRIX.new ( rows cols -- ptr )` in `std_heap` (allocates only).
+    *   **GPU Lib:** Create `gpu_lib.stacks` with `GPU.tdl` and `GPU.exec` wrappers.
+
+5.  **Verification**
+    *   Create `test_gpu_first_mile.asm`: Manually construct a TDL in memory and call `GPU`.
+    *   Verify the emulator prints the correct pointers.
+
+
+
+Some examples
+def 94=GPU {
+    .format one_reg
+    gpu($1)
+    set_cpu_state(FETCH)
+}

@@ -1,3 +1,9 @@
+# this version of the library acts as expected with a network
+# as 2-n-1 netwroks for n = [2 .. 5]. creating-training-testing.
+# when n = 6 or higher, then the training is crashing for an unknown reason.
+# other networks like 4-4-1 or 2-4-4 are not tested yet
+#
+
 # ----------------------------------------------------------------------------
 # Library: mlnn_lib.stacks
 # Description: A Multi-Layer Neural Network library for the Stern-XT platform.
@@ -31,6 +37,8 @@ VALUE _nn_predict_layer_ptr 0
 VALUE _nn_predict_input_ptr 0
 VALUE _nn_predict_output_ptr 0
 VALUE _nn_predict_neuron_idx 0
+VALUE _nn_predict_hidden_activations_ptr 0
+VALUE _nn_predict_output_activations_ptr 0
 VALUE _nn_predict_input_idx 0
 VALUE _nn_predict_weighted_sum 0
 VALUE _nn_train_weighted_sum 0
@@ -44,7 +52,6 @@ VALUE _nn_train_hidden_pre_activations_ptr 0
 VALUE _nn_train_output_pre_activations_ptr 0
 VALUE _nn_train_output_deltas_ptr 0
 VALUE _nn_train_hidden_deltas_ptr 0
-# VALUE _tmp_ptr 0
  
 VALUE _nn_delta_idx 0
 VALUE _nn_delta_error 0
@@ -64,24 +71,6 @@ VALUE _nn_update_weight_change 0
 VALUE _nn_update_new_value 0
 
  
-
-
-# ----------------------------------------------------------------------------
-# HELPER: ARRAY.clear
-# Resets the count of an array to zero, effectively clearing it without
-# deallocating its memory. This is essential for reusing temporary arrays
-# during the training process.
-#
-# Stack: (array_ptr -- )
-# ----------------------------------------------------------------------------
-# DEF ARRAY.clear {     # REPLACED IN THE HEAP LIBRARY
-#     # ( array_ptr -- )
-#     # This function takes an array pointer, calculates the address
-#     # of its 'count' field (ptr + 1), and writes a 0 to that address.
-#     # It uses the globally defined _tmp_ptr for the operation.
-#     1 + AS _tmp_ptr
-#     0 AS *_tmp_ptr
-# }
 
 
 # ----------------------------------------------------------------------------
@@ -185,6 +174,10 @@ DEF NN.new_network {
     _nn_output_size NEW.array AS _nn_train_output_deltas_ptr
     _nn_hidden_size NEW.array AS _nn_train_hidden_deltas_ptr
 
+    # Create the persistent temporary arrays needed for prediction, once.
+    _nn_hidden_size NEW.array AS _nn_predict_hidden_activations_ptr
+    _nn_output_size NEW.array AS _nn_predict_output_activations_ptr
+
     # Return the pointer to the fully constructed network
     _nn_network_ptr
 }
@@ -231,14 +224,16 @@ DEF _NN.relu_derivative {
 # ReLU activation function, and stores the result in an output array.
 #
 # Stack: (layer_ptr, input_array_ptr -- output_array_ptr)
+# Stack: (layer_ptr, input_array_ptr, output_array_ptr -- )
 # ----------------------------------------------------------------------------
 DEF _NN.forward_pass_layer {
-    # ( layer_ptr, input_array_ptr -- output_array_ptr )
+    # ( layer_ptr, input_array_ptr, output_array_ptr -- )
+    AS _nn_predict_output_ptr
     AS _nn_predict_input_ptr
     AS _nn_predict_layer_ptr
 
-    # Create a new array to store the activations of this layer
-    _nn_predict_layer_ptr ARRAY.len NEW.array AS _nn_predict_output_ptr
+    # Clear the reusable output array
+    _nn_predict_output_ptr ARRAY.clear
 
     # Loop through each neuron in the layer
     0 AS _nn_predict_neuron_idx
@@ -272,9 +267,6 @@ DEF _NN.forward_pass_layer {
 
         _nn_predict_neuron_idx 1 + AS _nn_predict_neuron_idx
     DONE
-
-    # Return the pointer to the array of activations
-    _nn_predict_output_ptr
 }
 
 
@@ -294,20 +286,21 @@ DEF NN.predict {
     _nn_network_ptr 1 ARRAY.get AS _nn_hidden_layer_ptr
 
     # Perform forward pass on the hidden layer
-    _nn_hidden_layer_ptr _nn_predict_input_ptr _NN.forward_pass_layer AS _nn_predict_output_ptr
+    # The results will be stored in the pre-allocated _nn_predict_hidden_activations_ptr
+    _nn_hidden_layer_ptr _nn_predict_input_ptr _nn_predict_hidden_activations_ptr _NN.forward_pass_layer
 
     # --- 2. Process Output Layer ---
     # The output of the hidden layer becomes the input for the output layer
-    _nn_predict_output_ptr AS _nn_predict_input_ptr
 
     # Get the output layer pointer from the network structure
     _nn_network_ptr 2 ARRAY.get AS _nn_output_layer_ptr
 
     # Perform forward pass on the output layer
-    _nn_output_layer_ptr _nn_predict_input_ptr _NN.forward_pass_layer AS _nn_predict_output_ptr
+    # The results will be stored in the pre-allocated _nn_predict_output_activations_ptr
+    _nn_output_layer_ptr _nn_predict_hidden_activations_ptr _nn_predict_output_activations_ptr _NN.forward_pass_layer
 
     # Return the final predictions
-    _nn_predict_output_ptr
+    _nn_predict_output_activations_ptr
 }
 
 

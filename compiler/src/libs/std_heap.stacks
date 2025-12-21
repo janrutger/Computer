@@ -14,7 +14,7 @@ VALUE HEAP_START 0
 VALUE HEAP_SIZE 0
 VALUE HEAP_FREE 0
 VALUE _ARR_TEMP_PTR 0
-VALUE _ARR_VALUE_PTR 0
+# VALUE _ARR_VALUE_PTR 0 # not used
 
 ; --- Internal state for Matrix operations ---
 VALUE _MAT_TEMP_PTR 0
@@ -243,19 +243,19 @@ DEF ARRAY.clear {
     # ( array_ptr -- )
     # This function takes an array pointer, calculates the address
     # of its 'count' field (ptr + 1), and writes a 0 to that address.
-    # It uses the globally defined _tmp_ptr for the operation.
-    1 + AS array_ptr
-    0 AS *array_ptr
+    # It uses a temporary pointer to avoid side-effects on global variables.
+    1 + AS _ARR_TEMP_PTR
+    0 AS *_ARR_TEMP_PTR
 }
 
 
-; --- NEW.matrix ---
+; --- NEW.matrix_populate ---
 ; Creates a new matrix and initializes it with data from the stack.
 ; Halts on failure.
 ; ( data_N ... data_0 y_dim x_dim -- new_matrix_pointer )
 VALUE _total_data_elements 0
 VALUE _total_matrix_size 0
-DEF NEW.matrix {
+DEF NEW.matrix_populate {
     AS _MAT_X_DIM
     AS _MAT_Y_DIM
 

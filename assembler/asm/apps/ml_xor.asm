@@ -42,6 +42,8 @@
 . $_nn_predict_input_ptr 1
 . $_nn_predict_output_ptr 1
 . $_nn_predict_neuron_idx 1
+. $_nn_predict_hidden_activations_ptr 1
+. $_nn_predict_output_activations_ptr 1
 . $_nn_predict_input_idx 1
 . $_nn_predict_weighted_sum 1
 . $_nn_train_weighted_sum 1
@@ -81,12 +83,12 @@
 . $_nn_train_activations_ptr 1
 . $network_ptr 1
 . $output_array_ptr 1
-. $epochs 1
-. $learning_rate 1
-. $i 1
-. $rand_idx 1
 . $current_input_ptr 1
 . $current_target_ptr 1
+. $learning_rate 1
+. $epochs 1
+. $i 1
+. $rand_idx 1
 . $xor_inputs_ptr 1
 . $xor_targets_ptr 1
 . $fp_0_0 4
@@ -1257,6 +1259,16 @@
     call @NEW.array
     ustack A $DATASTACK_PTR
     sto A $_nn_train_hidden_deltas_ptr
+    ldm A $_nn_hidden_size
+    stack A $DATASTACK_PTR
+    call @NEW.array
+    ustack A $DATASTACK_PTR
+    sto A $_nn_predict_hidden_activations_ptr
+    ldm A $_nn_output_size
+    stack A $DATASTACK_PTR
+    call @NEW.array
+    ustack A $DATASTACK_PTR
+    sto A $_nn_predict_output_activations_ptr
     ldm A $_nn_network_ptr
     stack A $DATASTACK_PTR
     ret
@@ -1293,14 +1305,14 @@
     ret
 @_NN.forward_pass_layer
     ustack A $DATASTACK_PTR
+    sto A $_nn_predict_output_ptr
+    ustack A $DATASTACK_PTR
     sto A $_nn_predict_input_ptr
     ustack A $DATASTACK_PTR
     sto A $_nn_predict_layer_ptr
+    ldm A $_nn_predict_output_ptr
     stack A $DATASTACK_PTR
-    call @ARRAY.len
-    call @NEW.array
-    ustack A $DATASTACK_PTR
-    sto A $_nn_predict_output_ptr
+    call @ARRAY.clear
     ldi A 0
     sto A $_nn_predict_neuron_idx
 :_NN.forward_pass_layer_while_start_2
@@ -1385,8 +1397,6 @@
     sto A $_nn_predict_neuron_idx
     jmp :_NN.forward_pass_layer_while_start_2
 :_NN.forward_pass_layer_while_end_2
-    ldm A $_nn_predict_output_ptr
-    stack A $DATASTACK_PTR
     ret
 @NN.predict
     ustack A $DATASTACK_PTR
@@ -1402,10 +1412,9 @@
     stack A $DATASTACK_PTR
     ldm A $_nn_predict_input_ptr
     stack A $DATASTACK_PTR
+    ldm A $_nn_predict_hidden_activations_ptr
+    stack A $DATASTACK_PTR
     call @_NN.forward_pass_layer
-    ustack A $DATASTACK_PTR
-    sto A $_nn_predict_output_ptr
-    sto A $_nn_predict_input_ptr
     ldm A $_nn_network_ptr
     stack A $DATASTACK_PTR
     ldi A 2
@@ -1414,11 +1423,12 @@
     ustack A $DATASTACK_PTR
     sto A $_nn_output_layer_ptr
     stack A $DATASTACK_PTR
-    ldm A $_nn_predict_input_ptr
+    ldm A $_nn_predict_hidden_activations_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_predict_output_activations_ptr
     stack A $DATASTACK_PTR
     call @_NN.forward_pass_layer
-    ustack A $DATASTACK_PTR
-    sto A $_nn_predict_output_ptr
+    ldm A $_nn_predict_output_activations_ptr
     stack A $DATASTACK_PTR
     ret
 @_NN.set_weight
@@ -1956,6 +1966,8 @@
 % $_nn_predict_input_ptr 0
 % $_nn_predict_output_ptr 0
 % $_nn_predict_neuron_idx 0
+% $_nn_predict_hidden_activations_ptr 0
+% $_nn_predict_output_activations_ptr 0
 % $_nn_predict_input_idx 0
 % $_nn_predict_weighted_sum 0
 % $_nn_train_weighted_sum 0
@@ -1995,12 +2007,12 @@
 % $_nn_train_activations_ptr 0
 % $network_ptr 0
 % $output_array_ptr 0
-% $epochs 0
-% $learning_rate 0
-% $i 0
-% $rand_idx 0
 % $current_input_ptr 0
 % $current_target_ptr 0
+% $learning_rate 0
+% $epochs 0
+% $i 0
+% $rand_idx 0
 % $xor_inputs_ptr 0
 % $xor_targets_ptr 0
 % $fp_0_0 \0 \. \0 \null

@@ -10,36 +10,36 @@ INCLUDE game_lib
 HEAP.free
 
 # 1) define the Tile data
-200 1 1 NEW.matrix AS Player
-42  1 1 NEW.matrix AS Coin
-204 1 1 NEW.matrix AS Special
+200 1 1 NEW.matrix_populate AS Player
+42  1 1 NEW.matrix_populate AS Coin
+204 1 1 NEW.matrix_populate AS Special
 
 
 # Roof sprite (27x1)
 201 201 201 201 201 201 201 201 201 # 9
 201 201 201 201 201 201 201 201 201 # 18
 201 201 201 201 201 201 201 201 201 # 27
-1 27 NEW.matrix AS Roof
+1 27 NEW.matrix_populate AS Roof
 
 # Short wall sprite (1x10)
 201 201 201 201 201 201 201 201 201 201
-10 1 NEW.matrix AS ShortWall
+10 1 NEW.matrix_populate AS ShortWall
 
 # Long wall sprite (1x15)
 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201
-15 1 NEW.matrix AS LongWall
+15 1 NEW.matrix_populate AS LongWall
 
 # "GAME OVER" sprite (9x1)
 82 69 86 79 32 69 77 65 71
-1 9 NEW.matrix AS GameOverSprite
+1 9 NEW.matrix_populate AS GameOverSprite
 
 # "YOU WON" sprite (7x1)
 78 79 87 32 85 79 89
-1 7 NEW.matrix AS YouWonSprite
+1 7 NEW.matrix_populate AS YouWonSprite
 
 # "YOU LOST" sprite (8x1)
 84 83 79 76 32 85 79 89
-1 8 NEW.matrix AS YouLostSprite
+1 8 NEW.matrix_populate AS YouLostSprite
 
 CONST PLAYER      0
 CONST COIN        1
@@ -280,6 +280,7 @@ DEF check_the_walls {
             # Not all walls are green, so this is a penalty.
             score _wall_cost - AS score # Subtract the full cost of the wall
             1 AS _score_dirty
+            DROP   #  this fix the datastack imbalance, for some reason
             # The wall is NOT deleted; it remains as a barrier.
         END
     END

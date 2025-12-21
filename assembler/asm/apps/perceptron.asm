@@ -261,7 +261,7 @@
 :_main_while_start_1
     ldm A $itter
     stack A $DATASTACK_PTR
-    ldi A 600
+    ldi A 800
     stack A $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR

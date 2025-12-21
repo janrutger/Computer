@@ -127,7 +127,7 @@
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @NEW.matrix
+    call @NEW.matrix_populate
     ustack A $DATASTACK_PTR
     sto A $Player
     ldi A 42
@@ -136,7 +136,7 @@
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @NEW.matrix
+    call @NEW.matrix_populate
     ustack A $DATASTACK_PTR
     sto A $Coin
     ldi A 204
@@ -145,7 +145,7 @@
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @NEW.matrix
+    call @NEW.matrix_populate
     ustack A $DATASTACK_PTR
     sto A $Special
     ldi A 201
@@ -206,7 +206,7 @@
     stack A $DATASTACK_PTR
     ldi A 27
     stack A $DATASTACK_PTR
-    call @NEW.matrix
+    call @NEW.matrix_populate
     ustack A $DATASTACK_PTR
     sto A $Roof
     ldi A 201
@@ -233,7 +233,7 @@
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @NEW.matrix
+    call @NEW.matrix_populate
     ustack A $DATASTACK_PTR
     sto A $ShortWall
     ldi A 201
@@ -270,7 +270,7 @@
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    call @NEW.matrix
+    call @NEW.matrix_populate
     ustack A $DATASTACK_PTR
     sto A $LongWall
     ldi A 82
@@ -295,7 +295,7 @@
     stack A $DATASTACK_PTR
     ldi A 9
     stack A $DATASTACK_PTR
-    call @NEW.matrix
+    call @NEW.matrix_populate
     ustack A $DATASTACK_PTR
     sto A $GameOverSprite
     ldi A 78
@@ -316,7 +316,7 @@
     stack A $DATASTACK_PTR
     ldi A 7
     stack A $DATASTACK_PTR
-    call @NEW.matrix
+    call @NEW.matrix_populate
     ustack A $DATASTACK_PTR
     sto A $YouWonSprite
     ldi A 84
@@ -339,7 +339,7 @@
     stack A $DATASTACK_PTR
     ldi A 8
     stack A $DATASTACK_PTR
-    call @NEW.matrix
+    call @NEW.matrix_populate
     ustack A $DATASTACK_PTR
     sto A $YouLostSprite
     call @GAME.init_game_lib
@@ -3457,6 +3457,7 @@
     sto A $score
     ldi A 1
     sto A $_score_dirty
+    call @rt_drop
 :check_the_walls_if_end_14
 :check_the_walls_if_end_13
     ret

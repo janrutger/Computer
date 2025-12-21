@@ -20,8 +20,9 @@ INCLUDE fixed_point_lib
 INCLUDE nn_lib
 
 
+
 # --- Training Parameters ---
-CONST TRAINING_ITERATIONS 600
+CONST TRAINING_ITERATIONS 800
 CONST TESTING_ITERATIONS 1000
 CONST LEARNING_RATE 100 # 0.1 as a fixed-point number (100 / 1000)
 

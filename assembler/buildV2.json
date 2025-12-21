@@ -9,7 +9,7 @@
         "restore_symbols": false
       },
       {
-        "file": "asm/apps/test.asm",
+        "file": "asm/apps/main.asm",
         "base_address": 4096,
         "restore_symbols": true
       }
@@ -76,8 +76,8 @@
         "output": "../bin/apps/perceptron.bin"
       },
       {
-        "file": "asm/apps/ml_nn.asm",
-        "output": "../bin/apps/ml_nn.bin"
+        "file": "asm/apps/ml_xor.asm",
+        "output": "../bin/apps/ml_xor.bin"
       }
     ]
   }

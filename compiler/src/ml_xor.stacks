@@ -14,13 +14,13 @@ INCLUDE mlnn_lib
 
 VALUE network_ptr 0
 VALUE output_array_ptr 0
-
-VALUE epochs 0
-VALUE learning_rate 0
-VALUE i 0
-VALUE rand_idx 0
 VALUE current_input_ptr 0
 VALUE current_target_ptr 0
+VALUE learning_rate 0
+
+VALUE epochs 0
+VALUE i 0
+VALUE rand_idx 0
 VALUE xor_inputs_ptr 0
 VALUE xor_targets_ptr 0
 
@@ -32,7 +32,7 @@ STRING fp_0_01 "0.01"
 
 
 
-DEF SRAND {
+DEF SRAND {     # uses std_stacks_rt to acces rand_m var from RND
     *p_currentime rand_m % AS random_seed
     "New random seed: " PRTstring
     random_seed PRINT
