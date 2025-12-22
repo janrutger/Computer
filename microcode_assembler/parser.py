@@ -35,6 +35,7 @@ ARG_VALIDATORS = {
     "set_interrupt_flag": [[is_bool_str]],
     "alu": [[is_alu_op]],
     "shadow": [[is_shadow_str]],
+    "gpu": [[is_register, is_runtime_arg]],
 }
 
 VALID_INSTRUCTIONS = {name: len(validators) for name, validators in ARG_VALIDATORS.items()}

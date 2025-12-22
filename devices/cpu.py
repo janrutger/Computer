@@ -1,4 +1,5 @@
-from devices.memory import Memory
+from devices.memoryR2 import Memory
+from devices.gpu import GPU
 import json
 import time
 
@@ -22,6 +23,7 @@ class CPU:
         # Special Registers
         self.registers["PC"] = 0  # Program Counter
         self.registers["SP"] = self.memory.size - 1  # Stack Pointer
+        self.gpu = GPU(self.memory)     # enable GPU
         # Shadow registers for interrupts
         self.shadow_registers = self.registers.copy()
         
@@ -304,6 +306,12 @@ class CPU:
             Rx = self._resolve_arg(microcode_step[1], operand1, operand2)
             Ry = self._resolve_arg(microcode_step[2], operand1, operand2)
             self.registers[Ry] = int(self.memory.read(self.registers[Rx]))
+
+        # gpu(Rx)
+        elif microcode_step[0] == "gpu":
+            Rx = self._resolve_arg(microcode_step[1], operand1, operand2)
+            tdl_ptr = self.registers[Rx]
+            self.gpu.execute(tdl_ptr)
 
     # end of core logic, microcode steps
 

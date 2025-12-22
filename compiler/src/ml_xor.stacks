@@ -9,8 +9,10 @@ USE std_stacks_rt
 
 INCLUDE math_lib
 INCLUDE fixed_point_lib
+INCLUDE gpu_lib
 
-INCLUDE mlnn_lib
+#INCLUDE mlnn_lib
+INCLUDE mlnn_gpu_lib
 
 VALUE network_ptr 0
 VALUE output_array_ptr 0
@@ -51,6 +53,7 @@ SRAND
 
 # Initialize fixed-point library with 4 decimal places of precision
 10000 FP.set_scale
+10000 NN.set_scale
 
 "--- Phase 1: Creating a 2-4-1 network...\n" PRTstring
 #"Creating a 2-4-1 network...\n" PRTstring

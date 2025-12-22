@@ -19,27 +19,27 @@ HEAP.free
 201 201 201 201 201 201 201 201 201 # 9
 201 201 201 201 201 201 201 201 201 # 18
 201 201 201 201 201 201 201 201 201 # 27
-1 27 NEW.matrix_populate AS Roof
+27 1 NEW.matrix_populate AS Roof
 
 # Short wall sprite (1x10)
 201 201 201 201 201 201 201 201 201 201
-10 1 NEW.matrix_populate AS ShortWall
+1 10 NEW.matrix_populate AS ShortWall
 
 # Long wall sprite (1x15)
 201 201 201 201 201 201 201 201 201 201 201 201 201 201 201
-15 1 NEW.matrix_populate AS LongWall
+1 15 NEW.matrix_populate AS LongWall
 
 # "GAME OVER" sprite (9x1)
 82 69 86 79 32 69 77 65 71
-1 9 NEW.matrix_populate AS GameOverSprite
+9 1 NEW.matrix_populate AS GameOverSprite
 
 # "YOU WON" sprite (7x1)
 78 79 87 32 85 79 89
-1 7 NEW.matrix_populate AS YouWonSprite
+7 1 NEW.matrix_populate AS YouWonSprite
 
 # "YOU LOST" sprite (8x1)
 84 83 79 76 32 85 79 89
-1 8 NEW.matrix_populate AS YouLostSprite
+8 1 NEW.matrix_populate AS YouLostSprite
 
 CONST PLAYER      0
 CONST COIN        1

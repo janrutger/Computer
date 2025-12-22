@@ -1468,6 +1468,26 @@
                     "comment": null
                 }
             ]
+        },
+        "94": {
+            "name": "GPU",
+            "format": "one_reg",
+            "code": [
+                {
+                    "instruction": [
+                        "gpu",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "set_cpu_state",
+                        "FETCH"
+                    ],
+                    "comment": null
+                }
+            ]
         }
     }
 }

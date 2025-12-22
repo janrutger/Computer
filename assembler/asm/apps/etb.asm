@@ -202,9 +202,9 @@
     stack A $DATASTACK_PTR
     ldi A 201
     stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
     ldi A 27
+    stack A $DATASTACK_PTR
+    ldi A 1
     stack A $DATASTACK_PTR
     call @NEW.matrix_populate
     ustack A $DATASTACK_PTR
@@ -229,9 +229,9 @@
     stack A $DATASTACK_PTR
     ldi A 201
     stack A $DATASTACK_PTR
-    ldi A 10
-    stack A $DATASTACK_PTR
     ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 10
     stack A $DATASTACK_PTR
     call @NEW.matrix_populate
     ustack A $DATASTACK_PTR
@@ -266,9 +266,9 @@
     stack A $DATASTACK_PTR
     ldi A 201
     stack A $DATASTACK_PTR
-    ldi A 15
-    stack A $DATASTACK_PTR
     ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 15
     stack A $DATASTACK_PTR
     call @NEW.matrix_populate
     ustack A $DATASTACK_PTR
@@ -291,9 +291,9 @@
     stack A $DATASTACK_PTR
     ldi A 71
     stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
     ldi A 9
+    stack A $DATASTACK_PTR
+    ldi A 1
     stack A $DATASTACK_PTR
     call @NEW.matrix_populate
     ustack A $DATASTACK_PTR
@@ -312,9 +312,9 @@
     stack A $DATASTACK_PTR
     ldi A 89
     stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
     ldi A 7
+    stack A $DATASTACK_PTR
+    ldi A 1
     stack A $DATASTACK_PTR
     call @NEW.matrix_populate
     ustack A $DATASTACK_PTR
@@ -335,9 +335,9 @@
     stack A $DATASTACK_PTR
     ldi A 89
     stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
     ldi A 8
+    stack A $DATASTACK_PTR
+    ldi A 1
     stack A $DATASTACK_PTR
     call @NEW.matrix_populate
     ustack A $DATASTACK_PTR

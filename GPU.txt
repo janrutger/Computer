@@ -39,9 +39,10 @@ Standard heap-allocated array format.
 | :--- | :--- | :--- |
 | `0` | `ADD` | $Result = A + B$ (Element-wise) |
 | `1` | `SUB` | $Result = A - B$ (Element-wise) |
-| `2` | `MUL` | $Result = (A \times B) / Scale$ (Matrix Multiplication) |
-| `3` | `DOT` | $Result = (A \cdot B) / Scale$ (Dot Product) |
+| `2` | `MUL` | $Result = (A * B) / Scale$ (Element-wise Multiplication) |
+| `3` | `DOT` | $Result = (A \cdot B) / Scale$ (Matrix Multiplication / Dot Product) |
 | `4` | `RELU` | $Result = \max(0, A)$ (Element-wise, B ignored) |
+| `5` | `TRANSPOSE` | $Result = A^T$ (B is ignored) |
 
 ## 5. Error Handling (Status)
 *   `0`: Success
@@ -124,31 +125,57 @@ The microcode instruction fires `GPU.execute(TDL_Pointer)`. The GPU class then:
 *** To Do List for the first mile 
 
 1.  **Memory & Dependencies**
-    *   Ensure `numpy` is installed/available in the emulator environment.
-    *   Update `Memory` class: Add `read_block(addr, length)` and `write_block(addr, data)`.
+    *   Ensure `numpy` is installed/available in the emulator environment. (Done)
+    *   Update `Memory` class: Add `read_block(addr, length)` and `write_block(addr, data)`. (Done)
 
 2.  **Emulator Core (Python)**
-    *   Create `GPU` class.
-        *   `__init__(memory)`
-        *   `execute(tdl_ptr)`: For now, just read TDL fields, print them to console, and return.
-    *   Modify `CPU` class:
-        *   Initialize `GPU` instance.
-        *   Add execution rule for the new microcode instruction. 
-        *   change the microcode assembler so it will reconize the new microcode instruction.
+    *   Create `GPU` class. (Done)
+        *   `__init__(memory)` (Done)
+        *   `execute(tdl_ptr)`: For now, just read TDL fields, print them to console, and return. (Done)
+    *   Modify `CPU` class: (Done)
+        *   Initialize `GPU` instance. (Done)
+        *   Add execution rule for the new microcode instruction. (Done)
+        *   change the microcode assembler so it will reconize the new microcode instruction. (Done)
 
 3.  **Instruction Set Architecture (ISA)**
-    *   Update `base_rom.uasm`: Add `def 94=GPU { .format one_reg ... }`.
-    *   (This enables the Assembler and CPU decoder automatically).
+    *   Update `base_rom.uasm`: Add `def 94=GPU { .format one_reg ... }`. (Done)
+    *   (This enables the Assembler and CPU decoder automatically). (Done)
 
 4.  **Software / Libraries (Stacks)**
     *   **Refactor:** Rename current `NEW.matrix` to `NEW.matrix_populate` (Done).
-    *   **New Method:** Implement `MATRIX.new ( rows cols -- ptr )` in `std_heap` (allocates only).
-    *   **GPU Lib:** Create `gpu_lib.stacks` with `GPU.tdl` and `GPU.exec` wrappers.
+    *   **New Method:** Implement `MATRIX.new ( rows cols -- ptr )` in `std_heap` (allocates only). (Done)
+    *   **GPU Lib:** Create `gpu_lib.stacks` with `GPU.tdl` and `GPU.exec` wrappers. (Done)
 
 5.  **Verification**
-    *   Create `test_gpu_first_mile.asm`: Manually construct a TDL in memory and call `GPU`.
-    *   Verify the emulator prints the correct pointers.
+    *   Create `test_gpu_first_mile.asm`: Manually construct a TDL in memory and call `GPU`. (Done)
+    *   Verify the emulator prints the correct pointers. (Done)
 
+*** To Do List for the second mile (Implementation)
+
+1.  **GPU Logic (Python)**
+    *   Implement `get_matrix` helper to read from memory. (Done)
+    *   Implement Numpy operations (ADD, SUB, MUL, DOT, RELU, TRANSPOSE). (Done)
+    *   Implement scaling logic. (Done)
+    *   Implement write-back to memory. (Done)
+
+2.  **Library Refinement**
+    *   Add `MATRIX.put` and `MATRIX.get` to `std_heap` with bounds checking. (Done)
+    *   Update `gpu_lib` to use `MAT.*` constants. (Done)
+
+3.  **Verification**
+    *   Update test script to perform actual math (ADD, MUL, DOT, TRANSPOSE). (Done)
+    *   Verify results against expected values. (Done)
+
+*** To Do List for the third mile (Integration)
+
+1.  **Neural Network Library (`mlnn_lib`)**
+    *   Refactor `_NN.forward_pass_layer` to use `MAT.DOT`, `MAT.ADD` (Bias), and `MAT.RELU`.
+    *   Refactor `_NN.calculate_output_deltas` to use GPU operations.
+    *   Refactor `_NN.calculate_hidden_deltas` to use `MAT.TRANS` and `MAT.DOT`.
+    *   Refactor `_NN.update_layer_weights` to use GPU operations.
+
+2.  **Verification**
+    *   Run `nn_xor_trainer.stacks` (or equivalent) to verify the GPU-accelerated training works.
 
 
 Some examples

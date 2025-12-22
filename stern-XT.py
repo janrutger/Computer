@@ -9,7 +9,7 @@ import cProfile
 import pstats
 
 from devices.cpu import CPU
-from devices.memory import Memory
+from devices.memoryR2 import Memory
 from devices.interrupt_controller import InterruptController
 from devices.keyboard import Keyboard
 

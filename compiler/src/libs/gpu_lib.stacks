@@ -1,0 +1,75 @@
+; ##############################################################################
+; #
+; #   GPU Library for the Stacks Language
+; #
+; ##############################################################################
+
+USE std_heap
+
+; --- Constants for GPU Operations ---
+CONST MAT.ADD 0
+CONST MAT.SUB 1
+CONST MAT.MUL 2
+CONST MAT.DOT 3
+CONST MAT.RELU 4
+CONST MAT.TRANS 5
+
+
+; --- Constants for Status ---
+CONST GPU_STATUS_OK 0
+CONST GPU_STATUS_ERR_DIM 1
+CONST GPU_STATUS_ERR_OP 2
+CONST GPU_STATUS_ERR_MEM 3
+
+; --- Internal variables ---
+VALUE _gpu_tdl_ptr 0
+VALUE _gpu_temp_ptr 0
+
+; --- GPU.tdl ---
+; Populates the Task Descriptor List.
+; ( ptr_a ptr_b ptr_res scale opcode tdl_ptr -- )
+DEF GPU.tdl {
+    AS _gpu_tdl_ptr
+    
+    ; Stack: ptr_a ptr_b ptr_res scale opcode
+    
+    ; Write Opcode (Offset 4)
+    _gpu_tdl_ptr 4 + AS _gpu_temp_ptr
+    AS *_gpu_temp_ptr ; Pops opcode
+    
+    ; Write Scale (Offset 3)
+    _gpu_tdl_ptr 3 + AS _gpu_temp_ptr
+    AS *_gpu_temp_ptr ; Pops scale
+    
+    ; Write Result Ptr (Offset 2)
+    _gpu_tdl_ptr 2 + AS _gpu_temp_ptr
+    AS *_gpu_temp_ptr ; Pops ptr_res
+    
+    ; Write Ptr B (Offset 1)
+    _gpu_tdl_ptr 1 + AS _gpu_temp_ptr
+    AS *_gpu_temp_ptr ; Pops ptr_b
+    
+    ; Write Ptr A (Offset 0)
+    _gpu_tdl_ptr AS _gpu_temp_ptr
+    AS *_gpu_temp_ptr ; Pops ptr_a
+    
+    ; Clear Status (Offset 5)
+    _gpu_tdl_ptr 5 + AS _gpu_temp_ptr
+    0 AS *_gpu_temp_ptr
+}
+
+; --- GPU.exec ---
+; Executes the GPU operation defined in the TDL.
+; ( tdl_ptr -- status )
+DEF GPU.exec {
+    AS _gpu_tdl_ptr
+    
+    ASM {
+        ldm A $_gpu_tdl_ptr
+        gpu A
+    }
+    
+    ; Read Status (Offset 5)
+    _gpu_tdl_ptr 5 + AS _gpu_temp_ptr
+    *_gpu_temp_ptr
+}

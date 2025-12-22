@@ -1,0 +1,998 @@
+# .HEADER
+. $_nn_tdl_ptr 1
+. $_nn_scale 1
+. $_nn_temp_ptr 1
+. $_nn_fill_counter 1
+. $_nn_row_counter 1
+. $_nn_col_counter 1
+. $_nn_train_k 1
+. $_nn_net_input_size 1
+. $_nn_net_hidden_size 1
+. $_nn_net_output_size 1
+. $_nn_network_ptr 1
+. $_nn_hidden_layer_ptr 1
+. $_nn_output_layer_ptr 1
+. $_nn_predict_input_ptr 1
+. $_nn_predict_layer_ptr 1
+. $_nn_predict_output_ptr 1
+. $_nn_weights_ptr 1
+. $_nn_bias_ptr 1
+. $_nn_mat_input_wrapper 1
+. $_nn_mat_hidden_activations 1
+. $_nn_mat_output_activations 1
+. $_nn_mat_target 1
+. $_nn_mat_output_error 1
+. $_nn_mat_output_deriv 1
+. $_nn_mat_output_delta 1
+. $_nn_mat_weights_ho_trans 1
+. $_nn_mat_hidden_error 1
+. $_nn_mat_hidden_deriv 1
+. $_nn_mat_hidden_delta 1
+. $_nn_mat_hidden_act_trans 1
+. $_nn_mat_grad_ho 1
+. $_nn_mat_input_trans 1
+. $_nn_mat_grad_ih 1
+. $_nn_mat_bias_input 1
+. $bias_val 4
+# .FUNCTIONS
+@NN.set_scale
+    ustack A $DATASTACK_PTR
+    sto A $_nn_scale
+    ret
+@_NN.new_layer
+    ustack A $DATASTACK_PTR
+    sto A $_nn_col_counter
+    ustack A $DATASTACK_PTR
+    sto A $_nn_row_counter
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @NEW.array
+    ustack A $DATASTACK_PTR
+    sto A $_nn_temp_ptr
+    ldm A $_nn_col_counter
+    stack A $DATASTACK_PTR
+    ldm A $_nn_row_counter
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_weights_ptr
+    ldi A 1
+    sto A $_nn_fill_counter
+:_NN.new_layer_while_start_0
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldm A $_nn_col_counter
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_NN.new_layer_while_end_0
+    ldi A 1
+    sto A $_nn_predict_layer_ptr
+:_NN.new_layer_while_start_1
+    ldm A $_nn_predict_layer_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_row_counter
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_NN.new_layer_while_end_1
+    call @rt_rnd
+    ldi A 200
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
+    ldi A 100
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    call @FP.from_int
+    ldi A 1000
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    call @FP.div
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldm A $_nn_predict_layer_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_weights_ptr
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    ldm A $_nn_predict_layer_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_nn_predict_layer_ptr
+    jmp :_NN.new_layer_while_start_1
+:_NN.new_layer_while_end_1
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_nn_fill_counter
+    jmp :_NN.new_layer_while_start_0
+:_NN.new_layer_while_end_0
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_row_counter
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_bias_ptr
+    ldi A 1
+    sto A $_nn_fill_counter
+:_NN.new_layer_while_start_2
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldm A $_nn_row_counter
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_NN.new_layer_while_end_2
+    ldi A $bias_val
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldm A $_nn_bias_ptr
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_nn_fill_counter
+    jmp :_NN.new_layer_while_start_2
+:_NN.new_layer_while_end_2
+    ldm A $_nn_weights_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_temp_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $_nn_bias_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_temp_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $_nn_temp_ptr
+    stack A $DATASTACK_PTR
+    ret
+@NN.new_network
+    ustack A $DATASTACK_PTR
+    sto A $_nn_net_output_size
+    ustack A $DATASTACK_PTR
+    sto A $_nn_net_hidden_size
+    ustack A $DATASTACK_PTR
+    sto A $_nn_net_input_size
+    ldi A 6
+    stack A $DATASTACK_PTR
+    call @NEW.list
+    ustack A $DATASTACK_PTR
+    sto A $_nn_tdl_ptr
+    ldi A 3
+    stack A $DATASTACK_PTR
+    call @NEW.array
+    ustack A $DATASTACK_PTR
+    sto A $_nn_network_ptr
+    ldm A $_nn_net_hidden_size
+    stack A $DATASTACK_PTR
+    ldm A $_nn_net_input_size
+    stack A $DATASTACK_PTR
+    call @_NN.new_layer
+    ustack A $DATASTACK_PTR
+    sto A $_nn_hidden_layer_ptr
+    ldm A $_nn_net_output_size
+    stack A $DATASTACK_PTR
+    ldm A $_nn_net_hidden_size
+    stack A $DATASTACK_PTR
+    call @_NN.new_layer
+    ustack A $DATASTACK_PTR
+    sto A $_nn_output_layer_ptr
+    ldm A $_nn_net_input_size
+    stack A $DATASTACK_PTR
+    ldm A $_nn_network_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $_nn_hidden_layer_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_network_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $_nn_output_layer_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_network_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_net_input_size
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_mat_input_wrapper
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_net_hidden_size
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_mat_hidden_activations
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_net_output_size
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_mat_output_activations
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_net_output_size
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_mat_target
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_net_output_size
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_mat_output_error
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_net_output_size
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_mat_output_deriv
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_net_output_size
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_mat_output_delta
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_net_hidden_size
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_mat_hidden_error
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_net_hidden_size
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_mat_hidden_deriv
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_net_hidden_size
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_mat_hidden_delta
+    ldm A $_nn_net_output_size
+    stack A $DATASTACK_PTR
+    ldm A $_nn_net_hidden_size
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_mat_weights_ho_trans
+    ldm A $_nn_net_hidden_size
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_mat_hidden_act_trans
+    ldm A $_nn_net_input_size
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_mat_input_trans
+    ldm A $_nn_net_hidden_size
+    stack A $DATASTACK_PTR
+    ldm A $_nn_net_output_size
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_mat_grad_ho
+    ldm A $_nn_net_input_size
+    stack A $DATASTACK_PTR
+    ldm A $_nn_net_hidden_size
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_mat_grad_ih
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @NEW.matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_mat_bias_input
+    ldm A $_nn_scale
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_bias_input
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    ldm A $_nn_network_ptr
+    stack A $DATASTACK_PTR
+    ret
+@_NN.forward_pass_layer
+    ustack A $DATASTACK_PTR
+    sto A $_nn_predict_output_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_nn_predict_input_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_nn_predict_layer_ptr
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $_nn_weights_ptr
+    ldm A $_nn_predict_layer_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $_nn_bias_ptr
+    ldm A $_nn_predict_input_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_weights_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_predict_output_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_scale
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
+    ldm A $_nn_predict_output_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_bias_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_predict_output_ptr
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
+    ldm A $_nn_predict_output_ptr
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $_nn_predict_output_ptr
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
+    ret
+@NN.predict
+    ustack A $DATASTACK_PTR
+    sto A $_nn_predict_input_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_nn_network_ptr
+    ldi A 0
+    sto A $_nn_fill_counter
+:NN.predict_while_start_3
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldm A $_nn_predict_input_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.len
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :NN.predict_while_end_3
+    ldm A $_nn_predict_input_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $_nn_mat_input_wrapper
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_nn_fill_counter
+    jmp :NN.predict_while_start_3
+:NN.predict_while_end_3
+    ldm A $_nn_network_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $_nn_hidden_layer_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_input_wrapper
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_hidden_activations
+    stack A $DATASTACK_PTR
+    call @_NN.forward_pass_layer
+    ldm A $_nn_network_ptr
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $_nn_output_layer_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_hidden_activations
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_output_activations
+    stack A $DATASTACK_PTR
+    call @_NN.forward_pass_layer
+    ldm A $_nn_mat_output_activations
+    stack A $DATASTACK_PTR
+    ret
+@_NN.populate_deriv_matrix
+    ustack A $DATASTACK_PTR
+    sto A $_nn_temp_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_nn_predict_layer_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.len
+    ustack A $DATASTACK_PTR
+    sto A $_nn_col_counter
+    ldi A 1
+    sto A $_nn_fill_counter
+:_NN.populate_deriv_matrix_while_start_4
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldm A $_nn_col_counter
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_NN.populate_deriv_matrix_while_end_4
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldm A $_nn_predict_layer_ptr
+    stack A $DATASTACK_PTR
+    call @MATRIX.get
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_NN.populate_deriv_matrix_if_else_0
+    ldm A $_nn_scale
+    stack A $DATASTACK_PTR
+    jmp :_NN.populate_deriv_matrix_if_end_0
+:_NN.populate_deriv_matrix_if_else_0
+    ldi A 0
+    stack A $DATASTACK_PTR
+:_NN.populate_deriv_matrix_if_end_0
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldm A $_nn_temp_ptr
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_nn_fill_counter
+    jmp :_NN.populate_deriv_matrix_while_start_4
+:_NN.populate_deriv_matrix_while_end_4
+    ret
+@NN.train
+    ustack A $DATASTACK_PTR
+    sto A $_nn_train_k
+    ustack A $DATASTACK_PTR
+    sto A $_nn_predict_output_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_nn_predict_input_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_nn_network_ptr
+    ldm A $_nn_scale
+    stack A $DATASTACK_PTR
+    ldm A $_nn_train_k
+    stack A $DATASTACK_PTR
+    call @FP.div
+    ustack A $DATASTACK_PTR
+    sto A $_nn_train_k
+    ldi A 0
+    sto A $_nn_fill_counter
+:NN.train_while_start_5
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldm A $_nn_predict_input_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.len
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :NN.train_while_end_5
+    ldm A $_nn_predict_input_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $_nn_mat_input_wrapper
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_nn_fill_counter
+    jmp :NN.train_while_start_5
+:NN.train_while_end_5
+    ldi A 0
+    sto A $_nn_fill_counter
+:NN.train_while_start_6
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldm A $_nn_predict_output_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.len
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :NN.train_while_end_6
+    ldm A $_nn_predict_output_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $_nn_mat_target
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_nn_fill_counter
+    jmp :NN.train_while_start_6
+:NN.train_while_end_6
+    ldm A $_nn_network_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $_nn_hidden_layer_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_input_wrapper
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_hidden_activations
+    stack A $DATASTACK_PTR
+    call @_NN.forward_pass_layer
+    ldm A $_nn_network_ptr
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $_nn_output_layer_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_hidden_activations
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_output_activations
+    stack A $DATASTACK_PTR
+    call @_NN.forward_pass_layer
+    ldm A $_nn_mat_target
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_output_activations
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_output_error
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
+    ldm A $_nn_mat_output_activations
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_output_deriv
+    stack A $DATASTACK_PTR
+    call @_NN.populate_deriv_matrix
+    ldm A $_nn_mat_output_error
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_output_deriv
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_output_delta
+    stack A $DATASTACK_PTR
+    ldm A $_nn_scale
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
+    ldm A $_nn_output_layer_ptr
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $_nn_weights_ptr
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_weights_ho_trans
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 5
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
+    ldm A $_nn_mat_output_delta
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_weights_ho_trans
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_hidden_error
+    stack A $DATASTACK_PTR
+    ldm A $_nn_scale
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
+    ldm A $_nn_mat_hidden_activations
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_hidden_deriv
+    stack A $DATASTACK_PTR
+    call @_NN.populate_deriv_matrix
+    ldm A $_nn_mat_hidden_error
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_hidden_deriv
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_hidden_delta
+    stack A $DATASTACK_PTR
+    ldm A $_nn_scale
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
+    ldm A $_nn_mat_hidden_activations
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_hidden_act_trans
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 5
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
+    ldm A $_nn_mat_hidden_act_trans
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_output_delta
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_grad_ho
+    stack A $DATASTACK_PTR
+    ldm A $_nn_train_k
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
+    ldm A $_nn_weights_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_grad_ho
+    stack A $DATASTACK_PTR
+    ldm A $_nn_weights_ptr
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
+    ldm A $_nn_mat_bias_input
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_output_delta
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_output_error
+    stack A $DATASTACK_PTR
+    ldm A $_nn_train_k
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
+    ldm A $_nn_output_layer_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $_nn_bias_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_output_error
+    stack A $DATASTACK_PTR
+    ldm A $_nn_bias_ptr
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
+    ldm A $_nn_mat_input_wrapper
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_input_trans
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 5
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
+    ldm A $_nn_mat_input_trans
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_hidden_delta
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_grad_ih
+    stack A $DATASTACK_PTR
+    ldm A $_nn_train_k
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
+    ldm A $_nn_hidden_layer_ptr
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $_nn_weights_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_grad_ih
+    stack A $DATASTACK_PTR
+    ldm A $_nn_weights_ptr
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
+    ldm A $_nn_mat_bias_input
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_hidden_delta
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_hidden_error
+    stack A $DATASTACK_PTR
+    ldm A $_nn_train_k
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
+    ldm A $_nn_hidden_layer_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $_nn_bias_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_nn_mat_hidden_error
+    stack A $DATASTACK_PTR
+    ldm A $_nn_bias_ptr
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
+    ret
+
+# .DATA
+% $_nn_tdl_ptr 0
+% $_nn_scale 10000
+% $_nn_temp_ptr 0
+% $_nn_fill_counter 0
+% $_nn_row_counter 0
+% $_nn_col_counter 0
+% $_nn_train_k 0
+% $_nn_net_input_size 0
+% $_nn_net_hidden_size 0
+% $_nn_net_output_size 0
+% $_nn_network_ptr 0
+% $_nn_hidden_layer_ptr 0
+% $_nn_output_layer_ptr 0
+% $_nn_predict_input_ptr 0
+% $_nn_predict_layer_ptr 0
+% $_nn_predict_output_ptr 0
+% $_nn_weights_ptr 0
+% $_nn_bias_ptr 0
+% $_nn_mat_input_wrapper 0
+% $_nn_mat_hidden_activations 0
+% $_nn_mat_output_activations 0
+% $_nn_mat_target 0
+% $_nn_mat_output_error 0
+% $_nn_mat_output_deriv 0
+% $_nn_mat_output_delta 0
+% $_nn_mat_weights_ho_trans 0
+% $_nn_mat_hidden_error 0
+% $_nn_mat_hidden_deriv 0
+% $_nn_mat_hidden_delta 0
+% $_nn_mat_hidden_act_trans 0
+% $_nn_mat_grad_ho 0
+% $_nn_mat_input_trans 0
+% $_nn_mat_grad_ih 0
+% $_nn_mat_bias_input 0
+% $bias_val \0 \. \1 \null

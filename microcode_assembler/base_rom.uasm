@@ -357,3 +357,9 @@ def 93=USTACK {
 
     set_cpu_state(FETCH)
 }
+
+def 94=GPU {
+    .format one_reg
+    gpu($1)
+    set_cpu_state(FETCH)
+}

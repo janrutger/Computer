@@ -22,7 +22,8 @@ VALUE _MAT_X_DIM 0
 VALUE _MAT_Y_DIM 0
 VALUE _MAT_VALUE 0
 VALUE _MAT_PTR 0
-VALUE _MAT_LOOP_COUNTER 0
+VALUE _MAT_LOOP_COUNTER 0 
+VALUE _MAT_OFFSET 0
 
 
 STRING error_mesg0 "NEW.array: No space on heap\n"
@@ -33,6 +34,8 @@ STRING error_mesg3 "ARRAY.get: Index out of bounds\n"
 STRING error_mesg4 "NEW.list: No space on heap\n"
 STRING error_mesg5 "NEW.matrix: No space on heap\n"
 STRING error_mesg6 "NEW.matrix: Not enough data on stack\n"
+STRING error_mesg7 "MATRIX: Index out of bounds\n"
+STRING error_mesg8 "NEW.matrix: Invalid dimensions\n"
 
 ; --- HEAP.init ---
 ; Initializes the heap allocator. This must be called once before any
@@ -249,15 +252,124 @@ DEF ARRAY.clear {
 }
 
 
+; --- NEW.matrix ---
+; Allocates a matrix on the heap.
+; ( rows cols -- pointer )
+VALUE _total_data_elements 0
+VALUE _total_matrix_size 0
+DEF NEW.matrix {
+    AS _MAT_X_DIM ; cols
+    AS _MAT_Y_DIM ; rows
+
+    ; Check for valid dimensions (>= 1)
+    _MAT_X_DIM 1 < IF &error_mesg8 PRTstring HALT END
+    _MAT_Y_DIM 1 < IF &error_mesg8 PRTstring HALT END
+
+    _MAT_X_DIM _MAT_Y_DIM * AS _total_data_elements
+    _total_data_elements 2 + AS _total_matrix_size
+
+    ; Check if there is enough space on the heap
+    HEAP_FREE _total_matrix_size + HEAP_START HEAP_SIZE + > IF
+        &error_mesg5 PRTstring
+        HALT
+    END
+
+    HEAP_FREE AS _MAT_PTR
+
+    ; Update next_free_space
+    HEAP_FREE _total_matrix_size + AS HEAP_FREE
+
+    ; Write header
+    _MAT_PTR AS _MAT_TEMP_PTR
+    _MAT_Y_DIM AS *_MAT_TEMP_PTR   ; Rows at offset 0
+
+    _MAT_PTR 1 + AS _MAT_TEMP_PTR
+    _MAT_X_DIM AS *_MAT_TEMP_PTR   ; Cols at offset 1
+
+    _MAT_PTR
+}
+
+; --- MATRIX.put ---
+; Writes a value to the matrix.
+; ( value row col matrix_ptr -- )
+DEF MATRIX.put {
+    AS _MAT_PTR
+    AS _MAT_X_DIM ; col
+    AS _MAT_Y_DIM ; row
+    AS _MAT_VALUE
+
+    ; Check Row bounds (1 <= row <= ROWS)
+    _MAT_Y_DIM 1 < IF &error_mesg7 PRTstring HALT END
+    _MAT_PTR AS _MAT_TEMP_PTR
+    *_MAT_TEMP_PTR AS _MAT_OFFSET ; Read ROWS
+    _MAT_Y_DIM _MAT_OFFSET > IF &error_mesg7 PRTstring HALT END
+
+    ; Check Col bounds (1 <= col <= COLS)
+    _MAT_X_DIM 1 < IF &error_mesg7 PRTstring HALT END
+    _MAT_PTR 1 + AS _MAT_TEMP_PTR
+    *_MAT_TEMP_PTR AS _MAT_OFFSET ; Read COLS
+    _MAT_X_DIM _MAT_OFFSET > IF &error_mesg7 PRTstring HALT END
+
+    ; Adjust for 1-based indexing
+    _MAT_X_DIM 1 - AS _MAT_X_DIM
+    _MAT_Y_DIM 1 - AS _MAT_Y_DIM
+
+    ; Note: _MAT_OFFSET currently holds COLS from the check above.
+
+    ; Calculate offset: 2 + (row * cols) + col
+    _MAT_Y_DIM _MAT_OFFSET * _MAT_X_DIM + 2 + AS _MAT_OFFSET
+
+    ; Write value
+    _MAT_PTR _MAT_OFFSET + AS _MAT_TEMP_PTR
+    _MAT_VALUE AS *_MAT_TEMP_PTR
+}
+
+; --- MATRIX.get ---
+; Reads a value from the matrix.
+; ( row col matrix_ptr -- value )
+DEF MATRIX.get {
+    AS _MAT_PTR
+    AS _MAT_X_DIM ; col
+    AS _MAT_Y_DIM ; row
+
+    ; Check Row bounds (1 <= row <= ROWS)
+    _MAT_Y_DIM 1 < IF &error_mesg7 PRTstring HALT END
+    _MAT_PTR AS _MAT_TEMP_PTR
+    *_MAT_TEMP_PTR AS _MAT_OFFSET ; Read ROWS
+    _MAT_Y_DIM _MAT_OFFSET > IF &error_mesg7 PRTstring HALT END
+
+    ; Check Col bounds (1 <= col <= COLS)
+    _MAT_X_DIM 1 < IF &error_mesg7 PRTstring HALT END
+    _MAT_PTR 1 + AS _MAT_TEMP_PTR
+    *_MAT_TEMP_PTR AS _MAT_OFFSET ; Read COLS
+    _MAT_X_DIM _MAT_OFFSET > IF &error_mesg7 PRTstring HALT END
+
+    ; Adjust for 1-based indexing
+    _MAT_X_DIM 1 - AS _MAT_X_DIM
+    _MAT_Y_DIM 1 - AS _MAT_Y_DIM
+
+    ; Note: _MAT_OFFSET currently holds COLS from the check above.
+
+    ; Calculate offset: 2 + (row * cols) + col
+    _MAT_Y_DIM _MAT_OFFSET * _MAT_X_DIM + 2 + AS _MAT_OFFSET
+
+    ; Read value
+    _MAT_PTR _MAT_OFFSET + AS _MAT_TEMP_PTR
+    *_MAT_TEMP_PTR
+}
+
 ; --- NEW.matrix_populate ---
 ; Creates a new matrix and initializes it with data from the stack.
 ; Halts on failure.
 ; ( data_N ... data_0 y_dim x_dim -- new_matrix_pointer )
-VALUE _total_data_elements 0
-VALUE _total_matrix_size 0
+
 DEF NEW.matrix_populate {
     AS _MAT_X_DIM
     AS _MAT_Y_DIM
+
+    ; Check for valid dimensions (>= 1)
+    _MAT_X_DIM 1 < IF &error_mesg8 PRTstring HALT END
+    _MAT_Y_DIM 1 < IF &error_mesg8 PRTstring HALT END
 
     _MAT_X_DIM _MAT_Y_DIM * AS _total_data_elements ; Calculate total data elements
     _total_data_elements 2 + AS _total_matrix_size  ; Add 2 for header (x_dim, y_dim)
@@ -275,9 +387,9 @@ DEF NEW.matrix_populate {
 
     ; Write header
     _MAT_PTR AS _MAT_TEMP_PTR
-    _MAT_X_DIM AS *_MAT_TEMP_PTR   ; X Dimension
+    _MAT_Y_DIM AS *_MAT_TEMP_PTR   ; Rows at offset 0
     _MAT_PTR 1 + AS _MAT_TEMP_PTR
-    _MAT_Y_DIM AS *_MAT_TEMP_PTR   ; Y Dimension
+    _MAT_X_DIM AS *_MAT_TEMP_PTR   ; Cols at offset 1
 
     ; Populate data elements from stack
     _MAT_PTR 2 + AS _MAT_TEMP_PTR ; Start writing data after header
