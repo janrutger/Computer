@@ -1,60 +1,59 @@
 {
   "functions": [
-    "PRTcls",
-    "KEYpressed",
-    "TOS.check",
     "NN.train",
-    "ARRAY.get",
-    "NEW.array",
-    "FP.set_scale",
-    "FP.add",
-    "NEW.matrix_populate",
-    "_NN.forward_pass_layer",
     "HEAP.free",
-    "MATRIX.get",
-    "GPU.exec",
-    "FP.power",
-    "HEAP.init",
-    "PRTchar",
-    "READline",
-    "TOS_nnl",
-    "HALT",
-    "FP.from_string",
-    "power",
-    "FP.fprint",
-    "ARRAY.clear",
-    "FP.sub",
-    "MATRIX.put",
-    "STRlen",
-    "ARRAY.len",
-    "CURSORon",
-    "KEYchar",
-    "CURSORoff",
-    "FP.to_int",
-    "FP.from_int",
-    "NN.new_network",
-    "PRTnum",
-    "STRcmp",
-    "ARRAY.put",
-    "STRfind",
-    "_STRNatoi",
-    "NN.set_scale",
-    "ARRAY.append",
-    "NN.predict",
-    "NEW.matrix",
-    "gcd",
     "GPU.tdl",
-    "io_lib_init",
-    "FP.mul",
-    "STRcopy",
-    "PRTstring",
-    "ARRAY.size",
-    "STRatoi",
+    "ARRAY.append",
+    "FP.add",
     "_NN.new_layer",
-    "FP.print",
+    "PRTchar",
+    "ARRAY.get",
+    "ARRAY.put",
+    "STRcopy",
+    "_STRNatoi",
+    "TOS_nnl",
+    "FP.power",
+    "PRTnum",
+    "FP.from_string",
+    "PRTcls",
+    "NEW.matrix",
+    "ARRAY.len",
+    "GPU.exec",
+    "HEAP.init",
+    "NN.new_network",
+    "PRTstring",
+    "KEYpressed",
+    "FP.set_scale",
+    "STRcmp",
+    "CURSORoff",
+    "STRfind",
+    "NN.set_scale",
+    "FP.to_int",
+    "NEW.list",
+    "power",
+    "HALT",
+    "KEYchar",
+    "io_lib_init",
+    "READline",
+    "CURSORon",
+    "FP.mul",
+    "TOS.check",
+    "STRatoi",
+    "ARRAY.size",
+    "ARRAY.clear",
+    "gcd",
     "FP.div",
+    "FP.sub",
+    "FP.from_int",
+    "FP.fprint",
+    "FP.print",
+    "NEW.matrix_populate",
+    "NN.predict",
     "factorial",
-    "NEW.list"
+    "NEW.array",
+    "MATRIX.get",
+    "MATRIX.put",
+    "STRlen"
   ],
   "variables": [
     {
@@ -503,11 +502,6 @@
       "size": 1
     },
     {
-      "name": "_nn_tdl_ptr",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
       "name": "_nn_scale",
       "type": "VALUE",
       "size": 1
@@ -669,6 +663,141 @@
     },
     {
       "name": "_nn_mat_bias_input",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_fh_dot",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_fh_add",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_fh_relu",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_fo_dot",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_fo_add",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_fo_relu",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_bp_err",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_bp_d_out",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_bp_delta_o",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_bp_trans_w",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_bp_h_err",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_bp_d_h",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_bp_delta_h",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_o_trans",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_o_grad",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_o_add_w",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_o_bias_g",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_o_add_b",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_h_trans",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_h_grad",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_h_add_w",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_h_bias_g",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_h_add_b",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_h_weights",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_h_bias",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_o_weights",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_o_bias",
       "type": "VALUE",
       "size": 1
     },

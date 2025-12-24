@@ -1,8 +1,8 @@
 {
   "functions": [
+    "power",
     "factorial",
-    "gcd",
-    "power"
+    "gcd"
   ],
   "variables": [
     {
