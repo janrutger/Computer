@@ -6,7 +6,7 @@
 # API:
 #   - NN.new_network: Creates a new 3-layer network (using Matrices).
 #   - NN.predict: Performs a forward pass using GPU acceleration.
-#   - NN.train: (TODO) Performs backpropagation.
+#   - NN.train: Performs backpropagation.
 # ----------------------------------------------------------------------------
 
 USE std_heap
@@ -299,42 +299,6 @@ DEF NN.predict {
     _nn_mat_output_activations
 }
 
-
-# ----------------------------------------------------------------------------
-# PRIVATE HELPER: _NN.populate_deriv_matrix
-# Calculates the derivative of ReLU for a given activation matrix.
-# Since GPU lacks a "Step" function, we do this on CPU.
-# Logic: If val > 0, result = 1.0 (scale), else 0.
-#
-# Stack: ( activation_matrix_ptr, deriv_matrix_ptr -- )
-# ----------------------------------------------------------------------------
-DEF _NN.populate_deriv_matrix {
-    AS _nn_temp_ptr # deriv ptr
-    AS _nn_predict_layer_ptr # activation ptr (reusing var)
-
-    # Get dimensions (assuming 1 x N)
-    _nn_predict_layer_ptr ARRAY.len AS _nn_col_counter # Cols
-
-    1 AS _nn_fill_counter
-    WHILE _nn_fill_counter _nn_col_counter 1 + < DO
-        # Read Activation
-        1 _nn_fill_counter _nn_predict_layer_ptr MATRIX.get
-        
-        # Check > 0
-        0 > IF
-            _nn_scale # 1.0
-        ELSE
-            0
-        END
-
-        # Write to Deriv Matrix
-        1 _nn_fill_counter _nn_temp_ptr MATRIX.put
-
-        _nn_fill_counter 1 + AS _nn_fill_counter
-    DONE
-}
-
-
 # ----------------------------------------------------------------------------
 # PUBLIC API: NN.train
 # Performs Backpropagation.
@@ -381,8 +345,8 @@ DEF NN.train {
     # Error = Target - Output
     _nn_mat_target _nn_mat_output_activations _nn_mat_output_error 0 MAT.SUB _nn_tdl_ptr GPU.tdl _nn_tdl_ptr GPU.exec DROP
     
-    # Deriv = f'(Output) (CPU)
-    _nn_mat_output_activations _nn_mat_output_deriv _NN.populate_deriv_matrix
+    # Deriv = f'(Output) (GPU)
+    _nn_mat_output_activations 0 _nn_mat_output_deriv _nn_scale MAT.RELU_DERIV _nn_tdl_ptr GPU.tdl _nn_tdl_ptr GPU.exec DROP
 
     # Delta = Error * Deriv
     _nn_mat_output_error _nn_mat_output_deriv _nn_mat_output_delta _nn_scale MAT.MUL _nn_tdl_ptr GPU.tdl _nn_tdl_ptr GPU.exec DROP
@@ -395,8 +359,8 @@ DEF NN.train {
     # Hidden Error = Output Delta . Weights_HO_T
     _nn_mat_output_delta _nn_mat_weights_ho_trans _nn_mat_hidden_error _nn_scale MAT.DOT _nn_tdl_ptr GPU.tdl _nn_tdl_ptr GPU.exec DROP
 
-    # Deriv = f'(Hidden) (CPU)
-    _nn_mat_hidden_activations _nn_mat_hidden_deriv _NN.populate_deriv_matrix
+    # Deriv = f'(Hidden) (GPU)
+    _nn_mat_hidden_activations 0 _nn_mat_hidden_deriv _nn_scale MAT.RELU_DERIV _nn_tdl_ptr GPU.tdl _nn_tdl_ptr GPU.exec DROP
 
     # Delta = Hidden Error * Deriv
     _nn_mat_hidden_error _nn_mat_hidden_deriv _nn_mat_hidden_delta _nn_scale MAT.MUL _nn_tdl_ptr GPU.tdl _nn_tdl_ptr GPU.exec DROP

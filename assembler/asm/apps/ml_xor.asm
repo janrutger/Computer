@@ -92,11 +92,11 @@
 . $_main_str_4 25
 . $_main_str_5 23
 . $_main_str_6 12
-. $_main_str_7 21
-. $_main_str_8 42
-. $_main_str_9 9
-. $_main_str_10 17
-. $_main_str_11 2
+. $_main_str_7 2
+. $_main_str_8 21
+. $_main_str_9 42
+. $_main_str_10 9
+. $_main_str_11 17
 . $_main_str_12 15
 
 # .CODE
@@ -259,7 +259,7 @@
     call @NEW.array
     ustack A $DATASTACK_PTR
     sto A $current_target_ptr
-    ldi A 600
+    ldi A 1500
     sto A $epochs
     ldi A $fp_0_1
     stack A $DATASTACK_PTR
@@ -268,6 +268,9 @@
     sto A $learning_rate
     ldi A 0
     sto A $i
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @TIME.start
     ldi A $_main_str_5
     stack A $DATASTACK_PTR
     call @PRTstring
@@ -305,7 +308,17 @@
     jmpt :_main_if_end_0
     ldm A $i
     stack A $DATASTACK_PTR
-    call @rt_print_tos
+    call @PRTnum
+    ldi A 32
+    stack A $DATASTACK_PTR
+    call @PRTchar
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @TIME.read
+    call @TIME.as_string
+    ldi A $_main_str_7
+    stack A $DATASTACK_PTR
+    call @PRTstring
 :_main_if_end_0
     ldm A $current_target_ptr
     stack A $DATASTACK_PTR
@@ -343,10 +356,10 @@
     sto A $i
     jmp :_main_while_start_0
 :_main_while_end_0
-    ldi A $_main_str_7
+    ldi A $_main_str_8
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A $_main_str_8
+    ldi A $_main_str_9
     stack A $DATASTACK_PTR
     call @PRTstring
     ldi A 0
@@ -360,13 +373,13 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :_main_while_end_1
-    ldi A $_main_str_9
+    ldi A $_main_str_10
     stack A $DATASTACK_PTR
     call @PRTstring
     ldm A $i
     stack A $DATASTACK_PTR
     call @PRTnum
-    ldi A $_main_str_10
+    ldi A $_main_str_11
     stack A $DATASTACK_PTR
     call @PRTstring
     ldm A $xor_inputs_ptr
@@ -387,7 +400,7 @@
     ldi A 4
     stack A $DATASTACK_PTR
     call @FP.fprint
-    ldi A $_main_str_11
+    ldi A $_main_str_7
     stack A $DATASTACK_PTR
     call @PRTstring
     ldm A $i
@@ -1622,67 +1635,6 @@
     ldm A $_nn_mat_output_activations
     stack A $DATASTACK_PTR
     ret
-@_NN.populate_deriv_matrix
-    ustack A $DATASTACK_PTR
-    sto A $_nn_temp_ptr
-    ustack A $DATASTACK_PTR
-    sto A $_nn_predict_layer_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.len
-    ustack A $DATASTACK_PTR
-    sto A $_nn_col_counter
-    ldi A 1
-    sto A $_nn_fill_counter
-:_NN.populate_deriv_matrix_while_start_4
-    ldm A $_nn_fill_counter
-    stack A $DATASTACK_PTR
-    ldm A $_nn_col_counter
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    call @rt_lt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_NN.populate_deriv_matrix_while_end_4
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldm A $_nn_fill_counter
-    stack A $DATASTACK_PTR
-    ldm A $_nn_predict_layer_ptr
-    stack A $DATASTACK_PTR
-    call @MATRIX.get
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_NN.populate_deriv_matrix_if_else_0
-    ldm A $_nn_scale
-    stack A $DATASTACK_PTR
-    jmp :_NN.populate_deriv_matrix_if_end_0
-:_NN.populate_deriv_matrix_if_else_0
-    ldi A 0
-    stack A $DATASTACK_PTR
-:_NN.populate_deriv_matrix_if_end_0
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldm A $_nn_fill_counter
-    stack A $DATASTACK_PTR
-    ldm A $_nn_temp_ptr
-    stack A $DATASTACK_PTR
-    call @MATRIX.put
-    ldm A $_nn_fill_counter
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $_nn_fill_counter
-    jmp :_NN.populate_deriv_matrix_while_start_4
-:_NN.populate_deriv_matrix_while_end_4
-    ret
 @NN.train
     ustack A $DATASTACK_PTR
     sto A $_nn_train_k
@@ -1701,7 +1653,7 @@
     sto A $_nn_train_k
     ldi A 0
     sto A $_nn_fill_counter
-:NN.train_while_start_5
+:NN.train_while_start_4
     ldm A $_nn_fill_counter
     stack A $DATASTACK_PTR
     ldm A $_nn_predict_input_ptr
@@ -1710,7 +1662,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :NN.train_while_end_5
+    jmpt :NN.train_while_end_4
     ldm A $_nn_predict_input_ptr
     stack A $DATASTACK_PTR
     ldm A $_nn_fill_counter
@@ -1734,11 +1686,11 @@
     add B A
     ld A B
     sto A $_nn_fill_counter
-    jmp :NN.train_while_start_5
-:NN.train_while_end_5
+    jmp :NN.train_while_start_4
+:NN.train_while_end_4
     ldi A 0
     sto A $_nn_fill_counter
-:NN.train_while_start_6
+:NN.train_while_start_5
     ldm A $_nn_fill_counter
     stack A $DATASTACK_PTR
     ldm A $_nn_predict_output_ptr
@@ -1747,7 +1699,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :NN.train_while_end_6
+    jmpt :NN.train_while_end_5
     ldm A $_nn_predict_output_ptr
     stack A $DATASTACK_PTR
     ldm A $_nn_fill_counter
@@ -1771,8 +1723,8 @@
     add B A
     ld A B
     sto A $_nn_fill_counter
-    jmp :NN.train_while_start_6
-:NN.train_while_end_6
+    jmp :NN.train_while_start_5
+:NN.train_while_end_5
     ldm A $_nn_network_ptr
     stack A $DATASTACK_PTR
     ldi A 1
@@ -1818,9 +1770,21 @@
     call @rt_drop
     ldm A $_nn_mat_output_activations
     stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
     ldm A $_nn_mat_output_deriv
     stack A $DATASTACK_PTR
-    call @_NN.populate_deriv_matrix
+    ldm A $_nn_scale
+    stack A $DATASTACK_PTR
+    ldi A 6
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
     ldm A $_nn_mat_output_error
     stack A $DATASTACK_PTR
     ldm A $_nn_mat_output_deriv
@@ -1880,9 +1844,21 @@
     call @rt_drop
     ldm A $_nn_mat_hidden_activations
     stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
     ldm A $_nn_mat_hidden_deriv
     stack A $DATASTACK_PTR
-    call @_NN.populate_deriv_matrix
+    ldm A $_nn_scale
+    stack A $DATASTACK_PTR
+    ldi A 6
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
     ldm A $_nn_mat_hidden_error
     stack A $DATASTACK_PTR
     ldm A $_nn_mat_hidden_deriv
@@ -2204,9 +2180,9 @@
 % $_main_str_4 \C \r \e \a \t \i \n \g \space \X \O \R \space \d \a \t \a \s \e \t \. \. \. \Return \null
 % $_main_str_5 \S \t \a \r \t \i \n \g \space \t \r \a \i \n \i \n \g \space \f \o \r \space \null
 % $_main_str_6 \space \e \p \o \c \h \s \. \. \. \Return \null
-% $_main_str_7 \T \r \a \i \n \i \n \g \space \c \o \m \p \l \e \t \e \. \space \Return \null
-% $_main_str_8 \Return \- \- \- \space \P \h \a \s \e \space \3 \: \space \T \e \s \t \i \n \g \space \t \r \a \i \n \e \d \space \n \e \t \w \o \r \k \. \. \. \Return \null
-% $_main_str_9 \space \space \I \n \p \u \t \space \null
-% $_main_str_10 \space \- \> \space \P \r \e \d \i \c \t \i \o \n \: \space \null
-% $_main_str_11 \Return \null
+% $_main_str_7 \Return \null
+% $_main_str_8 \T \r \a \i \n \i \n \g \space \c \o \m \p \l \e \t \e \. \space \Return \null
+% $_main_str_9 \Return \- \- \- \space \P \h \a \s \e \space \3 \: \space \T \e \s \t \i \n \g \space \t \r \a \i \n \e \d \space \n \e \t \w \o \r \k \. \. \. \Return \null
+% $_main_str_10 \space \space \I \n \p \u \t \space \null
+% $_main_str_11 \space \- \> \space \P \r \e \d \i \c \t \i \o \n \: \space \null
 % $_main_str_12 \Return \A \L \L \space \D \O \N \E \. \. \. \space \Return \null

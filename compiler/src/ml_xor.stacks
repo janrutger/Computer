@@ -11,7 +11,7 @@ INCLUDE math_lib
 INCLUDE fixed_point_lib
 INCLUDE gpu_lib
 
-#INCLUDE mlnn_lib
+# INCLUDE mlnn_lib
 INCLUDE mlnn_gpu_lib
 
 VALUE network_ptr 0
@@ -64,7 +64,6 @@ SRAND
 network_ptr PRINT
 
 
-
 "\n--- Phase 2: Training the Network ---\n" PRTstring
 # First, let's create the XOR dataset.
 "Creating XOR dataset...\n" PRTstring
@@ -111,6 +110,7 @@ current_input_ptr xor_inputs_ptr ARRAY.append
 &fp_0_1 FP.from_string AS learning_rate # 0.1 in fixed-point
 0 AS i
 
+0 TIME.start
 "Starting training for " PRTstring epochs PRTnum " epochs...\n" PRTstring
 
 WHILE i epochs < DO
@@ -118,7 +118,7 @@ WHILE i epochs < DO
     RND 4 % AS rand_idx
 
     i 100 % 0 == IF
-        i PRINT
+        i PRTnum 32 PRTchar 0 TIME.read TIME.as_string "\n" PRTstring
     END
 
     # Clear the reusable target array and get the new input/target for this training step

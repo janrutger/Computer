@@ -492,67 +492,6 @@
     ldm A $_nn_mat_output_activations
     stack A $DATASTACK_PTR
     ret
-@_NN.populate_deriv_matrix
-    ustack A $DATASTACK_PTR
-    sto A $_nn_temp_ptr
-    ustack A $DATASTACK_PTR
-    sto A $_nn_predict_layer_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.len
-    ustack A $DATASTACK_PTR
-    sto A $_nn_col_counter
-    ldi A 1
-    sto A $_nn_fill_counter
-:_NN.populate_deriv_matrix_while_start_4
-    ldm A $_nn_fill_counter
-    stack A $DATASTACK_PTR
-    ldm A $_nn_col_counter
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    call @rt_lt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_NN.populate_deriv_matrix_while_end_4
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldm A $_nn_fill_counter
-    stack A $DATASTACK_PTR
-    ldm A $_nn_predict_layer_ptr
-    stack A $DATASTACK_PTR
-    call @MATRIX.get
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_NN.populate_deriv_matrix_if_else_0
-    ldm A $_nn_scale
-    stack A $DATASTACK_PTR
-    jmp :_NN.populate_deriv_matrix_if_end_0
-:_NN.populate_deriv_matrix_if_else_0
-    ldi A 0
-    stack A $DATASTACK_PTR
-:_NN.populate_deriv_matrix_if_end_0
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldm A $_nn_fill_counter
-    stack A $DATASTACK_PTR
-    ldm A $_nn_temp_ptr
-    stack A $DATASTACK_PTR
-    call @MATRIX.put
-    ldm A $_nn_fill_counter
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $_nn_fill_counter
-    jmp :_NN.populate_deriv_matrix_while_start_4
-:_NN.populate_deriv_matrix_while_end_4
-    ret
 @NN.train
     ustack A $DATASTACK_PTR
     sto A $_nn_train_k
@@ -571,7 +510,7 @@
     sto A $_nn_train_k
     ldi A 0
     sto A $_nn_fill_counter
-:NN.train_while_start_5
+:NN.train_while_start_4
     ldm A $_nn_fill_counter
     stack A $DATASTACK_PTR
     ldm A $_nn_predict_input_ptr
@@ -580,7 +519,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :NN.train_while_end_5
+    jmpt :NN.train_while_end_4
     ldm A $_nn_predict_input_ptr
     stack A $DATASTACK_PTR
     ldm A $_nn_fill_counter
@@ -604,11 +543,11 @@
     add B A
     ld A B
     sto A $_nn_fill_counter
-    jmp :NN.train_while_start_5
-:NN.train_while_end_5
+    jmp :NN.train_while_start_4
+:NN.train_while_end_4
     ldi A 0
     sto A $_nn_fill_counter
-:NN.train_while_start_6
+:NN.train_while_start_5
     ldm A $_nn_fill_counter
     stack A $DATASTACK_PTR
     ldm A $_nn_predict_output_ptr
@@ -617,7 +556,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :NN.train_while_end_6
+    jmpt :NN.train_while_end_5
     ldm A $_nn_predict_output_ptr
     stack A $DATASTACK_PTR
     ldm A $_nn_fill_counter
@@ -641,8 +580,8 @@
     add B A
     ld A B
     sto A $_nn_fill_counter
-    jmp :NN.train_while_start_6
-:NN.train_while_end_6
+    jmp :NN.train_while_start_5
+:NN.train_while_end_5
     ldm A $_nn_network_ptr
     stack A $DATASTACK_PTR
     ldi A 1
@@ -688,9 +627,21 @@
     call @rt_drop
     ldm A $_nn_mat_output_activations
     stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
     ldm A $_nn_mat_output_deriv
     stack A $DATASTACK_PTR
-    call @_NN.populate_deriv_matrix
+    ldm A $_nn_scale
+    stack A $DATASTACK_PTR
+    ldi A 6
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
     ldm A $_nn_mat_output_error
     stack A $DATASTACK_PTR
     ldm A $_nn_mat_output_deriv
@@ -750,9 +701,21 @@
     call @rt_drop
     ldm A $_nn_mat_hidden_activations
     stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
     ldm A $_nn_mat_hidden_deriv
     stack A $DATASTACK_PTR
-    call @_NN.populate_deriv_matrix
+    ldm A $_nn_scale
+    stack A $DATASTACK_PTR
+    ldi A 6
+    stack A $DATASTACK_PTR
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $_nn_tdl_ptr
+    stack A $DATASTACK_PTR
+    call @GPU.exec
+    call @rt_drop
     ldm A $_nn_mat_hidden_error
     stack A $DATASTACK_PTR
     ldm A $_nn_mat_hidden_deriv

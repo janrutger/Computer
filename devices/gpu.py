@@ -43,6 +43,8 @@ class GPU:
                 result = np.maximum(0, mat_a)
             elif opcode == 5: # TRANSPOSE
                 result = mat_a.T
+            elif opcode == 6: # RELU_DERIV
+                result = np.where(mat_a > 0, scale, 0)
             else:
                 mat_b = get_matrix(ptr_b)
                 
