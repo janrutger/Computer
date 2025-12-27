@@ -1,0 +1,325 @@
+# ============================================================================
+# Hunter vs Target AI (2-16-4 Network)
+# Inputs:  [TargetX, TargetY, HunterX, HunterY]
+# Outputs: [North, South, East, West] (One-Hot Encoded)
+# ============================================================================
+
+USE std_heap
+USE std_stern_io
+USE std_time
+USE std_stacks_rt
+
+INCLUDE math_lib
+INCLUDE fixed_point_lib
+INCLUDE gpu_lib
+INCLUDE mlnn_gpu_lib
+INCLUDE turtle_lib
+
+VALUE network_ptr 0
+VALUE input_arr 0
+VALUE target_arr 0
+VALUE learning_rate 0
+
+# Training Variables
+VALUE tx 0
+VALUE ty 0
+VALUE hx 0
+VALUE hy 0
+VALUE _dx 0
+VALUE _dy 0
+VALUE abs_dx 0
+VALUE abs_dy 0
+VALUE i 0
+VALUE output_ptr 0
+
+STRING fp_0_1 "0.1"
+STRING fp_0_01 "0.01"
+
+# Test Variables
+VALUE steps 0
+VALUE predicted_dir 0
+VALUE max_val 0
+VALUE caught 0
+
+DEF SRAND {     # uses std_stacks_rt to acces rand_m var from RND
+    *p_currentime rand_m % AS random_seed
+    "New random seed: " PRTstring
+    random_seed PRINT
+}
+
+# ----------------------------------------------------------------------------
+# Helper: Generate Training Sample
+# Generates random positions and determines the correct direction.
+# ----------------------------------------------------------------------------
+DEF GEN_SAMPLE {
+    # 1. Clear Arrays for reuse
+    input_arr ARRAY.clear
+    target_arr ARRAY.clear
+
+    # 2. Generate Coordinates (0-100 range)
+    RND 10 // AS tx
+    RND 10 // AS ty
+
+    # Mix Strategy: 40% Global, 30% Close, 20% Medium, 10% Micro
+    RND 100 % DUP 40 < IF
+        DROP
+        # Global Random (Far)
+        RND 10 // AS hx
+        RND 10 // AS hy
+    ELSE
+        DUP 70 < IF
+            DROP
+            # Close Quarters (Hunter is within +/- 20 steps)
+            tx RND 41 % 20 - + DUP 0 < IF DROP 0 END DUP 99 > IF DROP 99 END AS hx
+            ty RND 41 % 20 - + DUP 0 < IF DROP 0 END DUP 99 > IF DROP 99 END AS hy
+        ELSE
+            DUP 90 < IF
+                DROP
+                # Medium Quarters (Hunter is within +/- 6 steps)
+                tx RND 13 % 6 - + DUP 0 < IF DROP 0 END DUP 99 > IF DROP 99 END AS hx
+                ty RND 13 % 6 - + DUP 0 < IF DROP 0 END DUP 99 > IF DROP 99 END AS hy
+            ELSE
+                DROP
+                # Micro Quarters (Hunter is within +/- 2 steps)
+                tx RND 5 % 1 - + DUP 0 < IF DROP 0 END DUP 99 > IF DROP 99 END AS hx
+                ty RND 5 % 1 - + DUP 0 < IF DROP 0 END DUP 99 > IF DROP 99 END AS hy
+            END
+        END
+    END
+
+
+    # 3. Calculate Deltas
+    tx hx - AS _dx
+    ty hy - AS _dy
+    _dx ABS AS abs_dx
+    _dy ABS AS abs_dy
+
+    # 4. Normalize Inputs (Deltas)
+    # We feed the difference (dx, dy) instead of absolute positions.
+    # Range -100..100 -> Normalized -1.0..1.0
+    _dx FP.from_int 100 // input_arr ARRAY.append
+    _dy FP.from_int 100 // input_arr ARRAY.append
+
+    # Logic: Move in the axis with the largest distance
+    abs_dx abs_dy > IF
+        # Horizontal Movement
+        _dx 0 > IF
+            # Target is East (Right) -> [0, 0, 1, 0]
+            0 target_arr ARRAY.append
+            0 target_arr ARRAY.append
+            10000 target_arr ARRAY.append
+            0 target_arr ARRAY.append
+        ELSE
+            # Target is West (Left) -> [0, 0, 0, 1]
+            0 target_arr ARRAY.append
+            0 target_arr ARRAY.append
+            0 target_arr ARRAY.append
+            10000 target_arr ARRAY.append
+        END
+    ELSE
+        # Vertical Movement
+        _dy 0 > IF
+            # Target is South (Down) -> [0, 1, 0, 0]
+            0 target_arr ARRAY.append
+            10000 target_arr ARRAY.append
+            0 target_arr ARRAY.append
+            0 target_arr ARRAY.append
+        ELSE
+            # Target is North (Up) -> [1, 0, 0, 0]
+            10000 target_arr ARRAY.append
+            0 target_arr ARRAY.append
+            0 target_arr ARRAY.append
+            0 target_arr ARRAY.append
+        END
+    END
+}
+
+# ----------------------------------------------------------------------------
+# Function: Train Network
+# Stack: ( epochs -- )
+# ----------------------------------------------------------------------------
+DEF TRAIN_NETWORK {
+    AS i
+    "Training for " PRTstring i PRTnum " epochs...\n" PRTstring
+
+    WHILE i 0 > DO
+        GEN_SAMPLE
+        network_ptr input_arr target_arr learning_rate NN.train
+        i 1 - AS i
+        
+        # Progress bar
+        i 100 % 0 == IF "." PRTstring END
+    DONE
+    "  Training Complete.\n" PRTstring
+}
+
+# ----------------------------------------------------------------------------
+# Function: Test Network (Simulation)
+# Simulates a chase to verify the network.
+# ----------------------------------------------------------------------------
+DEF TEST_NETWORK {
+    "\n--- Simulating a chase ---\n" PRTstring
+    
+    # 1. Initialize Random Positions
+    RND 10 // AS tx
+    RND 10 // AS ty
+    RND 10 // AS hx
+    RND 10 // AS hy
+    
+    "Target: " PRTstring tx PRTnum "," PRTstring ty PRTnum "\n" PRTstring
+    "Hunter: " PRTstring hx PRTnum "," PRTstring hy PRTnum "\n" PRTstring
+
+    0 AS steps
+    0 AS caught
+    
+    # Max steps = 200 (Manhattan distance for 100x100 grid)
+    WHILE steps 200 < DO
+        # Check if caught
+        #tx hx == IF ty hy == IF
+        tx hx == ty hy == * IF
+            "Caught Target in " PRTstring steps PRTnum " steps!\n" PRTstring
+            1 AS caught
+            200 AS steps # Break loop
+        ELSE
+            # Prepare Input
+            input_arr ARRAY.clear
+            tx hx - AS _dx
+            ty hy - AS _dy
+            _dx FP.from_int 100 // input_arr ARRAY.append
+            _dy FP.from_int 100 // input_arr ARRAY.append
+
+            # Predict
+            network_ptr input_arr NN.predict AS output_ptr
+            
+            # ArgMax Logic (Find highest output neuron)
+            output_ptr 0 ARRAY.get AS max_val
+            0 AS predicted_dir
+            
+            output_ptr 1 ARRAY.get max_val > IF output_ptr 1 ARRAY.get AS max_val 1 AS predicted_dir END
+            output_ptr 2 ARRAY.get max_val > IF output_ptr 2 ARRAY.get AS max_val 2 AS predicted_dir END
+            output_ptr 3 ARRAY.get max_val > IF output_ptr 3 ARRAY.get AS max_val 3 AS predicted_dir END
+
+            # Move Hunter based on prediction
+            # 0:North(_dy<0), 1:South(_dy>0), 2:East(_dx>0), 3:West(_dx<0)
+            predicted_dir 0 == IF hy 1 - AS hy END # North
+            predicted_dir 1 == IF hy 1 + AS hy END # South
+            predicted_dir 2 == IF hx 1 + AS hx END # East
+            predicted_dir 3 == IF hx 1 - AS hx END # West
+
+            steps 1 + AS steps
+        END
+    DONE
+    
+    caught 0 == IF
+        "Failed to catch target within 200 steps.\n" PRTstring
+        "Final Hunter Pos: " PRTstring hx PRTnum "," PRTstring hy PRTnum "\n" PRTstring
+    END
+}
+
+# ----------------------------------------------------------------------------
+# Function: Visualize Chase (Turtle Graphics)
+# ----------------------------------------------------------------------------
+DEF VISUALIZE_CHASE {
+    "--- Visualizing Chase on Turtle Graphics, <esc> to stop ---\n\n" PRTstring
+    TURTLE.start
+    2 TURTLE.mode # Double Buffered Pixel Mode (640x480)
+    IO 2 NEW
+    
+    # Initialize Random Positions
+    RND 10 // AS tx
+    RND 10 // AS ty
+    RND 10 // AS hx
+    RND 10 // AS hy
+    
+    0 AS steps
+    0 AS caught
+    
+    TURTLE.flip # Init buffer
+
+    WHILE steps 200 < DO
+        # Check caught
+        tx hx == ty hy == * IF
+            1 AS caught
+            500 AS steps
+        ELSE
+            # Erase old positions (Black)
+            0 TURTLE.color
+            tx 4 * 120 + ty 4 * 40 + 4 TURTLE.circle
+            hx 4 * 120 + hy 4 * 40 + 4 TURTLE.circle
+
+            # Predict Movement
+            input_arr ARRAY.clear
+            tx hx - AS _dx
+            ty hy - AS _dy
+            _dx FP.from_int 100 // input_arr ARRAY.append
+            _dy FP.from_int 100 // input_arr ARRAY.append
+
+            network_ptr input_arr NN.predict AS output_ptr
+            
+            output_ptr 0 ARRAY.get AS max_val
+            0 AS predicted_dir
+            output_ptr 1 ARRAY.get max_val > IF output_ptr 1 ARRAY.get AS max_val 1 AS predicted_dir END
+            output_ptr 2 ARRAY.get max_val > IF output_ptr 2 ARRAY.get AS max_val 2 AS predicted_dir END
+            output_ptr 3 ARRAY.get max_val > IF output_ptr 3 ARRAY.get AS max_val 3 AS predicted_dir END
+
+            predicted_dir 0 == IF hy 1 - AS hy END
+            predicted_dir 1 == IF hy 1 + AS hy END
+            predicted_dir 2 == IF hx 1 + AS hx END
+            predicted_dir 3 == IF hx 1 - AS hx END
+
+            # Draw new positions
+            2 TURTLE.color # Red for Target
+            tx 4 * 120 + ty 4 * 40 + 4 TURTLE.circle
+            5 TURTLE.color # Green for Hunter
+            hx 4 * 120 + hy 4 * 40 + 4 TURTLE.circle
+
+            TURTLE.flip
+            steps 1 + AS steps
+            # steps PRINT
+
+            KEYpressed IF
+                27 == IF                ; Check for <esc>
+                    200 AS steps
+                END
+            END
+        END
+    DONE
+}
+
+# ----------------------------------------------------------------------------
+# Main Program
+# ----------------------------------------------------------------------------
+
+HEAP.free
+SRAND
+10000 FP.set_scale
+10000 NN.set_scale
+
+"Creating 2-16-4 Network (Relative Inputs)...\n" PRTstring
+2 16 4 NN.new_network AS network_ptr
+
+# Allocate reusable arrays
+2 NEW.array AS input_arr
+4 NEW.array AS target_arr
+
+VISUALIZE_CHASE
+
+# "Training Phase 1 (10k epochs, LR=0.1)...\n" PRTstring
+# &fp_0_1 FP.from_string AS learning_rate
+# 10000 TRAIN_NETWORK
+# VISUALIZE_CHASE
+
+"Training Phase 2 (5k epochs, LR=0.01)...\n" PRTstring
+&fp_0_01 FP.from_string AS learning_rate
+4000 TRAIN_NETWORK
+VISUALIZE_CHASE
+
+
+
+"Run again? press a key, to stop press <esc>\n" PRTstring
+WHILE KEYchar 27 != DO
+    2000 TRAIN_NETWORK
+    VISUALIZE_CHASE
+    "Run again? press key, to stop press <esc>\n" PRTstring
+DONE
+13 PRTchar
