@@ -145,6 +145,12 @@
 . $abs_dy 1
 . $i 1
 . $output_ptr 1
+. $val_n 1
+. $val_s 1
+. $val_e 1
+. $val_w 1
+. $target_idx 1
+. $k 1
 . $fp_0_1 4
 . $fp_0_01 5
 . $steps 1
@@ -165,9 +171,9 @@
 . $TEST_NETWORK_str_11 9
 . $TEST_NETWORK_str_12 42
 . $TEST_NETWORK_str_13 19
-. $VISUALIZE_CHASE_str_14 62
-. $_main_str_15 46
-. $_main_str_16 42
+. $VISUALIZE_CHASE_str_14 57
+. $_main_str_15 45
+. $_main_str_16 40
 . $_main_str_17 45
 . $_main_str_18 43
 
@@ -185,7 +191,7 @@
     call @PRTstring
     ldi A 2
     stack A $DATASTACK_PTR
-    ldi A 16
+    ldi A 4
     stack A $DATASTACK_PTR
     ldi A 4
     stack A $DATASTACK_PTR
@@ -211,7 +217,11 @@
     call @FP.from_string
     ustack A $DATASTACK_PTR
     sto A $learning_rate
-    ldi A 3000
+    ldi A 5000
+    stack A $DATASTACK_PTR
+    call @TRAIN_NETWORK
+    call @VISUALIZE_CHASE
+    ldi A 5000
     stack A $DATASTACK_PTR
     call @TRAIN_NETWORK
     call @VISUALIZE_CHASE
@@ -226,7 +236,7 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :_main_while_end_3
-    ldi A 2000
+    ldi A 1000
     stack A $DATASTACK_PTR
     call @TRAIN_NETWORK
     call @VISUALIZE_CHASE
@@ -3246,67 +3256,24 @@
     ldm A $input_arr
     stack A $DATASTACK_PTR
     call @ARRAY.append
-    ldm A $abs_dx
+    ldm A $_dy
     stack A $DATASTACK_PTR
-    ldm A $abs_dy
+    ldi A 0
     stack A $DATASTACK_PTR
-    call @rt_gt
+    call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :GEN_SAMPLE_if_else_18
-    ldm A $_dx
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :GEN_SAMPLE_if_else_19
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldm A $target_arr
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldm A $target_arr
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
     ldi A 10000
     stack A $DATASTACK_PTR
-    ldm A $target_arr
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldm A $target_arr
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    jmp :GEN_SAMPLE_if_end_19
-:GEN_SAMPLE_if_else_19
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldm A $target_arr
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldm A $target_arr
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldm A $target_arr
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 10000
-    stack A $DATASTACK_PTR
-    ldm A $target_arr
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-:GEN_SAMPLE_if_end_19
     jmp :GEN_SAMPLE_if_end_18
 :GEN_SAMPLE_if_else_18
+    ldi A 0
+    stack A $DATASTACK_PTR
+:GEN_SAMPLE_if_end_18
+    ldm A $target_arr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
     ldm A $_dy
     stack A $DATASTACK_PTR
     ldi A 0
@@ -3314,51 +3281,53 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :GEN_SAMPLE_if_else_20
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldm A $target_arr
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
+    jmpt :GEN_SAMPLE_if_else_19
     ldi A 10000
     stack A $DATASTACK_PTR
-    ldm A $target_arr
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
+    jmp :GEN_SAMPLE_if_end_19
+:GEN_SAMPLE_if_else_19
     ldi A 0
     stack A $DATASTACK_PTR
+:GEN_SAMPLE_if_end_19
     ldm A $target_arr
     stack A $DATASTACK_PTR
     call @ARRAY.append
+    ldm A $_dx
+    stack A $DATASTACK_PTR
     ldi A 0
     stack A $DATASTACK_PTR
-    ldm A $target_arr
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :GEN_SAMPLE_if_else_20
+    ldi A 10000
     stack A $DATASTACK_PTR
-    call @ARRAY.append
     jmp :GEN_SAMPLE_if_end_20
 :GEN_SAMPLE_if_else_20
+    ldi A 0
+    stack A $DATASTACK_PTR
+:GEN_SAMPLE_if_end_20
+    ldm A $target_arr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $_dx
+    stack A $DATASTACK_PTR
+    ldi A 0
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :GEN_SAMPLE_if_else_21
     ldi A 10000
     stack A $DATASTACK_PTR
-    ldm A $target_arr
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
+    jmp :GEN_SAMPLE_if_end_21
+:GEN_SAMPLE_if_else_21
     ldi A 0
     stack A $DATASTACK_PTR
+:GEN_SAMPLE_if_end_21
     ldm A $target_arr
     stack A $DATASTACK_PTR
     call @ARRAY.append
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldm A $target_arr
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldm A $target_arr
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-:GEN_SAMPLE_if_end_20
-:GEN_SAMPLE_if_end_18
     ret
 @TRAIN_NETWORK
     ustack A $DATASTACK_PTR
@@ -3408,11 +3377,11 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :TRAIN_NETWORK_if_end_21
+    jmpt :TRAIN_NETWORK_if_end_22
     ldi A $TRAIN_NETWORK_str_3
     stack A $DATASTACK_PTR
     call @PRTstring
-:TRAIN_NETWORK_if_end_21
+:TRAIN_NETWORK_if_end_22
     jmp :TRAIN_NETWORK_while_start_0
 :TRAIN_NETWORK_while_end_0
     ldi A $TRAIN_NETWORK_str_4
@@ -3505,7 +3474,7 @@
     mul B A
     ld A B
     tst A 0
-    jmpt :TEST_NETWORK_if_else_22
+    jmpt :TEST_NETWORK_if_else_23
     ldi A $TEST_NETWORK_str_10
     stack A $DATASTACK_PTR
     call @PRTstring
@@ -3519,8 +3488,8 @@
     sto A $caught
     ldi A 200
     sto A $steps
-    jmp :TEST_NETWORK_if_end_22
-:TEST_NETWORK_if_else_22
+    jmp :TEST_NETWORK_if_end_23
+:TEST_NETWORK_if_else_23
     ldm A $input_arr
     stack A $DATASTACK_PTR
     call @ARRAY.clear
@@ -3570,80 +3539,44 @@
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
-    sto A $max_val
-    ldi A 0
-    sto A $predicted_dir
-    ldm A $output_ptr
-    stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    ldm A $max_val
-    stack A $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :TEST_NETWORK_if_end_23
+    sto A $val_n
     ldm A $output_ptr
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
-    sto A $max_val
-    ldi A 1
-    sto A $predicted_dir
-:TEST_NETWORK_if_end_23
-    ldm A $output_ptr
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    ldm A $max_val
-    stack A $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :TEST_NETWORK_if_end_24
+    sto A $val_s
     ldm A $output_ptr
     stack A $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
-    sto A $max_val
-    ldi A 2
-    sto A $predicted_dir
-:TEST_NETWORK_if_end_24
+    sto A $val_e
     ldm A $output_ptr
     stack A $DATASTACK_PTR
     ldi A 3
     stack A $DATASTACK_PTR
     call @ARRAY.get
-    ldm A $max_val
+    ustack A $DATASTACK_PTR
+    sto A $val_w
+    ldm A $val_n
+    stack A $DATASTACK_PTR
+    ldm A $val_s
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TEST_NETWORK_if_else_24
+    ldm A $val_n
+    stack A $DATASTACK_PTR
+    ldi A 6000
     stack A $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :TEST_NETWORK_if_end_25
-    ldm A $output_ptr
-    stack A $DATASTACK_PTR
-    ldi A 3
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    ustack A $DATASTACK_PTR
-    sto A $max_val
-    ldi A 3
-    sto A $predicted_dir
-:TEST_NETWORK_if_end_25
-    ldm A $predicted_dir
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :TEST_NETWORK_if_end_26
     ldm A $hy
     stack A $DATASTACK_PTR
     ldi A 1
@@ -3651,15 +3584,17 @@
     sub B A
     ld A B
     sto A $hy
-:TEST_NETWORK_if_end_26
-    ldm A $predicted_dir
+:TEST_NETWORK_if_end_25
+    jmp :TEST_NETWORK_if_end_24
+:TEST_NETWORK_if_else_24
+    ldm A $val_s
     stack A $DATASTACK_PTR
-    ldi A 1
+    ldi A 6000
     stack A $DATASTACK_PTR
-    call @rt_eq
+    call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :TEST_NETWORK_if_end_27
+    jmpt :TEST_NETWORK_if_end_26
     ldm A $hy
     stack A $DATASTACK_PTR
     ldi A 1
@@ -3667,12 +3602,21 @@
     add B A
     ld A B
     sto A $hy
-:TEST_NETWORK_if_end_27
-    ldm A $predicted_dir
+:TEST_NETWORK_if_end_26
+:TEST_NETWORK_if_end_24
+    ldm A $val_e
     stack A $DATASTACK_PTR
-    ldi A 2
+    ldm A $val_w
     stack A $DATASTACK_PTR
-    call @rt_eq
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TEST_NETWORK_if_else_27
+    ldm A $val_e
+    stack A $DATASTACK_PTR
+    ldi A 6000
+    stack A $DATASTACK_PTR
+    call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :TEST_NETWORK_if_end_28
@@ -3684,11 +3628,13 @@
     ld A B
     sto A $hx
 :TEST_NETWORK_if_end_28
-    ldm A $predicted_dir
+    jmp :TEST_NETWORK_if_end_27
+:TEST_NETWORK_if_else_27
+    ldm A $val_w
     stack A $DATASTACK_PTR
-    ldi A 3
+    ldi A 6000
     stack A $DATASTACK_PTR
-    call @rt_eq
+    call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :TEST_NETWORK_if_end_29
@@ -3700,6 +3646,7 @@
     ld A B
     sto A $hx
 :TEST_NETWORK_if_end_29
+:TEST_NETWORK_if_end_27
     ldm A $steps
     stack A $DATASTACK_PTR
     ldi A 1
@@ -3707,7 +3654,7 @@
     add B A
     ld A B
     sto A $steps
-:TEST_NETWORK_if_end_22
+:TEST_NETWORK_if_end_23
     jmp :TEST_NETWORK_while_start_1
 :TEST_NETWORK_while_end_1
     ldm A $caught
@@ -3911,80 +3858,44 @@
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
-    sto A $max_val
-    ldi A 0
-    sto A $predicted_dir
-    ldm A $output_ptr
-    stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    ldm A $max_val
-    stack A $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :VISUALIZE_CHASE_if_end_32
+    sto A $val_n
     ldm A $output_ptr
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
-    sto A $max_val
-    ldi A 1
-    sto A $predicted_dir
-:VISUALIZE_CHASE_if_end_32
+    sto A $val_s
     ldm A $output_ptr
     stack A $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     call @ARRAY.get
-    ldm A $max_val
+    ustack A $DATASTACK_PTR
+    sto A $val_e
+    ldm A $output_ptr
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $val_w
+    ldm A $val_n
+    stack A $DATASTACK_PTR
+    ldm A $val_s
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VISUALIZE_CHASE_if_else_32
+    ldm A $val_n
+    stack A $DATASTACK_PTR
+    ldi A 6000
     stack A $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :VISUALIZE_CHASE_if_end_33
-    ldm A $output_ptr
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    ustack A $DATASTACK_PTR
-    sto A $max_val
-    ldi A 2
-    sto A $predicted_dir
-:VISUALIZE_CHASE_if_end_33
-    ldm A $output_ptr
-    stack A $DATASTACK_PTR
-    ldi A 3
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    ldm A $max_val
-    stack A $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :VISUALIZE_CHASE_if_end_34
-    ldm A $output_ptr
-    stack A $DATASTACK_PTR
-    ldi A 3
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    ustack A $DATASTACK_PTR
-    sto A $max_val
-    ldi A 3
-    sto A $predicted_dir
-:VISUALIZE_CHASE_if_end_34
-    ldm A $predicted_dir
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :VISUALIZE_CHASE_if_end_35
     ldm A $hy
     stack A $DATASTACK_PTR
     ldi A 1
@@ -3992,15 +3903,17 @@
     sub B A
     ld A B
     sto A $hy
-:VISUALIZE_CHASE_if_end_35
-    ldm A $predicted_dir
+:VISUALIZE_CHASE_if_end_33
+    jmp :VISUALIZE_CHASE_if_end_32
+:VISUALIZE_CHASE_if_else_32
+    ldm A $val_s
     stack A $DATASTACK_PTR
-    ldi A 1
+    ldi A 6000
     stack A $DATASTACK_PTR
-    call @rt_eq
+    call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :VISUALIZE_CHASE_if_end_36
+    jmpt :VISUALIZE_CHASE_if_end_34
     ldm A $hy
     stack A $DATASTACK_PTR
     ldi A 1
@@ -4008,12 +3921,39 @@
     add B A
     ld A B
     sto A $hy
+:VISUALIZE_CHASE_if_end_34
+:VISUALIZE_CHASE_if_end_32
+    ldm A $val_e
+    stack A $DATASTACK_PTR
+    ldm A $val_w
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VISUALIZE_CHASE_if_else_35
+    ldm A $val_e
+    stack A $DATASTACK_PTR
+    ldi A 6000
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VISUALIZE_CHASE_if_end_36
+    ldm A $hx
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $hx
 :VISUALIZE_CHASE_if_end_36
-    ldm A $predicted_dir
+    jmp :VISUALIZE_CHASE_if_end_35
+:VISUALIZE_CHASE_if_else_35
+    ldm A $val_w
     stack A $DATASTACK_PTR
-    ldi A 2
+    ldi A 6000
     stack A $DATASTACK_PTR
-    call @rt_eq
+    call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :VISUALIZE_CHASE_if_end_37
@@ -4021,26 +3961,11 @@
     stack A $DATASTACK_PTR
     ldi A 1
     ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $hx
-:VISUALIZE_CHASE_if_end_37
-    ldm A $predicted_dir
-    stack A $DATASTACK_PTR
-    ldi A 3
-    stack A $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :VISUALIZE_CHASE_if_end_38
-    ldm A $hx
-    stack A $DATASTACK_PTR
-    ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $hx
-:VISUALIZE_CHASE_if_end_38
+:VISUALIZE_CHASE_if_end_37
+:VISUALIZE_CHASE_if_end_35
     ldi A 2
     stack A $DATASTACK_PTR
     call @TURTLE.color
@@ -4104,17 +4029,17 @@
     call @KEYpressed
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :VISUALIZE_CHASE_if_end_39
-    ldi A 27
+    jmpt :VISUALIZE_CHASE_if_end_38
+    ldi A 32
     stack A $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :VISUALIZE_CHASE_if_end_40
+    jmpt :VISUALIZE_CHASE_if_end_39
     ldi A 200
     sto A $steps
-:VISUALIZE_CHASE_if_end_40
 :VISUALIZE_CHASE_if_end_39
+:VISUALIZE_CHASE_if_end_38
 :VISUALIZE_CHASE_if_end_31
     jmp :VISUALIZE_CHASE_while_start_2
 :VISUALIZE_CHASE_while_end_2
@@ -4270,6 +4195,12 @@
 % $abs_dy 0
 % $i 0
 % $output_ptr 0
+% $val_n 0
+% $val_s 0
+% $val_e 0
+% $val_w 0
+% $target_idx 0
+% $k 0
 % $fp_0_1 \0 \. \1 \null
 % $fp_0_01 \0 \. \0 \1 \null
 % $steps 0
@@ -4290,8 +4221,8 @@
 % $TEST_NETWORK_str_11 \space \s \t \e \p \s \! \Return \null
 % $TEST_NETWORK_str_12 \F \a \i \l \e \d \space \t \o \space \c \a \t \c \h \space \t \a \r \g \e \t \space \w \i \t \h \i \n \space \2 \0 \0 \space \s \t \e \p \s \. \Return \null
 % $TEST_NETWORK_str_13 \F \i \n \a \l \space \H \u \n \t \e \r \space \P \o \s \: \space \null
-% $VISUALIZE_CHASE_str_14 \- \- \- \space \V \i \s \u \a \l \i \z \i \n \g \space \C \h \a \s \e \space \o \n \space \T \u \r \t \l \e \space \G \r \a \p \h \i \c \s \, \space \< \e \s \c \> \space \t \o \space \s \t \o \p \space \- \- \- \Return \Return \null
-% $_main_str_15 \C \r \e \a \t \i \n \g \space \2 \- \1 \6 \- \4 \space \N \e \t \w \o \r \k \space \( \R \e \l \a \t \i \v \e \space \I \n \p \u \t \s \) \. \. \. \Return \null
-% $_main_str_16 \T \r \a \i \n \i \n \g \space \P \h \a \s \e \space \2 \space \( \3 \k \space \e \p \o \c \h \s \, \space \L \R \= \0 \. \0 \1 \) \. \. \. \Return \null
+% $VISUALIZE_CHASE_str_14 \V \i \s \u \a \l \i \z \i \n \g \space \C \h \a \s \e \space \o \n \space \T \u \r \t \l \e \space \G \r \a \p \h \i \c \s \, \space \< \s \p \a \c \e \> \space \t \o \space \s \t \o \p \space \Return \Return \null
+% $_main_str_15 \C \r \e \a \t \i \n \g \space \2 \- \4 \- \4 \space \N \e \t \w \o \r \k \space \( \R \e \l \a \t \i \v \e \space \I \n \p \u \t \s \) \. \. \. \Return \null
+% $_main_str_16 \T \r \a \i \n \i \n \g \space \P \h \a \s \e \space \( \5 \k \space \e \p \o \c \h \s \, \space \L \R \= \0 \. \0 \1 \) \. \. \. \Return \null
 % $_main_str_17 \R \u \n \space \a \g \a \i \n \? \space \p \r \e \s \s \space \a \space \k \e \y \, \space \t \o \space \s \t \o \p \space \p \r \e \s \s \space \< \e \s \c \> \Return \null
 % $_main_str_18 \R \u \n \space \a \g \a \i \n \? \space \p \r \e \s \s \space \k \e \y \, \space \t \o \space \s \t \o \p \space \p \r \e \s \s \space \< \e \s \c \> \Return \null

@@ -31,6 +31,12 @@ VALUE abs_dx 0
 VALUE abs_dy 0
 VALUE i 0
 VALUE output_ptr 0
+VALUE val_n 0
+VALUE val_s 0
+VALUE val_e 0
+VALUE val_w 0
+VALUE target_idx 0
+VALUE k 0
 
 STRING fp_0_1 "0.1"
 STRING fp_0_01 "0.01"
@@ -109,38 +115,14 @@ DEF GEN_SAMPLE {
     _dx FP.from_int 10 // input_arr ARRAY.append
     _dy FP.from_int 10 // input_arr ARRAY.append
 
-    # Logic: Move in the axis with the largest distance
-    abs_dx abs_dy > IF
-        # Horizontal Movement
-        _dx 0 > IF
-            # Target is East (Right) -> [0, 0, 1, 0]
-            0 target_arr ARRAY.append
-            0 target_arr ARRAY.append
-            SCALE target_arr ARRAY.append
-            0 target_arr ARRAY.append
-        ELSE
-            # Target is West (Left) -> [0, 0, 0, 1]
-            0 target_arr ARRAY.append
-            0 target_arr ARRAY.append
-            0 target_arr ARRAY.append
-            SCALE target_arr ARRAY.append
-        END
-    ELSE
-        # Vertical Movement
-        _dy 0 > IF
-            # Target is South (Down) -> [0, 1, 0, 0]
-            0 target_arr ARRAY.append
-            SCALE target_arr ARRAY.append
-            0 target_arr ARRAY.append
-            0 target_arr ARRAY.append
-        ELSE
-            # Target is North (Up) -> [1, 0, 0, 0]
-            SCALE target_arr ARRAY.append
-            0 target_arr ARRAY.append
-            0 target_arr ARRAY.append
-            0 target_arr ARRAY.append
-        END
-    END
+    # Logic: Multi-Hot Encoding for 4 outputs
+    # 0:North, 1:South, 2:East, 3:West
+    # If target is NE, we set both North and East to SCALE.
+    
+    _dy 0 < IF SCALE ELSE 0 END target_arr ARRAY.append # North
+    _dy 0 > IF SCALE ELSE 0 END target_arr ARRAY.append # South
+    _dx 0 > IF SCALE ELSE 0 END target_arr ARRAY.append # East
+    _dx 0 < IF SCALE ELSE 0 END target_arr ARRAY.append # West
 }
 
 # ----------------------------------------------------------------------------
@@ -200,20 +182,25 @@ DEF TEST_NETWORK {
             # Predict
             network_ptr input_arr NN.predict AS output_ptr
             
-            # ArgMax Logic (Find highest output neuron)
-            output_ptr 0 ARRAY.get AS max_val
-            0 AS predicted_dir
-            
-            output_ptr 1 ARRAY.get max_val > IF output_ptr 1 ARRAY.get AS max_val 1 AS predicted_dir END
-            output_ptr 2 ARRAY.get max_val > IF output_ptr 2 ARRAY.get AS max_val 2 AS predicted_dir END
-            output_ptr 3 ARRAY.get max_val > IF output_ptr 3 ARRAY.get AS max_val 3 AS predicted_dir END
+            # Independent Axis Logic (Threshold = 4000/10000)
+            output_ptr 0 ARRAY.get AS val_n
+            output_ptr 1 ARRAY.get AS val_s
+            output_ptr 2 ARRAY.get AS val_e
+            output_ptr 3 ARRAY.get AS val_w
 
-            # Move Hunter based on prediction
-            # 0:North(_dy<0), 1:South(_dy>0), 2:East(_dx>0), 3:West(_dx<0)
-            predicted_dir 0 == IF hy 1 - AS hy END # North
-            predicted_dir 1 == IF hy 1 + AS hy END # South
-            predicted_dir 2 == IF hx 1 + AS hx END # East
-            predicted_dir 3 == IF hx 1 - AS hx END # West
+            # Y-Axis Check
+            val_n val_s > IF
+                val_n 6000 > IF hy 1 - AS hy END
+            ELSE
+                val_s 6000 > IF hy 1 + AS hy END
+            END
+
+            # X-Axis Check
+            val_e val_w > IF
+                val_e 6000 > IF hx 1 + AS hx END
+            ELSE
+                val_w 6000 > IF hx 1 - AS hx END
+            END
 
             steps 1 + AS steps
         END
@@ -229,7 +216,7 @@ DEF TEST_NETWORK {
 # Function: Visualize Chase (Turtle Graphics)
 # ----------------------------------------------------------------------------
 DEF VISUALIZE_CHASE {
-    "--- Visualizing Chase on Turtle Graphics, <esc> to stop ---\n\n" PRTstring
+    "Visualizing Chase on Turtle Graphics, <space> to stop \n\n" PRTstring
     TURTLE.start
     2 TURTLE.mode # Double Buffered Pixel Mode (640x480)
     IO 2 NEW
@@ -265,16 +252,23 @@ DEF VISUALIZE_CHASE {
 
             network_ptr input_arr NN.predict AS output_ptr
             
-            output_ptr 0 ARRAY.get AS max_val
-            0 AS predicted_dir
-            output_ptr 1 ARRAY.get max_val > IF output_ptr 1 ARRAY.get AS max_val 1 AS predicted_dir END
-            output_ptr 2 ARRAY.get max_val > IF output_ptr 2 ARRAY.get AS max_val 2 AS predicted_dir END
-            output_ptr 3 ARRAY.get max_val > IF output_ptr 3 ARRAY.get AS max_val 3 AS predicted_dir END
+            # Independent Axis Logic
+            output_ptr 0 ARRAY.get AS val_n
+            output_ptr 1 ARRAY.get AS val_s
+            output_ptr 2 ARRAY.get AS val_e
+            output_ptr 3 ARRAY.get AS val_w
 
-            predicted_dir 0 == IF hy 1 - AS hy END
-            predicted_dir 1 == IF hy 1 + AS hy END
-            predicted_dir 2 == IF hx 1 + AS hx END
-            predicted_dir 3 == IF hx 1 - AS hx END
+            val_n val_s > IF
+                val_n 6000 > IF hy 1 - AS hy END
+            ELSE
+                val_s 6000 > IF hy 1 + AS hy END
+            END
+
+            val_e val_w > IF
+                val_e 6000 > IF hx 1 + AS hx END
+            ELSE
+                val_w 6000 > IF hx 1 - AS hx END
+            END
 
             # Draw new positions
             2 TURTLE.color # Red for Target
@@ -287,7 +281,7 @@ DEF VISUALIZE_CHASE {
             # steps PRINT
 
             KEYpressed IF
-                27 == IF                ; Check for <esc>
+                32 == IF                ; Check for <esc>
                     200 AS steps
                 END
             END
@@ -304,8 +298,8 @@ SRAND
 SCALE FP.set_scale
 SCALE NN.set_scale
 
-"Creating 2-16-4 Network (Relative Inputs)...\n" PRTstring
-2 16 4 NN.new_network AS network_ptr
+"Creating 2-4-4 Network (Relative Inputs)...\n" PRTstring
+2 4 4 NN.new_network AS network_ptr
 
 # Allocate reusable arrays
 2 NEW.array AS input_arr
@@ -313,21 +307,20 @@ SCALE NN.set_scale
 
 VISUALIZE_CHASE
 
-# "Training Phase 1 (10k epochs, LR=0.1)...\n" PRTstring
-# &fp_0_1 FP.from_string AS learning_rate
-# 10000 TRAIN_NETWORK
-# VISUALIZE_CHASE
 
-"Training Phase 2 (3k epochs, LR=0.01)...\n" PRTstring
+"Training Phase (5k epochs, LR=0.01)...\n" PRTstring
 &fp_0_01 FP.from_string AS learning_rate
-3000 TRAIN_NETWORK
+5000 TRAIN_NETWORK
+VISUALIZE_CHASE
+
+5000 TRAIN_NETWORK
 VISUALIZE_CHASE
 
 
 
 "Run again? press a key, to stop press <esc>\n" PRTstring
 WHILE KEYchar 27 != DO
-    2000 TRAIN_NETWORK
+    1000 TRAIN_NETWORK
     VISUALIZE_CHASE
     "Run again? press key, to stop press <esc>\n" PRTstring
 DONE
@@ -335,4 +328,3 @@ DONE
 
 # TEST_NETWORK
 VISUALIZE_CHASE
-
