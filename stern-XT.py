@@ -8,7 +8,9 @@ import os
 import cProfile
 import pstats
 
-from devices.cpu import CPU
+from devices.cpu_m1 import CPU_M1 as CPU
+# from devices.cpu import CPU
+
 from devices.memoryR2 import Memory
 from devices.interrupt_controller import InterruptController
 from devices.keyboard import Keyboard
@@ -223,6 +225,7 @@ def main():
 
                 # Update Display
                 pygame.display.flip()
+
 
         # Yield a tiny amount of time to the OS to prevent 100% CPU usage
         # time.sleep(0.0001) # 10 microseconds sleep

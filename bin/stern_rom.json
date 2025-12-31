@@ -72,13 +72,6 @@
                         "PC"
                     ],
                     "comment": "PC = memory[SP] (read the saved PC)"
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -92,13 +85,6 @@
                         "TRUE"
                     ],
                     "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -110,13 +96,6 @@
                     "instruction": [
                         "set_interrupt_flag",
                         "FALSE"
-                    ],
-                    "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
                     ],
                     "comment": null
                 }
@@ -154,13 +133,6 @@
                         "arg1"
                     ],
                     "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -191,13 +163,6 @@
                         "arg1"
                     ],
                     "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -210,13 +175,6 @@
                         "load_immediate",
                         "PC",
                         "arg1"
-                    ],
-                    "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
                     ],
                     "comment": null
                 }
@@ -264,13 +222,6 @@
                         "arg1"
                     ],
                     "comment": "Load target address into PC"
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -339,13 +290,6 @@
                         "Ra"
                     ],
                     "comment": "Load effective address into PC"
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -397,13 +341,6 @@
                         "PC"
                     ],
                     "comment": "Read the handler pointer from memory (jump to the handler)"
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -416,13 +353,6 @@
                         "move_reg",
                         "arg1",
                         "arg2"
-                    ],
-                    "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
                     ],
                     "comment": null
                 }
@@ -439,13 +369,6 @@
                         "arg2"
                     ],
                     "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -458,13 +381,6 @@
                         "read_mem_adres",
                         "arg2",
                         "arg1"
-                    ],
-                    "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
                     ],
                     "comment": null
                 }
@@ -504,13 +420,6 @@
                         "arg1"
                     ],
                     "comment": "Read value from effective address (Ra) into $1"
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -523,13 +432,6 @@
                         "store_mem_adres",
                         "arg2",
                         "arg1"
-                    ],
-                    "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
                     ],
                     "comment": null
                 }
@@ -569,13 +471,6 @@
                         "arg1"
                     ],
                     "comment": "Store value of op1 at effective address (Ra)"
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -611,13 +506,6 @@
                         "move_reg",
                         "arg1",
                         "Ra"
-                    ],
-                    "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
                     ],
                     "comment": null
                 }
@@ -657,13 +545,6 @@
                         "Ra"
                     ],
                     "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -699,13 +580,6 @@
                         "move_reg",
                         "arg1",
                         "Ra"
-                    ],
-                    "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
                     ],
                     "comment": null
                 }
@@ -745,13 +619,6 @@
                         "Ra"
                     ],
                     "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -787,13 +654,6 @@
                         "move_reg",
                         "arg1",
                         "Ra"
-                    ],
-                    "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
                     ],
                     "comment": null
                 }
@@ -833,13 +693,6 @@
                         "Ra"
                     ],
                     "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -875,13 +728,6 @@
                         "move_reg",
                         "arg1",
                         "Ra"
-                    ],
-                    "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
                     ],
                     "comment": null
                 }
@@ -927,13 +773,6 @@
                         "move_reg",
                         "arg2",
                         "Rb"
-                    ],
-                    "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
                     ],
                     "comment": null
                 }
@@ -995,13 +834,6 @@
                         "TRUE"
                     ],
                     "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -1059,13 +891,6 @@
                     "instruction": [
                         "set_status_bit",
                         "TRUE"
-                    ],
-                    "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
                     ],
                     "comment": null
                 }
@@ -1135,13 +960,6 @@
                         "FALSE"
                     ],
                     "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -1179,13 +997,6 @@
                         "Ra"
                     ],
                     "comment": "Store the incremented value back to memory(op2)"
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -1223,13 +1034,6 @@
                         "Ra"
                     ],
                     "comment": "Store the decremented value back to memory(op2)"
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -1265,13 +1069,6 @@
                         "move_reg",
                         "arg1",
                         "Ra"
-                    ],
-                    "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
                     ],
                     "comment": null
                 }
@@ -1311,13 +1108,6 @@
                         "Ra"
                     ],
                     "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -1355,13 +1145,6 @@
                         "arg1"
                     ],
                     "comment": "$1 = memory[SP] (read the value at the new SP)"
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -1407,13 +1190,6 @@
                         "Ra"
                     ],
                     "comment": "Store the new SP value back."
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -1459,13 +1235,6 @@
                         "arg1"
                     ],
                     "comment": "Read the value from the top of the stack into the destination register $1."
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
-                    ],
-                    "comment": null
                 }
             ]
         },
@@ -1477,13 +1246,6 @@
                     "instruction": [
                         "gpu",
                         "arg1"
-                    ],
-                    "comment": null
-                },
-                {
-                    "instruction": [
-                        "set_cpu_state",
-                        "FETCH"
                     ],
                     "comment": null
                 }

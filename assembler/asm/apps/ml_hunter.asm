@@ -174,8 +174,8 @@
 . $VISUALIZE_CHASE_str_14 57
 . $_main_str_15 45
 . $_main_str_16 40
-. $_main_str_17 45
-. $_main_str_18 43
+. $_main_str_17 47
+. $_main_str_18 45
 
 # .CODE
     call @HEAP.free
@@ -225,6 +225,10 @@
     stack A $DATASTACK_PTR
     call @TRAIN_NETWORK
     call @VISUALIZE_CHASE
+    ldi A 5000
+    stack A $DATASTACK_PTR
+    call @TRAIN_NETWORK
+    call @VISUALIZE_CHASE
     ldi A $_main_str_17
     stack A $DATASTACK_PTR
     call @PRTstring
@@ -236,9 +240,6 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :_main_while_end_3
-    ldi A 1000
-    stack A $DATASTACK_PTR
-    call @TRAIN_NETWORK
     call @VISUALIZE_CHASE
     ldi A $_main_str_18
     stack A $DATASTACK_PTR
@@ -248,7 +249,6 @@
     ldi A 13
     stack A $DATASTACK_PTR
     call @PRTchar
-    call @VISUALIZE_CHASE
     ret
 
 # .FUNCTIONS
@@ -4224,5 +4224,5 @@
 % $VISUALIZE_CHASE_str_14 \V \i \s \u \a \l \i \z \i \n \g \space \C \h \a \s \e \space \o \n \space \T \u \r \t \l \e \space \G \r \a \p \h \i \c \s \, \space \< \s \p \a \c \e \> \space \t \o \space \s \t \o \p \space \Return \Return \null
 % $_main_str_15 \C \r \e \a \t \i \n \g \space \2 \- \4 \- \4 \space \N \e \t \w \o \r \k \space \( \R \e \l \a \t \i \v \e \space \I \n \p \u \t \s \) \. \. \. \Return \null
 % $_main_str_16 \T \r \a \i \n \i \n \g \space \P \h \a \s \e \space \( \5 \k \space \e \p \o \c \h \s \, \space \L \R \= \0 \. \0 \1 \) \. \. \. \Return \null
-% $_main_str_17 \R \u \n \space \a \g \a \i \n \? \space \p \r \e \s \s \space \a \space \k \e \y \, \space \t \o \space \s \t \o \p \space \p \r \e \s \s \space \< \e \s \c \> \Return \null
-% $_main_str_18 \R \u \n \space \a \g \a \i \n \? \space \p \r \e \s \s \space \k \e \y \, \space \t \o \space \s \t \o \p \space \p \r \e \s \s \space \< \e \s \c \> \Return \null
+% $_main_str_17 \C \h \a \s \e \space \a \g \a \i \n \? \space \p \r \e \s \s \space \a \space \k \e \y \, \space \t \o \space \s \t \o \p \space \p \r \e \s \s \space \< \e \s \c \> \Return \null
+% $_main_str_18 \C \h \a \s \e \space \a \g \a \i \n \? \space \p \r \e \s \s \space \k \e \y \, \space \t \o \space \s \t \o \p \space \p \r \e \s \s \space \< \e \s \c \> \Return \null

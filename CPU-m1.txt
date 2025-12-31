@@ -1,0 +1,48 @@
+In this new project i like to make an plug-in replacement for the current CPU (cpu.py)
+Where the current CPU follows a strict von Neumann architecture, the new architecture CPU-m1 should use an pipe-line architecture.
+The new CPU file is called cpu-m1.py.
+
+the new CPU-m1 is reusing the most of the current cpu logic, what keeps the ´binary' compatibility for the plug-in replacement
+
+
+the cpu's tick method is the primalry change for this, (right?)
+
+
+where the current CPU runs one 'robot' for the van neumann cycles, the new CPU needs tree 'robots'
+
+one robot for fetching an instrcution. stores the result in the MIR register.
+This robot is only fetching when the decode robot not stalls
+
+
+other robot for decoding, it reads the MIR register an decodes the instruction.
+then it stores the instrcution into the instruction execution buffer.
+this instrcution execution buffer can hold 4 instructions, whn the buffer is full, the decoder robot signals a stall to the fetching robot
+
+the last robot executes the instructions from the instruction execution buffer.
+it pops the instrcution from the buffer, and performs the ucode instructions per clockcycle (one per tick-call)
+
+when the whole instruction is executed (this can take 1 to 8 ucode insctructions) the executer checks if the PC is changed (jmp/call/ret/int/rti..)
+If so, then it will flush the instrcution execution buffer, resets the MIR register, set the PC to the right adres for the next fetch
+
+it also set the state from EXECUTE to IDLE to give the interrupt time to interrupt. when there is no interrupt the executer robot will start to execute again 
+(set the state to EXECUTE) on the next cycle when there is one waiting in the instrcution execution buffer.
+
+
+When an interrupt is pending, the pipe-line must be flushed, and the CPU/interrrupt controler is starting the ISR 
+after an return from interrupt, the pipe-line must be flushed also, and the PC must be restet to the correct address. (importent to take care of)
+
+
+The robots a running in the tick method:
+
+first tne executer robot checks if the is an instruction waiting in the instrcution execution buffer
+set the robot status from IDLE to EXECUTE, and start execution (this can take multiple ticks)
+
+second, the deocder robot checks the buffer, if an slot is free, it unstalls the FETCH robot and read the MIR, decodes the insctruction
+pushes the insctruction and PC (and arguments offcourse) into the instruction execution buffer
+checks if the buffer is full, if so it stalls the FETCH robot (this takes one tick)
+
+third, the fetching robot checks if it is stalled, if so do nothing, otherwise, fetches the instrcution.
+place the result into the MIR register and increment the PC
+
+
+And do not forgett the create an debug mode

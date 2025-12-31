@@ -6,7 +6,7 @@
 def 10=NOP {
     .format zero
     set_cpu_state(SLEEP)
-    ;set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 11=HALT {
@@ -20,19 +20,19 @@ def 12=RET {
     alu(INC)                ; Ra = Ra + 1 (SP is now effectively incremented in Ra)
     move_reg(SP, Ra)        ; SP = Ra (SP is updated)
     read_mem_reg(SP, PC)    ; PC = memory[SP] (read the saved PC)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 13=EI {
     .format zero
     set_interrupt_flag(TRUE)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 14=DI {
     .format zero
     set_interrupt_flag(FALSE)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 15=RTI {
@@ -45,7 +45,7 @@ def 20=JMPF {
     branch(S, false)      ; jump when the status bit is set to true
     load_immediate(PC, $1)
 :false
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 21=JMPT {
@@ -55,13 +55,13 @@ def 21=JMPT {
 :true
     load_immediate(PC, $1)
 :end
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 22=JMP {
     .format one_addr
     load_immediate(PC, $1)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 24=CALL {
@@ -71,7 +71,7 @@ def 24=CALL {
     alu(DEC)                ; Decrement SP
     move_reg(SP, Ra)        ; Update SP
     load_immediate(PC, $1)  ; Load target address into PC
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 
@@ -87,7 +87,7 @@ def 25=CALLX {
     move_reg(Rb, R0)        ; Rb = R0 (index register I)
     alu(ADD)                ; Ra = Ra + Rb (effective address)
     move_reg(PC, Ra)        ; Load effective address into PC
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 26=INT {
@@ -98,25 +98,25 @@ def 26=INT {
     move_reg(Rb, R0)            ; Rb = syscall ID (from register I/R0)
     alu(ADD)                    ; Ra = Ra + Rb (address of the handler pointer)
     read_mem_reg(Ra, PC)        ; Read the handler pointer from memory (jump to the handler)  
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 30=LD {
     .format two_reg_reg
     move_reg($1, $2)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 31=LDI {
     .format two_reg_val
     load_immediate($1, $2)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 32=LDM {
     .format two_reg_addr
     read_mem_adres($2, $1)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 33=LDX {
@@ -125,13 +125,13 @@ def 33=LDX {
     move_reg(Rb, R0)         ; Rb = R0 (index register)
     alu(ADD)                 ; Ra = Ra + Rb (effective address)
     read_mem_reg(Ra, $1)     ; Read value from effective address (Ra) into $1
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 40=STO {
     .format two_reg_addr
     store_mem_adres($2, $1)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 41=STX {
@@ -140,7 +140,7 @@ def 41=STX {
     move_reg(Rb, R0)         ; Rb = R0 (index register)
     alu(ADD)                 ; Ra = Ra + Rb (effective address)
     store_mem_reg(Ra, $1)    ; Store value of op1 at effective address (Ra)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 50=ADD {
@@ -149,7 +149,7 @@ def 50=ADD {
     move_reg(Rb, $2)
     alu(ADD)
     move_reg($1, Ra)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 51=ADDI {
@@ -158,7 +158,7 @@ def 51=ADDI {
     load_immediate(Rb, $2)
     alu(ADD)
     move_reg($1, Ra)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 52=SUB {
@@ -167,7 +167,7 @@ def 52=SUB {
     move_reg(Rb, $2)
     alu(SUB)
     move_reg($1, Ra)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 53=SUBI {
@@ -176,7 +176,7 @@ def 53=SUBI {
     load_immediate(Rb, $2)
     alu(SUB)
     move_reg($1, Ra)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 60=MUL {
@@ -185,7 +185,7 @@ def 60=MUL {
     move_reg(Rb, $2)
     alu(MUL)
     move_reg($1, Ra)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 61=MULI {
@@ -194,7 +194,7 @@ def 61=MULI {
     load_immediate(Rb, $2)
     alu(MUL)
     move_reg($1, Ra)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 63=DIVI {
@@ -203,7 +203,7 @@ def 63=DIVI {
     load_immediate(Rb, $2)
     alu(DIV)
     move_reg($1, Ra)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 65=DMOD {
@@ -213,7 +213,7 @@ def 65=DMOD {
     alu(MOD)
     move_reg($1, Ra)
     move_reg($2, Rb)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 
@@ -228,7 +228,7 @@ def 70=TST {
 :true
     set_status_bit(TRUE)
 :end
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 71=TSTE {
@@ -242,7 +242,7 @@ def 71=TSTE {
 :true
     set_status_bit(TRUE)
 :end
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 72=TSTG {
@@ -257,7 +257,7 @@ def 72=TSTG {
 :true
     set_status_bit(FALSE)
 :end
-    set_cpu_state(FETCH) 
+    ;  set_cpu_state(FETCH) 
 }
   
 # INC r mem (opcode 80)
@@ -269,7 +269,7 @@ def 80=INC {
     move_reg($1, Ra)         ; Move the original value from Ra to the destination register op1
     alu(INC)
     store_mem_adres($2, Ra)   ; Store the incremented value back to memory(op2)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 # DEC r mem (opcode 81)
@@ -281,7 +281,7 @@ def 81=DEC {
     alu(DEC)
     move_reg($1, Ra)         ; Move the decremented value back to the destination register op1
     store_mem_adres($2, Ra)  ; Store the decremented value back to memory(op2)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 82=ANDI {
@@ -290,7 +290,7 @@ def 82=ANDI {
     load_immediate(Rb, $2)
     alu(AND)
     move_reg($1, Ra)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 90=PUSH {
@@ -299,7 +299,7 @@ def 90=PUSH {
     store_mem_reg(SP, $1)
     alu(DEC)
     move_reg(SP, Ra)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 91=POP {
@@ -308,7 +308,7 @@ def 91=POP {
     alu(INC)                ; Ra = Ra + 1 (SP is now effectively incremented in Ra)
     move_reg(SP, Ra)        ; SP = Ra (SP is updated)
     read_mem_reg(SP, $1)    ; $1 = memory[SP] (read the value at the new SP)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 
@@ -334,7 +334,7 @@ def 92=STACK {
     load_immediate(Rb, $2)      ; Rb = address of the stack pointer variable
     store_mem_reg(Rb, Ra)       ; Store the new SP value back.
 
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 93=USTACK {
@@ -355,11 +355,11 @@ def 93=USTACK {
     # Ra still holds the new SP.
     read_mem_reg(Ra, $1)        ; Read the value from the top of the stack into the destination register $1.
 
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }
 
 def 94=GPU {
     .format one_reg
     gpu($1)
-    set_cpu_state(FETCH)
+    ;  set_cpu_state(FETCH)
 }

@@ -1,7 +1,7 @@
 # ============================================================================
-# Hunter vs Target AI (2-16-4 Network)
-# Inputs:  [TargetX, TargetY, HunterX, HunterY]
-# Outputs: [North, South, East, West] (One-Hot Encoded)
+# Hunter vs Target AI (2-4-4 Network)
+# Inputs:  [DeltaX, DeltaY] (Relative distance)
+# Outputs: [North, South, East, West] (Multi-Hot Encoded)
 # ============================================================================
 
 USE std_heap
@@ -182,7 +182,7 @@ DEF TEST_NETWORK {
             # Predict
             network_ptr input_arr NN.predict AS output_ptr
             
-            # Independent Axis Logic (Threshold = 4000/10000)
+            # Independent Axis Logic (Threshold = 6000/10000)
             output_ptr 0 ARRAY.get AS val_n
             output_ptr 1 ARRAY.get AS val_s
             output_ptr 2 ARRAY.get AS val_e
@@ -281,7 +281,7 @@ DEF VISUALIZE_CHASE {
             # steps PRINT
 
             KEYpressed IF
-                32 == IF                ; Check for <esc>
+                32 == IF                ; Check for <space>
                     200 AS steps
                 END
             END
@@ -316,15 +316,15 @@ VISUALIZE_CHASE
 5000 TRAIN_NETWORK
 VISUALIZE_CHASE
 
+5000 TRAIN_NETWORK
+VISUALIZE_CHASE
 
 
-"Run again? press a key, to stop press <esc>\n" PRTstring
+
+"Chase again? press a key, to stop press <esc>\n" PRTstring
 WHILE KEYchar 27 != DO
-    1000 TRAIN_NETWORK
+    # 1000 TRAIN_NETWORK
     VISUALIZE_CHASE
-    "Run again? press key, to stop press <esc>\n" PRTstring
+    "Chase again? press key, to stop press <esc>\n" PRTstring
 DONE
 13 PRTchar
-
-# TEST_NETWORK
-VISUALIZE_CHASE
