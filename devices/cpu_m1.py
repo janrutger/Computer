@@ -12,6 +12,7 @@ class CPU_M1(CPU):
         
         # Pipeline Register (Latch) between Fetch and Decode
         self.MIR_PC = 0  # Stores the address of the instruction currently in MIR
+        self.MIR_NEXT_PC = 0 # Stores the predicted next PC for the instruction in MIR
         
         # Flow control
         self.fetch_stalled = False
@@ -20,14 +21,24 @@ class CPU_M1(CPU):
         # Pipeline Register (Latch) - Initialize to None so we don't decode garbage at startup
         self.MIR = None
         self.current_instruction_pc = 0
+        self.current_predicted_pc = 0
         
         # Override state to ensure we start correctly
         self.state = "FETCH" 
 
+        # Performance Counters for Proof of Work
+        self.stats = {
+            "fetched": 0,
+            "predicted_correct": 0,
+            "predicted_wrong": 0,
+            "flushes": 0
+        }
+        self.ras = deque(maxlen=64) # Return Address Stack. deque handles overflow by discarding oldest.
+
     def tick(self):
         self.cycles_executed += 1
         if self.state == "HALT":
-            print("CPU is halted.")
+            self._print_stats()
             return
 
         # --- ROBOT 1: EXECUTE (The Consumer) ---
@@ -45,6 +56,20 @@ class CPU_M1(CPU):
         # Runs last to pull new data from memory
         self._tick_fetch_stage()
 
+        if self.state == "HALT":
+            self._print_stats()
+
+    def _print_stats(self):
+        print("CPU is halted.")
+        print(f"--- Pipeline Stats ---")
+        print(f"Instructions Fetched: {self.stats['fetched']}")
+        print(f"Predictions Correct : {self.stats['predicted_correct']}")
+        print(f"Predictions Wrong   : {self.stats['predicted_wrong']}")
+        print(f"Pipeline Flushes    : {self.stats['flushes']}")
+        if (self.stats['predicted_correct'] + self.stats['predicted_wrong']) > 0:
+            acc = self.stats['predicted_correct'] / (self.stats['predicted_correct'] + self.stats['predicted_wrong']) * 100
+            print(f"Prediction Accuracy : {acc:.2f}%")
+
     def _tick_fetch_stage(self):
         if self.fetch_stalled or self.pc_was_modified:
             return
@@ -58,8 +83,11 @@ class CPU_M1(CPU):
         # 3. Save the address in our "Shadow MIR"
         self.MIR_PC = current_pc
         
-        # 4. Increment Global PC for the next cycle
-        self.registers["PC"] += 1
+        # 4. Determine next PC (Prediction Step)
+        prediction = self._predict_next_pc(self.MIR, current_pc)
+        self.registers["PC"] = prediction
+        self.MIR_NEXT_PC = prediction
+        self.stats["fetched"] += 1
         
         if self.debug_mode:
             print(f"[FETCH] Fetched {self.MIR} from {current_pc}")
@@ -90,7 +118,7 @@ class CPU_M1(CPU):
             if opcode in self.microcode_rom:
                 ucode = self.microcode_rom[opcode]
                 # Push the bundle to the buffer, INCLUDING the saved MIR_PC
-                packet = (ucode, operand1, operand2, self.MIR_PC)
+                packet = (ucode, operand1, operand2, self.MIR_PC, self.MIR_NEXT_PC)
                 self.instruction_buffer.append(packet)
                 self.MIR = None # Consume the instruction so we don't decode it again
                 if self.debug_mode:
@@ -110,6 +138,7 @@ class CPU_M1(CPU):
             time.sleep(0)
             self.state = "FETCH"
             self.instructions_executed += 1
+            self.stats["predicted_correct"] += 1
             if self.pc_was_modified:
                 return True # Signal Flush
             return False
@@ -122,6 +151,7 @@ class CPU_M1(CPU):
                 self.operand1 = packet[1]
                 self.operand2 = packet[2]
                 self.current_instruction_pc = packet[3] # Capture the PC of this instruction
+                self.current_predicted_pc = packet[4]   # Capture what Fetch predicted
                 
                 self.microcode_step_index = 0
                 self.state = "EXECUTE"
@@ -147,18 +177,26 @@ class CPU_M1(CPU):
                 if not self.pc_was_modified:
                     self.registers["PC"] = logical_pc
 
+                if self.debug_mode:
+                    print(f"    Executing cycle: {step[0]} {step[1:]}")
+
                 self.execute_microcode_step(step, self.operand1, self.operand2)
                 
                 if not self.pc_was_modified:
-                    # We were in logical mode. Did the instruction modify PC?
-                    if self.registers["PC"] != logical_pc:
-                        self.pc_was_modified = True
-                    else:
-                        # No jump occurred. Restore the real fetch PC so the Fetch robot continues.
+                    # Verification: Did the actual execution match the prediction?
+                    if self.registers["PC"] == self.current_predicted_pc:
+                        # Prediction Correct: Restore the real fetch PC so the Fetch robot continues.
                         self.registers["PC"] = real_fetch_pc
+                    else:
+                        # Prediction Wrong: The PC is now pointing to the correct target.
+                        # Signal a flush so Fetch restarts from this new address.
+                        self.pc_was_modified = True
+                        self.stats["predicted_wrong"] += 1
             else:
                 self.state = "FETCH" # Ready for next
                 self.instructions_executed += 1
+                if not self.pc_was_modified:
+                    self.stats["predicted_correct"] += 1
                 if self.pc_was_modified:
                     return True # Signal Flush
         
@@ -169,6 +207,7 @@ class CPU_M1(CPU):
         self.MIR = None # Invalidate MIR so Decoder doesn't re-process old data
         self.fetch_stalled = False
         self.pc_was_modified = False
+        self.stats["flushes"] += 1
 
     def _handle_interrupt(self):
         # Rewind PC to the oldest instruction in the pipeline before saving context.
@@ -179,3 +218,43 @@ class CPU_M1(CPU):
             self.registers["PC"] = self.MIR_PC
         
         super()._handle_interrupt()
+
+    def _predict_next_pc(self, instruction, current_pc):
+        # 1. Safety Check: Ensure we have a valid instruction string
+        if not instruction or not isinstance(instruction, str) or len(instruction) < 2:
+            return current_pc + 1
+
+        # 2. Opcode Check: Extract the first two characters
+        opcode = instruction[:2]
+
+        # 3. Predict JMP (22) and CALL (24)
+        # We ONLY parse the address if we are SURE it is a control flow instruction.
+        # This prevents '613-1' (MUL) from being misread as a jump to -1.
+        # if opcode in ["22", "24"]:
+        # 3. Predict JMP (22) - Unconditional Jump
+        if opcode == "22":
+            try:
+                # For format "one_addr", the address is usually the rest of the string
+                return int(instruction[2:])
+            except ValueError:
+                pass
+
+        # 4. Predict CALL (24) - Push to RAS and Jump
+        elif opcode == "24":
+            try:
+                target = int(instruction[2:])
+                self.ras.append(current_pc + 1)
+                return target
+            except ValueError:
+                pass
+
+        # 5. Predict RET (12) - Pop from RAS
+        # The 'and self.ras' check prevents underflow (IndexError) if the stack is empty.
+        elif opcode == "12" and self.ras:
+            return self.ras.pop()
+
+        # Note:
+        # - JMPF (20) / JMPT (21): Conditional. We predict "Not Taken" (PC+1).
+        # - CALLX (25) / INT (26) / RET (12): Target unknown at fetch. We predict PC+1.
+        # If these instructions actually jump, the Execute stage will flush the pipeline.
+        return current_pc + 1
