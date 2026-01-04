@@ -319,6 +319,9 @@ VISUALIZE_CHASE
 5000 TRAIN_NETWORK
 VISUALIZE_CHASE
 
+5000 TRAIN_NETWORK
+VISUALIZE_CHASE
+
 
 
 "Chase again? press a key, to stop press <esc>\n" PRTstring

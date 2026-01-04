@@ -1,0 +1,17 @@
+now i have an pipelined CPU, the Stern motherboard should be upgraded to make better use of the new CPU
+lets call it the Stern-ATX (Advanced Turbo eXecution) motherboard, instead of AT (advanced Threading)
+
+
+the new motherboard should be binary compatible for both CPU. but it replaces the "asynchronous" threading model with a Synchronous Burst model.
+
+
+The core of the change, the CPU thread is removed. instead of the thread
+- the main() runs a burst of CPU ticks
+- Ticks the divices
+- Draw the screen and console
+- include an sleep(0)for housekeeping by the host computer
+- make sure an debug mode is still working
+
+
+please reflect on the question if this advise of Gemini Snel is really a good idea
+and will it give  better (wall-clock) performane

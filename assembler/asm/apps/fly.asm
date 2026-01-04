@@ -89,6 +89,8 @@
     sto A $N
     jmp :_main_while_start_0
 :_main_while_end_0
+
+    halt
     ret
 
 # .FUNCTIONS

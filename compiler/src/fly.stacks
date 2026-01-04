@@ -34,3 +34,7 @@ WHILE N 700 < DO
     N 1 + AS N 
     #1 TIME.wait
 DONE
+
+ASM {
+    halt
+}

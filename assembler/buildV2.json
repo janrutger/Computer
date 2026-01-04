@@ -78,6 +78,10 @@
       {
         "file": "asm/apps/ml_xor.asm",
         "output": "../bin/apps/ml_xor.bin"
+      },
+      {
+        "file": "asm/apps/fib.asm",
+        "output": "../bin/apps/fib.bin"
       }
     ]
   }

@@ -229,6 +229,10 @@
     stack A $DATASTACK_PTR
     call @TRAIN_NETWORK
     call @VISUALIZE_CHASE
+    ldi A 5000
+    stack A $DATASTACK_PTR
+    call @TRAIN_NETWORK
+    call @VISUALIZE_CHASE
     ldi A $_main_str_17
     stack A $DATASTACK_PTR
     call @PRTstring

@@ -219,42 +219,41 @@ class CPU_M1(CPU):
         
         super()._handle_interrupt()
 
+   
+
     def _predict_next_pc(self, instruction, current_pc):
-        # 1. Safety Check: Ensure we have a valid instruction string
-        if not instruction or not isinstance(instruction, str) or len(instruction) < 2:
+        # 1. Validation
+        if not instruction or len(instruction) < 2:
             return current_pc + 1
 
-        # 2. Opcode Check: Extract the first two characters
         opcode = instruction[:2]
 
-        # 3. Predict JMP (22) and CALL (24)
-        # We ONLY parse the address if we are SURE it is a control flow instruction.
-        # This prevents '613-1' (MUL) from being misread as a jump to -1.
-        # if opcode in ["22", "24"]:
-        # 3. Predict JMP (22) - Unconditional Jump
-        if opcode == "22":
+        # 2. Unconditional Jumps/Calls (Opcode 22/24)
+        if opcode == "22" or opcode == "24":
             try:
-                # For format "one_addr", the address is usually the rest of the string
-                return int(instruction[2:])
-            except ValueError:
-                pass
-
-        # 4. Predict CALL (24) - Push to RAS and Jump
-        elif opcode == "24":
-            try:
+                # Slice and convert only if it's a jump candidate
                 target = int(instruction[2:])
-                self.ras.append(current_pc + 1)
+                if opcode == "24": 
+                    self.ras.append(current_pc + 1)
                 return target
             except ValueError:
-                pass
+                # This handles the '613-1' case - if it's not a valid int, 
+                # it's not a jump address.
+                return current_pc + 1
 
-        # 5. Predict RET (12) - Pop from RAS
-        # The 'and self.ras' check prevents underflow (IndexError) if the stack is empty.
+        # 3. Conditional Branches (Opcode 20/21) - Static BTFN Prediction
+        elif opcode == "20" or opcode == "21":
+            try:
+                target = int(instruction[2:])
+                # BTFN: If jumping backward, predict TAKEN (Target)
+                # If jumping forward, predict NOT TAKEN (current_pc + 1)
+                return target if target < current_pc else current_pc + 1
+            except ValueError:
+                return current_pc + 1
+
+        # 4. Returns (Opcode 12)
         elif opcode == "12" and self.ras:
             return self.ras.pop()
 
-        # Note:
-        # - JMPF (20) / JMPT (21): Conditional. We predict "Not Taken" (PC+1).
-        # - CALLX (25) / INT (26) / RET (12): Target unknown at fetch. We predict PC+1.
-        # If these instructions actually jump, the Execute stage will flush the pipeline.
+        # Fallback for all other instructions (ADD, LD, STO, etc.)
         return current_pc + 1

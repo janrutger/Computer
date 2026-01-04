@@ -1,0 +1,189 @@
+Its time to resolve an historical design flaw in the virtual memory silicion (memoryR2.py)
+where the memory stores the values as strings, what causes int-str and str-int conversions on all reads and writes
+
+
+since i do have an new motherboard, stern-ATX, and the new pipelined CPU-m1, this flaw becomes more and more an bottleneck
+
+
+while desining an solution i need to be aware of:
+- i need an new binary format, since 613-1 is not a valid memory value anymore
+- The decoder of the CPU must be aware of the new binary format
+- the new CPU-m1 does not need to do INT conversions anymore
+- the new memory object should be transparant for the user (read/write operations)
+- the load program in the stern-atx should store ints instead of strings
+
+
+This binary part shows why an conversion is needed.
+The current memory stores the value as strings, and all values are valid strings
+but when the memory stores integgers, 613-1 (mul C -1) is not an valid integer
+
+259 908
+260 3140
+261 7030
+262 21286
+263 7293
+264 20271
+265 3141
+266 613-1           << Conversion needed
+267 903
+268 31345
+
+
+FIX:
+while loading the binary in memory the loader checks for this pattern opcode+register+negative imediate value (613-1) and converts it to -6131
+this value can be stored as an integer into memory
+The decoder in the CPU, must check the sign, and nows the immediate argument is negative
+
+    def load_binary_line(line):
+        line = line.strip()
+        
+        # Handle the "613-1" case
+        if '-' in line and not line.startswith('-'):
+            # Split "613-1" into "613" and "1"
+            parts = line.split('-')
+            # Reassemble as 6131 and negate it -> -6131
+            # This preserves the digits while indicating the negative immediate
+            val = int(parts[0] + parts[1]) * -1
+        else:
+            val = int(line)
+            
+        return val
+
+
+And the decoder logic in the CPU must be changed to (and the prediction logic needs to decode to)
+the current decoder is using string-slicing to get the opcode and the operands, where the MIR containts an String value 
+
+        opcode = self.MIR[:2]
+        operand1 = "0"
+        operand2 = "0"
+
+        if opcode in self.instruction_formats:
+            fmt = self.instruction_formats[opcode]
+            if fmt == "one_addr": operand1 = self.MIR[2:]
+            elif fmt == "one_reg": operand1 = self.MIR[2]
+            elif fmt == "two_reg_reg": operand1 = self.MIR[2]; operand2 = self.MIR[3]
+            elif fmt == "two_reg_addr" or fmt == "two_reg_val": operand1 = self.MIR[2]; operand2 = self.MIR[3:]
+
+
+But in the new way the MIR contains an interger value to decode.
+
+    def decode(self, instruction_int):
+        # 1. Handle Sign (Negative Immediate Flag)
+        is_negative_immediate = False
+        if instruction_int < 0:
+            is_negative_immediate = True
+            instruction_int = abs(instruction_int)
+
+        # 2. Extract Opcode (First 2 digits)
+        # We calculate the divisor to split Opcode from Operands
+        # e.g., 31100 -> Op: 31, Divisor: 1000
+        # e.g., 901   -> Op: 90, Divisor: 10
+        temp_val = instruction_int
+        divisor = 1
+        while temp_val >= 100:
+            temp_val //= 10
+            divisor *= 10
+        
+        opcode = temp_val  # This is now an int (e.g., 61)
+        
+        # 3. Extract Operands based on Format
+        # 'rest' contains everything after the opcode
+        rest = instruction_int % divisor
+        
+        operand1 = 0
+        operand2 = 0
+        
+        # Convert opcode to string for lookup if your dict uses string keys
+        opcode_str = str(opcode) 
+        
+        if opcode_str in self.instruction_formats:
+            fmt = self.instruction_formats[opcode_str]
+            
+            if fmt == "one_addr" or fmt == "one_reg":
+                # e.g., 31100 -> Rest is 100
+                operand1 = rest
+                
+            elif fmt == "two_reg_reg":
+                # e.g., 2012 -> Rest is 12. R1=1, R2=2
+                operand1 = rest // 10
+                operand2 = rest % 10
+                
+            elif fmt == "two_reg_addr" or fmt == "two_reg_val":
+                # e.g., 6131 -> Rest is 31. R1=3, Val=1
+                # The first operand (Register) is always 1 digit long in this architecture.
+                # We split the 'rest' by reducing the divisor by one power of 10.
+                
+                split_factor = divisor // 10
+                
+                # Safety check for edge cases (like opcode 6130 -> rest 30)
+                if split_factor == 0: split_factor = 1 
+
+                operand1 = rest // split_factor
+                operand2 = rest % split_factor
+                
+                if is_negative_immediate:
+                    operand2 = -operand2
+
+            # Convert register operands to strings for compatibility with cpu.py
+            if fmt == "one_reg":
+                operand1 = str(operand1)
+            elif fmt == "two_reg_reg":
+                operand1 = str(operand1)
+                operand2 = str(operand2)
+            elif fmt == "two_reg_addr" or fmt == "two_reg_val":
+                operand1 = str(operand1)
+
+        return opcode, operand1, operand2
+
+DON't forget to update the predictor to.... 
+
+the new decoder fills opernd1 and operand2 with integer values
+        # Push the bundle to the buffer, INCLUDING the saved MIR_PC
+        packet = (ucode, operand1, operand2, self.MIR_PC, self.MIR_NEXT_PC)
+
+
+
+This exucution packet is consumed by the execution robot with send the (now) integer values to the micro code execeture in the CORE CPU
+    self.execute_microcode_step(step, self.operand1, self.operand2)
+
+
+Be carefull when chaning the core CPU, because this is also running the old system, and i want to keep compatibility for now
+i actually think the is no reason to change the current execute_microcode_step, due all int() operations it compatible, and those int() are not 
+an problem for the new envorinment (althoug it costs performance)
+
+
+And we need to change the memory object for the new integer values
+as far i see, the initialization and both write methods must be changed.
+
+    def __init__(self, size=4096):
+        self.size = size
+        self.memory = [0] * size  # Initialize memory with 0 as int
+
+    def write(self, address, value):
+        if 0 <= address < self.size:
+            self.memory[address] = int(value)
+            if self.video_start <= address < self.video_end:
+                self.video_dirty = True
+
+    def write_block(self, address, data):
+        # ... checks ...
+        # Convert all data to int before writing
+        int_data = [int(d) for d in data]
+        self.memory[address:address + length] = int_data
+        # ... video dirty checks ...
+
+
+
+
+
+
+The binary file is still an ascci base file with compatible instruction notation (613-1)
+The old motherboard (memoryR2,CPU chipset) read and proces this file as is now
+
+the new motherboard (new memoryR3, cpu-M1 chipset):
+    loader: read the current file and do the conversion to all integgers
+    decoder: decode intergers instead of strings, keeping register as strings
+    memory: Stores integers instead of strings
+    cpu (execute_microcode_step): no changes here
+
+    and the new board runs the same code and integermamemory instead of string memory

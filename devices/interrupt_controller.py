@@ -1,5 +1,4 @@
-import threading
-import queue
+from collections import deque
 
 class InterruptController:
     """
@@ -8,7 +7,7 @@ class InterruptController:
     """
     def __init__(self, memory):
         # A thread-safe queue to hold incoming interrupt vectors and their associated data.
-        self.pending_interrupts = queue.Queue()
+        self.pending_interrupts = deque()
         self.memory = memory
         # Dictionary to map interrupt vectors to their corresponding data memory addresses
         self.vector_data_addresses = {}
@@ -23,24 +22,21 @@ class InterruptController:
     def trigger(self, vector, data=None):
         """Called by a peripheral to queue an interrupt with optional data."""
         if self.master_enabled:
-            self.pending_interrupts.put((vector, data))
+            self.pending_interrupts.append((vector, data))
 
     def has_pending(self):
         """Lets the CPU check if any interrupts are waiting."""
-        return not self.pending_interrupts.empty()
+        return bool(self.pending_interrupts)
 
     def acknowledge(self):
         """
         Called by the CPU to get the next interrupt (vector, data) from the queue.
         Returns (None, None) if no interrupt is pending.
         """
-        if not self.has_pending():
+        if not self.pending_interrupts:
             return None, None
-        try:
-            # Get the next interrupt (vector, data) from the queue.
-            return self.pending_interrupts.get_nowait()
-        except queue.Empty:
-            return None, None
+        # Get the next interrupt (vector, data) from the queue.
+        return self.pending_interrupts.popleft()
 
     def handle_acknowledged_interrupt(self, vector, data):
         """
