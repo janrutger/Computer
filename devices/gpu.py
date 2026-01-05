@@ -30,9 +30,7 @@ class GPU:
                 rows = int(self.memory.read(ptr))
                 cols = int(self.memory.read(ptr + 1))
                 data_block = self.memory.read_block(ptr + 2, rows * cols)
-                # Convert strings to float for numpy
-                data = [float(x) for x in data_block]
-                return np.array(data).reshape(rows, cols)
+                return np.array(data_block, dtype=float).reshape(rows, cols)
 
             mat_a = get_matrix(ptr_a)
             

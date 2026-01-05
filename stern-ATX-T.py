@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import pygame
+import threading
 import time
 import sys
 import os
@@ -8,6 +9,7 @@ import cProfile
 import pstats
 
 from devices.cpu_m1 import CPU_M1 as CPU
+# from devices.cpu import CPU
 
 from devices.memoryR3 import Memory
 from devices.interrupt_controller import InterruptController
@@ -52,12 +54,62 @@ MEM_UDC_I0_BASE   = MEM_VDSK_I0_BASE - 24   # UDC virtual controler starts here 
 MEM_RTC_IO_ADRES  = MEM_UDC_I0_BASE  - 1    # RTC memory IO adres (just one register)
 
 
+# --- CPU Thread ---
+class CpuThread(threading.Thread):
+    """Runs the CPU in a background thread."""
+    def __init__(self, cpu, debugger, enable_profiling=False):
+        super().__init__()
+        self.cpu = cpu
+        self.debugger = debugger
+        self.daemon = True
+        self._running = True
+        self.enable_profiling = enable_profiling
+
+    def run(self):
+        """Main loop for the CPU."""
+        # Localize variables for performance (avoids self. lookup in hot loop)
+        cpu = self.cpu
+        debugger = self.debugger
+        
+        # Batch size: Run this many cycles before yielding/checking thread state
+        BATCH_SIZE = 5000
+
+        if self.enable_profiling:
+            profiler = cProfile.Profile()
+            profiler.enable()
+
+        while self._running and cpu.state != "HALT":
+            if debugger.in_debug_mode:
+                time.sleep(0.1)
+                continue
+
+            # Run a batch of cycles to reduce thread switching overhead
+            for _ in range(BATCH_SIZE):
+                # Check for breakpoint only if breakpoints exist and we are fetching
+                if cpu.state == "FETCH" and debugger.breakpoints and cpu.registers["PC"] in debugger.breakpoints:
+                    debugger.enter_debug_mode()
+                    break
+
+                cpu.tick()
+                
+                if cpu.state == "HALT":
+                    break
+        
+        if self.enable_profiling:
+            profiler.disable()
+            print("\n--- CPU Thread Profile ---")
+            stats = pstats.Stats(profiler).sort_stats('cumulative')
+            stats.print_stats(20)
+
+    def stop(self):
+        self._running = False
+
 # --- Main Application ---
-def main():
+def main(profile_cpu=False):
     # 1. Initialize Pygame
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-    pygame.display.set_caption("Stern-ATX Computer (Synchronous Burst)")
+    pygame.display.set_caption("Stern-ATX Computer (Threaded)")
     font = pygame.font.SysFont('monospace', 18)
     clock = pygame.time.Clock()
 
@@ -130,20 +182,16 @@ def main():
     if debug_mode:
         debugger.add_breakpoint(0)
 
-    # 4. Main Loop
-    print("Starting Stern-ATX System...")
+    # 4. Create and Start Background Threads
+    print("Starting background threads (CPU)...")
+    cpu_thread = CpuThread(cpu, debugger, enable_profiling=profile_cpu)
     start_time = time.time()
+    cpu_thread.start()
     
+    print("Starting Stern-ATX System...")
     running = True
-    
-    # Tuning: BURST_SIZE determines how many CPU cycles run per screen refresh.
-    # Higher = Faster CPU, Lower = More responsive GUI.
-    BURST_SIZE = 20000
-    TARGET_FPS = 30
-    draw_interval = 1.0 / TARGET_FPS
-    last_draw_time = time.time()
 
-    while running:
+    while running and cpu_thread.is_alive():
         # --- Event Handling ---
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -151,23 +199,6 @@ def main():
             # Pass keyboard events to the keyboard device
             if event.type == pygame.KEYDOWN:
                 keyboard.handle_key_event(event)
-
-        # --- CPU Burst ---
-        # Run a burst of cycles if not halted and not paused by debugger
-        if not debugger.in_debug_mode and cpu.state != "HALT":
-            for _ in range(BURST_SIZE):
-                # Check for breakpoints (Optimization: only check on FETCH)
-                if cpu.state == "FETCH" and cpu.registers["PC"] in debugger.breakpoints:
-                    debugger.enter_debug_mode()
-
-                cpu.tick()
-                
-                if cpu.state == "HALT":
-                    running = False
-                    break
-
-                if cpu.state == "SLEEP":
-                    break
 
         # --- Device Ticks ---
         # Devices tick once per frame/burst
@@ -182,29 +213,29 @@ def main():
              
 
         # --- Drawing Logic ---
-        current_time = time.time()
-        if current_time - last_draw_time >= draw_interval:
-            last_draw_time = current_time
+        # plotter1.draw()  # turned of since the FLIP device instruction makes the plotter draw
+        lcd.draw()
 
-            # plotter1.draw()  # turned of since the FLIP device instruction makes the plotter draw
-            lcd.draw()
+        if ram.is_video_dirty():
+            ram.unset_video_dirty_flag()
+            screen.fill(BG_COLOR)
+            for y in range(SCREEN_HEIGHT_CHARS):
+                for x in range(SCREEN_WIDTH_CHARS):
+                    mem_addr = MEM_VIDEO_START + (y * SCREEN_WIDTH_CHARS) + x
+                    char_code = int(ram.read(mem_addr))
+                    if char_code > 0:
+                        char_surface = font.render(chr(char_code), True, FG_COLOR)
+                        screen.blit(char_surface, (x * CHAR_WIDTH, y * CHAR_HEIGHT))
+            pygame.display.flip()
 
-            if ram.is_video_dirty():
-                ram.unset_video_dirty_flag()
-                screen.fill(BG_COLOR)
-                for y in range(SCREEN_HEIGHT_CHARS):
-                    for x in range(SCREEN_WIDTH_CHARS):
-                        mem_addr = MEM_VIDEO_START + (y * SCREEN_WIDTH_CHARS) + x
-                        char_code = int(ram.read(mem_addr))
-                        if char_code > 0:
-                            char_surface = font.render(chr(char_code), True, FG_COLOR)
-                            screen.blit(char_surface, (x * CHAR_WIDTH, y * CHAR_HEIGHT))
-                pygame.display.flip()
-
+        # --- Housekeeping ---
+        time.sleep(0) # Yield to OS
+        # clock.tick(60) # Maintain stable frame rate
 
     # 5. Shutdown
     end_time = time.time()
     print("GUI loop exited. Halting system...")
+    cpu_thread.stop()
 
     # --- Performance Stats ---
     print("\n--- Simulation Performance ---")
@@ -242,12 +273,12 @@ if __name__ == "__main__":
         profiler = cProfile.Profile()
         try:
             profiler.enable()
-            main()
+            main(profile_cpu=True)
         finally:
             profiler.disable()
-            print("\n--- CProfile Results ---")
+            print("\n--- Main Thread Profile ---")
             stats = pstats.Stats(profiler).sort_stats('cumulative')
             stats.print_stats(20)
     else:
-        main()
+        main(profile_cpu=False)
     

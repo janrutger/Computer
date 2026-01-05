@@ -48,6 +48,9 @@ class VirtualLCD(UDCDevice):
         self.canvas = None
         self.photo_image = None
         self.dirty = True
+        
+
+        self.image_id = None # Track the canvas item ID
 
         # --- Color Palette (for PIL) ---
         # RGB values for the 16-color palette
@@ -68,6 +71,7 @@ class VirtualLCD(UDCDevice):
         if not self.window or not self.dirty:
             return
 
+
         try:
             # Create a PIL image from the numpy buffer in Palette mode
             img = Image.fromarray(self.screen_buffer, mode='P')
@@ -82,7 +86,11 @@ class VirtualLCD(UDCDevice):
             self.photo_image = ImageTk.PhotoImage(image=img)
 
             # Update the canvas with the new image
-            self.canvas.create_image(0, 0, image=self.photo_image, anchor=tk.NW)
+            if self.image_id:
+                self.canvas.itemconfig(self.image_id, image=self.photo_image)
+            else:
+                self.image_id = self.canvas.create_image(0, 0, image=self.photo_image, anchor=tk.NW)
+            
             self.window.update()
             self.dirty = False
         except Exception as e:
@@ -208,6 +216,7 @@ class VirtualLCD(UDCDevice):
         window_height = int(self.height * self.scale)
         self.canvas = tk.Canvas(self.window, width=window_width, height=window_height, borderwidth=0, highlightthickness=0)
         self.canvas.pack()
+        self.image_id = None
         self.dirty = True
 
     def close_tkinter_window(self):
@@ -217,6 +226,7 @@ class VirtualLCD(UDCDevice):
         self.window = None
         self.canvas = None
         self.photo_image = None
+        self.image_id = None
 
     # --- Helper Methods (Unchanged) ---
     

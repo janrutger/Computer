@@ -135,7 +135,65 @@ But in the new way the MIR contains an interger value to decode.
 
         return opcode, operand1, operand2
 
-DON't forget to update the predictor to.... 
+DON't forget to update the _predict_next_pc to.... 
+
+    def _predict_next_pc(self, instruction_int, pc):
+        """
+        Predicts the next PC based on the instruction.
+        Performs a lightweight decode on the integer instruction.
+        """
+        # 1. Handle Sign (Negative Immediate Flag)
+        is_negative_immediate = False
+        if instruction_int < 0:
+            is_negative_immediate = True
+            instruction_int = abs(instruction_int)
+
+        # 2. Extract Opcode (First 2 digits)
+        # Calculate divisor to split Opcode from Operands
+        temp_val = instruction_int
+        divisor = 1
+        while temp_val >= 100:
+            temp_val //= 10
+            divisor *= 10
+        
+        opcode = temp_val
+        
+        # 3. Extract Operands (Rest)
+        rest = instruction_int % divisor
+        
+        operand1 = 0
+        operand2 = 0
+        
+        # We need the opcode string to look up the format
+        opcode_str = str(opcode)
+        
+        if opcode_str in self.instruction_formats:
+            fmt = self.instruction_formats[opcode_str]
+            
+            if fmt == "one_addr":
+                # e.g., JMP 100 -> Op: JMP, Op1: 100
+                operand1 = rest
+            elif fmt == "one_reg":
+                operand1 = rest
+            elif fmt == "two_reg_reg":
+                operand1 = rest // 10
+                operand2 = rest % 10
+            elif fmt == "two_reg_addr" or fmt == "two_reg_val":
+                # e.g., JMP_IF_EQ R1, 100
+                split_factor = divisor // 10
+                if split_factor == 0: split_factor = 1
+                
+                operand1 = rest // split_factor
+                operand2 = rest % split_factor
+                
+                if is_negative_immediate:
+                    operand2 = -operand2
+
+        # Pass the decoded integer values to the branch predictor.
+        # Unlike the full decoder, we do NOT convert registers to strings here,
+        # as the predictor likely performs math on the operands (e.g., target calculation).
+        return self.branch_predictor.predict(opcode, operand1, operand2, pc)
+
 
 the new decoder fills opernd1 and operand2 with integer values
         # Push the bundle to the buffer, INCLUDING the saved MIR_PC

@@ -47,7 +47,10 @@ DEF sort_list {
             N 1 + sortlist ARRAY.get AS val2
 
             ; Compare and swap if needed
-            val1 val2 > IF
+            ; Optimization: Use < to invert logic. Common "No Swap" case becomes fall-through.
+            val1 val2 < IF
+                ; No swap needed (Common case)
+            ELSE
                 val2 N sortlist ARRAY.put
                 val1 N 1 + sortlist ARRAY.put
                 ; A swap occurred, so the list isn't fully sorted yet.

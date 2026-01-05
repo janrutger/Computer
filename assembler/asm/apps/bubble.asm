@@ -219,10 +219,12 @@
     stack A $DATASTACK_PTR
     ldm A $val2
     stack A $DATASTACK_PTR
-    call @rt_gt
+    call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :sort_list_if_end_0
+    jmpt :sort_list_if_else_0
+    jmp :sort_list_if_end_0
+:sort_list_if_else_0
     ldm A $val2
     stack A $DATASTACK_PTR
     ldm A $N

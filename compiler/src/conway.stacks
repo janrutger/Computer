@@ -634,10 +634,10 @@ IO 2 NEW        ; Refresh screen
 
 
 ; test_random_board ; We replace random init with our test
-; test_glider_pattern
+test_glider_pattern
 ; test_blinker_pattern
 ; test_r_pentomino_pattern
-test_gosper_glider_gun_pattern
+; test_gosper_glider_gun_pattern
 ; test_pulsar_pattern
 
 copy_board2 ; Copy the result from next_board to current_board to be drawn

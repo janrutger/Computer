@@ -35,6 +35,6 @@ WHILE N 700 < DO
     #1 TIME.wait
 DONE
 
-ASM {
-    halt
-}
+# ASM {
+#     halt
+# }

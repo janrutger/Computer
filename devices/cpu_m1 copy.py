@@ -1,54 +1,10 @@
+from devices.cpu import CPU
 from collections import deque
 import time
-import json
-from devices.gpu import GPU
 
-MEM_INT_VECTORS_START = 3072
-
-class CPU_M1:
+class CPU_M1(CPU):
     def __init__(self, memory, interrupt_controller=None, rom_path="bin/stern_rom.json", debug_mode=False):
-        self.memory = memory
-        self.interrupt_controller = interrupt_controller
-        self.microcode_rom = {}
-        self.instruction_formats = {}
-        self._load_microcode_from_json(rom_path)
-        self.debug_mode = debug_mode
-        self.address_to_symbols = {}
-
-        # General Purpose Registers (R0-R9) - Keys are strings for debugger compatibility
-        self.registers = {str(i): 0 for i in range(10)}
-
-        # Special Registers
-        self.registers["PC"] = 0
-        self.registers["SP"] = self.memory.size - 1
-        self.gpu = GPU(self.memory)
-        
-        # Shadow registers
-        self.shadow_registers = self.registers.copy()
-        
-        self.MIR = None # M1 specific: None init
-        
-        # Flags
-        self.flags = {"Z": False, "N": False, "E": False, "S": False}
-        self.shadow_flags = self.flags.copy()
-
-        self.interrupts_enabled = False
-        self.shadow_interrupts_enabled = False
-
-        # Internal Registers
-        self.registers["Ra"] = 0
-        self.registers["Rb"] = 0
-
-        # State
-        self.state = "FETCH"
-        self.instructions_executed = 0
-        self.cycles_executed = 0
-
-        # Microcode
-        self.current_microcode_sequence = []
-        self.microcode_step_index = 0
-        self.operand1 = 0 
-        self.operand2 = 0
+        super().__init__(memory, interrupt_controller, rom_path, debug_mode)
         
         # --- Pipeline Specific Structures ---
         # Buffer holds tuples: (microcode_sequence, operand1, operand2, instruction_pc)
@@ -67,6 +23,9 @@ class CPU_M1:
         self.current_instruction_pc = 0
         self.current_predicted_pc = 0
         
+        # Override state to ensure we start correctly
+        self.state = "FETCH" 
+
         # Performance Counters for Proof of Work
         self.stats = {
             "fetched": 0,
@@ -75,17 +34,6 @@ class CPU_M1:
             "flushes": 0
         }
         self.ras = deque(maxlen=64) # Return Address Stack. deque handles overflow by discarding oldest.
-
-    def set_address_to_symbols(self, address_to_symbols):
-        self.address_to_symbols = address_to_symbols
-
-    def _load_microcode_from_json(self, file_path):
-        with open(file_path, 'r') as f:
-            json_data = json.load(f)
-        for opcode, data in json_data["instructions"].items():
-            code_sequence = [tuple(item["instruction"]) for item in data["code"]]
-            self.microcode_rom[opcode] = code_sequence
-            self.instruction_formats[opcode] = data.get("format", "zero")
 
     def tick(self):
         self.cycles_executed += 1
@@ -292,161 +240,15 @@ class CPU_M1:
         self.pc_was_modified = False
         self.stats["flushes"] += 1
 
-    def execute_microcode_step(self, microcode_step, operand1, operand2):
-        """
-        Optimized execution engine. 
-        Inlines argument resolution and assumes integer arithmetic.
-        """
-        op = microcode_step[0]
-
-        if op == "load_immediate":
-            # Inline resolve_arg
-            a1 = microcode_step[1]
-            reg = operand1 if a1 == 'arg1' else (operand2 if a1 == 'arg2' else a1)
-            
-            a2 = microcode_step[2]
-            val = operand1 if a2 == 'arg1' else (operand2 if a2 == 'arg2' else a2)
-            
-            if reg in self.registers:
-                self.registers[reg] = val
-
-        elif op == "alu":
-            alu_op = microcode_step[1]
-            if alu_op == "ADD": self.registers["Ra"] += self.registers["Rb"]
-            elif alu_op == "SUB": self.registers["Ra"] -= self.registers["Rb"]
-            elif alu_op == "MUL": self.registers["Ra"] *= self.registers["Rb"]
-            elif alu_op == "DIV":
-                if self.registers["Rb"] != 0: self.registers["Ra"] //= self.registers["Rb"]
-                else: self.state = "HALT"; print("CPU Runtime Error: Division by zero!")
-            elif alu_op == "MOD":
-                if self.registers["Rb"] != 0: self.registers["Ra"], self.registers["Rb"] = divmod(self.registers["Ra"], self.registers["Rb"])
-                else: self.state = "HALT"; print("CPU Runtime Error: Division by zero!")
-            elif alu_op == "DEC": self.registers["Ra"] -= 1
-            elif alu_op == "INC": self.registers["Ra"] += 1
-            elif alu_op == "AND": self.registers["Ra"] &= self.registers["Rb"]
-            
-            # Set flags inline
-            ra = self.registers["Ra"]
-            self.flags["Z"] = (ra == 0)
-            self.flags["N"] = (ra < 0)
-            self.flags["E"] = (ra == self.registers["Rb"])
-
-        elif op == "move_reg":
-            a1 = microcode_step[1]
-            Rx = operand1 if a1 == 'arg1' else (operand2 if a1 == 'arg2' else a1)
-            a2 = microcode_step[2]
-            Ry = operand1 if a2 == 'arg1' else (operand2 if a2 == 'arg2' else a2)
-            if Rx in self.registers and Ry in self.registers:
-                self.registers[Rx] = self.registers[Ry]
-
-        elif op == "store_mem_adres":
-            a1 = microcode_step[1]
-            adres = operand1 if a1 == 'arg1' else (operand2 if a1 == 'arg2' else a1)
-            a2 = microcode_step[2]
-            Rx = operand1 if a2 == 'arg1' else (operand2 if a2 == 'arg2' else a2)
-            self.memory.write(adres, self.registers[Rx])
-
-        elif op == "store_mem_reg":
-            a1 = microcode_step[1]
-            Rx = operand1 if a1 == 'arg1' else (operand2 if a1 == 'arg2' else a1)
-            a2 = microcode_step[2]
-            Ry = operand1 if a2 == 'arg1' else (operand2 if a2 == 'arg2' else a2)
-            self.memory.write(self.registers[Rx], self.registers[Ry])
-
-        elif op == "read_mem_adres":
-            a1 = microcode_step[1]
-            adres = operand1 if a1 == 'arg1' else (operand2 if a1 == 'arg2' else a1)
-            a2 = microcode_step[2]
-            Rx = operand1 if a2 == 'arg1' else (operand2 if a2 == 'arg2' else a2)
-            self.registers[Rx] = self.memory.read(adres)
-
-        elif op == "read_mem_reg":
-            a1 = microcode_step[1]
-            Rx = operand1 if a1 == 'arg1' else (operand2 if a1 == 'arg2' else a1)
-            a2 = microcode_step[2]
-            Ry = operand1 if a2 == 'arg1' else (operand2 if a2 == 'arg2' else a2)
-            self.registers[Ry] = self.memory.read(self.registers[Rx])
-
-        elif op == "branch":
-            flag = microcode_step[1]
-            offset = int(microcode_step[2])
-            if flag == "A": self.microcode_step_index += offset
-            elif flag == "E" and self.flags["E"]: self.microcode_step_index += offset
-            elif flag == "Z" and self.flags["Z"]: self.microcode_step_index += offset
-            elif flag == "N" and self.flags["N"]: self.microcode_step_index += offset
-            elif flag == "S" and self.flags["S"]: self.microcode_step_index += offset
-
-        elif op == "gpu":
-            a1 = microcode_step[1]
-            Rx = operand1 if a1 == 'arg1' else (operand2 if a1 == 'arg2' else a1)
-            self.gpu.execute(self.registers[Rx])
-
-        elif op == "set_cpu_state":
-            self.state = microcode_step[1]
-        elif op == "set_status_bit":
-            self.flags["S"] = (microcode_step[1] == "TRUE")
-        elif op == "set_interrupt_flag":
-            self.interrupts_enabled = (microcode_step[1] == "TRUE")
-        elif op == "shadow":
-            sub = microcode_step[1]
-            if sub == "SAVE": self._save_to_shadow()
-            elif sub == "RESTORE": self._restore_from_shadow()
-
     def _handle_interrupt(self):
-        # 1. M1 Specific: Rewind PC to the oldest instruction in the pipeline
+        # Rewind PC to the oldest instruction in the pipeline before saving context.
+        # This ensures we resume execution at the instruction that was pending, not the one being fetched.
         if self.instruction_buffer:
             self.registers["PC"] = self.instruction_buffer[0][3]
         elif self.MIR is not None:
             self.registers["PC"] = self.MIR_PC
         
-        # 2. Standard Interrupt Logic (Inlined from Base CPU)
-        self._save_to_shadow()
-        self.interrupts_enabled = False
-
-        if self.interrupt_controller:
-            vector, data = self.interrupt_controller.acknowledge()
-            if vector is None and data is None:
-                self.interrupts_enabled = True
-                return
-
-            self.interrupt_controller.handle_acknowledged_interrupt(vector, data)
-            
-            if self.debug_mode:
-                print(f"CPU responding to interrupt vector {vector}")
-
-            vector_address = MEM_INT_VECTORS_START + vector
-            isr_address = int(self.memory.read(vector_address))
-            
-            if self.debug_mode:
-                print(f"CPU: Found ISR address {isr_address} at vector table entry {vector_address}.")
-
-            self.registers["PC"] = isr_address
-            self.state = "FETCH"
-
-    def _save_to_shadow(self):
-        self.shadow_registers = self.registers.copy()
-        self.shadow_flags = self.flags.copy()
-        self.shadow_interrupts_enabled = self.interrupts_enabled
-
-    def _restore_from_shadow(self):
-        self.registers = self.shadow_registers.copy()
-        self.flags = self.shadow_flags.copy()
-        self.interrupts_enabled = self.shadow_interrupts_enabled
-
-    def dump_state(self):
-        print("CPU State:")
-        print(f"  State: {self.state}")
-        pc_symbol = self.address_to_symbols.get(self.registers['PC'], '')
-        sp_symbol = self.address_to_symbols.get(self.registers['SP'], '')
-        pc_str = f"{self.registers['PC']}" + (f" ({pc_symbol})" if pc_symbol else "")
-        sp_str = f"{self.registers['SP']}" + (f" ({sp_symbol})" if sp_symbol else "")
-        print(f"  PC: {pc_str:<20} SP: {sp_str:<20} MIR: {self.MIR}")
-        print(f"  Flags: Z:{int(self.flags['Z'])} N:{int(self.flags['N'])} E:{int(self.flags['E'])} S:{int(self.flags['S'])}")
-        print("  General Purpose Registers:")
-        for i in range(0, 10, 2):
-            print(f"    R{i}: {self.registers[str(i)]:<5} R{i+1}: {self.registers[str(i+1)]}")
-        print(f"  Internal Registers: Ra={self.registers['Ra']} Rb={self.registers['Rb']}")
-        print(f"  Interrupts Enabled: {self.interrupts_enabled}")
+        super()._handle_interrupt()
 
     def _predict_next_pc(self, instruction_int, current_pc):
         # 1. Handle Sign (Negative Immediate Flag)
