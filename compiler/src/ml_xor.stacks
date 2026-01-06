@@ -9,10 +9,10 @@ USE std_stacks_rt
 
 INCLUDE math_lib
 INCLUDE fixed_point_lib
-INCLUDE gpu_lib
+INCLUDE gpu3_lib
 
 # INCLUDE mlnn_lib
-INCLUDE mlnn_gpu_lib
+INCLUDE mlnn_gpu3_optimized_lib
 
 VALUE network_ptr 0
 VALUE output_array_ptr 0

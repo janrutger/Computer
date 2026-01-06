@@ -1,0 +1,83 @@
+; ##############################################################################
+; #
+; #   GPU R3 Library for the Stacks Language
+; #   Supports TDL Chaining and VRAM Management
+; #
+; ##############################################################################
+
+USE std_heap
+
+; --- Constants for GPU Operations ---
+CONST MAT.ADD 0
+CONST MAT.SUB 1
+CONST MAT.MUL 2
+CONST MAT.DOT 3
+CONST MAT.RELU 4
+CONST MAT.TRANS 5
+CONST MAT.RELU_DERIV 6
+CONST MAT.FREE 12
+
+; --- Constants for Status ---
+CONST GPU_STATUS_OK 0
+CONST GPU_STATUS_ERR_DIM 1
+CONST GPU_STATUS_ERR_OP 2
+CONST GPU_STATUS_ERR_MEM 3
+
+; --- Internal variables ---
+VALUE _gpu_tdl_ptr 0
+VALUE _gpu_temp_ptr 0
+
+; --- GPU.tdl ---
+; Populates the Task Descriptor List (TDL) for GPU R3.
+; The TDL is now 7 words long to support chaining.
+;
+; Stack: ( ptr_a ptr_b ptr_res scale opcode next_tdl_ptr tdl_ptr -- )
+DEF GPU.tdl {
+    AS _gpu_tdl_ptr
+    
+    ; Stack: ptr_a ptr_b ptr_res scale opcode next_tdl_ptr
+    
+    ; Write Next TDL Ptr (Offset 6)
+    _gpu_tdl_ptr 6 + AS _gpu_temp_ptr
+    AS *_gpu_temp_ptr ; Pops next_tdl_ptr
+
+    ; Clear Status (Offset 5) - Initialize to 0
+    _gpu_tdl_ptr 5 + AS _gpu_temp_ptr
+    0 AS *_gpu_temp_ptr
+
+    ; Write Opcode (Offset 4)
+    _gpu_tdl_ptr 4 + AS _gpu_temp_ptr
+    AS *_gpu_temp_ptr ; Pops opcode
+    
+    ; Write Scale (Offset 3)
+    _gpu_tdl_ptr 3 + AS _gpu_temp_ptr
+    AS *_gpu_temp_ptr ; Pops scale
+    
+    ; Write Result Ptr (Offset 2)
+    _gpu_tdl_ptr 2 + AS _gpu_temp_ptr
+    AS *_gpu_temp_ptr ; Pops ptr_res
+    
+    ; Write Ptr B (Offset 1)
+    _gpu_tdl_ptr 1 + AS _gpu_temp_ptr
+    AS *_gpu_temp_ptr ; Pops ptr_b
+    
+    ; Write Ptr A (Offset 0)
+    _gpu_tdl_ptr AS _gpu_temp_ptr
+    AS *_gpu_temp_ptr ; Pops ptr_a
+}
+
+; --- GPU.exec ---
+; Executes the GPU operation defined in the TDL.
+; ( tdl_ptr -- status )
+DEF GPU.exec {
+    AS _gpu_tdl_ptr
+    
+    ASM {
+        ldm A $_gpu_tdl_ptr
+        gpu A
+    }
+    
+    ; Read Status (Offset 5)
+    _gpu_tdl_ptr 5 + AS _gpu_temp_ptr
+    *_gpu_temp_ptr
+}

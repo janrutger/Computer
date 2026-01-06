@@ -1,5 +1,6 @@
 from devices.memoryR2 import Memory
-from devices.gpu import GPU
+# from devices.gpu import GPU
+from devices.gpuR3 import GPU_R3 as GPU
 import json
 import time
 

@@ -1,0 +1,320 @@
+# ----------------------------------------------------------------------------
+# Library: mlnn_gpu3_optimized_lib.stacks
+# Description: Optimized GPU R3 Neural Network Library.
+#              Uses TDL Chaining to minimize CPU-GPU calls.
+#
+# API: Same as mlnn_gpu3_lib.stacks
+# ----------------------------------------------------------------------------
+
+USE std_heap
+USE fixed_point_lib
+USE gpu3_lib
+
+# ----------------------------------------------------------------------------
+# Global Variables
+# ----------------------------------------------------------------------------
+
+VALUE _nn_scale 10000
+
+VALUE _nn_temp_ptr 0
+VALUE _nn_fill_counter 0
+VALUE _nn_row_counter 0
+VALUE _nn_col_counter 0
+VALUE _nn_train_k 0
+
+# Network Dimensions
+VALUE _nn_net_input_size 0
+VALUE _nn_net_hidden_size 0
+VALUE _nn_net_output_size 0
+
+# Network Pointers
+VALUE _nn_network_ptr 0
+VALUE _nn_hidden_layer_ptr 0
+VALUE _nn_output_layer_ptr 0
+
+# Prediction Pointers
+VALUE _nn_predict_input_ptr 0
+VALUE _nn_predict_layer_ptr 0
+VALUE _nn_predict_output_ptr 0
+VALUE _nn_weights_ptr 0
+VALUE _nn_bias_ptr 0
+
+# Matrices
+VALUE _nn_mat_input_wrapper 0
+VALUE _nn_mat_hidden_activations 0
+VALUE _nn_mat_output_activations 0
+VALUE _nn_mat_target 0
+VALUE _nn_mat_output_error 0
+VALUE _nn_mat_output_deriv 0
+VALUE _nn_mat_output_delta 0
+VALUE _nn_mat_weights_ho_trans 0
+VALUE _nn_mat_hidden_error 0
+VALUE _nn_mat_hidden_deriv 0
+VALUE _nn_mat_hidden_delta 0
+VALUE _nn_mat_hidden_act_trans 0
+VALUE _nn_mat_grad_ho 0
+VALUE _nn_mat_input_trans 0
+VALUE _nn_mat_grad_ih 0
+VALUE _nn_mat_bias_input 0
+
+# TDL Pointers
+VALUE _tdl_fh_dot 0
+VALUE _tdl_fh_add 0
+VALUE _tdl_fh_relu 0
+
+VALUE _tdl_fo_dot 0
+VALUE _tdl_fo_add 0
+VALUE _tdl_fo_relu 0
+
+VALUE _tdl_bp_err 0
+VALUE _tdl_bp_d_out 0
+VALUE _tdl_bp_delta_o 0
+VALUE _tdl_bp_trans_w 0
+VALUE _tdl_bp_h_err 0
+VALUE _tdl_bp_d_h 0
+VALUE _tdl_bp_delta_h 0
+
+VALUE _tdl_up_o_trans 0
+VALUE _tdl_up_o_grad 0
+VALUE _tdl_up_o_add_w 0
+VALUE _tdl_up_o_bias_g 0
+VALUE _tdl_up_o_add_b 0
+
+VALUE _tdl_up_h_trans 0
+VALUE _tdl_up_h_grad 0
+VALUE _tdl_up_h_add_w 0
+VALUE _tdl_up_h_bias_g 0
+VALUE _tdl_up_h_add_b 0
+
+VALUE _nn_h_weights 0
+VALUE _nn_h_bias 0
+VALUE _nn_o_weights 0
+VALUE _nn_o_bias 0
+
+STRING bias_val "0.1"
+
+# ----------------------------------------------------------------------------
+# Configuration
+# ----------------------------------------------------------------------------
+DEF NN.set_scale { AS _nn_scale }
+
+# ----------------------------------------------------------------------------
+# PRIVATE HELPER: _NN.new_layer
+# ----------------------------------------------------------------------------
+DEF _NN.new_layer {
+    AS _nn_col_counter
+    AS _nn_row_counter
+    2 NEW.array AS _nn_temp_ptr
+    _nn_col_counter _nn_row_counter NEW.matrix AS _nn_weights_ptr
+
+    1 AS _nn_fill_counter
+    WHILE _nn_fill_counter _nn_col_counter 1 + < DO
+        1 AS _nn_predict_layer_ptr
+        WHILE _nn_predict_layer_ptr _nn_row_counter 1 + < DO
+            RND 200 % 100 - FP.from_int 1000 FP.from_int FP.div
+            _nn_fill_counter _nn_predict_layer_ptr _nn_weights_ptr MATRIX.put
+            _nn_predict_layer_ptr 1 + AS _nn_predict_layer_ptr
+        DONE
+        _nn_fill_counter 1 + AS _nn_fill_counter
+    DONE
+
+    1 _nn_row_counter NEW.matrix AS _nn_bias_ptr
+    1 AS _nn_fill_counter
+    WHILE _nn_fill_counter _nn_row_counter 1 + < DO
+        &bias_val FP.from_string 1 _nn_fill_counter _nn_bias_ptr MATRIX.put
+        _nn_fill_counter 1 + AS _nn_fill_counter
+    DONE
+
+    _nn_weights_ptr _nn_temp_ptr ARRAY.append
+    _nn_bias_ptr _nn_temp_ptr ARRAY.append
+    _nn_temp_ptr
+}
+
+# ----------------------------------------------------------------------------
+# PUBLIC API: NN.new_network
+# ----------------------------------------------------------------------------
+DEF NN.new_network {
+    AS _nn_net_output_size
+    AS _nn_net_hidden_size
+    AS _nn_net_input_size
+
+    3 NEW.array AS _nn_network_ptr
+    _nn_net_hidden_size _nn_net_input_size _NN.new_layer AS _nn_hidden_layer_ptr
+    _nn_net_output_size _nn_net_hidden_size _NN.new_layer AS _nn_output_layer_ptr
+
+    _nn_net_input_size _nn_network_ptr ARRAY.append
+    _nn_hidden_layer_ptr _nn_network_ptr ARRAY.append
+    _nn_output_layer_ptr _nn_network_ptr ARRAY.append
+
+    # Matrices
+    1 _nn_net_input_size NEW.matrix AS _nn_mat_input_wrapper
+    1 _nn_net_hidden_size NEW.matrix AS _nn_mat_hidden_activations
+    1 _nn_net_output_size NEW.matrix AS _nn_mat_output_activations
+    1 _nn_net_output_size NEW.matrix AS _nn_mat_target
+    1 _nn_net_output_size NEW.matrix AS _nn_mat_output_error
+    1 _nn_net_output_size NEW.matrix AS _nn_mat_output_deriv
+    1 _nn_net_output_size NEW.matrix AS _nn_mat_output_delta
+    1 _nn_net_hidden_size NEW.matrix AS _nn_mat_hidden_error
+    1 _nn_net_hidden_size NEW.matrix AS _nn_mat_hidden_deriv
+    1 _nn_net_hidden_size NEW.matrix AS _nn_mat_hidden_delta
+    _nn_net_output_size _nn_net_hidden_size NEW.matrix AS _nn_mat_weights_ho_trans
+    _nn_net_hidden_size 1 NEW.matrix AS _nn_mat_hidden_act_trans
+    _nn_net_input_size 1 NEW.matrix AS _nn_mat_input_trans
+    _nn_net_hidden_size _nn_net_output_size NEW.matrix AS _nn_mat_grad_ho
+    _nn_net_input_size _nn_net_hidden_size NEW.matrix AS _nn_mat_grad_ih
+    1 1 NEW.matrix AS _nn_mat_bias_input
+    _nn_scale 1 1 _nn_mat_bias_input MATRIX.put
+
+    # Cache Layer Pointers
+    _nn_hidden_layer_ptr 0 ARRAY.get AS _nn_h_weights
+    _nn_hidden_layer_ptr 1 ARRAY.get AS _nn_h_bias
+    _nn_output_layer_ptr 0 ARRAY.get AS _nn_o_weights
+    _nn_output_layer_ptr 1 ARRAY.get AS _nn_o_bias
+
+    # --- Pre-compile TDLs with Chaining ---
+    
+    # 1. Allocate all TDL lists first to establish pointers
+    7 NEW.list AS _tdl_fh_dot
+    7 NEW.list AS _tdl_fh_add
+    7 NEW.list AS _tdl_fh_relu
+    7 NEW.list AS _tdl_fo_dot
+    7 NEW.list AS _tdl_fo_add
+    7 NEW.list AS _tdl_fo_relu
+
+    7 NEW.list AS _tdl_bp_err
+    7 NEW.list AS _tdl_bp_d_out
+    7 NEW.list AS _tdl_bp_delta_o
+    7 NEW.list AS _tdl_bp_trans_w
+    7 NEW.list AS _tdl_bp_h_err
+    7 NEW.list AS _tdl_bp_d_h
+    7 NEW.list AS _tdl_bp_delta_h
+
+    7 NEW.list AS _tdl_up_o_trans
+    7 NEW.list AS _tdl_up_o_grad
+    7 NEW.list AS _tdl_up_o_add_w
+    7 NEW.list AS _tdl_up_o_bias_g
+    7 NEW.list AS _tdl_up_o_add_b
+    7 NEW.list AS _tdl_up_h_trans
+    7 NEW.list AS _tdl_up_h_grad
+    7 NEW.list AS _tdl_up_h_add_w
+    7 NEW.list AS _tdl_up_h_bias_g
+    7 NEW.list AS _tdl_up_h_add_b
+
+    # 2. Populate TDLs with Links
+    
+    # --- CHAIN 1: Forward Pass (Hidden -> Output) ---
+    # Head: _tdl_fh_dot
+    
+    # Hidden Layer
+    _nn_mat_input_wrapper _nn_h_weights _nn_mat_hidden_activations _nn_scale MAT.DOT _tdl_fh_add _tdl_fh_dot GPU.tdl
+    _nn_mat_hidden_activations _nn_h_bias _nn_mat_hidden_activations 0 MAT.ADD _tdl_fh_relu _tdl_fh_add GPU.tdl
+    _nn_mat_hidden_activations 0 _nn_mat_hidden_activations 0 MAT.RELU _tdl_fo_dot _tdl_fh_relu GPU.tdl
+
+    # Output Layer (Linked from Hidden Relu)
+    _nn_mat_hidden_activations _nn_o_weights _nn_mat_output_activations _nn_scale MAT.DOT _tdl_fo_add _tdl_fo_dot GPU.tdl
+    _nn_mat_output_activations _nn_o_bias _nn_mat_output_activations 0 MAT.ADD _tdl_fo_relu _tdl_fo_add GPU.tdl
+    _nn_mat_output_activations 0 _nn_mat_output_activations 0 MAT.RELU 0 _tdl_fo_relu GPU.tdl
+
+    # --- CHAIN 2: Backpropagation (Deltas -> Updates) ---
+    # Head: _tdl_bp_err
+
+    # Output Deltas
+    _nn_mat_target _nn_mat_output_activations _nn_mat_output_error 0 MAT.SUB _tdl_bp_d_out _tdl_bp_err GPU.tdl
+    _nn_mat_output_activations 0 _nn_mat_output_deriv _nn_scale MAT.RELU_DERIV _tdl_bp_delta_o _tdl_bp_d_out GPU.tdl
+    _nn_mat_output_error _nn_mat_output_deriv _nn_mat_output_delta _nn_scale MAT.MUL _tdl_bp_trans_w _tdl_bp_delta_o GPU.tdl
+
+    # Hidden Deltas
+    _nn_o_weights 0 _nn_mat_weights_ho_trans 0 MAT.TRANS _tdl_bp_h_err _tdl_bp_trans_w GPU.tdl
+    _nn_mat_output_delta _nn_mat_weights_ho_trans _nn_mat_hidden_error _nn_scale MAT.DOT _tdl_bp_d_h _tdl_bp_h_err GPU.tdl
+    _nn_mat_hidden_activations 0 _nn_mat_hidden_deriv _nn_scale MAT.RELU_DERIV _tdl_bp_delta_h _tdl_bp_d_h GPU.tdl
+    _nn_mat_hidden_error _nn_mat_hidden_deriv _nn_mat_hidden_delta _nn_scale MAT.MUL _tdl_up_o_trans _tdl_bp_delta_h GPU.tdl
+
+    # Update Output Layer
+    _nn_mat_hidden_activations 0 _nn_mat_hidden_act_trans 0 MAT.TRANS _tdl_up_o_grad _tdl_up_o_trans GPU.tdl
+    _nn_mat_hidden_act_trans _nn_mat_output_delta _nn_mat_grad_ho 0 MAT.DOT _tdl_up_o_add_w _tdl_up_o_grad GPU.tdl
+    _nn_o_weights _nn_mat_grad_ho _nn_o_weights 0 MAT.ADD _tdl_up_o_bias_g _tdl_up_o_add_w GPU.tdl
+    _nn_mat_bias_input _nn_mat_output_delta _nn_mat_output_error 0 MAT.DOT _tdl_up_o_add_b _tdl_up_o_bias_g GPU.tdl
+    _nn_o_bias _nn_mat_output_error _nn_o_bias 0 MAT.ADD _tdl_up_h_trans _tdl_up_o_add_b GPU.tdl
+
+    # Update Hidden Layer
+    _nn_mat_input_wrapper 0 _nn_mat_input_trans 0 MAT.TRANS _tdl_up_h_grad _tdl_up_h_trans GPU.tdl
+    _nn_mat_input_trans _nn_mat_hidden_delta _nn_mat_grad_ih 0 MAT.DOT _tdl_up_h_add_w _tdl_up_h_grad GPU.tdl
+    _nn_h_weights _nn_mat_grad_ih _nn_h_weights 0 MAT.ADD _tdl_up_h_bias_g _tdl_up_h_add_w GPU.tdl
+    _nn_mat_bias_input _nn_mat_hidden_delta _nn_mat_hidden_error 0 MAT.DOT _tdl_up_h_add_b _tdl_up_h_bias_g GPU.tdl
+    _nn_h_bias _nn_mat_hidden_error _nn_h_bias 0 MAT.ADD 0 _tdl_up_h_add_b GPU.tdl
+
+    _nn_network_ptr
+}
+
+# ----------------------------------------------------------------------------
+# PUBLIC API: NN.predict
+# ----------------------------------------------------------------------------
+DEF NN.predict {
+    AS _nn_predict_input_ptr
+    AS _nn_network_ptr
+
+    # 1. Convert Input Array to Matrix
+    0 AS _nn_fill_counter
+    WHILE _nn_fill_counter _nn_predict_input_ptr ARRAY.len < DO
+        _nn_predict_input_ptr _nn_fill_counter ARRAY.get
+        1 _nn_fill_counter 1 + _nn_mat_input_wrapper MATRIX.put
+        _nn_fill_counter 1 + AS _nn_fill_counter
+    DONE
+
+    # 2. Execute Forward Chain (Hidden -> Output)
+    # This single call executes all 6 GPU operations
+    _tdl_fh_dot GPU.exec DROP
+
+    _nn_mat_output_activations
+}
+
+# ----------------------------------------------------------------------------
+# PUBLIC API: NN.train
+# ----------------------------------------------------------------------------
+DEF NN.train {
+    AS _nn_train_k
+    AS _nn_predict_output_ptr
+    AS _nn_predict_input_ptr
+    AS _nn_network_ptr
+
+    # 1. Calculate Gradient Scale K
+    _nn_scale _nn_train_k FP.div AS _nn_train_k
+
+    # 2. Populate Input Matrix
+    0 AS _nn_fill_counter
+    WHILE _nn_fill_counter _nn_predict_input_ptr ARRAY.len < DO
+        _nn_predict_input_ptr _nn_fill_counter ARRAY.get
+        1 _nn_fill_counter 1 + _nn_mat_input_wrapper MATRIX.put
+        _nn_fill_counter 1 + AS _nn_fill_counter
+    DONE
+
+    # 3. Populate Target Matrix
+    0 AS _nn_fill_counter
+    WHILE _nn_fill_counter _nn_predict_output_ptr ARRAY.len < DO
+        _nn_predict_output_ptr _nn_fill_counter ARRAY.get
+        1 _nn_fill_counter 1 + _nn_mat_target MATRIX.put
+        _nn_fill_counter 1 + AS _nn_fill_counter
+    DONE
+
+    # 4. Update Scales in TDLs with Learning Rate
+    # We must do this before execution because the TDLs are reused
+    
+    _tdl_up_o_grad 3 + AS _nn_temp_ptr
+    _nn_train_k AS *_nn_temp_ptr
+    
+    _tdl_up_o_bias_g 3 + AS _nn_temp_ptr
+    _nn_train_k AS *_nn_temp_ptr
+
+    _tdl_up_h_grad 3 + AS _nn_temp_ptr
+    _nn_train_k AS *_nn_temp_ptr
+
+    _tdl_up_h_bias_g 3 + AS _nn_temp_ptr
+    _nn_train_k AS *_nn_temp_ptr
+
+    # 5. Execute Forward Chain (Hidden -> Output)
+    _tdl_fh_dot GPU.exec DROP
+
+    # 6. Execute Backprop Chain (Deltas -> Updates)
+    # This single call executes all 16 backprop operations
+    _tdl_bp_err GPU.exec DROP
+}

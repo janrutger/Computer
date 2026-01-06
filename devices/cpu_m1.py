@@ -1,7 +1,12 @@
 from collections import deque
 import time
 import json
-from devices.gpu import GPU
+# from devices.gpu import GPU
+from devices.gpuR3 import GPU_R3 as GPU
+
+# --- Constants ---
+# Memory Map
+MEM_SIZE = 16384
 
 MEM_INT_VECTORS_START = 3072
 
@@ -21,7 +26,7 @@ class CPU_M1:
         # Special Registers
         self.registers["PC"] = 0
         self.registers["SP"] = self.memory.size - 1
-        self.gpu = GPU(self.memory)
+        self.gpu = GPU(self.memory, mode=1)     # mode 1 for R3 memory insted of R2 memory
         
         # Shadow registers
         self.shadow_registers = self.registers.copy()

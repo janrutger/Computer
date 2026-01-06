@@ -1,55 +1,59 @@
 {
   "functions": [
-    "ARRAY.append",
-    "power",
-    "FP.to_int",
-    "FP.mul",
-    "gcd",
-    "FP.div",
-    "FP.fprint",
-    "NN.predict",
-    "MATRIX.put",
-    "STRcopy",
-    "FP.set_scale",
-    "FP.from_int",
-    "HALT",
-    "ARRAY.get",
-    "KEYpressed",
-    "CURSORoff",
-    "FP.add",
-    "NEW.list",
-    "ARRAY.put",
-    "_STRNatoi",
-    "KEYchar",
-    "PRTcls",
-    "ARRAY.size",
-    "NEW.matrix",
-    "NEW.matrix_populate",
-    "READline",
-    "ARRAY.clear",
-    "FP.from_string",
-    "MATRIX.get",
+    "FP.power",
     "STRcmp",
-    "FP.print",
-    "STRatoi",
-    "NN.new_perceptron",
-    "NEW.array",
-    "STRlen",
-    "TOS_nnl",
-    "HEAP.init",
-    "io_lib_init",
-    "HEAP.free",
     "PRTnum",
-    "TOS.check",
-    "STRfind",
+    "ARRAY.size",
     "PRTstring",
+    "NEW.matrix_populate",
+    "factorial",
+    "FP.from_string",
+    "ARRAY.put",
+    "STRfind",
+    "MATRIX.put",
+    "KEYchar",
+    "NN.set_scale",
+    "TOS_nnl",
+    "NN.new_network",
+    "FP.to_int",
+    "_STRNatoi",
+    "ARRAY.append",
     "PRTchar",
     "CURSORon",
-    "FP.power",
-    "ARRAY.len",
+    "KEYpressed",
     "FP.sub",
-    "factorial",
-    "NN.train_step"
+    "gcd",
+    "HALT",
+    "HEAP.free",
+    "FP.add",
+    "READline",
+    "STRlen",
+    "FP.fprint",
+    "HEAP.init",
+    "ARRAY.clear",
+    "FP.div",
+    "NEW.list",
+    "FP.print",
+    "GPU.tdl",
+    "FP.mul",
+    "FP.set_scale",
+    "ARRAY.get",
+    "NEW.array",
+    "FP.from_int",
+    "ARRAY.len",
+    "NEW.matrix",
+    "power",
+    "NN.train",
+    "io_lib_init",
+    "TOS.check",
+    "GPU.exec",
+    "STRcopy",
+    "_NN.new_layer",
+    "MATRIX.get",
+    "STRatoi",
+    "NN.predict",
+    "CURSORoff",
+    "PRTcls"
   ],
   "variables": [
     {
@@ -488,99 +492,319 @@
       "size": 1
     },
     {
-      "name": "num_inputs",
+      "name": "_gpu_tdl_ptr",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_gpu_temp_ptr",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_nn_scale",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "weights_ptr",
+      "name": "_nn_temp_ptr",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "perceptron_ptr",
+      "name": "_nn_fill_counter",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "i",
+      "name": "_nn_row_counter",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "input_val",
+      "name": "_nn_col_counter",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "input_ptr",
+      "name": "_nn_train_k",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "weight_val",
+      "name": "_nn_net_input_size",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "product",
+      "name": "_nn_net_hidden_size",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "weighted_sum",
+      "name": "_nn_net_output_size",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "bias",
+      "name": "_nn_network_ptr",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_error",
+      "name": "_nn_hidden_layer_ptr",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "error_fp",
+      "name": "_nn_output_layer_ptr",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "learning_rate",
+      "name": "_nn_predict_input_ptr",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "old_bias",
+      "name": "_nn_predict_layer_ptr",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "old_weight",
+      "name": "_nn_predict_output_ptr",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "adjustment",
+      "name": "_nn_weights_ptr",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "weight_delta",
+      "name": "_nn_bias_ptr",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "new_bias",
+      "name": "_nn_mat_input_wrapper",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "new_weight",
+      "name": "_nn_mat_hidden_activations",
       "type": "VALUE",
       "size": 1
+    },
+    {
+      "name": "_nn_mat_output_activations",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_mat_target",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_mat_output_error",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_mat_output_deriv",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_mat_output_delta",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_mat_weights_ho_trans",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_mat_hidden_error",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_mat_hidden_deriv",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_mat_hidden_delta",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_mat_hidden_act_trans",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_mat_grad_ho",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_mat_input_trans",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_mat_grad_ih",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_mat_bias_input",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_fh_dot",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_fh_add",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_fh_relu",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_fo_dot",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_fo_add",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_fo_relu",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_bp_err",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_bp_d_out",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_bp_delta_o",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_bp_trans_w",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_bp_h_err",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_bp_d_h",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_bp_delta_h",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_o_trans",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_o_grad",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_o_add_w",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_o_bias_g",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_o_add_b",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_h_trans",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_h_grad",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_h_add_w",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_h_bias_g",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_h_add_b",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_h_weights",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_h_bias",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_o_weights",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn_o_bias",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "bias_val",
+      "type": "STRING",
+      "size": 4
     }
   ],
   "constants": {
@@ -591,6 +815,18 @@
     "null": 0,
     "_ASCII_0": 48,
     "_ASCII_9": 57,
-    "FP_DOT": 46
+    "FP_DOT": 46,
+    "MAT.ADD": 0,
+    "MAT.SUB": 1,
+    "MAT.MUL": 2,
+    "MAT.DOT": 3,
+    "MAT.RELU": 4,
+    "MAT.TRANS": 5,
+    "MAT.RELU_DERIV": 6,
+    "MAT.FREE": 12,
+    "GPU_STATUS_OK": 0,
+    "GPU_STATUS_ERR_DIM": 1,
+    "GPU_STATUS_ERR_OP": 2,
+    "GPU_STATUS_ERR_MEM": 3
   }
 }

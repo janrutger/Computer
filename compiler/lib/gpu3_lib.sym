@@ -1,31 +1,33 @@
 {
   "functions": [
+    "CURSORon",
+    "READline",
+    "NEW.matrix_populate",
+    "TOS.check",
+    "KEYpressed",
+    "HALT",
     "CURSORoff",
     "PRTchar",
-    "HEAP.free",
+    "ARRAY.get",
+    "ARRAY.size",
+    "GPU.exec",
+    "PRTnum",
+    "PRTstring",
+    "ARRAY.len",
     "io_lib_init",
+    "HEAP.init",
     "ARRAY.clear",
     "KEYchar",
-    "NEW.list",
-    "ARRAY.get",
-    "HEAP.init",
-    "ARRAY.append",
-    "NEW.array",
-    "ARRAY.size",
-    "PRTstring",
-    "CURSORon",
-    "HALT",
-    "PRTnum",
-    "ARRAY.len",
-    "NEW.matrix",
-    "MATRIX.put",
-    "NEW.matrix_populate",
-    "KEYpressed",
-    "PRTcls",
-    "READline",
-    "ARRAY.put",
+    "GPU.tdl",
     "MATRIX.get",
-    "TOS.check"
+    "NEW.matrix",
+    "ARRAY.put",
+    "NEW.list",
+    "PRTcls",
+    "MATRIX.put",
+    "HEAP.free",
+    "ARRAY.append",
+    "NEW.array"
   ],
   "variables": [
     {
@@ -60,171 +62,181 @@
     },
     {
       "name": "HEAP_START",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "HEAP_SIZE",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "HEAP_FREE",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_ARR_TEMP_PTR",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_MAT_TEMP_PTR",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_MAT_X_DIM",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_MAT_Y_DIM",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_MAT_VALUE",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_MAT_PTR",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_MAT_LOOP_COUNTER",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_MAT_OFFSET",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "error_mesg0",
-      "type": "STRING",
+      "type": "LIB_VAR",
       "size": 29
     },
     {
       "name": "error_mesg1",
-      "type": "STRING",
+      "type": "LIB_VAR",
       "size": 29
     },
     {
       "name": "error_mesg2",
-      "type": "STRING",
+      "type": "LIB_VAR",
       "size": 32
     },
     {
       "name": "error_mesg3",
-      "type": "STRING",
+      "type": "LIB_VAR",
       "size": 32
     },
     {
       "name": "error_mesg4",
-      "type": "STRING",
+      "type": "LIB_VAR",
       "size": 28
     },
     {
       "name": "error_mesg5",
-      "type": "STRING",
+      "type": "LIB_VAR",
       "size": 30
     },
     {
       "name": "error_mesg6",
-      "type": "STRING",
+      "type": "LIB_VAR",
       "size": 38
     },
     {
       "name": "error_mesg7",
-      "type": "STRING",
+      "type": "LIB_VAR",
       "size": 29
     },
     {
       "name": "error_mesg8",
-      "type": "STRING",
+      "type": "LIB_VAR",
       "size": 32
     },
     {
       "name": "_list_size",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_list_ptr",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "requested_capacity",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "total_size",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "new_array_pointer",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "array_ptr",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_value",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_capacity",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_count",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "dest_addr",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_index",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "read_addr",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_total_data_elements",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_total_matrix_size",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_gpu_tdl_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_gpu_temp_ptr",
       "type": "VALUE",
       "size": 1
     }
@@ -234,6 +246,18 @@
     "backspace": 8,
     "return": 13,
     "newline": 10,
-    "null": 0
+    "null": 0,
+    "MAT.ADD": 0,
+    "MAT.SUB": 1,
+    "MAT.MUL": 2,
+    "MAT.DOT": 3,
+    "MAT.RELU": 4,
+    "MAT.TRANS": 5,
+    "MAT.RELU_DERIV": 6,
+    "MAT.FREE": 12,
+    "GPU_STATUS_OK": 0,
+    "GPU_STATUS_ERR_DIM": 1,
+    "GPU_STATUS_ERR_OP": 2,
+    "GPU_STATUS_ERR_MEM": 3
   }
 }

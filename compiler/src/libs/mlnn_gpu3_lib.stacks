@@ -1,0 +1,474 @@
+# ----------------------------------------------------------------------------
+# Library: mlnn_gpu3_lib.stacks
+# Description: GPU-Accelerated Multi-Layer Neural Network library (R3).
+#              Drop-in replacement for mlnn_lib.stacks.
+#
+# API:
+#   - NN.new_network: Creates a new 3-layer network (using Matrices).
+#   - NN.predict: Performs a forward pass using GPU acceleration.
+#   - NN.train: Performs backpropagation.
+# ----------------------------------------------------------------------------
+
+USE std_heap
+USE fixed_point_lib
+USE gpu3_lib
+
+# ----------------------------------------------------------------------------
+# Global Variables
+# ----------------------------------------------------------------------------
+
+VALUE _nn_scale 10000  # Default scale, should match FP.set_scale
+
+VALUE _nn_temp_ptr 0
+VALUE _nn_fill_counter 0
+VALUE _nn_row_counter 0
+VALUE _nn_col_counter 0
+VALUE _nn_train_k 0
+
+# Network Dimensions (Persistent during creation)
+VALUE _nn_net_input_size 0
+VALUE _nn_net_hidden_size 0
+VALUE _nn_net_output_size 0
+
+# Network Pointers
+VALUE _nn_network_ptr 0
+VALUE _nn_hidden_layer_ptr 0
+VALUE _nn_output_layer_ptr 0
+
+# Prediction Pointers
+VALUE _nn_predict_input_ptr 0
+VALUE _nn_predict_layer_ptr 0
+VALUE _nn_predict_output_ptr 0
+VALUE _nn_weights_ptr 0
+VALUE _nn_bias_ptr 0
+
+# Temporary Matrices for Prediction (Pre-allocated)
+VALUE _nn_mat_input_wrapper 0
+VALUE _nn_mat_hidden_activations 0
+VALUE _nn_mat_output_activations 0
+
+# Temporary Matrices for Training (Pre-allocated)
+VALUE _nn_mat_target 0
+VALUE _nn_mat_output_error 0
+VALUE _nn_mat_output_deriv 0
+VALUE _nn_mat_output_delta 0
+
+VALUE _nn_mat_weights_ho_trans 0
+VALUE _nn_mat_hidden_error 0
+VALUE _nn_mat_hidden_deriv 0
+VALUE _nn_mat_hidden_delta 0
+
+VALUE _nn_mat_hidden_act_trans 0
+VALUE _nn_mat_grad_ho 0
+VALUE _nn_mat_input_trans 0
+VALUE _nn_mat_grad_ih 0
+
+VALUE _nn_mat_bias_input 0
+
+# TDL Pointers (Pre-compiled)
+VALUE _tdl_fh_dot 0
+VALUE _tdl_fh_add 0
+VALUE _tdl_fh_relu 0
+
+VALUE _tdl_fo_dot 0
+VALUE _tdl_fo_add 0
+VALUE _tdl_fo_relu 0
+
+VALUE _tdl_bp_err 0
+VALUE _tdl_bp_d_out 0
+VALUE _tdl_bp_delta_o 0
+VALUE _tdl_bp_trans_w 0
+VALUE _tdl_bp_h_err 0
+VALUE _tdl_bp_d_h 0
+VALUE _tdl_bp_delta_h 0
+
+VALUE _tdl_up_o_trans 0
+VALUE _tdl_up_o_grad 0
+VALUE _tdl_up_o_add_w 0
+VALUE _tdl_up_o_bias_g 0
+VALUE _tdl_up_o_add_b 0
+
+VALUE _tdl_up_h_trans 0
+VALUE _tdl_up_h_grad 0
+VALUE _tdl_up_h_add_w 0
+VALUE _tdl_up_h_bias_g 0
+VALUE _tdl_up_h_add_b 0
+
+VALUE _nn_h_weights 0
+VALUE _nn_h_bias 0
+VALUE _nn_o_weights 0
+VALUE _nn_o_bias 0
+
+STRING bias_val "0.1"
+
+# ----------------------------------------------------------------------------
+# Configuration
+# ----------------------------------------------------------------------------
+
+DEF NN.set_scale {
+    AS _nn_scale
+}
+
+# ----------------------------------------------------------------------------
+# PRIVATE HELPER: _NN.new_layer
+# Creates a layer structure containing two Matrices: Weights and Bias.
+#
+# Weights Matrix: [Inputs x Neurons]
+# Bias Matrix:    [1 x Neurons]
+#
+# Stack: ( num_neurons, num_inputs_per_neuron -- layer_ptr )
+# ----------------------------------------------------------------------------
+DEF _NN.new_layer {
+    AS _nn_col_counter # Inputs (Rows of weights)
+    AS _nn_row_counter # Neurons (Cols of weights)
+
+    # 1. Create Layer Container (Array of 2 pointers)
+    2 NEW.array AS _nn_temp_ptr
+
+    # 2. Create Weights Matrix (Inputs x Neurons)
+    # Standard Dot Product: (1 x In) . (In x Neurons) = (1 x Neurons)
+    _nn_col_counter _nn_row_counter NEW.matrix AS _nn_weights_ptr
+
+    # Initialize Weights with Random Values
+    # Loop Rows (Inputs)
+    1 AS _nn_fill_counter # row idx
+    WHILE _nn_fill_counter _nn_col_counter 1 + < DO
+        
+        # Loop Cols (Neurons)
+        1 AS _nn_predict_layer_ptr # col idx (reusing var)
+        WHILE _nn_predict_layer_ptr _nn_row_counter 1 + < DO
+            
+            # Generate Random: (RND % 200 - 100) / 1000
+            RND 200 % 100 - FP.from_int
+            1000 FP.from_int
+            FP.div
+            
+            # Put into Matrix
+            _nn_fill_counter _nn_predict_layer_ptr _nn_weights_ptr MATRIX.put
+
+            _nn_predict_layer_ptr 1 + AS _nn_predict_layer_ptr
+        DONE
+
+        _nn_fill_counter 1 + AS _nn_fill_counter
+    DONE
+
+    # 3. Create Bias Matrix (1 x Neurons)
+    1 _nn_row_counter NEW.matrix AS _nn_bias_ptr
+
+    # Initialize Bias to 0.1
+    1 AS _nn_fill_counter # col idx
+    WHILE _nn_fill_counter _nn_row_counter 1 + < DO
+        &bias_val FP.from_string
+        1 _nn_fill_counter _nn_bias_ptr MATRIX.put
+        _nn_fill_counter 1 + AS _nn_fill_counter
+    DONE
+
+    # 4. Store in Layer Container
+    _nn_weights_ptr _nn_temp_ptr ARRAY.append
+    _nn_bias_ptr _nn_temp_ptr ARRAY.append
+
+    _nn_temp_ptr
+}
+
+
+# ----------------------------------------------------------------------------
+# PUBLIC API: NN.new_network
+# Creates a new 3-layer neural network optimized for GPU.
+#
+# Stack: (input_size, hidden_size, output_size -- network_ptr)
+# ----------------------------------------------------------------------------
+DEF NN.new_network {
+    AS _nn_net_output_size
+    AS _nn_net_hidden_size
+    AS _nn_net_input_size
+
+    # Create Network Container
+    3 NEW.array AS _nn_network_ptr
+
+    # Create Hidden Layer (Input x Hidden)
+    _nn_net_hidden_size _nn_net_input_size _NN.new_layer AS _nn_hidden_layer_ptr
+
+    # Create Output Layer (Hidden x Output)
+    _nn_net_output_size _nn_net_hidden_size _NN.new_layer AS _nn_output_layer_ptr
+
+    # Store in Network
+    _nn_net_input_size _nn_network_ptr ARRAY.append # Store Input Size
+    _nn_hidden_layer_ptr _nn_network_ptr ARRAY.append
+    _nn_output_layer_ptr _nn_network_ptr ARRAY.append
+
+    # Pre-allocate Matrices for Forward Pass
+    # Input Wrapper (1 x Input)
+    1 _nn_net_input_size NEW.matrix AS _nn_mat_input_wrapper
+    
+    # Hidden Activations (1 x Hidden)
+    1 _nn_net_hidden_size NEW.matrix AS _nn_mat_hidden_activations
+
+    # Output Activations (1 x Output)
+    1 _nn_net_output_size NEW.matrix AS _nn_mat_output_activations
+
+    # --- Training Matrices ---
+    
+    # Target & Error (1 x Output)
+    1 _nn_net_output_size NEW.matrix AS _nn_mat_target
+    1 _nn_net_output_size NEW.matrix AS _nn_mat_output_error
+    1 _nn_net_output_size NEW.matrix AS _nn_mat_output_deriv
+    1 _nn_net_output_size NEW.matrix AS _nn_mat_output_delta
+
+    # Hidden Backprop (1 x Hidden)
+    1 _nn_net_hidden_size NEW.matrix AS _nn_mat_hidden_error
+    1 _nn_net_hidden_size NEW.matrix AS _nn_mat_hidden_deriv
+    1 _nn_net_hidden_size NEW.matrix AS _nn_mat_hidden_delta
+
+    # Transposed Weights HO (Output x Hidden)
+    _nn_net_output_size _nn_net_hidden_size NEW.matrix AS _nn_mat_weights_ho_trans
+
+    # Transposed Activations & Inputs
+    _nn_net_hidden_size 1 NEW.matrix AS _nn_mat_hidden_act_trans # Hidden x 1
+    _nn_net_input_size 1 NEW.matrix AS _nn_mat_input_trans     # Input x 1
+
+    # Gradients (Same size as Weights)
+    # Grad HO (Hidden x Output)
+    _nn_net_hidden_size _nn_net_output_size NEW.matrix AS _nn_mat_grad_ho
+    # Grad IH (Input x Hidden)
+    _nn_net_input_size _nn_net_hidden_size NEW.matrix AS _nn_mat_grad_ih
+
+    # Bias Input Wrapper (1 x 1) - Always holds 1.0
+    1 1 NEW.matrix AS _nn_mat_bias_input
+    _nn_scale 1 1 _nn_mat_bias_input MATRIX.put
+
+    # --- Pre-compile TDLs ---
+    
+    # Cache Layer Pointers
+    _nn_hidden_layer_ptr 0 ARRAY.get AS _nn_h_weights
+    _nn_hidden_layer_ptr 1 ARRAY.get AS _nn_h_bias
+    _nn_output_layer_ptr 0 ARRAY.get AS _nn_o_weights
+    _nn_output_layer_ptr 1 ARRAY.get AS _nn_o_bias
+
+    # Forward Hidden
+    7 NEW.list AS _tdl_fh_dot
+    _nn_mat_input_wrapper _nn_h_weights _nn_mat_hidden_activations _nn_scale MAT.DOT 0 _tdl_fh_dot GPU.tdl
+
+    7 NEW.list AS _tdl_fh_add
+    _nn_mat_hidden_activations _nn_h_bias _nn_mat_hidden_activations 0 MAT.ADD 0 _tdl_fh_add GPU.tdl
+
+    7 NEW.list AS _tdl_fh_relu
+    _nn_mat_hidden_activations 0 _nn_mat_hidden_activations 0 MAT.RELU 0 _tdl_fh_relu GPU.tdl
+
+    # Forward Output
+    7 NEW.list AS _tdl_fo_dot
+    _nn_mat_hidden_activations _nn_o_weights _nn_mat_output_activations _nn_scale MAT.DOT 0 _tdl_fo_dot GPU.tdl
+
+    7 NEW.list AS _tdl_fo_add
+    _nn_mat_output_activations _nn_o_bias _nn_mat_output_activations 0 MAT.ADD 0 _tdl_fo_add GPU.tdl
+
+    7 NEW.list AS _tdl_fo_relu
+    _nn_mat_output_activations 0 _nn_mat_output_activations 0 MAT.RELU 0 _tdl_fo_relu GPU.tdl
+
+    # Backprop Deltas
+    7 NEW.list AS _tdl_bp_err
+    _nn_mat_target _nn_mat_output_activations _nn_mat_output_error 0 MAT.SUB 0 _tdl_bp_err GPU.tdl
+
+    7 NEW.list AS _tdl_bp_d_out
+    _nn_mat_output_activations 0 _nn_mat_output_deriv _nn_scale MAT.RELU_DERIV 0 _tdl_bp_d_out GPU.tdl
+
+    7 NEW.list AS _tdl_bp_delta_o
+    _nn_mat_output_error _nn_mat_output_deriv _nn_mat_output_delta _nn_scale MAT.MUL 0 _tdl_bp_delta_o GPU.tdl
+
+    7 NEW.list AS _tdl_bp_trans_w
+    _nn_o_weights 0 _nn_mat_weights_ho_trans 0 MAT.TRANS 0 _tdl_bp_trans_w GPU.tdl
+
+    7 NEW.list AS _tdl_bp_h_err
+    _nn_mat_output_delta _nn_mat_weights_ho_trans _nn_mat_hidden_error _nn_scale MAT.DOT 0 _tdl_bp_h_err GPU.tdl
+
+    7 NEW.list AS _tdl_bp_d_h
+    _nn_mat_hidden_activations 0 _nn_mat_hidden_deriv _nn_scale MAT.RELU_DERIV 0 _tdl_bp_d_h GPU.tdl
+
+    7 NEW.list AS _tdl_bp_delta_h
+    _nn_mat_hidden_error _nn_mat_hidden_deriv _nn_mat_hidden_delta _nn_scale MAT.MUL 0 _tdl_bp_delta_h GPU.tdl
+
+    # Update Output
+    7 NEW.list AS _tdl_up_o_trans
+    _nn_mat_hidden_activations 0 _nn_mat_hidden_act_trans 0 MAT.TRANS 0 _tdl_up_o_trans GPU.tdl
+
+    7 NEW.list AS _tdl_up_o_grad
+    _nn_mat_hidden_act_trans _nn_mat_output_delta _nn_mat_grad_ho 0 MAT.DOT 0 _tdl_up_o_grad GPU.tdl
+
+    7 NEW.list AS _tdl_up_o_add_w
+    _nn_o_weights _nn_mat_grad_ho _nn_o_weights 0 MAT.ADD 0 _tdl_up_o_add_w GPU.tdl
+
+    7 NEW.list AS _tdl_up_o_bias_g
+    _nn_mat_bias_input _nn_mat_output_delta _nn_mat_output_error 0 MAT.DOT 0 _tdl_up_o_bias_g GPU.tdl
+
+    7 NEW.list AS _tdl_up_o_add_b
+    _nn_o_bias _nn_mat_output_error _nn_o_bias 0 MAT.ADD 0 _tdl_up_o_add_b GPU.tdl
+
+    # Update Hidden
+    7 NEW.list AS _tdl_up_h_trans
+    _nn_mat_input_wrapper 0 _nn_mat_input_trans 0 MAT.TRANS 0 _tdl_up_h_trans GPU.tdl
+
+    7 NEW.list AS _tdl_up_h_grad
+    _nn_mat_input_trans _nn_mat_hidden_delta _nn_mat_grad_ih 0 MAT.DOT 0 _tdl_up_h_grad GPU.tdl
+
+    7 NEW.list AS _tdl_up_h_add_w
+    _nn_h_weights _nn_mat_grad_ih _nn_h_weights 0 MAT.ADD 0 _tdl_up_h_add_w GPU.tdl
+
+    7 NEW.list AS _tdl_up_h_bias_g
+    _nn_mat_bias_input _nn_mat_hidden_delta _nn_mat_hidden_error 0 MAT.DOT 0 _tdl_up_h_bias_g GPU.tdl
+
+    7 NEW.list AS _tdl_up_h_add_b
+    _nn_h_bias _nn_mat_hidden_error _nn_h_bias 0 MAT.ADD 0 _tdl_up_h_add_b GPU.tdl
+
+    _nn_network_ptr
+}
+
+
+# ----------------------------------------------------------------------------
+# PUBLIC API: NN.predict
+# Performs a full forward pass.
+# Handles conversion from Input Array to Input Matrix.
+#
+# Stack: (network_ptr, input_array_ptr -- output_matrix_ptr)
+# ----------------------------------------------------------------------------
+DEF NN.predict {
+    AS _nn_predict_input_ptr # This is an Array
+    AS _nn_network_ptr
+
+    # 1. Convert Input Array to Input Matrix
+    # We copy data from the array to our pre-allocated matrix wrapper
+    0 AS _nn_fill_counter
+    WHILE _nn_fill_counter _nn_predict_input_ptr ARRAY.len < DO
+        _nn_predict_input_ptr _nn_fill_counter ARRAY.get
+        1 _nn_fill_counter 1 + _nn_mat_input_wrapper MATRIX.put
+        _nn_fill_counter 1 + AS _nn_fill_counter
+    DONE
+
+    # 2. Hidden Layer Pass
+    _tdl_fh_dot GPU.exec DROP
+    _tdl_fh_add GPU.exec DROP
+    _tdl_fh_relu GPU.exec DROP
+
+    # 3. Output Layer Pass
+    _tdl_fo_dot GPU.exec DROP
+    _tdl_fo_add GPU.exec DROP
+    _tdl_fo_relu GPU.exec DROP
+
+    # Return the Output Matrix
+    # Note: Since a 1xN Matrix has the same memory layout as an Array (mostly),
+    # ARRAY.get will work on this pointer if the user treats it as an array.
+    _nn_mat_output_activations
+}
+
+# ----------------------------------------------------------------------------
+# PUBLIC API: NN.train
+# Performs Backpropagation.
+#
+# Stack: (network_ptr, input_array_ptr, target_array_ptr, learning_rate -- )
+# ----------------------------------------------------------------------------
+DEF NN.train {
+    AS _nn_train_k # Learning Rate (reusing var temporarily)
+    AS _nn_predict_output_ptr # Target Array (reusing var)
+    AS _nn_predict_input_ptr # Input Array
+    AS _nn_network_ptr
+
+    # 1. Calculate Gradient Scale K
+    # We use the DOT product scale to handle Learning Rate.
+    # K = (Scale * Scale) / LearningRate
+    # Example: Scale=10, LR=1 (0.1). K = 100/1 = 100.
+    # Result = (A . B) / 100 -> (A . B) / 10 * 0.1. Correct.
+    _nn_scale _nn_train_k FP.div AS _nn_train_k
+
+    # 2. Populate Input Matrix
+    0 AS _nn_fill_counter
+    WHILE _nn_fill_counter _nn_predict_input_ptr ARRAY.len < DO
+        _nn_predict_input_ptr _nn_fill_counter ARRAY.get
+        1 _nn_fill_counter 1 + _nn_mat_input_wrapper MATRIX.put
+        _nn_fill_counter 1 + AS _nn_fill_counter
+    DONE
+
+    # 3. Populate Target Matrix
+    0 AS _nn_fill_counter
+    WHILE _nn_fill_counter _nn_predict_output_ptr ARRAY.len < DO
+        _nn_predict_output_ptr _nn_fill_counter ARRAY.get
+        1 _nn_fill_counter 1 + _nn_mat_target MATRIX.put
+        _nn_fill_counter 1 + AS _nn_fill_counter
+    DONE
+
+    # 4. Forward Pass (Input -> Hidden -> Output)
+    _tdl_fh_dot GPU.exec DROP
+    _tdl_fh_add GPU.exec DROP
+    _tdl_fh_relu GPU.exec DROP
+
+    _tdl_fo_dot GPU.exec DROP
+    _tdl_fo_add GPU.exec DROP
+    _tdl_fo_relu GPU.exec DROP
+
+    # 5. Output Deltas
+    # Error = Target - Output
+    _tdl_bp_err GPU.exec DROP
+    
+    # Deriv = f'(Output) (GPU)
+    _tdl_bp_d_out GPU.exec DROP
+
+    # Delta = Error * Deriv
+    _tdl_bp_delta_o GPU.exec DROP
+
+    # 6. Hidden Deltas
+    # Transpose Output Weights
+    _tdl_bp_trans_w GPU.exec DROP
+
+    # Hidden Error = Output Delta . Weights_HO_T
+    _tdl_bp_h_err GPU.exec DROP
+
+    # Deriv = f'(Hidden) (GPU)
+    _tdl_bp_d_h GPU.exec DROP
+
+    # Delta = Hidden Error * Deriv
+    _tdl_bp_delta_h GPU.exec DROP
+
+    # 7. Update Output Layer Weights
+    
+    # Update Scales with Learning Rate
+    _tdl_up_o_grad 3 + AS _nn_temp_ptr
+    _nn_train_k AS *_nn_temp_ptr
+    
+    _tdl_up_o_bias_g 3 + AS _nn_temp_ptr
+    _nn_train_k AS *_nn_temp_ptr
+
+    _tdl_up_h_grad 3 + AS _nn_temp_ptr
+    _nn_train_k AS *_nn_temp_ptr
+
+    _tdl_up_h_bias_g 3 + AS _nn_temp_ptr
+    _nn_train_k AS *_nn_temp_ptr
+
+    # Grad = (Hidden_Act_T . Output_Delta) * LR
+    # We use _nn_train_k as scale to apply LR
+    _tdl_up_o_trans GPU.exec DROP
+    
+    _tdl_up_o_grad GPU.exec DROP
+
+    # Weights = Weights + Grad
+    _tdl_up_o_add_w GPU.exec DROP
+
+    # Update Output Bias
+    # Bias_Grad = (Bias_Input . Output_Delta) * LR
+    # Note: Reusing _nn_mat_output_error as temp buffer for bias grad (1 x Output)
+    _tdl_up_o_bias_g GPU.exec DROP
+    
+    _tdl_up_o_add_b GPU.exec DROP
+
+    # 8. Update Hidden Layer Weights
+    # Grad = (Input_T . Hidden_Delta) * LR
+    _tdl_up_h_trans GPU.exec DROP
+
+    _tdl_up_h_grad GPU.exec DROP
+
+    # Weights = Weights + Grad
+    _tdl_up_h_add_w GPU.exec DROP
+
+    # Update Hidden Bias
+    # Bias_Grad = (Bias_Input . Hidden_Delta) * LR
+    # Reusing _nn_mat_hidden_error as temp buffer
+    _tdl_up_h_bias_g GPU.exec DROP
+
+    _tdl_up_h_add_b GPU.exec DROP
+}

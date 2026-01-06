@@ -1,0 +1,94 @@
+# .HEADER
+. $_gpu_tdl_ptr 1
+. $_gpu_temp_ptr 1
+# .FUNCTIONS
+@GPU.tdl
+    ustack A $DATASTACK_PTR
+    sto A $_gpu_tdl_ptr
+    stack A $DATASTACK_PTR
+    ldi A 6
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_gpu_temp_ptr
+    ustack B $DATASTACK_PTR
+    ldm I $_gpu_temp_ptr
+    stx B $_start_memory_
+    ldm A $_gpu_tdl_ptr
+    stack A $DATASTACK_PTR
+    ldi A 5
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_gpu_temp_ptr
+    ldi A 0
+    ld B A
+    ldm I $_gpu_temp_ptr
+    stx B $_start_memory_
+    ldm A $_gpu_tdl_ptr
+    stack A $DATASTACK_PTR
+    ldi A 4
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_gpu_temp_ptr
+    ustack B $DATASTACK_PTR
+    ldm I $_gpu_temp_ptr
+    stx B $_start_memory_
+    ldm A $_gpu_tdl_ptr
+    stack A $DATASTACK_PTR
+    ldi A 3
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_gpu_temp_ptr
+    ustack B $DATASTACK_PTR
+    ldm I $_gpu_temp_ptr
+    stx B $_start_memory_
+    ldm A $_gpu_tdl_ptr
+    stack A $DATASTACK_PTR
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_gpu_temp_ptr
+    ustack B $DATASTACK_PTR
+    ldm I $_gpu_temp_ptr
+    stx B $_start_memory_
+    ldm A $_gpu_tdl_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_gpu_temp_ptr
+    ustack B $DATASTACK_PTR
+    ldm I $_gpu_temp_ptr
+    stx B $_start_memory_
+    ldm A $_gpu_tdl_ptr
+    sto A $_gpu_temp_ptr
+    ustack B $DATASTACK_PTR
+    ldm I $_gpu_temp_ptr
+    stx B $_start_memory_
+    ret
+@GPU.exec
+    ustack A $DATASTACK_PTR
+    sto A $_gpu_tdl_ptr
+
+        ldm A $_gpu_tdl_ptr
+        gpu A
+        ldm A $_gpu_tdl_ptr
+    stack A $DATASTACK_PTR
+    ldi A 5
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_gpu_temp_ptr
+    ldm I $_gpu_temp_ptr
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ret
+
+# .DATA
+% $_gpu_tdl_ptr 0
+% $_gpu_temp_ptr 0
