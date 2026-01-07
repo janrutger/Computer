@@ -1713,6 +1713,27 @@
     ustack A $DATASTACK_PTR
     sto A $_gpu_tdl_ptr
     stack A $DATASTACK_PTR
+    ldi A 6
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_gpu_temp_ptr
+    ustack B $DATASTACK_PTR
+    ldm I $_gpu_temp_ptr
+    stx B $_start_memory_
+    ldm A $_gpu_tdl_ptr
+    stack A $DATASTACK_PTR
+    ldi A 5
+    ustack B $DATASTACK_PTR
+    add B A
+    ld A B
+    sto A $_gpu_temp_ptr
+    ldi A 0
+    ld B A
+    ldm I $_gpu_temp_ptr
+    stx B $_start_memory_
+    ldm A $_gpu_tdl_ptr
+    stack A $DATASTACK_PTR
     ldi A 4
     ustack B $DATASTACK_PTR
     add B A
@@ -1754,17 +1775,6 @@
     ldm A $_gpu_tdl_ptr
     sto A $_gpu_temp_ptr
     ustack B $DATASTACK_PTR
-    ldm I $_gpu_temp_ptr
-    stx B $_start_memory_
-    ldm A $_gpu_tdl_ptr
-    stack A $DATASTACK_PTR
-    ldi A 5
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    sto A $_gpu_temp_ptr
-    ldi A 0
-    ld B A
     ldm I $_gpu_temp_ptr
     stx B $_start_memory_
     ret

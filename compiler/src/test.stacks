@@ -5,7 +5,7 @@ INCLUDE math_lib
 USE std_heap
 INCLUDE fixed_point_lib
 
-INCLUDE gpu_lib
+INCLUDE gpu3_lib
 
 HEAP.free
 10 FP.set_scale

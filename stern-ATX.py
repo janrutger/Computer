@@ -7,7 +7,8 @@ import os
 import cProfile
 import pstats
 
-from devices.cpu_m1 import CPU_M1 as CPU
+from devices.cpu_m1 import CPU_M1
+from devices.cpuR3 import CPU_R3
 
 from devices.memoryR3 import Memory
 from devices.interrupt_controller import InterruptController
@@ -112,7 +113,27 @@ def main():
     # 3. Initialize CPU and Peripherals
     debug_mode = "-debug" in sys.argv
     #debug_mode = True      # use this when running in VScode debug mode
-    cpu = CPU(ram, interrupt_controller, debug_mode=debug_mode)
+    
+    # CPU Selection Logic
+    SelectedCPU = CPU_R3 # Default
+    if "-cpu" in sys.argv:
+        try:
+            arg_index = sys.argv.index("-cpu")
+            if arg_index + 1 < len(sys.argv):
+                cpu_type = sys.argv[arg_index + 1].lower()
+                if cpu_type == "m1":
+                    SelectedCPU = CPU_M1
+                    print("Configuration: CPU M1 (Pipeline Architecture)")
+                elif cpu_type == "r3":
+                    SelectedCPU = CPU_R3
+                    print("Configuration: CPU R3 (Hybrid Architecture)")
+                else:
+                    SelectedCPU = CPU_R3 # Default
+                    print(f"Warning: Unknown CPU type '{cpu_type}'. Defaulting to CPU R3.")
+        except ValueError:
+            pass
+
+    cpu = SelectedCPU(ram, interrupt_controller, debug_mode=debug_mode)
     cpu.registers["PC"] = MEM_LOADER_START # Set PC to the start of the loaded program
     keyboard = Keyboard(interrupt_controller, vector=KEYBOARD_INTERRUPT_VECTOR)
     rtc = RTC(interrupt_controller, vector=RTC_INTERRUPT_VECTOR)

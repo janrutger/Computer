@@ -40,7 +40,7 @@ MAIN_PROGRAMS := main fly maze chaos3 turtle koch fib conway barnsly taylor pi b
 DEFAULT_PROGRAM := $(firstword $(MAIN_PROGRAMS))
 
 # --- Target Calculation ---
-KNOWN_TARGETS := all run debug clean
+KNOWN_TARGETS := all run run-m1 run-r3 debug clean
 SRC_TARGET := $(filter-out $(KNOWN_TARGETS),$(MAKECMDGOALS))
 SRC := $(if $(SRC_TARGET),$(SRC_TARGET),$(DEFAULT_PROGRAM))
 
@@ -83,11 +83,19 @@ directories:
 
 run: $(PROGRAM_ROM)
 	@echo "====== Running Simulation ======"
-	python3 stern-XT.py
+	python3 stern-ATX.py
+
+run-m1: $(PROGRAM_ROM)
+	@echo "====== Running Simulation (CPU M1) ======"
+	python3 stern-ATX.py -cpu m1
+
+run-r3: $(PROGRAM_ROM)
+	@echo "====== Running Simulation (CPU R3) ======"
+	python3 stern-ATX.py -cpu r3
 
 debug: $(PROGRAM_ROM)
 	@echo "====== Running Simulation (Debug) ======"
-	python3 stern-XT.py -debug
+	python3 stern-ATX.py -debug
 
 clean:
 	@echo "====== Cleaning up build artifacts ======"
