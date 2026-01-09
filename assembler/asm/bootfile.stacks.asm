@@ -119,8 +119,7 @@
 @TIME.start
     ldm A $p_watch_list
     ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $current_watch
     ldm I $p_currentime
     ldx A $_start_memory_
@@ -131,8 +130,7 @@
 @TIME.read
     ldm A $p_watch_list
     ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $current_watch
     ldm I $p_currentime
     ldx A $_start_memory_
@@ -147,8 +145,7 @@
     ldm I $p_currentime
     ldx A $_start_memory_
     ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $wait_end_time
 :wait_loop
     ldm A $wait_end_time
@@ -326,10 +323,8 @@
     jmpt :READline_if_else_4
     call @CURSORoff
     call @PRTchar
-    ldm A $input_buffer_index
-    stack A $DATASTACK_PTR
+    ldm B $input_buffer_index
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $input_buffer_index
@@ -343,30 +338,23 @@
     call @rt_dup
     call @PRTchar
     ldi A $input_buffer
-    stack A $DATASTACK_PTR
+    ld B A
     ldm A $input_buffer_index
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $p_input_buffer
     ustack B $DATASTACK_PTR
     ldm I $p_input_buffer
     stx B $_start_memory_
-    ldm A $input_buffer_index
-    stack A $DATASTACK_PTR
+    ldm B $input_buffer_index
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $input_buffer_index
     jmp :readline_loop
 :finish_readline
     ldi A $input_buffer
-    stack A $DATASTACK_PTR
+    ld B A
     ldm A $input_buffer_index
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $p_input_buffer
     ldi A 0
     ld B A
@@ -457,19 +445,13 @@
     stack A $DATASTACK_PTR
     jmp :strcmp_end
 :STRcmp_if_end_1
-    ldm A $_strcmp_p1
-    stack A $DATASTACK_PTR
+    ldm B $_strcmp_p1
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_strcmp_p1
-    ldm A $_strcmp_p2
-    stack A $DATASTACK_PTR
+    ldm B $_strcmp_p2
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_strcmp_p2
     jmp :strcmp_loop
 :strcmp_end
@@ -518,28 +500,19 @@
     jmpt :STRatoi_if_end_4
     jmp :atoi_fail
 :STRatoi_if_end_4
-    ldm A $_atoi_c
-    stack A $DATASTACK_PTR
+    ldm B $_atoi_c
     ldi A 48
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
-    ldm A $_atoi_result
-    stack A $DATASTACK_PTR
+    ldm B $_atoi_result
     ldi A 10
+    mul A B
     ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_atoi_result
-    ldm A $_atoi_p
-    stack A $DATASTACK_PTR
+    ldm B $_atoi_p
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_atoi_p
     jmp :atoi_loop
 :atoi_fail
@@ -567,19 +540,13 @@
     jmpt :STRlen_if_end_5
     jmp :strlen_end
 :STRlen_if_end_5
-    ldm A $_strlen_p
-    stack A $DATASTACK_PTR
+    ldm B $_strlen_p
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_strlen_p
-    ldm A $_strlen_len
-    stack A $DATASTACK_PTR
+    ldm B $_strlen_len
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_strlen_len
     jmp :strlen_loop
 :strlen_end
@@ -623,19 +590,13 @@
     stack A $DATASTACK_PTR
     jmp :strfind_end
 :STRfind_if_end_7
-    ldm A $_strfind_p
-    stack A $DATASTACK_PTR
+    ldm B $_strfind_p
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_strfind_p
-    ldm A $_strfind_idx
-    stack A $DATASTACK_PTR
+    ldm B $_strfind_idx
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_strfind_idx
     jmp :strfind_loop
 :strfind_end
@@ -686,16 +647,12 @@
 @NEW.list
     ustack A $DATASTACK_PTR
     sto A $_list_size
-    ldm A $HEAP_FREE
-    stack A $DATASTACK_PTR
+    ldm B $HEAP_FREE
     ldm A $_list_size
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
-    ldm A $HEAP_START
-    stack A $DATASTACK_PTR
+    ldm B $HEAP_START
     ldm A $HEAP_SIZE
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     call @rt_gt
@@ -709,12 +666,9 @@
 :NEW.list_if_end_0
     ldm A $HEAP_FREE
     sto A $_list_ptr
-    ldm A $HEAP_FREE
-    stack A $DATASTACK_PTR
+    ldm B $HEAP_FREE
     ldm A $_list_size
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $HEAP_FREE
     ldm A $_list_ptr
     stack A $DATASTACK_PTR
@@ -722,22 +676,16 @@
 @NEW.array
     ustack A $DATASTACK_PTR
     sto A $requested_capacity
-    stack A $DATASTACK_PTR
+    ld B A
     ldi A 2
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $total_size
-    ldm A $HEAP_FREE
-    stack A $DATASTACK_PTR
+    ldm B $HEAP_FREE
     ldm A $total_size
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
-    ldm A $HEAP_START
-    stack A $DATASTACK_PTR
+    ldm B $HEAP_START
     ldm A $HEAP_SIZE
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     call @rt_gt
@@ -751,12 +699,9 @@
 :NEW.array_if_end_1
     ldm A $HEAP_FREE
     sto A $new_array_pointer
-    ldm A $HEAP_FREE
-    stack A $DATASTACK_PTR
+    ldm B $HEAP_FREE
     ldm A $total_size
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $HEAP_FREE
     ldm A $new_array_pointer
     sto A $_ARR_TEMP_PTR
@@ -764,12 +709,9 @@
     ld B A
     ldm I $_ARR_TEMP_PTR
     stx B $_start_memory_
-    ldm A $new_array_pointer
-    stack A $DATASTACK_PTR
+    ldm B $new_array_pointer
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_ARR_TEMP_PTR
     ldi A 0
     ld B A
@@ -788,12 +730,9 @@
     ldm I $_ARR_TEMP_PTR
     ldx A $_start_memory_
     sto A $_capacity
-    ldm A $array_ptr
-    stack A $DATASTACK_PTR
+    ldm B $array_ptr
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_ARR_TEMP_PTR
     ldm I $_ARR_TEMP_PTR
     ldx A $_start_memory_
@@ -823,33 +762,25 @@
     call @PRTstring
     call @HALT
 :ARRAY.append_if_end_3
-    ldm A $array_ptr
-    stack A $DATASTACK_PTR
+    ldm B $array_ptr
     ldi A 2
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     ldm A $_count
     ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $dest_addr
     sto A $_ARR_TEMP_PTR
     ldm A $_value
     ld B A
     ldm I $_ARR_TEMP_PTR
     stx B $_start_memory_
-    ldm A $array_ptr
-    stack A $DATASTACK_PTR
+    ldm B $array_ptr
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_ARR_TEMP_PTR
-    ldm A $_count
-    stack A $DATASTACK_PTR
+    ldm B $_count
     ldi A 1
-    ustack B $DATASTACK_PTR
     add B A
     ldm I $_ARR_TEMP_PTR
     stx B $_start_memory_
@@ -861,12 +792,9 @@
     sto A $_index
     ustack A $DATASTACK_PTR
     sto A $_value
-    ldm A $array_ptr
-    stack A $DATASTACK_PTR
+    ldm B $array_ptr
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_ARR_TEMP_PTR
     ldm I $_ARR_TEMP_PTR
     ldx A $_start_memory_
@@ -910,16 +838,13 @@
     call @PRTstring
     call @HALT
 :ARRAY.put_if_end_6
-    ldm A $array_ptr
-    stack A $DATASTACK_PTR
+    ldm B $array_ptr
     ldi A 2
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     ldm A $_index
     ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $dest_addr
     sto A $_ARR_TEMP_PTR
     ldm A $_value
@@ -932,12 +857,9 @@
     sto A $array_ptr
     ustack A $DATASTACK_PTR
     sto A $_index
-    ldm A $array_ptr
-    stack A $DATASTACK_PTR
+    ldm B $array_ptr
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_ARR_TEMP_PTR
     ldm I $_ARR_TEMP_PTR
     ldx A $_start_memory_
@@ -981,16 +903,13 @@
     call @PRTstring
     call @HALT
 :ARRAY.get_if_end_9
-    ldm A $array_ptr
-    stack A $DATASTACK_PTR
+    ldm B $array_ptr
     ldi A 2
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     ldm A $_index
     ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $read_addr
     sto A $_ARR_TEMP_PTR
     ldm I $_ARR_TEMP_PTR
@@ -1008,11 +927,9 @@
 @ARRAY.len
     ustack A $DATASTACK_PTR
     sto A $array_ptr
-    stack A $DATASTACK_PTR
+    ld B A
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_ARR_TEMP_PTR
     ldm I $_ARR_TEMP_PTR
     ldx A $_start_memory_
@@ -1021,8 +938,7 @@
 @ARRAY.clear
     ldi A 1
     ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_ARR_TEMP_PTR
     ldi A 0
     ld B A
@@ -1060,29 +976,20 @@
     call @PRTstring
     call @HALT
 :NEW.matrix_if_end_11
-    ldm A $_MAT_X_DIM
-    stack A $DATASTACK_PTR
+    ldm B $_MAT_X_DIM
     ldm A $_MAT_Y_DIM
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
+    mul A B
     sto A $_total_data_elements
-    stack A $DATASTACK_PTR
+    ld B A
     ldi A 2
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_total_matrix_size
-    ldm A $HEAP_FREE
-    stack A $DATASTACK_PTR
+    ldm B $HEAP_FREE
     ldm A $_total_matrix_size
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
-    ldm A $HEAP_START
-    stack A $DATASTACK_PTR
+    ldm B $HEAP_START
     ldm A $HEAP_SIZE
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     call @rt_gt
@@ -1096,12 +1003,9 @@
 :NEW.matrix_if_end_12
     ldm A $HEAP_FREE
     sto A $_MAT_PTR
-    ldm A $HEAP_FREE
-    stack A $DATASTACK_PTR
+    ldm B $HEAP_FREE
     ldm A $_total_matrix_size
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $HEAP_FREE
     ldm A $_MAT_PTR
     sto A $_MAT_TEMP_PTR
@@ -1109,12 +1013,9 @@
     ld B A
     ldm I $_MAT_TEMP_PTR
     stx B $_start_memory_
-    ldm A $_MAT_PTR
-    stack A $DATASTACK_PTR
+    ldm B $_MAT_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_MAT_TEMP_PTR
     ldm A $_MAT_X_DIM
     ld B A
@@ -1176,12 +1077,9 @@
     call @PRTstring
     call @HALT
 :MATRIX.put_if_end_15
-    ldm A $_MAT_PTR
-    stack A $DATASTACK_PTR
+    ldm B $_MAT_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_MAT_TEMP_PTR
     ldm I $_MAT_TEMP_PTR
     ldx A $_start_memory_
@@ -1199,23 +1097,18 @@
     call @PRTstring
     call @HALT
 :MATRIX.put_if_end_16
-    ldm A $_MAT_X_DIM
-    stack A $DATASTACK_PTR
+    ldm B $_MAT_X_DIM
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $_MAT_X_DIM
-    ldm A $_MAT_Y_DIM
-    stack A $DATASTACK_PTR
+    ldm B $_MAT_Y_DIM
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $_MAT_Y_DIM
-    stack A $DATASTACK_PTR
+    ld B A
     ldm A $_MAT_OFFSET
-    ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
     ldm A $_MAT_X_DIM
@@ -1224,15 +1117,11 @@
     stack B $DATASTACK_PTR
     ldi A 2
     ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_MAT_OFFSET
-    ldm A $_MAT_PTR
-    stack A $DATASTACK_PTR
+    ldm B $_MAT_PTR
     ldm A $_MAT_OFFSET
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_MAT_TEMP_PTR
     ldm A $_MAT_VALUE
     ld B A
@@ -1289,12 +1178,9 @@
     call @PRTstring
     call @HALT
 :MATRIX.get_if_end_19
-    ldm A $_MAT_PTR
-    stack A $DATASTACK_PTR
+    ldm B $_MAT_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_MAT_TEMP_PTR
     ldm I $_MAT_TEMP_PTR
     ldx A $_start_memory_
@@ -1312,23 +1198,18 @@
     call @PRTstring
     call @HALT
 :MATRIX.get_if_end_20
-    ldm A $_MAT_X_DIM
-    stack A $DATASTACK_PTR
+    ldm B $_MAT_X_DIM
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $_MAT_X_DIM
-    ldm A $_MAT_Y_DIM
-    stack A $DATASTACK_PTR
+    ldm B $_MAT_Y_DIM
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $_MAT_Y_DIM
-    stack A $DATASTACK_PTR
+    ld B A
     ldm A $_MAT_OFFSET
-    ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
     ldm A $_MAT_X_DIM
@@ -1337,15 +1218,11 @@
     stack B $DATASTACK_PTR
     ldi A 2
     ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_MAT_OFFSET
-    ldm A $_MAT_PTR
-    stack A $DATASTACK_PTR
+    ldm B $_MAT_PTR
     ldm A $_MAT_OFFSET
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_MAT_TEMP_PTR
     ldm I $_MAT_TEMP_PTR
     ldx A $_start_memory_
@@ -1382,29 +1259,20 @@
     call @PRTstring
     call @HALT
 :NEW.matrix_populate_if_end_22
-    ldm A $_MAT_X_DIM
-    stack A $DATASTACK_PTR
+    ldm B $_MAT_X_DIM
     ldm A $_MAT_Y_DIM
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
+    mul A B
     sto A $_total_data_elements
-    stack A $DATASTACK_PTR
+    ld B A
     ldi A 2
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_total_matrix_size
-    ldm A $HEAP_FREE
-    stack A $DATASTACK_PTR
+    ldm B $HEAP_FREE
     ldm A $_total_matrix_size
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
-    ldm A $HEAP_START
-    stack A $DATASTACK_PTR
+    ldm B $HEAP_START
     ldm A $HEAP_SIZE
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     call @rt_gt
@@ -1418,12 +1286,9 @@
 :NEW.matrix_populate_if_end_23
     ldm A $HEAP_FREE
     sto A $_MAT_PTR
-    ldm A $HEAP_FREE
-    stack A $DATASTACK_PTR
+    ldm B $HEAP_FREE
     ldm A $_total_matrix_size
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $HEAP_FREE
     ldm A $_MAT_PTR
     sto A $_MAT_TEMP_PTR
@@ -1431,23 +1296,17 @@
     ld B A
     ldm I $_MAT_TEMP_PTR
     stx B $_start_memory_
-    ldm A $_MAT_PTR
-    stack A $DATASTACK_PTR
+    ldm B $_MAT_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_MAT_TEMP_PTR
     ldm A $_MAT_X_DIM
     ld B A
     ldm I $_MAT_TEMP_PTR
     stx B $_start_memory_
-    ldm A $_MAT_PTR
-    stack A $DATASTACK_PTR
+    ldm B $_MAT_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_MAT_TEMP_PTR
     ldi A 0
     sto A $_MAT_LOOP_COUNTER
@@ -1477,19 +1336,13 @@
     ld B A
     ldm I $_MAT_TEMP_PTR
     stx B $_start_memory_
-    ldm A $_MAT_TEMP_PTR
-    stack A $DATASTACK_PTR
+    ldm B $_MAT_TEMP_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_MAT_TEMP_PTR
-    ldm A $_MAT_LOOP_COUNTER
-    stack A $DATASTACK_PTR
+    ldm B $_MAT_LOOP_COUNTER
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_MAT_LOOP_COUNTER
     jmp :matrix_populate_loop
 :NEW.matrix_populate_if_end_24

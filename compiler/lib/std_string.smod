@@ -49,19 +49,13 @@
     stack A $DATASTACK_PTR
     jmp :strcmp_end
 :STRcmp_if_end_1
-    ldm A $_strcmp_p1
-    stack A $DATASTACK_PTR
+    ldm B $_strcmp_p1
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_strcmp_p1
-    ldm A $_strcmp_p2
-    stack A $DATASTACK_PTR
+    ldm B $_strcmp_p2
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_strcmp_p2
     jmp :strcmp_loop
 :strcmp_end
@@ -110,28 +104,19 @@
     jmpt :STRatoi_if_end_4
     jmp :atoi_fail
 :STRatoi_if_end_4
-    ldm A $_atoi_c
-    stack A $DATASTACK_PTR
+    ldm B $_atoi_c
     ldi A 48
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
-    ldm A $_atoi_result
-    stack A $DATASTACK_PTR
+    ldm B $_atoi_result
     ldi A 10
+    mul A B
     ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_atoi_result
-    ldm A $_atoi_p
-    stack A $DATASTACK_PTR
+    ldm B $_atoi_p
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_atoi_p
     jmp :atoi_loop
 :atoi_fail
@@ -159,19 +144,13 @@
     jmpt :STRlen_if_end_5
     jmp :strlen_end
 :STRlen_if_end_5
-    ldm A $_strlen_p
-    stack A $DATASTACK_PTR
+    ldm B $_strlen_p
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_strlen_p
-    ldm A $_strlen_len
-    stack A $DATASTACK_PTR
+    ldm B $_strlen_len
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_strlen_len
     jmp :strlen_loop
 :strlen_end
@@ -215,19 +194,13 @@
     stack A $DATASTACK_PTR
     jmp :strfind_end
 :STRfind_if_end_7
-    ldm A $_strfind_p
-    stack A $DATASTACK_PTR
+    ldm B $_strfind_p
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_strfind_p
-    ldm A $_strfind_idx
-    stack A $DATASTACK_PTR
+    ldm B $_strfind_idx
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_strfind_idx
     jmp :strfind_loop
 :strfind_end

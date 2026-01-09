@@ -607,6 +607,62 @@ class CodeGenerator:
                         i += 2
                         lines_removed_count += 1
                         continue
+                    
+                    # Pattern 4: Interleaved Load/Stack optimization
+                    # stack A $PTR -> ldm A $VAR -> ustack B $PTR
+                    # Becomes: ld B A -> ldm A $VAR
+                    if i + 2 < len(lines):
+                        line3 = lines[i+2].strip()
+                        parts3 = line3.split()
+                        
+                        if len(parts1) > 2 and len(parts3) > 2 and \
+                           parts1[0] == 'stack' and parts3[0] == 'ustack' and \
+                           parts1[2:] == parts3[2:] and parts1[1] != parts3[1]:
+                            
+                            src_reg = parts1[1]
+                            dest_reg = parts3[1]
+                            
+                            if len(parts2) >= 2 and parts2[0] in ['ldm', 'ldi'] and parts2[1] == src_reg:
+                                optimized_lines.append(f"    ld {dest_reg.upper()} {src_reg.upper()}")
+                                optimized_lines.append(lines[i+1])
+                                i += 3
+                                lines_removed_count += 1
+                                continue
+
+                    # Pattern 5: Load A then Move to B optimization
+                    # ldm A $VAR -> ld B A
+                    # Becomes: ldm B $VAR
+                    # Only if A is overwritten in the next instruction
+                    if i + 2 < len(lines):
+                        line3 = lines[i+2].strip()
+                        parts3 = line3.split()
+
+                        overwrites_a = False
+                        if len(parts3) >= 2 and parts3[1] == 'A':
+                            if parts3[0] in ['ldi', 'ldm', 'ustack', 'ld']:
+                                overwrites_a = True
+                        
+                        if len(parts1) == 3 and len(parts2) == 3 and \
+                           parts1[0] == 'ldm' and parts1[1] == 'A' and \
+                           parts2[0] == 'ld' and parts2[1] == 'B' and parts2[2] == 'A' and \
+                           overwrites_a:
+                            
+                            optimized_lines.append(f"    ldm B {parts1[2]}")
+                            i += 2
+                            lines_removed_count += 1
+                            continue
+
+                    # Pattern 6: Commutative Op to Register Swap
+                    # add B A -> ld A B  ==> add A B
+                    # mul B A -> ld A B  ==> mul A B
+                    if len(parts1) == 3 and len(parts2) == 3 and \
+                       parts1[0] in ['add', 'mul'] and parts1[1] == 'B' and parts1[2] == 'A' and \
+                       parts2[0] == 'ld' and parts2[1] == 'A' and parts2[2] == 'B':
+                        
+                        optimized_lines.append(f"    {parts1[0]} A B")
+                        i += 2
+                        lines_removed_count += 1
+                        continue
 
                 optimized_lines.append(lines[i])
                 i += 1

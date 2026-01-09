@@ -55,22 +55,16 @@
     jmpt :_main_if_else_0
     ldm A $P
     stack A $DATASTACK_PTR
-    ldm A $N
-    stack A $DATASTACK_PTR
+    ldm B $N
     ldi A 1
+    add A B
     ustack B $DATASTACK_PTR
-    add B A
-    ld A B
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $R
     jmp :_main_if_end_0
 :_main_if_else_0
-    ldm A $P
-    stack A $DATASTACK_PTR
+    ldm B $P
     ldm A $C
-    ustack B $DATASTACK_PTR
     dmod B A
     ld A B
     sto A $R
@@ -80,12 +74,9 @@
     call @plot
     ldm A $R
     sto A $P
-    ldm A $N
-    stack A $DATASTACK_PTR
+    ldm B $N
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $N
     jmp :_main_while_start_0
 :_main_while_end_0
@@ -132,17 +123,12 @@
     stack A $DATASTACK_PTR
     jmp :_power_end
 :power_if_end_0
-    ldm A $_power_res
-    stack A $DATASTACK_PTR
+    ldm B $_power_res
     ldm A $_power_base
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
+    mul A B
     sto A $_power_res
-    ldm A $_power_exp
-    stack A $DATASTACK_PTR
+    ldm B $_power_exp
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $_power_exp
@@ -165,17 +151,12 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :factorial_while_end_1
-    ldm A $res
-    stack A $DATASTACK_PTR
+    ldm B $res
     ldm A $n
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
+    mul A B
     sto A $res
-    ldm A $n
-    stack A $DATASTACK_PTR
+    ldm B $n
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $n

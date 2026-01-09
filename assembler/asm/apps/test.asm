@@ -1067,17 +1067,12 @@
     stack A $DATASTACK_PTR
     jmp :_power_end
 :power_if_end_0
-    ldm A $_power_res
-    stack A $DATASTACK_PTR
+    ldm B $_power_res
     ldm A $_power_base
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
+    mul A B
     sto A $_power_res
-    ldm A $_power_exp
-    stack A $DATASTACK_PTR
+    ldm B $_power_exp
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $_power_exp
@@ -1100,17 +1095,12 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :factorial_while_end_1
-    ldm A $res
-    stack A $DATASTACK_PTR
+    ldm B $res
     ldm A $n
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
+    mul A B
     sto A $res
-    ldm A $n
-    stack A $DATASTACK_PTR
+    ldm B $n
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $n
@@ -1170,10 +1160,8 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :FP.mul_if_else_0
-    ldm A $SCALE_FACTOR
-    stack A $DATASTACK_PTR
+    ldm B $SCALE_FACTOR
     ldi A 2
-    ustack B $DATASTACK_PTR
     dmod B A
     ld A B
     ustack B $DATASTACK_PTR
@@ -1181,10 +1169,8 @@
     stack B $DATASTACK_PTR
     jmp :FP.mul_if_end_0
 :FP.mul_if_else_0
-    ldm A $SCALE_FACTOR
-    stack A $DATASTACK_PTR
+    ldm B $SCALE_FACTOR
     ldi A 2
-    ustack B $DATASTACK_PTR
     dmod B A
     ld A B
     ustack B $DATASTACK_PTR
@@ -1217,8 +1203,7 @@
     sub B A
     ld A B
     ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
+    mul A B
     sto A $result_sign
 :FP.div_if_end_1
     ldm A $fp_b
@@ -1236,8 +1221,7 @@
     sub B A
     ld A B
     ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
+    mul A B
     sto A $result_sign
 :FP.div_if_end_2
     ldm A $fp_a
@@ -1270,10 +1254,8 @@
     stack A $DATASTACK_PTR
     jmp :FP.div_if_end_5
 :FP.div_if_else_5
-    ldm A $abs_numerator
-    stack A $DATASTACK_PTR
+    ldm B $abs_numerator
     ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
     ldm A $abs_denominator
@@ -1324,10 +1306,8 @@
     call @FP.mul
     ustack A $DATASTACK_PTR
     sto A $result
-    ldm A $exponent
-    stack A $DATASTACK_PTR
+    ldm B $exponent
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $exponent
@@ -1366,51 +1346,38 @@
     ustack B $DATASTACK_PTR
     dmod B A
     sto A $frac
-    stack A $DATASTACK_PTR
+    ld B A
     ldi A 10
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
+    mul A B
     sto A $frac
-    stack A $DATASTACK_PTR
+    ld B A
     ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
     dmod B A
     stack B $DATASTACK_PTR
     call @TOS_nnl
-    ldm A $frac
-    stack A $DATASTACK_PTR
+    ldm B $frac
     ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
     dmod B A
     sto A $frac
-    stack A $DATASTACK_PTR
+    ld B A
     ldi A 10
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
+    mul A B
     sto A $frac
-    stack A $DATASTACK_PTR
+    ld B A
     ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
     dmod B A
     stack B $DATASTACK_PTR
     call @TOS_nnl
-    ldm A $frac
-    stack A $DATASTACK_PTR
+    ldm B $frac
     ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
     dmod B A
     sto A $frac
-    stack A $DATASTACK_PTR
+    ld B A
     ldi A 10
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
+    mul A B
     sto A $frac
-    stack A $DATASTACK_PTR
+    ld B A
     ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
     dmod B A
     stack B $DATASTACK_PTR
     call @TOS_nnl
@@ -1446,19 +1413,13 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :FP.fprint_if_end_10
-    ldm A $temp_scale
-    stack A $DATASTACK_PTR
+    ldm B $temp_scale
     ldi A 10
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
+    mul A B
     sto A $temp_scale
-    ldm A $MAX_VALID_DIGITS
-    stack A $DATASTACK_PTR
+    ldm B $MAX_VALID_DIGITS
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $MAX_VALID_DIGITS
     jmp :loop_calc_valid_digits
 :FP.fprint_if_end_10
@@ -1495,29 +1456,21 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :FP.fprint_if_end_12
-    ldm A $frac
-    stack A $DATASTACK_PTR
+    ldm B $frac
     ldi A 10
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
+    mul A B
     sto A $frac
-    stack A $DATASTACK_PTR
+    ld B A
     ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
     dmod B A
     stack B $DATASTACK_PTR
     call @TOS_nnl
-    ldm A $frac
-    stack A $DATASTACK_PTR
+    ldm B $frac
     ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
     dmod B A
     sto A $frac
-    ldm A $num_digits
-    stack A $DATASTACK_PTR
+    ldm B $num_digits
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $num_digits
@@ -1546,32 +1499,22 @@
 :_STRNatoi_if_end_13
     ldm I $__natoi_p
     ldx A $_start_memory_
-    stack A $DATASTACK_PTR
+    ld B A
     ldi A 48
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
-    ldm A $__natoi_res
-    stack A $DATASTACK_PTR
+    ldm B $__natoi_res
     ldi A 10
+    mul A B
     ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $__natoi_res
-    ldm A $__natoi_p
-    stack A $DATASTACK_PTR
+    ldm B $__natoi_p
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $__natoi_p
-    ldm A $__natoi_len
-    stack A $DATASTACK_PTR
+    ldm B $__natoi_len
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $__natoi_len
@@ -1597,12 +1540,9 @@
     sub B A
     ld A B
     sto A $sign
-    ldm A $str_ptr
-    stack A $DATASTACK_PTR
+    ldm B $str_ptr
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $str_ptr
 :FP.from_string_if_end_14
     ldm A $str_ptr
@@ -1647,25 +1587,21 @@
     call @FP.from_int
     ustack A $DATASTACK_PTR
     sto A $int_part_fp
-    ldm A $str_ptr
-    stack A $DATASTACK_PTR
+    ldm B $str_ptr
     ldm A $dot_index
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     ldi A 1
     ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $frac_ptr
     ldm A $str_ptr
     stack A $DATASTACK_PTR
     call @STRlen
     ustack A $DATASTACK_PTR
     sto A $total_len
-    stack A $DATASTACK_PTR
+    ld B A
     ldm A $dot_index
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldi A 1
@@ -1687,10 +1623,8 @@
     call @power
     ustack A $DATASTACK_PTR
     sto A $divisor
-    ldm A $frac_as_int
-    stack A $DATASTACK_PTR
+    ldm B $frac_as_int
     ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
     ldm A $divisor
@@ -1712,62 +1646,45 @@
 @GPU.tdl
     ustack A $DATASTACK_PTR
     sto A $_gpu_tdl_ptr
-    stack A $DATASTACK_PTR
+    ld B A
     ldi A 6
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_gpu_temp_ptr
     ustack B $DATASTACK_PTR
     ldm I $_gpu_temp_ptr
     stx B $_start_memory_
-    ldm A $_gpu_tdl_ptr
-    stack A $DATASTACK_PTR
+    ldm B $_gpu_tdl_ptr
     ldi A 5
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_gpu_temp_ptr
     ldi A 0
     ld B A
     ldm I $_gpu_temp_ptr
     stx B $_start_memory_
-    ldm A $_gpu_tdl_ptr
-    stack A $DATASTACK_PTR
+    ldm B $_gpu_tdl_ptr
     ldi A 4
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_gpu_temp_ptr
     ustack B $DATASTACK_PTR
     ldm I $_gpu_temp_ptr
     stx B $_start_memory_
-    ldm A $_gpu_tdl_ptr
-    stack A $DATASTACK_PTR
+    ldm B $_gpu_tdl_ptr
     ldi A 3
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_gpu_temp_ptr
     ustack B $DATASTACK_PTR
     ldm I $_gpu_temp_ptr
     stx B $_start_memory_
-    ldm A $_gpu_tdl_ptr
-    stack A $DATASTACK_PTR
+    ldm B $_gpu_tdl_ptr
     ldi A 2
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_gpu_temp_ptr
     ustack B $DATASTACK_PTR
     ldm I $_gpu_temp_ptr
     stx B $_start_memory_
-    ldm A $_gpu_tdl_ptr
-    stack A $DATASTACK_PTR
+    ldm B $_gpu_tdl_ptr
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_gpu_temp_ptr
     ustack B $DATASTACK_PTR
     ldm I $_gpu_temp_ptr
@@ -1784,12 +1701,9 @@
 
         ldm A $_gpu_tdl_ptr
         gpu A
-        ldm A $_gpu_tdl_ptr
-    stack A $DATASTACK_PTR
+    ldm B $_gpu_tdl_ptr
     ldi A 5
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $_gpu_temp_ptr
     ldm I $_gpu_temp_ptr
     ldx A $_start_memory_

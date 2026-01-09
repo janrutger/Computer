@@ -299,7 +299,7 @@ SCALE FP.set_scale
 SCALE NN.set_scale
 
 "Creating 2-4-4 Network (Relative Inputs)...\n" PRTstring
-2 4 4 NN.new_network AS network_ptr
+2 6 4 NN.new_network AS network_ptr
 
 # Allocate reusable arrays
 2 NEW.array AS input_arr

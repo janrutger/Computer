@@ -1,59 +1,59 @@
 {
   "functions": [
-    "FP.add",
-    "PRTchar",
-    "KEYchar",
-    "TOS_nnl",
-    "GPU.tdl",
-    "MATRIX.get",
-    "HALT",
-    "FP.to_int",
-    "ARRAY.clear",
-    "io_lib_init",
-    "HEAP.free",
-    "MATRIX.put",
-    "ARRAY.len",
-    "FP.div",
-    "STRcopy",
-    "FP.set_scale",
-    "NEW.matrix_populate",
-    "GPU.exec",
-    "NN.set_scale",
-    "PRTcls",
-    "FP.from_int",
-    "factorial",
-    "gcd",
-    "_STRNatoi",
-    "power",
-    "FP.sub",
-    "NN.predict",
-    "NEW.list",
-    "NEW.array",
-    "HEAP.init",
-    "ARRAY.append",
-    "READline",
-    "FP.from_string",
-    "ARRAY.get",
-    "STRfind",
-    "STRcmp",
-    "FP.power",
-    "FP.print",
     "STRatoi",
-    "ARRAY.put",
-    "PRTstring",
-    "FP.mul",
+    "PRTcls",
     "KEYpressed",
-    "TOS.check",
-    "NN.new_network",
-    "_NN.new_layer",
-    "ARRAY.size",
-    "FP.fprint",
-    "STRlen",
+    "TOS_nnl",
+    "_STRNatoi",
     "NEW.matrix",
+    "NEW.array",
+    "FP.mul",
+    "NN.predict",
+    "MATRIX.get",
     "NN.train",
+    "gcd",
+    "FP.fprint",
+    "power",
+    "factorial",
+    "FP.to_int",
+    "NEW.list",
+    "KEYchar",
+    "ARRAY.append",
+    "ARRAY.clear",
+    "ARRAY.get",
+    "io_lib_init",
+    "HEAP.init",
+    "HALT",
+    "FP.div",
+    "STRcmp",
+    "FP.print",
     "PRTnum",
+    "STRlen",
+    "ARRAY.len",
+    "STRcopy",
+    "GPU.exec",
+    "CURSORon",
+    "_NN.new_layer",
+    "NN.new_network",
+    "FP.set_scale",
+    "TOS.check",
+    "ARRAY.put",
     "CURSORoff",
-    "CURSORon"
+    "PRTchar",
+    "FP.from_string",
+    "FP.power",
+    "FP.from_int",
+    "ARRAY.size",
+    "NN.set_scale",
+    "MATRIX.put",
+    "NEW.matrix_populate",
+    "STRfind",
+    "FP.sub",
+    "HEAP.free",
+    "PRTstring",
+    "GPU.tdl",
+    "FP.add",
+    "READline"
   ],
   "variables": [
     {
@@ -667,6 +667,11 @@
       "size": 1
     },
     {
+      "name": "_nn_mat_lr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
       "name": "_tdl_fh_dot",
       "type": "VALUE",
       "size": 1
@@ -742,12 +747,22 @@
       "size": 1
     },
     {
+      "name": "_tdl_up_o_apply_lr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
       "name": "_tdl_up_o_add_w",
       "type": "VALUE",
       "size": 1
     },
     {
       "name": "_tdl_up_o_bias_g",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_o_bias_apply_lr",
       "type": "VALUE",
       "size": 1
     },
@@ -767,12 +782,22 @@
       "size": 1
     },
     {
+      "name": "_tdl_up_h_apply_lr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
       "name": "_tdl_up_h_add_w",
       "type": "VALUE",
       "size": 1
     },
     {
       "name": "_tdl_up_h_bias_g",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_tdl_up_h_bias_apply_lr",
       "type": "VALUE",
       "size": 1
     },

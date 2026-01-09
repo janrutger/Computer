@@ -56,7 +56,6 @@ VALUE _nn_mat_grad_ho 0
 VALUE _nn_mat_input_trans 0
 VALUE _nn_mat_grad_ih 0
 VALUE _nn_mat_bias_input 0
-VALUE _nn_mat_lr 0
 
 # TDL Pointers
 VALUE _tdl_fh_dot 0
@@ -77,18 +76,14 @@ VALUE _tdl_bp_delta_h 0
 
 VALUE _tdl_up_o_trans 0
 VALUE _tdl_up_o_grad 0
-VALUE _tdl_up_o_apply_lr 0
 VALUE _tdl_up_o_add_w 0
 VALUE _tdl_up_o_bias_g 0
-VALUE _tdl_up_o_bias_apply_lr 0
 VALUE _tdl_up_o_add_b 0
 
 VALUE _tdl_up_h_trans 0
 VALUE _tdl_up_h_grad 0
-VALUE _tdl_up_h_apply_lr 0
 VALUE _tdl_up_h_add_w 0
 VALUE _tdl_up_h_bias_g 0
-VALUE _tdl_up_h_bias_apply_lr 0
 VALUE _tdl_up_h_add_b 0
 
 VALUE _nn_h_weights 0
@@ -169,7 +164,6 @@ DEF NN.new_network {
     _nn_net_input_size _nn_net_hidden_size NEW.matrix AS _nn_mat_grad_ih
     1 1 NEW.matrix AS _nn_mat_bias_input
     _nn_scale 1 1 _nn_mat_bias_input MATRIX.put
-    1 1 NEW.matrix AS _nn_mat_lr
 
     # Cache Layer Pointers
     _nn_hidden_layer_ptr 0 ARRAY.get AS _nn_h_weights
@@ -197,17 +191,13 @@ DEF NN.new_network {
 
     7 NEW.list AS _tdl_up_o_trans
     7 NEW.list AS _tdl_up_o_grad
-    7 NEW.list AS _tdl_up_o_apply_lr
     7 NEW.list AS _tdl_up_o_add_w
     7 NEW.list AS _tdl_up_o_bias_g
-    7 NEW.list AS _tdl_up_o_bias_apply_lr
     7 NEW.list AS _tdl_up_o_add_b
     7 NEW.list AS _tdl_up_h_trans
     7 NEW.list AS _tdl_up_h_grad
-    7 NEW.list AS _tdl_up_h_apply_lr
     7 NEW.list AS _tdl_up_h_add_w
     7 NEW.list AS _tdl_up_h_bias_g
-    7 NEW.list AS _tdl_up_h_bias_apply_lr
     7 NEW.list AS _tdl_up_h_add_b
 
     # 2. Populate TDLs with Links
@@ -241,20 +231,16 @@ DEF NN.new_network {
 
     # Update Output Layer
     _nn_mat_hidden_activations 0 _nn_mat_hidden_act_trans 0 MAT.TRANS _tdl_up_o_grad _tdl_up_o_trans GPU.tdl
-    _nn_mat_hidden_act_trans _nn_mat_output_delta _nn_mat_grad_ho _nn_scale MAT.DOT _tdl_up_o_apply_lr _tdl_up_o_grad GPU.tdl
-    _nn_mat_grad_ho _nn_mat_lr _nn_mat_grad_ho _nn_scale MAT.MUL _tdl_up_o_add_w _tdl_up_o_apply_lr GPU.tdl
+    _nn_mat_hidden_act_trans _nn_mat_output_delta _nn_mat_grad_ho 0 MAT.DOT _tdl_up_o_add_w _tdl_up_o_grad GPU.tdl
     _nn_o_weights _nn_mat_grad_ho _nn_o_weights 0 MAT.ADD _tdl_up_o_bias_g _tdl_up_o_add_w GPU.tdl
-    _nn_mat_bias_input _nn_mat_output_delta _nn_mat_output_error _nn_scale MAT.DOT _tdl_up_o_bias_apply_lr _tdl_up_o_bias_g GPU.tdl
-    _nn_mat_output_error _nn_mat_lr _nn_mat_output_error _nn_scale MAT.MUL _tdl_up_o_add_b _tdl_up_o_bias_apply_lr GPU.tdl
+    _nn_mat_bias_input _nn_mat_output_delta _nn_mat_output_error 0 MAT.DOT _tdl_up_o_add_b _tdl_up_o_bias_g GPU.tdl
     _nn_o_bias _nn_mat_output_error _nn_o_bias 0 MAT.ADD _tdl_up_h_trans _tdl_up_o_add_b GPU.tdl
 
     # Update Hidden Layer
     _nn_mat_input_wrapper 0 _nn_mat_input_trans 0 MAT.TRANS _tdl_up_h_grad _tdl_up_h_trans GPU.tdl
-    _nn_mat_input_trans _nn_mat_hidden_delta _nn_mat_grad_ih _nn_scale MAT.DOT _tdl_up_h_apply_lr _tdl_up_h_grad GPU.tdl
-    _nn_mat_grad_ih _nn_mat_lr _nn_mat_grad_ih _nn_scale MAT.MUL _tdl_up_h_add_w _tdl_up_h_apply_lr GPU.tdl
+    _nn_mat_input_trans _nn_mat_hidden_delta _nn_mat_grad_ih 0 MAT.DOT _tdl_up_h_add_w _tdl_up_h_grad GPU.tdl
     _nn_h_weights _nn_mat_grad_ih _nn_h_weights 0 MAT.ADD _tdl_up_h_bias_g _tdl_up_h_add_w GPU.tdl
-    _nn_mat_bias_input _nn_mat_hidden_delta _nn_mat_hidden_error _nn_scale MAT.DOT _tdl_up_h_bias_apply_lr _tdl_up_h_bias_g GPU.tdl
-    _nn_mat_hidden_error _nn_mat_lr _nn_mat_hidden_error _nn_scale MAT.MUL _tdl_up_h_add_b _tdl_up_h_bias_apply_lr GPU.tdl
+    _nn_mat_bias_input _nn_mat_hidden_delta _nn_mat_hidden_error 0 MAT.DOT _tdl_up_h_add_b _tdl_up_h_bias_g GPU.tdl
     _nn_h_bias _nn_mat_hidden_error _nn_h_bias 0 MAT.ADD 0 _tdl_up_h_add_b GPU.tdl
 
     _nn_network_ptr
@@ -291,8 +277,8 @@ DEF NN.train {
     AS _nn_predict_input_ptr
     AS _nn_network_ptr
 
-    # 1. Update LR Matrix
-    _nn_train_k 1 1 _nn_mat_lr MATRIX.put
+    # 1. Calculate Gradient Scale K
+    _nn_scale _nn_train_k FP.div AS _nn_train_k
 
     # 2. Populate Input Matrix
     0 AS _nn_fill_counter
@@ -309,6 +295,21 @@ DEF NN.train {
         1 _nn_fill_counter 1 + _nn_mat_target MATRIX.put
         _nn_fill_counter 1 + AS _nn_fill_counter
     DONE
+
+    # 4. Update Scales in TDLs with Learning Rate
+    # We must do this before execution because the TDLs are reused
+    
+    _tdl_up_o_grad 3 + AS _nn_temp_ptr
+    _nn_train_k AS *_nn_temp_ptr
+    
+    _tdl_up_o_bias_g 3 + AS _nn_temp_ptr
+    _nn_train_k AS *_nn_temp_ptr
+
+    _tdl_up_h_grad 3 + AS _nn_temp_ptr
+    _nn_train_k AS *_nn_temp_ptr
+
+    _tdl_up_h_bias_g 3 + AS _nn_temp_ptr
+    _nn_train_k AS *_nn_temp_ptr
 
     # 5. Execute Forward Chain (Hidden -> Output)
     _tdl_fh_dot GPU.exec DROP

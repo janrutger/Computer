@@ -299,7 +299,7 @@
 
         tst M ~DISK_IDLE
         jmpt :return_disk_error_status
-
+nop
         jmp @_check_return_status
 
 

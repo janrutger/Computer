@@ -83,12 +83,9 @@ MALLOC $next_board 10416
 :_main_if_end_6
     call @compute_next_generation
     call @copy_board2
-    ldm A $counter
-    stack A $DATASTACK_PTR
+    ldm B $counter
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $counter
     jmp :_main_while_start_5
 :_main_while_end_5
@@ -303,19 +300,15 @@ MALLOC $next_board 10416
     ustack A $DATASTACK_PTR
     sto A $board_ptr
     stack A $DATASTACK_PTR
-    ldm A $y_coord
-    stack A $DATASTACK_PTR
+    ldm B $y_coord
     ldm A $WIDTH
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
+    mul A B
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     ldm A $x_coord
     ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $p_current
     ldm I $p_current
     ldx A $_start_memory_
@@ -331,19 +324,15 @@ MALLOC $next_board 10416
     ustack A $DATASTACK_PTR
     sto A $board_ptr
     stack A $DATASTACK_PTR
-    ldm A $y_coord
-    stack A $DATASTACK_PTR
+    ldm B $y_coord
     ldm A $WIDTH
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
+    mul A B
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     ldm A $x_coord
     ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $p_current
     ldm A $value_in
     stack A $DATASTACK_PTR
@@ -365,10 +354,8 @@ MALLOC $next_board 10416
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :fast_draw_board_while_end_0
-    ldm A $y
-    stack A $DATASTACK_PTR
+    ldm B $y
     ldm A $Y_OFFSET
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     ldi A 2
@@ -423,10 +410,8 @@ MALLOC $next_board 10416
     ldm A $current_color
     sto A $last_color
 :fast_draw_board_if_end_1
-    ldm A $x
-    stack A $DATASTACK_PTR
+    ldm B $x
     ldm A $X_OFFSET
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     ldi A 2
@@ -441,21 +426,15 @@ MALLOC $next_board 10416
     ldi A 17
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldm A $x
-    stack A $DATASTACK_PTR
+    ldm B $x
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $x
     jmp :fast_draw_board_while_start_1
 :fast_draw_board_while_end_1
-    ldm A $y
-    stack A $DATASTACK_PTR
+    ldm B $y
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $y
     jmp :fast_draw_board_while_start_0
 :fast_draw_board_while_end_0
@@ -545,21 +524,15 @@ MALLOC $next_board 10416
     ldm A $new_state
     stack A $DATASTACK_PTR
     call @set_cell_state
-    ldm A $x
-    stack A $DATASTACK_PTR
+    ldm B $x
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $x
     jmp :compute_next_generation_while_start_3
 :compute_next_generation_while_end_3
-    ldm A $y
-    stack A $DATASTACK_PTR
+    ldm B $y
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $y
     jmp :compute_next_generation_while_start_2
 :compute_next_generation_while_end_2
@@ -623,21 +596,16 @@ MALLOC $next_board 10416
     stack A $DATASTACK_PTR
 :test_random_board_if_end_5
     ldi A $next_board
-    stack A $DATASTACK_PTR
+    ld B A
     ldm A $i
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $p_current
     ustack B $DATASTACK_PTR
     ldm I $p_current
     stx B $_start_memory_
-    ldm A $i
-    stack A $DATASTACK_PTR
+    ldm B $i
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $i
     jmp :test_random_board_while_start_4
 :test_random_board_while_end_4

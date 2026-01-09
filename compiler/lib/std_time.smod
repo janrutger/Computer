@@ -27,8 +27,7 @@
 @TIME.start
     ldm A $p_watch_list
     ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $current_watch
     ldm I $p_currentime
     ldx A $_start_memory_
@@ -39,8 +38,7 @@
 @TIME.read
     ldm A $p_watch_list
     ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $current_watch
     ldm I $p_currentime
     ldx A $_start_memory_
@@ -55,8 +53,7 @@
     ldm I $p_currentime
     ldx A $_start_memory_
     ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $wait_end_time
 :wait_loop
     ldm A $wait_end_time

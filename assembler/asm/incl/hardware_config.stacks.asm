@@ -149,10 +149,8 @@
     :rt_udc_end 
         ret
 @rt_rnd
-    ldm A $random_seed
-    stack A $DATASTACK_PTR
+    ldm B $random_seed
     ldi A 134775813
-    ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
     ldi A 1
@@ -163,9 +161,8 @@
     ustack B $DATASTACK_PTR
     dmod B A
     sto A $random_seed
-    stack A $DATASTACK_PTR
+    ld B A
     ldi A 1000
-    ustack B $DATASTACK_PTR
     dmod B A
     stack A $DATASTACK_PTR
     ret

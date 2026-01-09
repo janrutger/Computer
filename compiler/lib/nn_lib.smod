@@ -41,9 +41,8 @@
     ldi A 200
     ustack B $DATASTACK_PTR
     dmod B A
-    stack A $DATASTACK_PTR
+    ld B A
     ldi A 100
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     call @FP.from_int
@@ -54,12 +53,9 @@
     ldm A $weights_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.append
-    ldm A $i
-    stack A $DATASTACK_PTR
+    ldm B $i
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $i
     jmp :NN.new_perceptron_while_start_0
 :NN.new_perceptron_while_end_0
@@ -147,12 +143,9 @@
     call @FP.add
     ustack A $DATASTACK_PTR
     sto A $weighted_sum
-    ldm A $i
-    stack A $DATASTACK_PTR
+    ldm B $i
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $i
     jmp :NN.predict_while_start_1
 :NN.predict_while_end_1
@@ -269,12 +262,9 @@
     ldm A $weights_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.put
-    ldm A $i
-    stack A $DATASTACK_PTR
+    ldm B $i
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $i
     jmp :NN.train_step_while_start_2
 :NN.train_step_while_end_2

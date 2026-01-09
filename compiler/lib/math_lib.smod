@@ -44,17 +44,12 @@
     stack A $DATASTACK_PTR
     jmp :_power_end
 :power_if_end_0
-    ldm A $_power_res
-    stack A $DATASTACK_PTR
+    ldm B $_power_res
     ldm A $_power_base
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
+    mul A B
     sto A $_power_res
-    ldm A $_power_exp
-    stack A $DATASTACK_PTR
+    ldm B $_power_exp
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $_power_exp
@@ -77,17 +72,12 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :factorial_while_end_1
-    ldm A $res
-    stack A $DATASTACK_PTR
+    ldm B $res
     ldm A $n
-    ustack B $DATASTACK_PTR
-    mul B A
-    ld A B
+    mul A B
     sto A $res
-    ldm A $n
-    stack A $DATASTACK_PTR
+    ldm B $n
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $n

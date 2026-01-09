@@ -68,12 +68,9 @@
     ldm A $sortlist
     stack A $DATASTACK_PTR
     call @ARRAY.append
-    ldm A $N
-    stack A $DATASTACK_PTR
+    ldm B $N
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $N
     jmp :_main_while_start_3
 :_main_while_end_3
@@ -147,12 +144,9 @@
     ldi A 11
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldm A $NN
-    stack A $DATASTACK_PTR
+    ldm B $NN
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $NN
     jmp :plotlist_while_start_0
 :plotlist_while_end_0
@@ -187,10 +181,8 @@
 :sort_list_while_start_2
     ldm A $N
     stack A $DATASTACK_PTR
-    ldm A $n_limit
-    stack A $DATASTACK_PTR
+    ldm B $n_limit
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     call @rt_lt
@@ -204,10 +196,8 @@
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $val1
-    ldm A $N
-    stack A $DATASTACK_PTR
+    ldm B $N
     ldi A 1
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     ldm A $sortlist
@@ -234,29 +224,21 @@
     call @ARRAY.put
     ldm A $val1
     stack A $DATASTACK_PTR
-    ldm A $N
-    stack A $DATASTACK_PTR
+    ldm B $N
     ldi A 1
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     ldm A $sortlist
     stack A $DATASTACK_PTR
     call @ARRAY.put
-    ldm A $N
-    stack A $DATASTACK_PTR
+    ldm B $N
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $new_n_limit
 :sort_list_if_end_0
-    ldm A $N
-    stack A $DATASTACK_PTR
+    ldm B $N
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $N
     jmp :sort_list_while_start_2
 :sort_list_while_end_2

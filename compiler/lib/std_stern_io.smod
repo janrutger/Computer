@@ -120,10 +120,8 @@
     jmpt :READline_if_else_4
     call @CURSORoff
     call @PRTchar
-    ldm A $input_buffer_index
-    stack A $DATASTACK_PTR
+    ldm B $input_buffer_index
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $input_buffer_index
@@ -137,30 +135,23 @@
     call @rt_dup
     call @PRTchar
     ldi A $input_buffer
-    stack A $DATASTACK_PTR
+    ld B A
     ldm A $input_buffer_index
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $p_input_buffer
     ustack B $DATASTACK_PTR
     ldm I $p_input_buffer
     stx B $_start_memory_
-    ldm A $input_buffer_index
-    stack A $DATASTACK_PTR
+    ldm B $input_buffer_index
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $input_buffer_index
     jmp :readline_loop
 :finish_readline
     ldi A $input_buffer
-    stack A $DATASTACK_PTR
+    ld B A
     ldm A $input_buffer_index
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $p_input_buffer
     ldi A 0
     ld B A

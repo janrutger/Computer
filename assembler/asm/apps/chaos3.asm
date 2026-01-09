@@ -67,10 +67,8 @@
     jmpt :_main_if_end_2
     call @select3
 :_main_if_end_2
-    ldm A $X
-    stack A $DATASTACK_PTR
+    ldm B $X
     ldm A $K
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     ldi A 2
@@ -78,10 +76,8 @@
     dmod B A
     ld A B
     sto A $X
-    ldm A $Y
-    stack A $DATASTACK_PTR
+    ldm B $Y
     ldm A $L
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     ldi A 2
@@ -94,16 +90,12 @@
     ldm A $Y
     stack A $DATASTACK_PTR
     call @draw
-    ldm A $N
-    stack A $DATASTACK_PTR
+    ldm B $N
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $N
-    stack A $DATASTACK_PTR
+    ld B A
     ldi A 500
-    ustack B $DATASTACK_PTR
     dmod B A
     stack A $DATASTACK_PTR
     ldi A 0

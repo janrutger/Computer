@@ -54,12 +54,9 @@
     stack A $DATASTACK_PTR
     call @rt_udc_control
 :_main_if_end_0
-    ldm A $X
-    stack A $DATASTACK_PTR
+    ldm B $X
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $X
     stack A $DATASTACK_PTR
     ldi A 2
@@ -84,12 +81,9 @@
     ldi A 15
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldm A $Y
-    stack A $DATASTACK_PTR
+    ldm B $Y
     ldi A 1
-    ustack B $DATASTACK_PTR
-    add B A
-    ld A B
+    add A B
     sto A $Y
     stack A $DATASTACK_PTR
     ldi A 2
