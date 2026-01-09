@@ -269,7 +269,9 @@
     stack A $DATASTACK_PTR
     jmp :key_end_loop
 :KEYchar_if_end_0
-    jmp :key_loop
+
+            nop
+            jmp :key_loop
 :key_end_loop
     ret
 @KEYpressed

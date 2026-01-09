@@ -1,70 +1,75 @@
-# Project Stern-XT: A Complete Virtual Computer Ecosystem
+# Project Stern-ATX: The Next-Generation Virtual Computer Ecosystem
 
 ## Overview
 
-Welcome to Project Stern-XT, a comprehensive, simulated computer system. This repository contains a complete, vertically integrated environment, from a custom-designed CPU and hardware peripherals to a unique high-level programming language, compiler, and operating system.
+Welcome to **Project Stern-ATX**, the high-performance evolution of the Stern-XT virtual computer system. This repository contains a complete, vertically integrated environment, from custom-designed CPU architectures and hardware peripherals to a unique high-level programming language, compiler, and operating system.
 
-It is a hands-on playground for learning how computers *really* work, with the feel of building and programming a classic 8-bit or 16-bit home computer from the ground up.
+The Stern-ATX platform represents a major architectural shift, transitioning from a string-based emulation environment to a high-performance **integer-based system**. It features a redesigned motherboard capable of hosting interchangeable CPU architectures and specialized co-processors like the GPU_R3.
 
-## Project Quality & Fun Factor
+It remains a hands-on playground for learning how computers *really* work, offering the feel of building and programming a classic system from the ground up, but with modern performance capabilities.
 
-This project is both **high-quality** and incredibly **fun** for anyone interested in computer science fundamentals.
+## Key Features
 
-*   **Extremely Comprehensive:** It's a full-stack environment, including a microcode-driven CPU, hardware simulation, an assembler, a high-level language ("Stacks"), a compiler, and a basic operating system.
-*   **Well-Documented:** With a Developer's Guide, a language manual, and numerous READMEs, the project is designed to be understood and used by others.
-*   **Educational:** It provides a fantastic environment for learning and experimenting with the core concepts of computing. You can explore everything from CPU design to compiler construction.
-*   **Creative Freedom:** The entire system is open for modification. You can write your own games and applications, add new instructions to the CPU, or even extend the operating system.
+*   **High-Performance Architecture:** The new `MemoryR3` silicon stores data as integers, eliminating runtime type conversions and significantly boosting execution speed.
+*   **Swappable CPUs:** The motherboard supports multiple CPU modules:
+    *   **CPU-R3 (Hybrid):** The robust, default processor updated for the ATX platform.
+    *   **CPU-M1 (Pipeline):** A next-gen architecture featuring a deep instruction pipeline and branch prediction.
+*   **Hardware Acceleration:** Includes the **GPU_R3**, a specialized matrix processing unit for high-speed linear algebra and neural network computations.
+*   **Full-Stack Environment:** Includes a microcode-driven CPU, hardware simulation, an assembler, the "Stacks" high-level language compiler, and a custom OS kernel.
+*   **Educational & Fun:** Explore concepts like pipelining, microcode, compiler design, and OS development in a controlled, documented environment.
 
-## Architecture
+## System Architecture
 
-The Stern-XT is a full-stack system, with each layer building on the one below it.
+The Stern-ATX is a layered system:
 
-#### 1. Hardware & CPU Simulation (`devices/`, `stern-XT.py`)
-At the lowest level is the Stern-XT hardware emulator, written in Python. It simulates a custom CPU, RAM, and peripherals like a screen, keyboard, and virtual disk. The CPU's instruction set is defined by microcode, making it highly flexible.
+#### 1. Hardware Simulation (`devices/`, `stern-ATX.py`)
+At the core is the Stern-ATX motherboard emulator. It manages the 16KB unified memory map, the interrupt controller, and the bus for peripherals.
+*   **Memory:** 16KB Integer-based storage.
+*   **Peripherals:** Universal Device Controller (UDC), Real Time Clock (RTC @ 30Hz), Virtual Disk, and GPU.
 
 #### 2. Microcode Assembler (`microcode_assembler/`)
-This tool compiles microcode source files (`.uasm`) into a `stern_rom.json` file. This file defines the instruction set for the simulated CPU, allowing its architecture to be easily modified and extended.
+Compiles microcode source files (`.uasm`) into the `stern_rom.json` firmware. This defines the instruction set (ISA) for the CPUs, allowing for easy modification and extension of machine instructions.
 
 #### 3. Assembler (`assembler/`)
-The assembler translates Stern-XT assembly code (`.asm`) into a `program.bin` file. This binary contains the machine code that the emulated computer runs. It dynamically reads the `stern_rom.json` to know what instructions are available.
+Translates assembly code (`.asm`) into the `program.bin` machine code. It dynamically adapts to the instruction set defined in the microcode ROM.
 
 #### 4. The "Stacks" Language & Compiler (`compiler/`)
-"Stacks" is a custom, high-level programming language designed for this project. It is a stack-oriented language that uses Reverse Polish Notation (RPN), similar to Forth. The compiler translates Stacks code (`.stacks`) into Stern-XT assembly.
+"Stacks" is the system's native high-level programming language. It uses Reverse Polish Notation (RPN) and compiles directly to Stern-ATX assembly. It supports libraries, structures, and inline assembly.
 
-#### 5. Operating System & Kernel (`compiler/src/kernel_files/`)
-The system runs a basic operating system and kernel written almost entirely in the Stacks language itself. These modules provide fundamental functionalities like system calls and hardware interaction.
+#### 5. Operating System (`compiler/src/kernel_files/`)
+The system runs a lightweight OS written in Stacks. It handles system calls, manages the heap, and provides drivers for the UDC devices (Screen, Keyboard, Disk).
 
 ## Getting Started
 
 The project uses `make` to automate the build and execution process.
 
-*   **Build the default program:**
-    ```bash
-    make
-    ```
-
-*   **Run the emulator:**
+*   **Build and Run (Default CPU-R3):**
     ```bash
     make run
     ```
 
-*   **Run with the interactive debugger:**
+*   **Run with the M1 Pipeline CPU:**
+    You can select the CPU architecture via command-line arguments to the emulator.
+    ```bash
+    python stern-ATX.py -cpu m1
+    ```
+
+*   **Run with the Interactive Debugger:**
     ```bash
     make debug
     ```
 
-*   **Build and run a specific program** (e.g., `maze.stacks`):
+*   **Build and Run a Specific Program:**
     ```bash
     make maze run
     ```
 
 ## Example Program: `maze.stacks`
 
-To give you a taste of what's possible, here is a simple program written in Stacks that generates and draws a maze-like pattern on the screen.
+Here is a simple program written in Stacks that generates a random maze on the virtual LCD screen.
 
 ```stacks
 # maze.stacks
-#
 # Generates a simple random maze on the virtual LCD screen.
 
 # --- Variable Declarations ---
@@ -72,8 +77,6 @@ VALUE X 0
 VALUE Y 0
 
 # --- Function Definitions ---
-
-# Initializes the LCD screen on UDC channel 2
 DEF screen {
   0 AS X
   0 AS Y
@@ -83,28 +86,26 @@ DEF screen {
   3 IO 2 MODE   ; Set to Sprite mode with double buffering
 }
 
-
 # --- Main Program ---
-
-screen  ; Initialize the screen
+screen  ; Initialize
 
 # Loop through each row (Y)
 WHILE Y 60 < DO
   # Loop through each column (X)
   WHILE X 80 < DO
-    # Generate a random number to decide between wall and path
+    # Randomly choose wall or path
     RND 2 * 999 // 0 == IF
-        129 IO 2 DRAW  ; Draw a wall sprite ('/')
+        129 IO 2 DRAW  ; Draw wall ('/')
     ELSE
-        130 IO 2 DRAW  ; Draw a path sprite ('\')
+        130 IO 2 DRAW  ; Draw path ('\')
     END
     X 1 + AS X
-    X IO 2 X         ; Set next X coordinate
+    X IO 2 X         ; Set next X
   DONE
-  IO 2 FLIP          ; Flip the buffer to show the completed row
+  IO 2 FLIP          ; Show row
   0 AS X
-  X IO 2 X           ; Reset X coordinate for next row
+  X IO 2 X           ; Reset X
   Y 1 + AS Y
-  Y IO 2 Y           ; Set next Y coordinate
+  Y IO 2 Y           ; Set next Y
 DONE
 ```

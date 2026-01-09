@@ -67,11 +67,28 @@ The Stern-ATX retains compatibility with Stern-XT peripherals while adding new c
 *   **Virtual Disk**: Provides persistent storage by mapping host files to the virtual environment.
 *   **RTC (Real Time Clock)**: *New in ATX*. A dedicated hardware clock mapped to Interrupt Vector 1, allowing for precise timekeeping and timed events.
 
-## 6. Usage
+## 6. Hardware Acceleration: GPU_R3
+
+The **GPU_R3** is a specialized co-processor designed for high-performance matrix operations and neural network calculations. It is tightly integrated with the `MemoryR3` integer system.
+
+### 6.1. Key Features
+*   **Matrix Processing**: Native support for matrix addition, subtraction, multiplication, and dot products.
+*   **TDL Chaining**: Executes complex pipelines defined by linked lists of **Task Description Lists (TDLs)** in a single CPU cycle.
+*   **VRAM Caching**: Internal caching mechanism to minimize main memory I/O during deep learning forward passes.
+*   **Integer/Fixed-Point**: Handles scaling natively, allowing for fixed-point arithmetic on integer hardware.
+
+### 6.2. Programming Model
+The GPU is controlled by constructing TDLs in main memory. Each TDL specifies the operation, operands (matrix pointers), result destination, and a pointer to the next TDL.
+
+*   **Supported Operations**: ADD, SUB, MUL, DOT (Matrix Multiplication), RELU, TRANS (Transpose), THRESH.
+
+*For detailed programming instructions and memory layouts, refer to the `GPU_R3_Manual.md`.*
+
+## 7. Usage
 
 The `stern-ATX.py` emulator is the entry point for the system.
 
-### 6.1. Basic Execution
+### 7.1. Basic Execution
 Run the system with the default CPU-R3:
 ```bash
 python stern-ATX.py

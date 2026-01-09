@@ -3,7 +3,7 @@ import time
 class RTC:
     """
     Simulates a Real Time Clock (RTC) for the Stern-XT computer.
-    The RTC generates an interrupt every 0.5 seconds, providing a time value
+    The RTC generates an interrupt every 0.2 seconds, providing a time value
     that represents the current time scaled to milliseconds, with a rollover
     period of approximately one month.
     """
@@ -13,7 +13,7 @@ class RTC:
         self.vector = vector
 
         self.last_interrupt_time = 0
-        self.interrupt_interval = 0.5  # seconds
+        self.interrupt_interval = 0.2  # 200 miliseconds
 
         # We will represent time in milliseconds.
         self.scale_factor = 1000

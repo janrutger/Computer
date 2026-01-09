@@ -10,7 +10,7 @@ USE std_string
 VALUE rpn_input_ptr 0
 
 DEF start_kernel {
-    "WELCOME at Stern-XT!\n" PRTstring
+    "WELCOME at Stern Platform Kernel!\n" PRTstring
     "\nEnter instructions or 'q' to quit.\n\n" PRTstring
 
     # ASM {

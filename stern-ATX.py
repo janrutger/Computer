@@ -116,6 +116,7 @@ def main():
     
     # CPU Selection Logic
     SelectedCPU = CPU_R3 # Default
+    cpu_burst_size = 30000 # Default burst size
     if "-cpu" in sys.argv:
         try:
             arg_index = sys.argv.index("-cpu")
@@ -123,6 +124,7 @@ def main():
                 cpu_type = sys.argv[arg_index + 1].lower()
                 if cpu_type == "m1":
                     SelectedCPU = CPU_M1
+                    cpu_burst_size = 10000 # Lower burst size for M1 to maintain FPS
                     print("Configuration: CPU M1 (Pipeline Architecture)")
                 elif cpu_type == "r3":
                     SelectedCPU = CPU_R3
@@ -159,10 +161,11 @@ def main():
     
     # Tuning: BURST_SIZE determines how many CPU cycles run per screen refresh.
     # Higher = Faster CPU, Lower = More responsive GUI.
-    BURST_SIZE = 20000
+    BURST_SIZE = cpu_burst_size
     TARGET_FPS = 30
     draw_interval = 1.0 / TARGET_FPS
     last_draw_time = time.time()
+    total_bursts = 0
 
     while running:
         # --- Event Handling ---
@@ -176,6 +179,7 @@ def main():
         # --- CPU Burst ---
         # Run a burst of cycles if not halted and not paused by debugger
         if not debugger.in_debug_mode and cpu.state != "HALT":
+            total_bursts += 1
             for _ in range(BURST_SIZE):
                 # Check for breakpoints (Optimization: only check on FETCH)
                 if cpu.state == "FETCH" and cpu.registers["PC"] in debugger.breakpoints:
@@ -243,13 +247,21 @@ def main():
         
         # Format IPS
         ips_val, ips_unit = (ips / 1_000_000, "MIPS") if ips > 1_000_000 else ((ips / 1_000, "kIPS") if ips > 1_000 else (ips, "IPS"))
+        
+        # Calculate Burst Time
+        full_burst_time_ms = (BURST_SIZE / core_speed) * 1000
+        avg_cycles_per_burst = total_cycles / total_bursts if total_bursts > 0 else 0
+        avg_burst_time_ms = (avg_cycles_per_burst / core_speed) * 1000
 
-        print(f"  Total Simulation Time : {elapsed_time:.2f} seconds")
-        print(f"  Total Cycles (ticks)  : {total_cycles:,}")
-        print(f"  Total Instructions    : {total_instructions:,}")        
-        print(f"  Average Core Speed    : {core_speed_val:.2f} {core_speed_unit}")
-        print(f"  Average CPI           : {cpi:.2f} Cycles/Instruction")
-        print(f"  Average Performance   : {ips_val:.2f} {ips_unit} (Instructions/Second)\n")
+        print(f"  Total Simulation Time    : {elapsed_time:.2f} seconds")
+        print(f"  Total Cycles (ticks)     : {total_cycles:,}")
+        print(f"  Total Instructions       : {total_instructions:,}\n")        
+        print(f"  Average Core Speed       : {core_speed_val:.2f} {core_speed_unit}")
+        print(f"  Average CPI              : {cpi:.2f} Cycles/Instruction")
+        print(f"  Average Performance      : {ips_val:.2f} {ips_unit} (Instructions/Second)\n")
+        print(f"  Average Cycles/Burst     : {avg_cycles_per_burst:.0f} (Max: {BURST_SIZE})")
+        print(f"  Avg. Time per Burst      : {avg_burst_time_ms:.2f} ms")
+        print(f"  Est. Time per Full Burst : {full_burst_time_ms:.2f} ms\n")
 
 
     pygame.quit()

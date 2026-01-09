@@ -105,6 +105,9 @@ DEF KEYchar {
             GOTO key_end_loop
         END
         # Failure (status was 0), loop again.
+        ASM {
+            nop
+        }
         GOTO key_loop
     :key_end_loop
 }

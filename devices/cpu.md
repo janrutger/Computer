@@ -1,8 +1,22 @@
 # CPU (Central Processing Unit)
+# CPU Architecture (R3 & M1)# CPU Architecture (R3 & M1)
 
+stem.
+The Stern-ATX motherboard supports swappable CPU modules. This document describes the two available architecture: the standard **CPU_R3** and h high-perforance **CPU_M1**
 The `CPU` class in the Stern-XT simulation models the core functionality of a central processing unit, including instruction fetching, decoding, and execution based on a microcoded architecture. It interacts with memory and the interrupt controller to simulate a complete computer system.
+The Stern-`CPUA
+Both CPUs share the same Instruction Set Architecture (ISA) defined by the microcode ROM, ensuring binary compatibility.
+
+## 1. CPU_R3 (Default)
+
+The `CPU_R3` is the standard processor for the Stern-ATX. It is an evolution of the classic Stern-XT TX , updated to work with the high-speed **Integer-Based Memory** (mMemoryR3`). It follows a robust, multi-cycle Von Neumann architecture (Fetch-Decode-Execute).otherboard supports swappable CPU modules. This document describes the two available architectures: the standard **CPU_R3** and the high-performance **CPU_M1**.
 
 ## Class: `CPU`
+Both CPUs share the same Instruction Set Architecture (ISA) defined by the microcode ROM, ensuring binary compatibility.
+
+## 1. CPU_R3 (Default)
+
+The `CPU_R3` is the standard processor for the Stern-ATX. It is an evolution of the classic Stern-XT CPU, updated to work with the high-speed **Integer-Based Memory** (`MemoryR3`). It follows a robust, multi-cycle Von Neumann architecture (Fetch-Decode-Execute).
 
 ### Initialization
 
@@ -122,11 +136,36 @@ Here's a breakdown of the supported microcode instructions:
 Updates the `Z`, `N`, and `E` flags based on the result of the last ALU operation (specifically, the value in `Ra` and the comparison between `Ra` and `Rb`).
 
 #### `dump_state()`
+.
 
-Prints a comprehensive overview of the CPU's current state, including:
--   Current CPU state (FETCH, DECODE, EXECUTE, HALT).
--   Values of `PC`, `SP`, and `MIR`.
--   Status of all flags (`Z`, `N`, `E`, `S`).
--   Values of all General Purpose Registers (`R0` - `R9`).
--   Values of internal ALU registers (`Ra`, `Rb`).
--   Whether interrupts are currently enabled.
+## 2. CPU_M1 (Pipeline Architecture)
+
+The `CPU_M1` is a next-generation processor designed for high throughput. Unlike the R3, which executes one instruction at a time, the M1 utilizes a **3-Stage Pipeline** to process multiple instructions in parallel.
+
+### Pipeline Stages (Robots)
+
+1.  **Fetch Unit**:
+    *   Prefetches instructions from memory into the `MIR`.
+    *   Uses a **Branch Predictor** (BTFN) to speculatively determine the next PC address.
+2.  **Decode Unit**:
+    *   Decodes the integer instruction from the `MIR`.
+    *   Pushes the decoded microcode sequence into an **Instruction Buffer**.
+3.  **Execute Unit**:
+    *   Pops microcode sequences from the buffer.
+    *   Executes them against the ALU.
+    *   **Verification**: Checks if the Branch Predictor was correct. If not, it flushes the pipeline and rewinds the PC.
+
+### Key Differences from R3
+*   **Parallelism**: Fetch, Decode, and Execute occur simultaneously in a single `tick()`.
+*   **Throughput**: Capable of significantly higher Instructions Per Second (IPS).
+*   **Idle Handling**: Implements "Idle Skipping" via the `SLEEP` state to efficiently yield host CPU time during I/O waits.
+*   **Simulation Overhead**: Due to the complexity of simulating three parallel stages in Python, the M1 `tick()` is computationally heavier. While the *virtual* CPU is faster (higher IPS), the *simulation* may run slower in wall-clock time on the host machine compared to the simpler R3.
+
+*   Prints a comprehensive overview of the CPU's current state, including:
+    -    Current CPU state (FETCH, DECODE, EXECUTE, HALT).
+    -   Values of `PC`, `SP`, and `MIR`.
+    -   Status of all flags (`Z`, `N`, `E`, `S`).
+    -   Values of all General Purpose Registers (`R0` .. `R9`).
+    -    Values of internal ALU registers (`Ra`, `Rb`).
+    -   Whether interrupts are currently enabled.
+

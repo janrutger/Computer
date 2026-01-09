@@ -148,7 +148,7 @@ class CPU_R3:
 
             elif self.state == "SLEEP":
                 self.state = "FETCH"
-                time.sleep(0)
+                # time.sleep(0)         # sleep is useless in an unthreaded model
 
             elif self.state == "EXECUTE":
                 if self.microcode_step_index < len(self.current_microcode_sequence):
