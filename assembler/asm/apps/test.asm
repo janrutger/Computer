@@ -647,8 +647,7 @@
     call @MATRIX.put
     ldm A $matrix_relu_in
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $matrix_res_relu
     stack A $DATASTACK_PTR
     ldi A 10
@@ -953,8 +952,7 @@
     call @MATRIX.put
     ldm A $matrix_relu_in
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $matrix_res_relu
     stack A $DATASTACK_PTR
     ldi A 10
@@ -1031,8 +1029,7 @@
 @gcd
 :gcd_while_start_0
     call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -1057,8 +1054,7 @@
 :loop_POWER
     ldm A $_power_exp
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -1154,8 +1150,7 @@
     mul B A
     stack B $DATASTACK_PTR
     call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -1190,8 +1185,7 @@
     ustack A $DATASTACK_PTR
     sto A $fp_a
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -1208,8 +1202,7 @@
 :FP.div_if_end_1
     ldm A $fp_b
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -1241,8 +1234,7 @@
 :FP.div_abs_pos_4
     sto A $abs_denominator
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -1250,8 +1242,7 @@
     ldm A $div_error
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     jmp :FP.div_if_end_5
 :FP.div_if_else_5
     ldm B $abs_numerator
@@ -1280,8 +1271,7 @@
     sto A $result
     ldm A $exponent
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -1293,8 +1283,7 @@
 :loop_power
     ldm A $exponent
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -1319,8 +1308,7 @@
     ret
 @FP.print
     call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -1386,8 +1374,7 @@
     ustack A $DATASTACK_PTR
     sto A $num_digits
     call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -1400,7 +1387,7 @@
     sub B A
     stack B $DATASTACK_PTR
 :FP.fprint_if_end_9
-    ldi A 0
+    ld A Z
     sto A $MAX_VALID_DIGITS
     ldi A 1
     sto A $temp_scale
@@ -1450,8 +1437,7 @@
 :loop_print_digits
     ldm A $num_digits
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -1482,13 +1468,12 @@
     sto A $__natoi_len
     ustack A $DATASTACK_PTR
     sto A $__natoi_p
-    ldi A 0
+    ld A Z
     sto A $__natoi_res
 :loop_natoi
     ldm A $__natoi_len
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -1556,8 +1541,7 @@
     sto A $dot_index
     ldm A $dot_found
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -1657,8 +1641,7 @@
     ldi A 5
     add A B
     sto A $_gpu_temp_ptr
-    ldi A 0
-    ld B A
+    ld B Z
     ldm I $_gpu_temp_ptr
     stx B $_start_memory_
     ldm B $_gpu_tdl_ptr

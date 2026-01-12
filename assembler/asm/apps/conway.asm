@@ -24,18 +24,15 @@ MALLOC $next_board 10416
 . $_main_str_0 2
 
 # .CODE
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @TIME.start
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 10
@@ -55,8 +52,7 @@ MALLOC $next_board 10416
     tst A 0
     jmpt :_main_while_end_5
     call @fast_draw_board
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @TIME.read
     call @TIME.as_string
     ldi A $_main_str_0
@@ -65,8 +61,7 @@ MALLOC $next_board 10416
     ldm A $counter
     stack A $DATASTACK_PTR
     call @rt_print_tos
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @TIME.start
     call @KEYpressed
     ustack A $DATASTACK_PTR
@@ -343,7 +338,7 @@ MALLOC $next_board 10416
     stx B $_start_memory_
     ret
 @fast_draw_board
-    ldi A 0
+    ld A Z
     sto A $y
 :fast_draw_board_while_start_0
     ldm A $y
@@ -363,7 +358,7 @@ MALLOC $next_board 10416
     ldi A 16
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldi A 0
+    ld A Z
     sto A $x
 :fast_draw_board_while_start_1
     ldm A $x
@@ -438,8 +433,7 @@ MALLOC $next_board 10416
     sto A $y
     jmp :fast_draw_board_while_start_0
 :fast_draw_board_while_end_0
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 18
@@ -447,7 +441,7 @@ MALLOC $next_board 10416
     call @rt_udc_control
     ret
 @compute_next_generation
-    ldi A 0
+    ld A Z
     sto A $y
 :compute_next_generation_while_start_2
     ldm A $y
@@ -458,7 +452,7 @@ MALLOC $next_board 10416
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :compute_next_generation_while_end_2
-    ldi A 0
+    ld A Z
     sto A $x
 :compute_next_generation_while_start_3
     ldm A $x
@@ -481,7 +475,7 @@ MALLOC $next_board 10416
     ldm A $y
     stack A $DATASTACK_PTR
     call @count_neighbors2
-    ldi A 0
+    ld A Z
     sto A $new_state
     call @rt_dup
     ldi A 3
@@ -495,8 +489,7 @@ MALLOC $next_board 10416
     jmp :compute_next_generation_if_end_2
 :compute_next_generation_if_else_2
     call @rt_over
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -570,7 +563,7 @@ MALLOC $next_board 10416
        ; ret
         ret
 @test_random_board
-    ldi A 0
+    ld A Z
     sto A $i
 :test_random_board_while_start_4
     ldm A $i
@@ -588,8 +581,7 @@ MALLOC $next_board 10416
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :test_random_board_if_else_5
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     jmp :test_random_board_if_end_5
 :test_random_board_if_else_5
     ldi A 1

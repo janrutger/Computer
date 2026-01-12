@@ -26,7 +26,7 @@
     call @NEW.array
     ustack A $DATASTACK_PTR
     sto A $weights_ptr
-    ldi A 0
+    ld A Z
     sto A $i
 :NN.new_perceptron_while_start_0
     ldm A $i
@@ -64,8 +64,7 @@
     call @NEW.array
     ustack A $DATASTACK_PTR
     sto A $perceptron_ptr
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @FP.from_int
     ldm A $perceptron_ptr
     stack A $DATASTACK_PTR
@@ -83,8 +82,7 @@
     sto A $perceptron_ptr
     ustack A $DATASTACK_PTR
     sto A $input_ptr
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $perceptron_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
@@ -99,7 +97,7 @@
     sto A $weights_ptr
     ldm A $bias
     sto A $weighted_sum
-    ldi A 0
+    ld A Z
     sto A $i
     ldm A $input_ptr
     stack A $DATASTACK_PTR
@@ -151,8 +149,7 @@
 :NN.predict_while_end_1
     ldm A $weighted_sum
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -161,8 +158,7 @@
     stack A $DATASTACK_PTR
     jmp :NN.predict_if_end_0
 :NN.predict_if_else_0
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
 :NN.predict_if_end_0
     ret
 @NN.train_step
@@ -174,8 +170,7 @@
     sto A $_error
     ustack A $DATASTACK_PTR
     sto A $learning_rate
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $perceptron_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
@@ -208,12 +203,11 @@
     ustack A $DATASTACK_PTR
     sto A $new_bias
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $perceptron_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.put
-    ldi A 0
+    ld A Z
     sto A $i
     ldm A $input_ptr
     stack A $DATASTACK_PTR

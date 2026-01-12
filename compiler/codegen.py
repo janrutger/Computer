@@ -664,6 +664,18 @@ class CodeGenerator:
                         lines_removed_count += 1
                         continue
 
+                    # Pattern 7: Optimize pushing 0
+                    # ldi A 0 -> stack A $DATASTACK_PTR
+                    # Becomes: stack Z $DATASTACK_PTR
+                    if len(parts1) == 3 and len(parts2) == 3 and \
+                       parts1[0] == 'ldi' and parts1[1] == 'A' and parts1[2] == '0' and \
+                       parts2[0] == 'stack' and parts2[1] == 'A' and parts2[2] == '$DATASTACK_PTR':
+                        
+                        optimized_lines.append(f"    stack Z {parts2[2]}")
+                        i += 2
+                        lines_removed_count += 1
+                        continue
+
                 optimized_lines.append(lines[i])
                 i += 1
 

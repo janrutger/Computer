@@ -297,10 +297,9 @@
     call @FP.from_string
     ustack A $DATASTACK_PTR
     sto A $learning_rate
-    ldi A 0
+    ld A Z
     sto A $i
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @TIME.start
     ldi A $_main_str_5
     stack A $DATASTACK_PTR
@@ -329,8 +328,7 @@
     ldi A 100
     dmod B A
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -341,8 +339,7 @@
     ldi A 32
     stack A $DATASTACK_PTR
     call @PRTchar
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @TIME.read
     call @TIME.as_string
     ldi A $_main_str_7
@@ -388,7 +385,7 @@
     ldi A $_main_str_9
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 0
+    ld A Z
     sto A $i
 :_main_while_start_1
     ldm A $i
@@ -420,8 +417,7 @@
     ldm A $current_input_ptr
     stack A $DATASTACK_PTR
     call @NN.predict
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @ARRAY.get
     ldi A 4
     stack A $DATASTACK_PTR
@@ -445,8 +441,7 @@
 @gcd
 :gcd_while_start_0
     call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -471,8 +466,7 @@
 :loop_POWER
     ldm A $_power_exp
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -568,8 +562,7 @@
     mul B A
     stack B $DATASTACK_PTR
     call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -604,8 +597,7 @@
     ustack A $DATASTACK_PTR
     sto A $fp_a
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -622,8 +614,7 @@
 :FP.div_if_end_1
     ldm A $fp_b
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -655,8 +646,7 @@
 :FP.div_abs_pos_4
     sto A $abs_denominator
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -664,8 +654,7 @@
     ldm A $div_error
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     jmp :FP.div_if_end_5
 :FP.div_if_else_5
     ldm B $abs_numerator
@@ -694,8 +683,7 @@
     sto A $result
     ldm A $exponent
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -707,8 +695,7 @@
 :loop_power
     ldm A $exponent
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -733,8 +720,7 @@
     ret
 @FP.print
     call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -800,8 +786,7 @@
     ustack A $DATASTACK_PTR
     sto A $num_digits
     call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -814,7 +799,7 @@
     sub B A
     stack B $DATASTACK_PTR
 :FP.fprint_if_end_9
-    ldi A 0
+    ld A Z
     sto A $MAX_VALID_DIGITS
     ldi A 1
     sto A $temp_scale
@@ -864,8 +849,7 @@
 :loop_print_digits
     ldm A $num_digits
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -896,13 +880,12 @@
     sto A $__natoi_len
     ustack A $DATASTACK_PTR
     sto A $__natoi_p
-    ldi A 0
+    ld A Z
     sto A $__natoi_res
 :loop_natoi
     ldm A $__natoi_len
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -970,8 +953,7 @@
     sto A $dot_index
     ldm A $dot_found
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -1071,8 +1053,7 @@
     ldi A 5
     add A B
     sto A $_gpu_temp_ptr
-    ldi A 0
-    ld B A
+    ld B Z
     ldm I $_gpu_temp_ptr
     stx B $_start_memory_
     ldm B $_gpu_tdl_ptr
@@ -1424,8 +1405,7 @@
     sto A $_nn_mat_lr
     ldm A $_nn_hidden_layer_ptr
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $_nn_h_weights
@@ -1438,8 +1418,7 @@
     sto A $_nn_h_bias
     ldm A $_nn_output_layer_ptr
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $_nn_o_weights
@@ -1606,10 +1585,8 @@
     stack A $DATASTACK_PTR
     ldm A $_nn_mat_hidden_activations
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $_tdl_fh_relu
     stack A $DATASTACK_PTR
     ldm A $_tdl_fh_add
@@ -1617,12 +1594,10 @@
     call @GPU.tdl
     ldm A $_nn_mat_hidden_activations
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $_nn_mat_hidden_activations
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 4
     stack A $DATASTACK_PTR
     ldm A $_tdl_fo_dot
@@ -1651,10 +1626,8 @@
     stack A $DATASTACK_PTR
     ldm A $_nn_mat_output_activations
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $_tdl_fo_relu
     stack A $DATASTACK_PTR
     ldm A $_tdl_fo_add
@@ -1662,16 +1635,13 @@
     call @GPU.tdl
     ldm A $_nn_mat_output_activations
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $_nn_mat_output_activations
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 4
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $_tdl_fo_relu
     stack A $DATASTACK_PTR
     call @GPU.tdl
@@ -1681,8 +1651,7 @@
     stack A $DATASTACK_PTR
     ldm A $_nn_mat_output_error
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     ldm A $_tdl_bp_d_out
@@ -1692,8 +1661,7 @@
     call @GPU.tdl
     ldm A $_nn_mat_output_activations
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $_nn_mat_output_deriv
     stack A $DATASTACK_PTR
     ldm A $_nn_scale
@@ -1722,12 +1690,10 @@
     call @GPU.tdl
     ldm A $_nn_o_weights
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $_nn_mat_weights_ho_trans
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 5
     stack A $DATASTACK_PTR
     ldm A $_tdl_bp_h_err
@@ -1752,8 +1718,7 @@
     call @GPU.tdl
     ldm A $_nn_mat_hidden_activations
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $_nn_mat_hidden_deriv
     stack A $DATASTACK_PTR
     ldm A $_nn_scale
@@ -1782,12 +1747,10 @@
     call @GPU.tdl
     ldm A $_nn_mat_hidden_activations
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $_nn_mat_hidden_act_trans
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 5
     stack A $DATASTACK_PTR
     ldm A $_tdl_up_o_grad
@@ -1831,10 +1794,8 @@
     stack A $DATASTACK_PTR
     ldm A $_nn_o_weights
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $_tdl_up_o_bias_g
     stack A $DATASTACK_PTR
     ldm A $_tdl_up_o_add_w
@@ -1876,10 +1837,8 @@
     stack A $DATASTACK_PTR
     ldm A $_nn_o_bias
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $_tdl_up_h_trans
     stack A $DATASTACK_PTR
     ldm A $_tdl_up_o_add_b
@@ -1887,12 +1846,10 @@
     call @GPU.tdl
     ldm A $_nn_mat_input_wrapper
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $_nn_mat_input_trans
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 5
     stack A $DATASTACK_PTR
     ldm A $_tdl_up_h_grad
@@ -1936,10 +1893,8 @@
     stack A $DATASTACK_PTR
     ldm A $_nn_h_weights
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $_tdl_up_h_bias_g
     stack A $DATASTACK_PTR
     ldm A $_tdl_up_h_add_w
@@ -1981,12 +1936,9 @@
     stack A $DATASTACK_PTR
     ldm A $_nn_h_bias
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $_tdl_up_h_add_b
     stack A $DATASTACK_PTR
     call @GPU.tdl
@@ -1998,7 +1950,7 @@
     sto A $_nn_predict_input_ptr
     ustack A $DATASTACK_PTR
     sto A $_nn_network_ptr
-    ldi A 0
+    ld A Z
     sto A $_nn_fill_counter
 :NN.predict_while_start_3
     ldm A $_nn_fill_counter
@@ -2055,7 +2007,7 @@
     ldm A $_nn_mat_lr
     stack A $DATASTACK_PTR
     call @MATRIX.put
-    ldi A 0
+    ld A Z
     sto A $_nn_fill_counter
 :NN.train_while_start_4
     ldm A $_nn_fill_counter
@@ -2087,7 +2039,7 @@
     sto A $_nn_fill_counter
     jmp :NN.train_while_start_4
 :NN.train_while_end_4
-    ldi A 0
+    ld A Z
     sto A $_nn_fill_counter
 :NN.train_while_start_5
     ldm A $_nn_fill_counter

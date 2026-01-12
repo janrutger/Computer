@@ -60,8 +60,7 @@
 :_NN.new_layer_while_start_0
     ldm A $_nn_num_neurons
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -76,7 +75,7 @@
     call @NEW.array
     ustack A $DATASTACK_PTR
     sto A $_nn_weights_ptr
-    ldi A 0
+    ld A Z
     sto A $_nn_fill_counter
 :_NN.new_layer_while_start_1
     ldm A $_nn_fill_counter
@@ -221,21 +220,18 @@
     ret
 @_NN.relu
     call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :_NN.relu_if_end_0
     call @rt_drop
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @FP.from_int
 :_NN.relu_if_end_0
     ret
 @_NN.relu_derivative
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -245,8 +241,7 @@
     call @FP.from_int
     jmp :_NN.relu_derivative_if_end_1
 :_NN.relu_derivative_if_else_1
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @FP.from_int
 :_NN.relu_derivative_if_end_1
     ret
@@ -260,7 +255,7 @@
     ldm A $_nn_predict_output_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.clear
-    ldi A 0
+    ld A Z
     sto A $_nn_predict_neuron_idx
 :_NN.forward_pass_layer_while_start_2
     ldm A $_nn_predict_neuron_idx
@@ -280,8 +275,7 @@
     ustack A $DATASTACK_PTR
     sto A $_nn_perceptron_ptr
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $_nn_predict_weighted_sum
@@ -292,7 +286,7 @@
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $_nn_weights_ptr
-    ldi A 0
+    ld A Z
     sto A $_nn_predict_input_idx
 :_NN.forward_pass_layer_while_start_3
     ldm A $_nn_predict_input_idx
@@ -403,7 +397,7 @@
     sto A $_nn_predict_input_ptr
     ustack A $DATASTACK_PTR
     sto A $_nn_predict_layer_ptr
-    ldi A 0
+    ld A Z
     sto A $_nn_predict_neuron_idx
 :_NN.train_forward_pass_layer_while_start_4
     ldm A $_nn_predict_neuron_idx
@@ -423,8 +417,7 @@
     ustack A $DATASTACK_PTR
     sto A $_nn_perceptron_ptr
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $_nn_train_weighted_sum
@@ -435,7 +428,7 @@
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $_nn_weights_ptr
-    ldi A 0
+    ld A Z
     sto A $_nn_predict_input_idx
 :_NN.train_forward_pass_layer_while_start_5
     ldm A $_nn_predict_input_idx
@@ -488,7 +481,7 @@
 :_NN.train_forward_pass_layer_while_end_4
     ret
 @_NN.calculate_output_deltas
-    ldi A 0
+    ld A Z
     sto A $_nn_delta_idx
 :_NN.calculate_output_deltas_while_start_6
     ldm A $_nn_delta_idx
@@ -541,7 +534,7 @@
     sto A $_nn_output_layer_ptr
     ustack A $DATASTACK_PTR
     sto A $_nn_hidden_layer_ptr
-    ldi A 0
+    ld A Z
     sto A $_nn_hidden_delta_idx
 :_NN.calculate_hidden_deltas_while_start_7
     ldm A $_nn_hidden_delta_idx
@@ -553,12 +546,11 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :_NN.calculate_hidden_deltas_while_end_7
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @FP.from_int
     ustack A $DATASTACK_PTR
     sto A $_nn_weighted_delta_sum
-    ldi A 0
+    ld A Z
     sto A $_nn_output_delta_idx
 :_NN.calculate_hidden_deltas_while_start_8
     ldm A $_nn_output_delta_idx
@@ -630,7 +622,7 @@
     sto A $_nn_update_deltas_ptr
     ustack A $DATASTACK_PTR
     sto A $_nn_update_layer_ptr
-    ldi A 0
+    ld A Z
     sto A $_nn_update_neuron_idx
 :_NN.update_layer_weights_while_start_9
     ldm A $_nn_update_neuron_idx
@@ -663,7 +655,7 @@
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $_nn_weights_ptr
-    ldi A 0
+    ld A Z
     sto A $_nn_update_weight_idx
 :_NN.update_layer_weights_while_start_10
     ldm A $_nn_update_weight_idx
@@ -723,8 +715,7 @@
     sto A $_nn_update_weight_change
     ldm A $_nn_perceptron_ptr
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @ARRAY.get
     ldm A $_nn_update_weight_change
     stack A $DATASTACK_PTR
@@ -732,8 +723,7 @@
     ustack A $DATASTACK_PTR
     sto A $_nn_update_new_value
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $_nn_perceptron_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.put

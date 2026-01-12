@@ -83,8 +83,7 @@
     stack A $DATASTACK_PTR
     jmp :KEYpressed_if_end_1
 :KEYpressed_if_else_1
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
 :KEYpressed_if_end_1
     ret
 @READline
@@ -112,8 +111,7 @@
     jmpt :READline_if_end_3
     ldm A $input_buffer_index
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -153,11 +151,10 @@
     ldm A $input_buffer_index
     add A B
     sto A $p_input_buffer
-    ldi A 0
-    ld B A
+    ld B Z
     ldm I $p_input_buffer
     stx B $_start_memory_
-    ldi A 0
+    ld A Z
     sto A $input_buffer_index
     ldi A $input_buffer
     stack A $DATASTACK_PTR
@@ -175,8 +172,7 @@
         stack M $DATASTACK_PTR  ; place numner of stack items at TOS
         jmp :checkstack_done
     :stack_empty                ; Stack is empty
-        ldi A 0
-        stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     :checkstack_done
         ret
 @HALT

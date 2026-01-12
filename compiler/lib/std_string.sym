@@ -1,9 +1,9 @@
 {
   "functions": [
     "STRatoi",
-    "STRcmp",
     "STRcopy",
     "STRfind",
+    "STRcmp",
     "STRlen"
   ],
   "variables": [

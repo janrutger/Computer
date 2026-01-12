@@ -23,15 +23,33 @@ This document provides an overview of the methods available in the standard Stac
 *   `FP.fprint`: Prints a fixed-point number with a specified number of decimal places.
 *   `FP.from_string`: Converts a string (e.g., "12.34") to a fixed-point number.
 
-### `heaper_lib.stacks` (Array and Heap Management)
+### `game_lib.stacks` (Game Engine)
+
+*   `init_game_lib`: Initializes the game engine.
+*   `init_single_tile`: Initializes a game tile. `( tile_id start_x start_y data_ptr color reaction replace_ptr -- )`
+*   `define_replacement`: Defines a replacement behavior for a tile. `( replacement_data_ptr new_sprite_data_ptr new_color new_reaction -- )`
+*   `is_timer_ready`: Checks if a timer is ready. `( timer_variable_pointer cooldown_duration -- ready )`
+*   `tile_move`: Moves a tile to a new position. `( tile_id new_y new_x -- )`
+*   `delete_tile`: Deletes a tile (moves it off-screen). `( tile_id -- )`
+*   `redraw_all_moved_tiles`: Redraws only tiles that have moved.
+*   `draw_all_tiles`: Draws all active tiles.
+*   `draw_tile_by_id`: Draws a specific tile by ID. `( tile_id -- )`
+*   `refresh_tiles`: Flips the screen buffer.
+*   `clear_rect`: Clears a rectangular area. `( start_x start_y width height sprite_id -- )`
+
+### `std_heap.stacks` (Dynamic Memory Management)
 
 *   `HEAP.init`: Initializes the heap allocator. `( heap_start_ptr heap_size -- )`
 *   `NEW.array`: Creates a new array on the heap. `( requested_capacity -- new_array_pointer )`
+*   `NEW.matrix`: Creates a new matrix on the heap. `( rows cols -- new_matrix_pointer )`
+*   `NEW.list`: Creates a new list on the heap. `( capacity -- new_list_pointer )`
 *   `ARRAY.append`: Appends an element to an array. `( value array_ptr -- )`
 *   `ARRAY.put`: Updates a value at a specific index in an array. `( value index array_ptr -- )`
 *   `ARRAY.get`: Reads a value from a specific index in an array. `( index array_ptr -- value )`
 *   `ARRAY.size`: Returns the total capacity of an array. `( array_ptr -- capacity )`
 *   `ARRAY.len`: Returns the current number of elements in an array. `( array_ptr -- count )`
+*   `MATRIX.put`: Updates a value in a matrix. `( value row col matrix_ptr -- )`
+*   `MATRIX.get`: Reads a value from a matrix. `( row col matrix_ptr -- value )`
 
 ### `math_lib.stacks`
 
@@ -40,6 +58,13 @@ This document provides an overview of the methods available in the standard Stac
 *   `factorial`: Calculates the factorial of a number.
 *   `negate`: Negates the top of the stack.
 *   `abs`: Computes the absolute value of the top of the stack.
+
+### `mlnn_gpu3_optimized_lib.stacks` (GPU-Accelerated Neural Network)
+
+*   `NN.set_scale`: Sets the fixed-point scale factor. `( scale -- )`
+*   `NN.new_network`: Creates a new neural network. `( input_size hidden_size output_size -- network_ptr )`
+*   `NN.predict`: Performs a forward pass (prediction). `( network_ptr input_array_ptr -- output_array_ptr )`
+*   `NN.train`: Trains the network using backpropagation. `( network_ptr input_array_ptr target_array_ptr learning_rate -- )`
 
 ### `parser_tools.stacks`
 

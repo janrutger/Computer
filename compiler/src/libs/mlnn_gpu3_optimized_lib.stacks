@@ -310,10 +310,10 @@ DEF NN.train {
         _nn_fill_counter 1 + AS _nn_fill_counter
     DONE
 
-    # 5. Execute Forward Chain (Hidden -> Output)
+    # 4. Execute Forward Chain (Hidden -> Output)
     _tdl_fh_dot GPU.exec DROP
 
-    # 6. Execute Backprop Chain (Deltas -> Updates)
+    # 5. Execute Backprop Chain (Deltas -> Updates)
     # This single call executes all 16 backprop operations
     _tdl_bp_err GPU.exec DROP
 }

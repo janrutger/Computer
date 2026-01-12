@@ -114,8 +114,7 @@
     ldi A 1
     add A B
     sto A $_ARR_TEMP_PTR
-    ldi A 0
-    ld B A
+    ld B Z
     ldm I $_ARR_TEMP_PTR
     stx B $_start_memory_
     ldm A $new_array_pointer
@@ -202,8 +201,7 @@
     sto A $_count
     ldm A $_index
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -267,8 +265,7 @@
     sto A $_count
     ldm A $_index
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -341,8 +338,7 @@
     ustack B $DATASTACK_PTR
     add A B
     sto A $_ARR_TEMP_PTR
-    ldi A 0
-    ld B A
+    ld B Z
     ldm I $_ARR_TEMP_PTR
     stx B $_start_memory_
     ret
@@ -709,7 +705,7 @@
     ldi A 2
     add A B
     sto A $_MAT_TEMP_PTR
-    ldi A 0
+    ld A Z
     sto A $_MAT_LOOP_COUNTER
 :matrix_populate_loop
     ldm A $_MAT_LOOP_COUNTER
@@ -721,8 +717,7 @@
     tst A 0
     jmpt :NEW.matrix_populate_if_end_24
     call @TOS.check
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0

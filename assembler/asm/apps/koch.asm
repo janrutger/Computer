@@ -75,8 +75,7 @@
 @_drawTurtle
     ldm A $current_mode
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -110,13 +109,12 @@
     call @rt_udc_control
     ldm A $current_mode
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :TURTLE.mode_if_end_1
-    ldi A 0
+    ld A Z
     sto A $current_flip
 :TURTLE.mode_if_end_1
     ldm A $current_mode
@@ -127,7 +125,7 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :TURTLE.mode_if_end_2
-    ldi A 0
+    ld A Z
     sto A $current_flip
 :TURTLE.mode_if_end_2
     ldm A $current_mode
@@ -138,7 +136,7 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :TURTLE.mode_if_end_3
-    ldi A 0
+    ld A Z
     sto A $current_mode
     ldi A 1
     sto A $current_flip
@@ -158,8 +156,7 @@
 :TURTLE.mode_if_end_4
     ldm A $current_mode
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -180,8 +177,7 @@
     ldm A $current_flip
     tst A 0
     jmpt :TURTLE.flip_if_end_6
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 18
@@ -259,8 +255,7 @@
     ustack A $DATASTACK_PTR
     sto A $distance
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -295,8 +290,7 @@
 :move_loop
     ldm A $distance
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -349,8 +343,7 @@
     ldx A $_start_memory_
     sto A $char
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -384,8 +377,7 @@
     sto A $i_turtle
     jmp :welcome_loop
 :welcome_end
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 18
@@ -400,15 +392,13 @@
     % $TURTLE_DX  1  1  0 -1 -1 -1  0  1
     ;. $TURTLE_DY 8
     % $TURTLE_DY  0  1  1  1  0 -1 -1 -1
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 10
@@ -445,15 +435,14 @@
     ld A B
     sto A $dx
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :TURTLE.line_if_end_10
-    ldi A 0
-    ld B A
+    stack Z $DATASTACK_PTR
     ldi A 1
+    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $dx
@@ -467,15 +456,14 @@
     ld A B
     sto A $dy
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :TURTLE.line_if_end_11
-    ldi A 0
-    ld B A
+    stack Z $DATASTACK_PTR
     ldi A 1
+    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $dy
@@ -483,9 +471,9 @@
     mul A B
     sto A $dy
 :TURTLE.line_if_end_11
-    ldi A 0
-    ld B A
+    stack Z $DATASTACK_PTR
     ldi A 1
+    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $sx
@@ -500,9 +488,9 @@
     ldi A 1
     sto A $sx
 :TURTLE.line_if_end_12
-    ldi A 0
-    ld B A
+    stack Z $DATASTACK_PTR
     ldi A 1
+    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $sy
@@ -517,9 +505,9 @@
     ldi A 1
     sto A $sy
 :TURTLE.line_if_end_13
-    ldi A 0
-    ld B A
+    stack Z $DATASTACK_PTR
     ldi A 1
+    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $dy
@@ -690,7 +678,7 @@
     sto A $circ_xc
     ldm A $circ_p
     sto A $circ_x
-    ldi A 0
+    ld A Z
     sto A $circ_y
     ldi A 1
     ld B A
@@ -708,8 +696,7 @@
     ldi A 1
     add A B
     sto A $circ_y
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $circ_p
     stack A $DATASTACK_PTR
     call @rt_gt
@@ -793,8 +780,7 @@
 @draw_koch
     call @stack_pop
     call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0

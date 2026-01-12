@@ -31,8 +31,7 @@
     ustack B $DATASTACK_PTR
     dmod B A
     stack B $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -66,14 +65,13 @@
     call @rt_udc_control
     jmp :_main_while_start_1
 :_main_while_end_1
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 18
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldi A 0
+    ld A Z
     sto A $X
     stack A $DATASTACK_PTR
     ldi A 2
@@ -97,19 +95,17 @@
 
 # .FUNCTIONS
 @screen
-    ldi A 0
+    ld A Z
     sto A $X
-    ldi A 0
+    ld A Z
     sto A $Y
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 10

@@ -74,7 +74,7 @@ GAME.init_game_lib
 700    AS t_coin_time       # Duration of the timer
 
 90    AS t_special         # the Special tile timer
-50    AS t_special_time    # Duration of the timer
+90    AS t_special_time    # Duration of the timer
 
 0      AS t_monster_cooldown    # Cooldown timer/counter
 

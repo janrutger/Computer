@@ -22,15 +22,13 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :_main_if_else_1
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     ldi A 10
@@ -53,7 +51,7 @@
     call @ARRAY.size
     ustack A $DATASTACK_PTR
     sto A $size
-    ldi A 0
+    ld A Z
     sto A $N
 :_main_while_start_3
     ldm A $N
@@ -116,10 +114,9 @@
     call @ARRAY.len
     ustack A $DATASTACK_PTR
     sto A $listlenn
-    ldi A 0
+    ld A Z
     sto A $NN
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     ldi A 10
@@ -150,8 +147,7 @@
     sto A $NN
     jmp :plotlist_while_start_0
 :plotlist_while_end_0
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     ldi A 18
@@ -174,9 +170,9 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :sort_list_while_end_1
-    ldi A 0
+    ld A Z
     sto A $new_n_limit
-    ldi A 0
+    ld A Z
     sto A $N
 :sort_list_while_start_2
     ldm A $N

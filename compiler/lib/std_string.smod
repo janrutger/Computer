@@ -33,14 +33,12 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :STRcmp_if_end_0
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     jmp :strcmp_end
 :STRcmp_if_end_0
     ldm A $_strcmp_c1
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -63,7 +61,7 @@
 @STRatoi
     ustack A $DATASTACK_PTR
     sto A $_atoi_s_ptr
-    ldi A 0
+    ld A Z
     sto A $_atoi_result
     ldm A $_atoi_s_ptr
     sto A $_atoi_p
@@ -72,8 +70,7 @@
     ldx A $_start_memory_
     sto A $_atoi_c
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -122,22 +119,20 @@
 :atoi_fail
     ldm A $_atoi_s_ptr
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     jmp :atoi_end
 :atoi_end
     ret
 @STRlen
     ustack A $DATASTACK_PTR
     sto A $_strlen_p
-    ldi A 0
+    ld A Z
     sto A $_strlen_len
 :strlen_loop
     ldm I $_strlen_p
     ldx A $_start_memory_
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -162,24 +157,21 @@
     sto A $_strfind_char
     ustack A $DATASTACK_PTR
     sto A $_strfind_p
-    ldi A 0
+    ld A Z
     sto A $_strfind_idx
 :strfind_loop
     ldm I $_strfind_p
     ldx A $_start_memory_
     stack A $DATASTACK_PTR
     call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :STRfind_if_end_6
     call @rt_drop
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     jmp :strfind_end
 :STRfind_if_end_6
     ldm A $_strfind_char

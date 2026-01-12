@@ -15,12 +15,11 @@
 . $_main_str_1 4
 
 # .CODE
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @TIME.start
     call @screen
 :_main_while_start_0
-    ldi A 15000
+    ldi A 50000
     stack A $DATASTACK_PTR
     ldm A $N
     stack A $DATASTACK_PTR
@@ -39,8 +38,7 @@
     ld A B
     sto A $R
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -98,21 +96,18 @@
     ldi A 500
     dmod B A
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :_main_if_end_3
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 18
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @TIME.read
     call @TIME.as_string
     ldi A 32
@@ -135,8 +130,7 @@
     ldi A $_main_str_0
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @TIME.read
     call @TIME.as_string
     ldi A $_main_str_1
@@ -146,15 +140,13 @@
 
 # .FUNCTIONS
 @screen
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 10

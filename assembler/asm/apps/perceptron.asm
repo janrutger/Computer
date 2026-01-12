@@ -78,22 +78,19 @@
 # .CODE
     call @HEAP.free
     call @SRAND
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 14
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 10
@@ -121,27 +118,24 @@
     ldi A $_main_str_2
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $input_array
     stack A $DATASTACK_PTR
     call @ARRAY.append
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $input_array
     stack A $DATASTACK_PTR
     call @ARRAY.append
     ldi A $_main_str_4
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 10
     stack A $DATASTACK_PTR
     call @rt_udc_control
-    ldi A 0
+    ld A Z
     sto A $itter
 :_main_while_start_0
     ldm A $itter
@@ -156,8 +150,7 @@
     ldm A $x_int
     stack A $DATASTACK_PTR
     call @FP.from_int
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $input_array
     stack A $DATASTACK_PTR
     call @ARRAY.put
@@ -184,8 +177,7 @@
     stack A $DATASTACK_PTR
     jmp :_main_if_end_0
 :_main_if_else_0
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
 :_main_if_end_0
     ustack A $DATASTACK_PTR
     sto A $true_label
@@ -195,8 +187,7 @@
     ld A B
     sto A $error
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -248,7 +239,7 @@
     ldi A $_main_str_5
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 0
+    ld A Z
     sto A $itter
 :_main_while_start_1
     ldm A $itter
@@ -263,8 +254,7 @@
     ldm A $x_int
     stack A $DATASTACK_PTR
     call @FP.from_int
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $input_array
     stack A $DATASTACK_PTR
     call @ARRAY.put
@@ -291,8 +281,7 @@
     stack A $DATASTACK_PTR
     jmp :_main_if_end_2
 :_main_if_else_2
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
 :_main_if_end_2
     ustack A $DATASTACK_PTR
     sto A $true_label
@@ -302,8 +291,7 @@
     ld A B
     sto A $error
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -321,8 +309,7 @@
 :_main_if_end_3
     ldm A $error
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -378,9 +365,9 @@
     ldi A $_main_str_6
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 0
+    ld A Z
     sto A $itter
-    ldi A 0
+    ld A Z
     sto A $error_count
 :_main_while_start_2
     ldm A $itter
@@ -395,8 +382,7 @@
     ldm A $x_int
     stack A $DATASTACK_PTR
     call @FP.from_int
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $input_array
     stack A $DATASTACK_PTR
     call @ARRAY.put
@@ -423,8 +409,7 @@
     stack A $DATASTACK_PTR
     jmp :_main_if_end_5
 :_main_if_else_5
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
 :_main_if_end_5
     ustack A $DATASTACK_PTR
     sto A $true_label
@@ -434,8 +419,7 @@
     ld A B
     sto A $error
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -447,8 +431,7 @@
 :_main_if_end_6
     ldm A $error
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -543,8 +526,7 @@
 @gcd
 :gcd_while_start_0
     call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -569,8 +551,7 @@
 :loop_POWER
     ldm A $_power_exp
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -666,8 +647,7 @@
     mul B A
     stack B $DATASTACK_PTR
     call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -702,8 +682,7 @@
     ustack A $DATASTACK_PTR
     sto A $fp_a
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -720,8 +699,7 @@
 :FP.div_if_end_1
     ldm A $fp_b
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -753,8 +731,7 @@
 :FP.div_abs_pos_4
     sto A $abs_denominator
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -762,8 +739,7 @@
     ldm A $div_error
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     jmp :FP.div_if_end_5
 :FP.div_if_else_5
     ldm B $abs_numerator
@@ -792,8 +768,7 @@
     sto A $result
     ldm A $exponent
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -805,8 +780,7 @@
 :loop_power
     ldm A $exponent
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -831,8 +805,7 @@
     ret
 @FP.print
     call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -898,8 +871,7 @@
     ustack A $DATASTACK_PTR
     sto A $num_digits
     call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -912,7 +884,7 @@
     sub B A
     stack B $DATASTACK_PTR
 :FP.fprint_if_end_9
-    ldi A 0
+    ld A Z
     sto A $MAX_VALID_DIGITS
     ldi A 1
     sto A $temp_scale
@@ -962,8 +934,7 @@
 :loop_print_digits
     ldm A $num_digits
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -994,13 +965,12 @@
     sto A $__natoi_len
     ustack A $DATASTACK_PTR
     sto A $__natoi_p
-    ldi A 0
+    ld A Z
     sto A $__natoi_res
 :loop_natoi
     ldm A $__natoi_len
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -1068,8 +1038,7 @@
     sto A $dot_index
     ldm A $dot_found
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -1162,7 +1131,7 @@
     call @NEW.array
     ustack A $DATASTACK_PTR
     sto A $weights_ptr
-    ldi A 0
+    ld A Z
     sto A $i
 :NN.new_perceptron_while_start_0
     ldm A $i
@@ -1200,8 +1169,7 @@
     call @NEW.array
     ustack A $DATASTACK_PTR
     sto A $perceptron_ptr
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @FP.from_int
     ldm A $perceptron_ptr
     stack A $DATASTACK_PTR
@@ -1219,8 +1187,7 @@
     sto A $perceptron_ptr
     ustack A $DATASTACK_PTR
     sto A $input_ptr
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $perceptron_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
@@ -1235,7 +1202,7 @@
     sto A $weights_ptr
     ldm A $bias
     sto A $weighted_sum
-    ldi A 0
+    ld A Z
     sto A $i
     ldm A $input_ptr
     stack A $DATASTACK_PTR
@@ -1287,8 +1254,7 @@
 :NN.predict_while_end_1
     ldm A $weighted_sum
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -1297,8 +1263,7 @@
     stack A $DATASTACK_PTR
     jmp :NN.predict_if_end_0
 :NN.predict_if_else_0
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
 :NN.predict_if_end_0
     ret
 @NN.train_step
@@ -1310,8 +1275,7 @@
     sto A $_error
     ustack A $DATASTACK_PTR
     sto A $learning_rate
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $perceptron_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
@@ -1344,12 +1308,11 @@
     ustack A $DATASTACK_PTR
     sto A $new_bias
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     ldm A $perceptron_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.put
-    ldi A 0
+    ld A Z
     sto A $i
     ldm A $input_ptr
     stack A $DATASTACK_PTR

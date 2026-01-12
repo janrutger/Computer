@@ -1,0 +1,111 @@
+# Adding Structs to the Stacks Language
+
+## 1. Design Philosophy: Contiguous Memory
+Refined approach: Instead of a list of pointers (which causes double indirection and fragmentation), a Struct will be a **single contiguous block of memory** on the heap.
+
+*   **Efficiency:** 1 allocation per struct instance, not 1 per field.
+*   **Simplicity:** Fields are just offsets from the base pointer.
+*   **"Everything is a Word":** Every field is 1 word (integer). It can be a raw value (e.g., HP=100) or a pointer to another object (e.g., Inventory=Address).
+*   **Consumer Responsibility:** The library returns a generic integer. The programmer must know if that integer represents a value or a pointer to another structure/array.
+
+## 2. Implementation Strategy: Runtime Library
+Since we want to avoid modifying the compiler, we will implement a **Dynamic Type System** in a library (`std_struct.stacks`).
+
+*   **No Compiler Changes:** We use standard Stacks syntax.
+*   **Runtime Resolution:** Field names are resolved to memory offsets while the program runs.
+*   **Hashing:** To speed up lookups, field names (strings) are hashed into integers.
+
+## 3. Data Structures
+
+### The Struct Type (The Blueprint)
+Created once. Stores the mapping between Field Names (Hashes) and Offsets.
+*   **Heap Layout:**
+    *   `[0]`: Number of Fields (N)
+    *   `[1]`: Hash of Field 1 Name
+    *   `[2]`: Hash of Field 2 Name
+    *   `...`: ...
+
+### The Struct Instance (The Object)
+Created many times. Stores the actual data.
+*   **Heap Layout:**
+    *   `[0]`: **Pointer to Struct Type** (Crucial for looking up field names!)
+    *   `[1]`: Value of Field 1
+    *   `[2]`: Value of Field 2
+    *   `...`: ...
+
+## 4. API Reference
+
+### Defining a Type
+`STRUCT.new_type`
+*   **Stack:** `( field_name_1 ... field_name_N N -- type_ptr )`
+*   **Action:** Creates the Blueprint. Hashes the strings and stores them.
+*   **Example:** `"hp" "xp" 2 STRUCT.new_type AS player_type`
+
+### Creating an Instance
+`STRUCT.new`
+*   **Stack:** `( type_ptr -- instance_ptr )`
+*   **Action:** Allocates memory (Size = N + 1). Stores `type_ptr` in slot 0.
+*   **Example:** `player_type STRUCT.new AS my_player`
+
+### Writing to a Field
+`STRUCT.put`
+*   **Stack:** `( value field_name instance_ptr -- )`
+*   **Action:**
+    1.  Read `type_ptr` from `instance_ptr`.
+    2.  Search `type_ptr` for `hash(field_name)`.
+    3.  Write `value` to `instance_ptr + found_index`.
+
+### Reading from a Field
+`STRUCT.get`
+*   **Stack:** `( field_name instance_ptr -- value )`
+*   **Action:** Similar to put, but reads the value.
+
+### Note on Field Names
+Field names passed to the constructor or get/put methods must be **pointers to null-terminated strings**.
+*   **Literals:** You can use string literals directly: `"hp"`.
+*   **Variables:** You can use `STRING` variables: `my_field_name`.
+*   **Mechanism:** The library uses this pointer to read the string characters and compute a unique hash for the field lookup.
+
+## 5. Helper Functions (std_string extension)
+
+The `std_string` library should be expanded with the `STR.hash` function.
+Here is the implementation using the DJB2 algorithm (hash * 33 + char).
+
+```stacks
+# Internal variables for the hash function
+VALUE _sh_ptr 0
+VALUE _sh_acc 0
+
+DEF STR.hash {
+    # Stack: ( string_ptr -- hash )
+    ASM {
+        # 1. Get String Pointer
+        ustack A $DATASTACK_PTR ; Pop string pointer into A
+        sto A @_sh_ptr          ; Store it so LDX can use it as base
+
+        # 2. Init Hash (DJB2 starts with 5381)
+        ldi A 5381
+        sto A @_sh_acc
+        
+        # 3. Init Index
+        ldi I 0
+
+        :hash_loop
+            ldx A @_sh_ptr   ; Load char at (_sh_ptr + I)
+            tst A 0          ; Check for null terminator
+            jmpt :hash_end   ; If 0, we are done
+
+            ld B @_sh_acc    ; Load current hash
+            muli B 33        ; Hash * 33
+            add B A          ; + Char
+            sto B @_sh_acc   ; Update hash
+
+            addi I 1         ; Increment index
+            jmp :hash_loop
+
+        :hash_end
+            ld A @_sh_acc          ; Load result
+            stack A $DATASTACK_PTR ; Push to stack
+    }
+}
+```

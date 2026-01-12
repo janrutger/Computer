@@ -286,8 +286,7 @@
     stack A $DATASTACK_PTR
     jmp :KEYpressed_if_end_1
 :KEYpressed_if_else_1
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
 :KEYpressed_if_end_1
     ret
 @READline
@@ -315,8 +314,7 @@
     jmpt :READline_if_end_3
     ldm A $input_buffer_index
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -356,11 +354,10 @@
     ldm A $input_buffer_index
     add A B
     sto A $p_input_buffer
-    ldi A 0
-    ld B A
+    ld B Z
     ldm I $p_input_buffer
     stx B $_start_memory_
-    ldi A 0
+    ld A Z
     sto A $input_buffer_index
     ldi A $input_buffer
     stack A $DATASTACK_PTR
@@ -378,8 +375,7 @@
         stack M $DATASTACK_PTR  ; place numner of stack items at TOS
         jmp :checkstack_done
     :stack_empty                ; Stack is empty
-        ldi A 0
-        stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     :checkstack_done
         ret
 @HALT
@@ -429,14 +425,12 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :STRcmp_if_end_0
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     jmp :strcmp_end
 :STRcmp_if_end_0
     ldm A $_strcmp_c1
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -459,7 +453,7 @@
 @STRatoi
     ustack A $DATASTACK_PTR
     sto A $_atoi_s_ptr
-    ldi A 0
+    ld A Z
     sto A $_atoi_result
     ldm A $_atoi_s_ptr
     sto A $_atoi_p
@@ -468,8 +462,7 @@
     ldx A $_start_memory_
     sto A $_atoi_c
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -518,22 +511,20 @@
 :atoi_fail
     ldm A $_atoi_s_ptr
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     jmp :atoi_end
 :atoi_end
     ret
 @STRlen
     ustack A $DATASTACK_PTR
     sto A $_strlen_p
-    ldi A 0
+    ld A Z
     sto A $_strlen_len
 :strlen_loop
     ldm I $_strlen_p
     ldx A $_start_memory_
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
@@ -558,24 +549,21 @@
     sto A $_strfind_char
     ustack A $DATASTACK_PTR
     sto A $_strfind_p
-    ldi A 0
+    ld A Z
     sto A $_strfind_idx
 :strfind_loop
     ldm I $_strfind_p
     ldx A $_start_memory_
     stack A $DATASTACK_PTR
     call @rt_dup
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :STRfind_if_end_6
     call @rt_drop
-    ldi A 0
-    stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     jmp :strfind_end
 :STRfind_if_end_6
     ldm A $_strfind_char
@@ -713,8 +701,7 @@
     ldi A 1
     add A B
     sto A $_ARR_TEMP_PTR
-    ldi A 0
-    ld B A
+    ld B Z
     ldm I $_ARR_TEMP_PTR
     stx B $_start_memory_
     ldm A $new_array_pointer
@@ -801,8 +788,7 @@
     sto A $_count
     ldm A $_index
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -866,8 +852,7 @@
     sto A $_count
     ldm A $_index
     stack A $DATASTACK_PTR
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
@@ -940,8 +925,7 @@
     ustack B $DATASTACK_PTR
     add A B
     sto A $_ARR_TEMP_PTR
-    ldi A 0
-    ld B A
+    ld B Z
     ldm I $_ARR_TEMP_PTR
     stx B $_start_memory_
     ret
@@ -1308,7 +1292,7 @@
     ldi A 2
     add A B
     sto A $_MAT_TEMP_PTR
-    ldi A 0
+    ld A Z
     sto A $_MAT_LOOP_COUNTER
 :matrix_populate_loop
     ldm A $_MAT_LOOP_COUNTER
@@ -1320,8 +1304,7 @@
     tst A 0
     jmpt :NEW.matrix_populate_if_end_24
     call @TOS.check
-    ldi A 0
-    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
