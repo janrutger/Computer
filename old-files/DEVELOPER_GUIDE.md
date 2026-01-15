@@ -1,33 +1,40 @@
-# Stern-XT Developer's Guide
+# Stern-ATX Developer's Guide
 
 ## Introduction
 
-Welcome to the Stern-XT computer project! This guide provides instructions on how to build, run, and develop software for the Stern-XT virtual computer. The project includes a compiler for the "Stacks" language, an assembler, and an emulator for the Stern-XT hardware.
+Welcome to the **Stern-ATX** computer project! This guide provides instructions on how to build, run, and develop software for the Stern-ATX virtual computer ecosystem.
+
+The Stern-ATX is a high-performance evolution of the previous Stern-XT, featuring an integer-based memory architecture, swappable CPUs (including the pipelined **CPU-M1**), and hardware acceleration via the **GPU_R3**.
 
 ## Project Structure
 
 The project is organized into the following main directories:
 
-- `assembler/`: Contains the assembler for the Stern-XT CPU.
-  - `asm/`: Source code for the OS, libraries, and other assembly programs.
-- `compiler/`: Contains the compiler for the Stacks language.
-  - `src/`: Source code for programs written in Stacks (`.stacks` files).
-    - `libs/`: Libraries for the Stacks language.
-    - `kernel_stacks/`: Kernel modules written in Stacks.
-- `devices/`: Emulated hardware devices for the Stern-XT computer (CPU, Memory, Screen, etc.).
-- `microcode_assembler/`: The assembler for the CPU's microcode.
-- `bin/`: Output directory for compiled binaries, including the final `program.bin` ROM.
-- `Vdisk0/`: The virtual disk for the emulator.
+- `assembler/`: Contains the ISA assembler and linker.
+  - `asm/`: Assembly source files and generated output.
+    - `apps/`: Compiled application assembly files.
+    - `incl/`: Compiled kernel module assembly files.
+- `compiler/`: Contains the **Stacks** language compiler.
+  - `src/`: Source code for Stacks programs.
+    - `libs/`: Standard libraries.
+    - `kernel_files/`: OS Kernel modules.
+    - `boot_files/`: System bootloaders.
+  - `lib/`: Compiled library modules (`.smod`).
+- `devices/`: Emulated hardware devices (CPU, Memory, UDC, etc.).
+- `documentation/`: Comprehensive system documentation.
+- `microcode_assembler/`: Tools for defining the CPU Instruction Set Architecture (ISA).
+- `bin/`: Output directory for binaries (`program.bin`, `stern_rom.json`).
+- `Vdisk0/`: The virtual disk directory mapped to the emulator.
 
 ## Build System (`Makefile`)
 
-The project uses `make` to automate the build process. The main configuration is in `Makefile.mk`.
+The project uses `make` to automate the complex build process, which involves compiling microcode, libraries, the kernel, and user applications. The configuration is defined in `Makefile.mk`.
 
 ### Common Commands
 
-- **Build the default program:**
+- **Build and Run (Default):**
   ```bash
-  make
+  make run
   ```
   This compiles the default program (`main.stacks`) and assembles the final `program.bin` ROM.
 
