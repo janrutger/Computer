@@ -4,11 +4,11 @@
 ASM {
 
     # Define register of the disk
-    MALLOC $status_register 12272
-    MALLOC $command_register 12273
-    MALLOC $hostbuffer_adres_register 12274
-    MALLOC $filehash_register 12275
-    MALLOC $last_block_register 12276
+    MALLOC $status_register 18416
+    MALLOC $command_register 18417
+    MALLOC $hostbuffer_adres_register 18418
+    MALLOC $filehash_register 18419
+    MALLOC $last_block_register 18420
 
     # Define all disk status codes
     EQU ~DISK_IDLE 0
@@ -354,4 +354,3 @@ DEF error_fatal_disk_error {
         # do nothing endless loop
     DONE
 }
-

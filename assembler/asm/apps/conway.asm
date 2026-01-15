@@ -12,8 +12,8 @@
 . $cy 1
 . $new_state 1
 . $counter 1
-MALLOC $current_board 9216
-MALLOC $next_board 10416
+MALLOC $current_board 12288
+MALLOC $next_board 13488
 . $y_coord 1
 . $x_coord 1
 . $board_ptr 1
@@ -46,6 +46,7 @@ MALLOC $next_board 10416
     stack A $DATASTACK_PTR
     call @rt_udc_control
     call @test_glider_pattern
+    call @test_pulsar_pattern
     call @copy_board2
 :_main_while_start_5
     ldi A 1

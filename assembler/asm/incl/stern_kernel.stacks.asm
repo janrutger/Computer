@@ -3,7 +3,7 @@
 . $_strtok_d 1
 . $_strtok_p 1
 . $_strtok_c 1
-MALLOC $bytecode_buffer 3584
+MALLOC $bytecode_buffer 8704
 . $bytecode_ptr 1
 . $current_opcode 1
 . $current_value 1
@@ -12,7 +12,7 @@ MALLOC $bytecode_buffer 3584
 . $InfoMessage0 27
 . $InfoMessage1 27
 . $rpn_input_ptr 1
-. $start_kernel_str_0 35
+. $start_kernel_str_0 29
 . $start_kernel_str_1 38
 . $start_kernel_str_2 2
 . $start_kernel_str_3 6
@@ -738,7 +738,7 @@ MALLOC $bytecode_buffer 3584
 % $_strtok_d 0
 % $_strtok_p 0
 % $_strtok_c 0
-% $bytecode_ptr 3584
+% $bytecode_ptr 8704
 % $current_opcode 1
 % $current_value 1
 % $bytecode_execution_ptr 3584
@@ -746,7 +746,7 @@ MALLOC $bytecode_buffer 3584
 % $InfoMessage0 \T \o \t \a \l \space \i \t \e \m \s \space \o \n \space \t \h \e \space \s \t \a \c \k \: \space \null
 % $InfoMessage1 \F \i \r \s \t \space \v \a \l \u \e \space \o \n \space \t \h \e \space \s \t \a \c \k \: \space \null
 % $rpn_input_ptr 0
-% $start_kernel_str_0 \W \E \L \C \O \M \E \space \a \t \space \S \t \e \r \n \space \P \l \a \t \f \o \r \m \space \K \e \r \n \e \l \! \Return \null
+% $start_kernel_str_0 \W \E \L \C \O \M \E \space \a \t \space \S \t \e \r \n \space \K \e \r \n \e \l \space \2 \4 \K \Return \null
 % $start_kernel_str_1 \Return \E \n \t \e \r \space \i \n \s \t \r \u \c \t \i \o \n \s \space \o \r \space \' \q \' \space \t \o \space \q \u \i \t \. \Return \Return \null
 % $start_kernel_str_2 \[ \null
 % $start_kernel_str_3 \] \space \> \> \space \null

@@ -24,15 +24,15 @@ from devices.rtc import RTC
 
 # --- Constants ---
 # Memory Map
-MEM_SIZE = 16384
+MEM_SIZE = 24576
 MEM_LOADER_START = 0
 MEM_KERNEL_START = 1024
-MEM_INT_VECTORS_START = 3072
-MEM_PROG_START = 4096
-MEM_VAR_START = 12288
-MEM_IO_END = 12287 # IO devices map downwards from here
-MEM_VIDEO_START = 14336
-MEM_STACK_END = 14335 # Stack grows downwards from here
+MEM_INT_VECTORS_START = 8192
+MEM_PROG_START = 9216
+MEM_VAR_START = 18432
+MEM_IO_END = 18431 # IO devices map downwards from here
+MEM_VIDEO_START = 22528
+# MEM_STACK_END = 22527 # Stack grows downwards from here
 
 # Display
 SCREEN_WIDTH_CHARS = 80

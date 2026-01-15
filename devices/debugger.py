@@ -45,12 +45,11 @@ class Debugger:
 
     def show_memory_map(self):
         print("--- Memory Map & Pointers ---")
-        print(f"  0     - 1023  : Loader")
-        print(f"  1024  - 3071  : Kernel")
-        print(f"  3072  - 4095  : Interrupt/SYSCALL Vectors")
-        print(f"  4096  - 12287 : Program & Free Memory")
-        print(f"  12288 - 14335 : Data and I/O Region")
-        print(f"  14336 - 16383 : Video & Stack Region")
+        print(f"  0     - 8192  : OS/Loader")
+        print(f"  8192  - 9216  : Interrupt/SYSCALL Vectors")
+        print(f"  9216  - 17407 : Program & Free Memory")
+        print(f"  18432 - 22528 : Data and I/O Region")
+        print(f"  22528 - 24576 : Video & Stack Region")
         print("\n--- Pointers ---")
         print(f"  Program Counter (PC): {self.cpu.registers['PC']}")
         print(f"  Stack Pointer   (SP): {self.cpu.registers['SP']}")

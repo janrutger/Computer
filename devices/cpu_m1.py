@@ -6,9 +6,9 @@ from devices.gpuR3 import GPU_R3 as GPU
 
 # --- Constants ---
 # Memory Map
-MEM_SIZE = 16384
+MEM_SIZE = 24576
 
-MEM_INT_VECTORS_START = 3072
+MEM_INT_VECTORS_START = 8192
 
 class CPU_M1:
     def __init__(self, memory, interrupt_controller=None, rom_path="bin/stern_rom.json", debug_mode=False):

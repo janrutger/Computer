@@ -76,7 +76,7 @@
     ldi A $SYSCALL_RETURN_VALUE
     stack A $DATASTACK_PTR
     call @io_lib_init
-    ldi A 10240
+    ldi A 15360
     stack A $DATASTACK_PTR
     ldi A 2048
     stack A $DATASTACK_PTR

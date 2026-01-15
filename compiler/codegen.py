@@ -77,7 +77,7 @@ class CodeGenerator:
         self.code_section = self.generate_program(ast, is_module_compilation=setModule)
 
         # Peephole optimization
-        self.code_section = self.peephole_optimize(self.code_section, "CODE")
+        self.code_section      = self.peephole_optimize(self.code_section, "CODE")
         self.functions_section = self.peephole_optimize(self.functions_section, "FUNCTIONS")
 
         # Assemble the final code from sections

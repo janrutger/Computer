@@ -21,8 +21,8 @@ VALUE counter 0
 
 ; --- Data ---
 ; Two boards to store the current and next generation
-VAR current_board 9216
-VAR next_board 10416
+VAR current_board 12288
+VAR next_board 13488
 
 
 ; --- Functions ---
@@ -638,7 +638,7 @@ test_glider_pattern
 ; test_blinker_pattern
 ; test_r_pentomino_pattern
 ; test_gosper_glider_gun_pattern
-; test_pulsar_pattern
+test_pulsar_pattern
 
 copy_board2 ; Copy the result from next_board to current_board to be drawn
 

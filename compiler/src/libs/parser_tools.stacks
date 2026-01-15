@@ -74,8 +74,8 @@ DEF TOKENIZE {
 # =============================================================================
 
 # --- Bytecode Buffer ---
-VAR bytecode_buffer 3584    # create buffer at adres 4096 - 512
-VALUE bytecode_ptr 3584     # Pointer points to the start adres
+VAR bytecode_buffer 8704    # create buffer at adres 4096 - 512
+VALUE bytecode_ptr 8704     # Pointer points to the start adres
 VALUE current_opcode 1
 VALUE current_value 1
 

@@ -3,7 +3,7 @@
 . $_strtok_d 1
 . $_strtok_p 1
 . $_strtok_c 1
-MALLOC $bytecode_buffer 3584
+MALLOC $bytecode_buffer 8704
 . $bytecode_ptr 1
 . $current_opcode 1
 . $current_value 1
@@ -360,7 +360,7 @@ MALLOC $bytecode_buffer 3584
 % $_strtok_d 0
 % $_strtok_p 0
 % $_strtok_c 0
-% $bytecode_ptr 3584
+% $bytecode_ptr 8704
 % $current_opcode 1
 % $current_value 1
 % $bytecode_execution_ptr 3584

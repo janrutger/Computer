@@ -1,19 +1,19 @@
 # .CODE
 
     # Define all registers of the UDC
-    MALLOC $udc_channel_register 12248
-    MALLOC $udc_status_register  12249
-    MALLOC $udc_command_register 12250
-    MALLOC $udc_data_register    12251
+    MALLOC $udc_channel_register 18392
+    MALLOC $udc_status_register  18393
+    MALLOC $udc_command_register 18394
+    MALLOC $udc_data_register    18395
 
-    MALLOC $udc_device_type_0    12252
-    MALLOC $udc_device_type_1    12253
-    MALLOC $udc_device_type_2    12254
-    MALLOC $udc_device_type_3    12255
-    MALLOC $udc_device_type_4    12256
-    MALLOC $udc_device_type_5    12257
-    MALLOC $udc_device_type_6    12258
-    MALLOC $udc_device_type_7    12259
+    MALLOC $udc_device_type_0    18396
+    MALLOC $udc_device_type_1    18397
+    MALLOC $udc_device_type_2    18398
+    MALLOC $udc_device_type_3    18399
+    MALLOC $udc_device_type_4    18400
+    MALLOC $udc_device_type_5    18401
+    MALLOC $udc_device_type_6    18402
+    MALLOC $udc_device_type_7    18403
 
     # Define all CDU controller statussen
     EQU ~UDC_WAITING        0

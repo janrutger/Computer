@@ -1,24 +1,24 @@
 {
   "functions": [
-    "KEYchar",
-    "HALT",
-    "io_lib_init",
     "READline",
-    "TOKENIZE",
-    "CURSORon",
-    "KEYpressed",
-    "load_bin_file",
-    "CURSORoff",
-    "_read_disk_block",
-    "_check_last_block",
     "PRTstring",
-    "PRTchar",
-    "WRITE_TO_BYTECODE",
-    "PRTnum",
-    "TOS.check",
+    "HALT",
     "EXECUTE_BYTECODE",
     "PRTcls",
-    "_read_next_block"
+    "TOS.check",
+    "load_bin_file",
+    "_read_next_block",
+    "CURSORoff",
+    "_read_disk_block",
+    "PRTnum",
+    "CURSORon",
+    "_check_last_block",
+    "io_lib_init",
+    "KEYpressed",
+    "KEYchar",
+    "PRTchar",
+    "TOKENIZE",
+    "WRITE_TO_BYTECODE"
   ],
   "variables": [
     {
@@ -74,7 +74,7 @@
     {
       "name": "bytecode_buffer",
       "type": "VAR",
-      "size": 3584
+      "size": 8704
     },
     {
       "name": "bytecode_ptr",

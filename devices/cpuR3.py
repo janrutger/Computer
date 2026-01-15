@@ -4,7 +4,7 @@ import json
 import time
 
 # --- Constants ---
-MEM_INT_VECTORS_START = 3072
+MEM_INT_VECTORS_START = 8192
 
 class CPU_R3:
     """

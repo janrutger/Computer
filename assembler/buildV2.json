@@ -1,7 +1,7 @@
 {
   "bootrom": {
     "output": "../bin/program.bin",
-    "var_start": 12288,
+    "var_start": 18432,
     "sources": [
       {
         "file": "asm/bootfile.stacks.asm",
@@ -10,13 +10,13 @@
       },
       {
         "file": "asm/apps/ml_hunter.asm",
-        "base_address": 4096,
+        "base_address": 9216,
         "restore_symbols": true
       }
     ]
   }, 
   "apps": {
-    "base_address": 4096,
+    "base_address": 9216,
     "restore_symbols": true,
     "sources": [
       {

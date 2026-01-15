@@ -11,9 +11,13 @@ class Memory:
         self.video_dirty = False
 
     def read(self, address):
+        # if 0 <= address < self.size:
+        #     return self.memory[address]
+        # return 0
         if 0 <= address < self.size:
             return self.memory[address]
-        return 0
+        else:
+            raise IndexError("Memory address out of bounds")
 
     def write(self, address, value):
         if 0 <= address < self.size:
