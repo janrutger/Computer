@@ -48,6 +48,9 @@
 . $error_mesg8 32
 . $_list_size 1
 . $_list_ptr 1
+. $_LST_PTR 1
+. $_LST_IDX 1
+. $_LST_VAL 1
 . $requested_capacity 1
 . $total_size 1
 . $new_array_pointer 1
@@ -693,6 +696,32 @@
     ldm A $_list_ptr
     stack A $DATASTACK_PTR
     ret
+@LIST.put
+    ustack A $DATASTACK_PTR
+    sto A $_LST_PTR
+    ustack A $DATASTACK_PTR
+    sto A $_LST_IDX
+    ustack A $DATASTACK_PTR
+    sto A $_LST_VAL
+
+        ldm A $_LST_VAL
+        ldm B $_LST_PTR
+        ldm I $_LST_IDX
+        add I B
+        stx A $_start_memory_
+        ret
+@LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_LST_PTR
+    ustack A $DATASTACK_PTR
+    sto A $_LST_IDX
+
+        ldm B $_LST_PTR
+        ldm I $_LST_IDX
+        add I B
+        ldx A $_start_memory_
+        stack A $DATASTACK_PTR
+        ret
 @NEW.array
     ustack A $DATASTACK_PTR
     sto A $requested_capacity
@@ -1418,6 +1447,9 @@
 % $error_mesg8 \N \E \W \. \m \a \t \r \i \x \: \space \I \n \v \a \l \i \d \space \d \i \m \e \n \s \i \o \n \s \Return \null
 % $_list_size 0
 % $_list_ptr 0
+% $_LST_PTR 0
+% $_LST_IDX 0
+% $_LST_VAL 0
 % $requested_capacity 0
 % $total_size 0
 % $new_array_pointer 0

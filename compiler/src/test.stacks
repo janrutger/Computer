@@ -5,7 +5,7 @@
 
 INCLUDE std_struct
 
-
+VALUE self 0
 
 
 
@@ -15,7 +15,7 @@ INCLUDE std_struct
 \"age"   AS age
 \"city"  AS city
 \"none"  AS none
-VALUE self 0
+
 
 
 name PRINT

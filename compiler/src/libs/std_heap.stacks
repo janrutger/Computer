@@ -75,6 +75,43 @@ DEF NEW.list {
     _list_ptr     ; return pointer to allocated block
 }
 
+; --- LIST.put ---
+; Writes a value to a raw list at an index.
+; ( value index list_ptr -- )
+VALUE _LST_PTR 0
+VALUE _LST_IDX 0
+VALUE _LST_VAL 0
+DEF LIST.put {
+    AS _LST_PTR
+    AS _LST_IDX
+    AS _LST_VAL
+    
+    ASM {
+        ldm A $_LST_VAL
+        ldm B $_LST_PTR
+        ldm I $_LST_IDX
+        add I B
+        stx A $_start_memory_
+    }
+}
+
+; --- LIST.get ---
+; Reads a value from a raw list at an index.
+; ( index list_ptr -- value )
+DEF LIST.get {
+    AS _LST_PTR
+    AS _LST_IDX
+    
+    ASM {
+        ldm B $_LST_PTR
+        ldm I $_LST_IDX
+        add I B
+        ldx A $_start_memory_
+        stack A $DATASTACK_PTR
+    }
+}
+
+
 ; --- NEW.array ---
 ; Creates a new array. Halts on failure.
 ; ( requested_capacity -- new_array_pointer )

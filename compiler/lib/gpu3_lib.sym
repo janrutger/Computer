@@ -1,33 +1,35 @@
 {
   "functions": [
-    "PRTstring",
-    "NEW.matrix",
-    "HEAP.init",
-    "KEYchar",
-    "ARRAY.clear",
-    "NEW.array",
-    "ARRAY.put",
-    "MATRIX.put",
+    "HALT",
     "GPU.tdl",
-    "MATRIX.get",
-    "TOS.check",
-    "NEW.matrix_populate",
-    "ARRAY.get",
-    "ARRAY.size",
-    "CURSORon",
-    "io_lib_init",
+    "MATRIX.put",
     "CURSORoff",
     "PRTcls",
-    "HEAP.free",
-    "READline",
+    "io_lib_init",
+    "LIST.put",
     "PRTchar",
-    "ARRAY.len",
-    "KEYpressed",
-    "HALT",
-    "PRTnum",
-    "ARRAY.append",
+    "CURSORon",
+    "PRTstring",
     "NEW.list",
-    "GPU.exec"
+    "NEW.matrix",
+    "KEYchar",
+    "ARRAY.put",
+    "READline",
+    "TOS.check",
+    "PRTnum",
+    "MATRIX.get",
+    "HEAP.free",
+    "LIST.get",
+    "GPU.exec",
+    "NEW.matrix_populate",
+    "NEW.array",
+    "ARRAY.len",
+    "ARRAY.clear",
+    "HEAP.init",
+    "ARRAY.get",
+    "KEYpressed",
+    "ARRAY.size",
+    "ARRAY.append"
   ],
   "variables": [
     {
@@ -167,6 +169,21 @@
     },
     {
       "name": "_list_ptr",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_LST_PTR",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_LST_IDX",
+      "type": "LIB_VAR",
+      "size": 1
+    },
+    {
+      "name": "_LST_VAL",
       "type": "LIB_VAR",
       "size": 1
     },

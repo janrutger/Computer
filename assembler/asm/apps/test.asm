@@ -21,11 +21,11 @@
 . $_sg_n 1
 . $_sg_i 1
 . $_sg_found 1
+. $self 1
 . $name 1
 . $age 1
 . $city 1
 . $none 1
-. $self 1
 . $t_person 1
 . $person1 1
 . $_main_str_0 4
@@ -196,11 +196,13 @@
     call @NEW.list
     ustack A $DATASTACK_PTR
     sto A $_snt_ptr
-
-        ldm A $_snt_n
-        ldm I $_snt_ptr
-        stx A $_start_memory_
-        ldm A $_snt_n
+    ldm A $_snt_n
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_snt_ptr
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldm A $_snt_n
     sto A $_snt_i
 :STRUCT.new_type_while_start_0
     ldm A $_snt_i
@@ -210,12 +212,11 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :STRUCT.new_type_while_end_0
-
-            ustack A $DATASTACK_PTR
-            ldm B $_snt_ptr
-            ldm I $_snt_i
-            add I B
-            stx A $_start_memory_
+    ldm A $_snt_i
+    stack A $DATASTACK_PTR
+    ldm A $_snt_ptr
+    stack A $DATASTACK_PTR
+    call @LIST.put
     ldm B $_snt_i
     ldi A 1
     sub B A
@@ -229,10 +230,12 @@
 @STRUCT.new
     ustack A $DATASTACK_PTR
     sto A $_sn_type_ptr
-
-        ldm I $_sn_type_ptr
-        ldx A $_start_memory_
-        sto A $_sn_n
+    stack Z $DATASTACK_PTR
+    ldm A $_sn_type_ptr
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_sn_n
     ld B A
     ldi A 1
     add B A
@@ -240,11 +243,13 @@
     call @NEW.list
     ustack A $DATASTACK_PTR
     sto A $_sn_inst_ptr
-
-        ldm A $_sn_type_ptr
-        ldm I $_sn_inst_ptr
-        stx A $_start_memory_
-        ldi A 1
+    ldm A $_sn_type_ptr
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_sn_inst_ptr
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 1
     sto A $_sn_i
 :STRUCT.new_while_start_1
     ldm A $_sn_i
@@ -257,12 +262,12 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :STRUCT.new_while_end_1
-
-            ldi A 0
-            ldm B $_sn_inst_ptr
-            ldm I $_sn_i
-            add I B
-            stx A $_start_memory_
+    stack Z $DATASTACK_PTR
+    ldm A $_sn_i
+    stack A $DATASTACK_PTR
+    ldm A $_sn_inst_ptr
+    stack A $DATASTACK_PTR
+    call @LIST.put
     ldm B $_sn_i
     ldi A 1
     add A B
@@ -279,14 +284,18 @@
     sto A $_sp_hash
     ustack A $DATASTACK_PTR
     sto A $_sp_val
-
-        ldm I $_sp_inst_ptr
-        ldx A $_start_memory_
-        sto A $_sp_type_ptr
-    
-        ldm I $_sp_type_ptr
-        ldx A $_start_memory_
-        sto A $_sp_n
+    stack Z $DATASTACK_PTR
+    ldm A $_sp_inst_ptr
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_sp_type_ptr
+    stack Z $DATASTACK_PTR
+    ldm A $_sp_type_ptr
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_sp_n
     ld A Z
     sto A $_sp_found
     ldi A 1
@@ -302,24 +311,24 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :STRUCT.put_while_end_2
-
-            ldm B $_sp_type_ptr
-            ldm I $_sp_i
-            add I B
-            ldx A $_start_memory_
-            stack A $DATASTACK_PTR
-            ldm A $_sp_hash
+    ldm A $_sp_i
+    stack A $DATASTACK_PTR
+    ldm A $_sp_type_ptr
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ldm A $_sp_hash
     stack A $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :STRUCT.put_if_else_0
-
-                ldm A $_sp_val
-                ldm B $_sp_inst_ptr
-                ldm I $_sp_i
-                add I B
-                stx A $_start_memory_
+    ldm A $_sp_val
+    stack A $DATASTACK_PTR
+    ldm A $_sp_i
+    stack A $DATASTACK_PTR
+    ldm A $_sp_inst_ptr
+    stack A $DATASTACK_PTR
+    call @LIST.put
     ldm B $_sp_n
     ldi A 1
     add A B
@@ -353,14 +362,18 @@
     sto A $_sg_inst_ptr
     ustack A $DATASTACK_PTR
     sto A $_sg_hash
-
-        ldm I $_sg_inst_ptr
-        ldx A $_start_memory_
-        sto A $_sg_type_ptr
-    
-        ldm I $_sg_type_ptr
-        ldx A $_start_memory_
-        sto A $_sg_n
+    stack Z $DATASTACK_PTR
+    ldm A $_sg_inst_ptr
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_sg_type_ptr
+    stack Z $DATASTACK_PTR
+    ldm A $_sg_type_ptr
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_sg_n
     ld A Z
     sto A $_sg_found
     ldi A 1
@@ -376,24 +389,22 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :STRUCT.get_while_end_3
-
-            ldm B $_sg_type_ptr
-            ldm I $_sg_i
-            add I B
-            ldx A $_start_memory_
-            stack A $DATASTACK_PTR
-            ldm A $_sg_hash
+    ldm A $_sg_i
+    stack A $DATASTACK_PTR
+    ldm A $_sg_type_ptr
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ldm A $_sg_hash
     stack A $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :STRUCT.get_if_else_2
-
-                ldm B $_sg_inst_ptr
-                ldm I $_sg_i
-                add I B
-                ldx A $_start_memory_
-                stack A $DATASTACK_PTR
+    ldm A $_sg_i
+    stack A $DATASTACK_PTR
+    ldm A $_sg_inst_ptr
+    stack A $DATASTACK_PTR
+    call @LIST.get
     ldm B $_sg_n
     ldi A 1
     add A B

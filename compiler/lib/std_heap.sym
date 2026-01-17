@@ -1,31 +1,33 @@
 {
   "functions": [
+    "READline",
+    "NEW.list",
+    "TOS.check",
+    "ARRAY.clear",
     "PRTcls",
+    "LIST.put",
+    "CURSORoff",
     "HEAP.init",
+    "KEYchar",
+    "MATRIX.get",
+    "io_lib_init",
+    "ARRAY.len",
+    "HEAP.free",
+    "HALT",
+    "ARRAY.append",
+    "PRTchar",
+    "CURSORon",
+    "MATRIX.put",
+    "PRTstring",
+    "ARRAY.size",
+    "LIST.get",
     "ARRAY.put",
     "NEW.matrix_populate",
-    "PRTnum",
-    "KEYpressed",
-    "HALT",
-    "PRTstring",
     "NEW.array",
-    "NEW.matrix",
+    "PRTnum",
     "ARRAY.get",
-    "ARRAY.clear",
-    "HEAP.free",
-    "io_lib_init",
-    "MATRIX.get",
-    "NEW.list",
-    "ARRAY.size",
-    "ARRAY.len",
-    "CURSORon",
-    "ARRAY.append",
-    "MATRIX.put",
-    "CURSORoff",
-    "KEYchar",
-    "TOS.check",
-    "READline",
-    "PRTchar"
+    "KEYpressed",
+    "NEW.matrix"
   ],
   "variables": [
     {
@@ -165,6 +167,21 @@
     },
     {
       "name": "_list_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_LST_PTR",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_LST_IDX",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_LST_VAL",
       "type": "VALUE",
       "size": 1
     },
