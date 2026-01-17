@@ -1,0 +1,91 @@
+{
+  "functions": [
+    "STRhash",
+    "STRlen",
+    "STRfind",
+    "STRcopy",
+    "STRatoi",
+    "STRcmp"
+  ],
+  "variables": [
+    {
+      "name": "_strcmp_p1",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strcmp_p2",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strcmp_c1",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strcmp_c2",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_atoi_s_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_atoi_p",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_atoi_c",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_atoi_result",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strlen_p",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strlen_len",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strfind_p",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strfind_char",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_strfind_idx",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_sh_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_sh_acc",
+      "type": "VALUE",
+      "size": 1
+    }
+  ],
+  "constants": {
+    "_ASCII_0": 48,
+    "_ASCII_9": 57
+  }
+}

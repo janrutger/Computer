@@ -1,0 +1,27 @@
+{
+  "functions": [
+    "rt_eq",
+    "rt_dup",
+    "rt_drop",
+    "rt_print_tos",
+    "rt_lt",
+    "rt_swap",
+    "rt_over",
+    "rt_gt",
+    "rt_udc_control",
+    "rt_rnd",
+    "rt_neq"
+  ],
+  "variables": [
+    {
+      "name": "random_seed",
+      "type": "VALUE",
+      "size": 1
+    }
+  ],
+  "constants": {
+    "rand_a": 134775813,
+    "rand_c": 1,
+    "rand_m": 65536
+  }
+}

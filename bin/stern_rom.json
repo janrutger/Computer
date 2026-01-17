@@ -1,0 +1,1255 @@
+{
+    "register_map": {
+        "I": "0",
+        "A": "1",
+        "B": "2",
+        "C": "3",
+        "K": "4",
+        "L": "5",
+        "M": "6",
+        "X": "7",
+        "Y": "8",
+        "Z": "9"
+    },
+    "instructions": {
+        "10": {
+            "name": "NOP",
+            "format": "zero",
+            "code": [
+                {
+                    "instruction": [
+                        "set_cpu_state",
+                        "SLEEP"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "11": {
+            "name": "HALT",
+            "format": "zero",
+            "code": [
+                {
+                    "instruction": [
+                        "set_cpu_state",
+                        "HALT"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "12": {
+            "name": "RET",
+            "format": "zero",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "SP"
+                    ],
+                    "comment": "Ra = SP"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "INC"
+                    ],
+                    "comment": "Ra = Ra + 1 (SP is now effectively incremented in Ra)"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "SP",
+                        "Ra"
+                    ],
+                    "comment": "SP = Ra (SP is updated)"
+                },
+                {
+                    "instruction": [
+                        "read_mem_reg",
+                        "SP",
+                        "PC"
+                    ],
+                    "comment": "PC = memory[SP] (read the saved PC)"
+                }
+            ]
+        },
+        "13": {
+            "name": "EI",
+            "format": "zero",
+            "code": [
+                {
+                    "instruction": [
+                        "set_interrupt_flag",
+                        "TRUE"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "14": {
+            "name": "DI",
+            "format": "zero",
+            "code": [
+                {
+                    "instruction": [
+                        "set_interrupt_flag",
+                        "FALSE"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "15": {
+            "name": "RTI",
+            "format": "zero",
+            "code": [
+                {
+                    "instruction": [
+                        "shadow",
+                        "RESTORE"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "20": {
+            "name": "JMPF",
+            "format": "one_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "branch",
+                        "S",
+                        "+1"
+                    ],
+                    "comment": "jump when the status bit is set to true"
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "PC",
+                        "arg1"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "21": {
+            "name": "JMPT",
+            "format": "one_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "branch",
+                        "S",
+                        "+1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "branch",
+                        "A",
+                        "+1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "PC",
+                        "arg1"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "22": {
+            "name": "JMP",
+            "format": "one_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "PC",
+                        "arg1"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "24": {
+            "name": "CALL",
+            "format": "one_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "SP"
+                    ],
+                    "comment": "Ra = SP"
+                },
+                {
+                    "instruction": [
+                        "store_mem_reg",
+                        "SP",
+                        "PC"
+                    ],
+                    "comment": "Store PC (return address) at SP"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "DEC"
+                    ],
+                    "comment": "Decrement SP"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "SP",
+                        "Ra"
+                    ],
+                    "comment": "Update SP"
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "PC",
+                        "arg1"
+                    ],
+                    "comment": "Load target address into PC"
+                }
+            ]
+        },
+        "25": {
+            "name": "CALLX",
+            "format": "one_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "SP"
+                    ],
+                    "comment": "Ra = SP"
+                },
+                {
+                    "instruction": [
+                        "store_mem_reg",
+                        "SP",
+                        "PC"
+                    ],
+                    "comment": "Store PC (return address) at SP"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "DEC"
+                    ],
+                    "comment": "Decrement SP"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "SP",
+                        "Ra"
+                    ],
+                    "comment": "Update SP"
+                },
+                {
+                    "instruction": [
+                        "read_mem_adres",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": "Ra = value at address arg1"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Rb",
+                        "0"
+                    ],
+                    "comment": "Rb = R0 (index register I)"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "ADD"
+                    ],
+                    "comment": "Ra = Ra + Rb (effective address)"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "PC",
+                        "Ra"
+                    ],
+                    "comment": "Load effective address into PC"
+                }
+            ]
+        },
+        "26": {
+            "name": "INT",
+            "format": "one_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "shadow",
+                        "SAVE"
+                    ],
+                    "comment": "Save registers, including PC"
+                },
+                {
+                    "instruction": [
+                        "set_interrupt_flag",
+                        "FALSE"
+                    ],
+                    "comment": "Disable interrupts"
+                },
+                {
+                    "instruction": [
+                        "read_mem_adres",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": "Ra = value at address from argument (syscall table base address)"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Rb",
+                        "0"
+                    ],
+                    "comment": "Rb = syscall ID (from register I/R0)"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "ADD"
+                    ],
+                    "comment": "Ra = Ra + Rb (address of the handler pointer)"
+                },
+                {
+                    "instruction": [
+                        "read_mem_reg",
+                        "Ra",
+                        "PC"
+                    ],
+                    "comment": "Read the handler pointer from memory (jump to the handler)"
+                }
+            ]
+        },
+        "30": {
+            "name": "LD",
+            "format": "two_reg_reg",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "arg1",
+                        "arg2"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "31": {
+            "name": "LDI",
+            "format": "two_reg_val",
+            "code": [
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "arg1",
+                        "arg2"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "32": {
+            "name": "LDM",
+            "format": "two_reg_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "read_mem_adres",
+                        "arg2",
+                        "arg1"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "33": {
+            "name": "LDX",
+            "format": "two_reg_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "read_mem_adres",
+                        "arg2",
+                        "Ra"
+                    ],
+                    "comment": "Read value from memory(op2) into Ra"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Rb",
+                        "0"
+                    ],
+                    "comment": "Rb = R0 (index register)"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "ADD"
+                    ],
+                    "comment": "Ra = Ra + Rb (effective address)"
+                },
+                {
+                    "instruction": [
+                        "read_mem_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": "Read value from effective address (Ra) into $1"
+                }
+            ]
+        },
+        "40": {
+            "name": "STO",
+            "format": "two_reg_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "store_mem_adres",
+                        "arg2",
+                        "arg1"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "41": {
+            "name": "STX",
+            "format": "two_reg_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "read_mem_adres",
+                        "arg2",
+                        "Ra"
+                    ],
+                    "comment": "Read value from memory(op2)"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Rb",
+                        "0"
+                    ],
+                    "comment": "Rb = R0 (index register)"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "ADD"
+                    ],
+                    "comment": "Ra = Ra + Rb (effective address)"
+                },
+                {
+                    "instruction": [
+                        "store_mem_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": "Store value of op1 at effective address (Ra)"
+                }
+            ]
+        },
+        "50": {
+            "name": "ADD",
+            "format": "two_reg_reg",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "ADD"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "51": {
+            "name": "ADDI",
+            "format": "two_reg_val",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "ADD"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "52": {
+            "name": "SUB",
+            "format": "two_reg_reg",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "SUB"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "53": {
+            "name": "SUBI",
+            "format": "two_reg_val",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "SUB"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "60": {
+            "name": "MUL",
+            "format": "two_reg_reg",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "MUL"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "61": {
+            "name": "MULI",
+            "format": "two_reg_val",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "MUL"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "63": {
+            "name": "DIVI",
+            "format": "two_reg_val",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "DIV"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "65": {
+            "name": "DMOD",
+            "format": "two_reg_reg",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "MOD"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "arg2",
+                        "Rb"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "70": {
+            "name": "TST",
+            "format": "two_reg_val",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "CMP"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "branch",
+                        "E",
+                        "+2"
+                    ],
+                    "comment": "jump to true"
+                },
+                {
+                    "instruction": [
+                        "set_status_bit",
+                        "FALSE"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "branch",
+                        "A",
+                        "+1"
+                    ],
+                    "comment": "jump to end"
+                },
+                {
+                    "instruction": [
+                        "set_status_bit",
+                        "TRUE"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "71": {
+            "name": "TSTE",
+            "format": "two_reg_reg",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "CMP"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "branch",
+                        "E",
+                        "+2"
+                    ],
+                    "comment": "jump to true"
+                },
+                {
+                    "instruction": [
+                        "set_status_bit",
+                        "FALSE"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "branch",
+                        "A",
+                        "+1"
+                    ],
+                    "comment": "jump to end"
+                },
+                {
+                    "instruction": [
+                        "set_status_bit",
+                        "TRUE"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "72": {
+            "name": "TSTG",
+            "format": "two_reg_reg",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "SUB"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "branch",
+                        "Z",
+                        "+3"
+                    ],
+                    "comment": "jump to true"
+                },
+                {
+                    "instruction": [
+                        "branch",
+                        "N",
+                        "+2"
+                    ],
+                    "comment": "jump to true"
+                },
+                {
+                    "instruction": [
+                        "set_status_bit",
+                        "TRUE"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "branch",
+                        "A",
+                        "+1"
+                    ],
+                    "comment": "jump to end"
+                },
+                {
+                    "instruction": [
+                        "set_status_bit",
+                        "FALSE"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "80": {
+            "name": "INC",
+            "format": "two_reg_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "read_mem_adres",
+                        "arg2",
+                        "Ra"
+                    ],
+                    "comment": "Read value from memory(op2) into internal register Ra"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": "Move the original value from Ra to the destination register op1"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "INC"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "store_mem_adres",
+                        "arg2",
+                        "Ra"
+                    ],
+                    "comment": "Store the incremented value back to memory(op2)"
+                }
+            ]
+        },
+        "81": {
+            "name": "DEC",
+            "format": "two_reg_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "read_mem_adres",
+                        "arg2",
+                        "Ra"
+                    ],
+                    "comment": "Read value from memory(op2) into internal register Ra"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "DEC"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": "Move the decremented value back to the destination register op1"
+                },
+                {
+                    "instruction": [
+                        "store_mem_adres",
+                        "arg2",
+                        "Ra"
+                    ],
+                    "comment": "Store the decremented value back to memory(op2)"
+                }
+            ]
+        },
+        "82": {
+            "name": "ANDI",
+            "format": "two_reg_val",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "AND"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "90": {
+            "name": "PUSH",
+            "format": "one_reg",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "SP"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "store_mem_reg",
+                        "SP",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "DEC"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "SP",
+                        "Ra"
+                    ],
+                    "comment": null
+                }
+            ]
+        },
+        "91": {
+            "name": "POP",
+            "format": "one_reg",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "SP"
+                    ],
+                    "comment": "Ra = SP"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "INC"
+                    ],
+                    "comment": "Ra = Ra + 1 (SP is now effectively incremented in Ra)"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "SP",
+                        "Ra"
+                    ],
+                    "comment": "SP = Ra (SP is updated)"
+                },
+                {
+                    "instruction": [
+                        "read_mem_reg",
+                        "SP",
+                        "arg1"
+                    ],
+                    "comment": "$1 = memory[SP] (read the value at the new SP)"
+                }
+            ]
+        },
+        "92": {
+            "name": "STACK",
+            "format": "two_reg_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "read_mem_adres",
+                        "arg2",
+                        "Ra"
+                    ],
+                    "comment": "Ra = current stack pointer value (SP)"
+                },
+                {
+                    "instruction": [
+                        "store_mem_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": null
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "INC"
+                    ],
+                    "comment": "Ra = new stack pointer value (SP + 1)"
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": "Rb = address of the stack pointer variable"
+                },
+                {
+                    "instruction": [
+                        "store_mem_reg",
+                        "Rb",
+                        "Ra"
+                    ],
+                    "comment": "Store the new SP value back."
+                }
+            ]
+        },
+        "93": {
+            "name": "USTACK",
+            "format": "two_reg_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "read_mem_adres",
+                        "arg2",
+                        "Ra"
+                    ],
+                    "comment": "Ra = current stack pointer value (SP)"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "DEC"
+                    ],
+                    "comment": "Ra = new stack pointer value (SP - 1)"
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "Rb",
+                        "arg2"
+                    ],
+                    "comment": "Rb = address of the stack pointer variable"
+                },
+                {
+                    "instruction": [
+                        "store_mem_reg",
+                        "Rb",
+                        "Ra"
+                    ],
+                    "comment": "Store the new SP value back."
+                },
+                {
+                    "instruction": [
+                        "read_mem_reg",
+                        "Ra",
+                        "arg1"
+                    ],
+                    "comment": "Read the value from the top of the stack into the destination register $1."
+                }
+            ]
+        },
+        "94": {
+            "name": "GPU",
+            "format": "one_reg",
+            "code": [
+                {
+                    "instruction": [
+                        "gpu",
+                        "arg1"
+                    ],
+                    "comment": null
+                }
+            ]
+        }
+    }
+}

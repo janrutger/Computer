@@ -1,0 +1,369 @@
+# .HEADER
+. $_strtok_s 1
+. $_strtok_d 1
+. $_strtok_p 1
+. $_strtok_c 1
+MALLOC $bytecode_buffer 8704
+. $bytecode_ptr 1
+. $current_opcode 1
+. $current_value 1
+. $bytecode_execution_ptr 1
+. $ErrorMessage 32
+. $InfoMessage0 27
+. $InfoMessage1 27
+# .FUNCTIONS
+@TOKENIZE
+    ustack A $DATASTACK_PTR
+    sto A $_strtok_d
+    ustack A $DATASTACK_PTR
+    sto A $_strtok_s
+:skip_delimiters_loop
+    ldm I $_strtok_s
+    ldx A $_start_memory_
+    sto A $_strtok_c
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TOKENIZE_if_end_0
+    stack Z $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    jmp :strtok_end
+:TOKENIZE_if_end_0
+    ldm A $_strtok_c
+    stack A $DATASTACK_PTR
+    ldm A $_strtok_d
+    stack A $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TOKENIZE_if_end_1
+    jmp :find_end_of_token
+:TOKENIZE_if_end_1
+    ldm B $_strtok_s
+    ldi A 1
+    add A B
+    sto A $_strtok_s
+    jmp :skip_delimiters_loop
+:find_end_of_token
+    ldm A $_strtok_s
+    sto A $_strtok_p
+:scan_loop
+    ldm I $_strtok_p
+    ldx A $_start_memory_
+    sto A $_strtok_c
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TOKENIZE_if_end_2
+    ldm A $_strtok_s
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    jmp :strtok_end
+:TOKENIZE_if_end_2
+    ldm A $_strtok_c
+    stack A $DATASTACK_PTR
+    ldm A $_strtok_d
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :TOKENIZE_if_end_3
+    ld B Z
+    ldm I $_strtok_p
+    stx B $_start_memory_
+    ldm A $_strtok_s
+    stack A $DATASTACK_PTR
+    ldm B $_strtok_p
+    ldi A 1
+    add B A
+    stack B $DATASTACK_PTR
+    jmp :strtok_end
+:TOKENIZE_if_end_3
+    ldm B $_strtok_p
+    ldi A 1
+    add A B
+    sto A $_strtok_p
+    jmp :scan_loop
+:strtok_end
+    ret
+@WRITE_TO_BYTECODE
+    ustack A $DATASTACK_PTR
+    sto A $current_opcode
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :WRITE_TO_BYTECODE_if_end_4
+    ustack A $DATASTACK_PTR
+    sto A $current_value
+    ldm A $current_opcode
+    ld B A
+    ldm I $bytecode_ptr
+    stx B $_start_memory_
+    ldm B $bytecode_ptr
+    ldi A 1
+    add A B
+    sto A $bytecode_ptr
+    ldm A $current_value
+    ld B A
+    ldm I $bytecode_ptr
+    stx B $_start_memory_
+    ldm B $bytecode_ptr
+    ldi A 1
+    add A B
+    sto A $bytecode_ptr
+    jmp :write_to_bytecode_end
+:WRITE_TO_BYTECODE_if_end_4
+    ldm A $current_opcode
+    stack A $DATASTACK_PTR
+    ldi A 4
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :WRITE_TO_BYTECODE_if_end_5
+    ustack A $DATASTACK_PTR
+    sto A $current_value
+    ldm A $current_opcode
+    ld B A
+    ldm I $bytecode_ptr
+    stx B $_start_memory_
+    ldm B $bytecode_ptr
+    ldi A 1
+    add A B
+    sto A $bytecode_ptr
+    ldm A $current_value
+    ld B A
+    ldm I $bytecode_ptr
+    stx B $_start_memory_
+    ldm B $bytecode_ptr
+    ldi A 1
+    add A B
+    sto A $bytecode_ptr
+    jmp :write_to_bytecode_end
+:WRITE_TO_BYTECODE_if_end_5
+    ldm A $current_opcode
+    stack A $DATASTACK_PTR
+    ldi A 6
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :WRITE_TO_BYTECODE_if_end_6
+    ustack A $DATASTACK_PTR
+    sto A $current_value
+    ldm A $current_opcode
+    ld B A
+    ldm I $bytecode_ptr
+    stx B $_start_memory_
+    ldm B $bytecode_ptr
+    ldi A 1
+    add A B
+    sto A $bytecode_ptr
+    ldm A $current_value
+    ld B A
+    ldm I $bytecode_ptr
+    stx B $_start_memory_
+    ldm B $bytecode_ptr
+    ldi A 1
+    add A B
+    sto A $bytecode_ptr
+    jmp :write_to_bytecode_end
+:WRITE_TO_BYTECODE_if_end_6
+    ldm A $current_opcode
+    ld B A
+    ldm I $bytecode_ptr
+    stx B $_start_memory_
+    ldm B $bytecode_ptr
+    ldi A 1
+    add A B
+    sto A $bytecode_ptr
+:write_to_bytecode_end
+    ret
+@EXECUTE_BYTECODE
+    ustack A $DATASTACK_PTR
+    sto A $bytecode_execution_ptr
+:execution_loop
+    ldm I $bytecode_execution_ptr
+    ldx A $_start_memory_
+    sto A $current_opcode
+    ldm B $bytecode_execution_ptr
+    ldi A 1
+    add A B
+    sto A $bytecode_execution_ptr
+    ldm A $current_opcode
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :EXECUTE_BYTECODE_if_end_7
+    jmp :execution_end
+:EXECUTE_BYTECODE_if_end_7
+    ldm A $current_opcode
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :EXECUTE_BYTECODE_if_end_8
+    ldm I $bytecode_execution_ptr
+    ldx A $_start_memory_
+    sto A $current_value
+    ldm B $bytecode_execution_ptr
+    ldi A 1
+    add A B
+    sto A $bytecode_execution_ptr
+    ldm A $current_value
+    stack A $DATASTACK_PTR
+    jmp :execution_loop
+:EXECUTE_BYTECODE_if_end_8
+    ldm A $current_opcode
+    stack A $DATASTACK_PTR
+    ldi A 6
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :EXECUTE_BYTECODE_if_end_9
+    ldm I $bytecode_execution_ptr
+    ldx A $_start_memory_
+    sto A $current_value
+    ldm B $bytecode_execution_ptr
+    ldi A 1
+    add A B
+    sto A $bytecode_execution_ptr
+    ldm A $current_value
+    stack A $DATASTACK_PTR
+    jmp :execution_loop
+:EXECUTE_BYTECODE_if_end_9
+    ldm A $current_opcode
+    stack A $DATASTACK_PTR
+    ldi A 5
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :EXECUTE_BYTECODE_if_end_10
+
+                ustack A $DATASTACK_PTR
+                ld I A
+                callx $_start_memory_
+                jmp :execution_loop
+:EXECUTE_BYTECODE_if_end_10
+    ldm A $current_opcode
+    stack A $DATASTACK_PTR
+    ldi A 7
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :EXECUTE_BYTECODE_if_end_11
+    call @rt_dup
+    call @PRTstring
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @PRTchar
+    call @load_bin_file
+    jmp :execution_loop
+:EXECUTE_BYTECODE_if_end_11
+    ldm A $current_opcode
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :EXECUTE_BYTECODE_if_end_12
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    jmp :execution_loop
+:EXECUTE_BYTECODE_if_end_12
+    ldm A $current_opcode
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :EXECUTE_BYTECODE_if_end_13
+    call @rt_print_tos
+    jmp :execution_loop
+:EXECUTE_BYTECODE_if_end_13
+    ldm A $current_opcode
+    stack A $DATASTACK_PTR
+    ldi A 8
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :EXECUTE_BYTECODE_if_end_14
+    call @TOS.check
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :EXECUTE_BYTECODE_if_else_15
+    call @TOS.check
+    ldi A $InfoMessage0
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @rt_print_tos
+    call @rt_dup
+    ldi A $InfoMessage1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @rt_print_tos
+    jmp :EXECUTE_BYTECODE_if_end_15
+:EXECUTE_BYTECODE_if_else_15
+    stack Z $DATASTACK_PTR
+    ldi A $InfoMessage0
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @rt_print_tos
+:EXECUTE_BYTECODE_if_end_15
+    jmp :execution_loop
+:EXECUTE_BYTECODE_if_end_14
+    ldm A $current_opcode
+    stack A $DATASTACK_PTR
+    ldi A 4
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :EXECUTE_BYTECODE_if_end_16
+    ldi A $ErrorMessage
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldm B $bytecode_execution_ptr
+    ldi A 1
+    add A B
+    sto A $bytecode_execution_ptr
+    jmp :execution_loop
+:EXECUTE_BYTECODE_if_end_16
+    ldi A $ErrorMessage
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    jmp :execution_end
+:execution_end
+    ret
+
+# .DATA
+% $_strtok_s 0
+% $_strtok_d 0
+% $_strtok_p 0
+% $_strtok_c 0
+% $bytecode_ptr 8704
+% $current_opcode 1
+% $current_value 1
+% $bytecode_execution_ptr 3584
+% $ErrorMessage \F \a \t \a \l \space \e \r \r \o \r \: \space \a \n \space \i \n \v \a \l \i \d \space \t \o \k \e \n \space \Return \null
+% $InfoMessage0 \T \o \t \a \l \space \i \t \e \m \s \space \o \n \space \t \h \e \space \s \t \a \c \k \: \space \null
+% $InfoMessage1 \F \i \r \s \t \space \v \a \l \u \e \space \o \n \space \t \h \e \space \s \t \a \c \k \: \space \null

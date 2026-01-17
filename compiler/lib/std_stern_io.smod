@@ -1,0 +1,209 @@
+# .HEADER
+. $p_syscall_status 1
+. $p_syscall_value 1
+. $input_buffer 80
+. $p_input_buffer 1
+. $input_buffer_index 1
+. $info_mesg0 61
+# .FUNCTIONS
+@io_lib_init
+    ustack A $DATASTACK_PTR
+    sto A $p_syscall_value
+    ustack A $DATASTACK_PTR
+    sto A $p_syscall_status
+    ret
+@PRTchar
+
+        ustack A $DATASTACK_PTR ; Pop character from stack into C register for the syscall
+        ld C A
+        ldi I ~SYS_PRINT_CHAR
+        int $INT_VECTORS        ; Interrupt to trigger the syscall
+        ret
+@PRTstring
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ret
+@PRTnum
+
+        ustack A $DATASTACK_PTR
+        ld C A
+
+        ldi I ~SYS_PRINT_NUMBER
+        int $INT_VECTORS
+        
+        ret
+@PRTcls
+
+        ldi I ~SYS_CLEAR_SCREEN
+        int $INT_VECTORS
+        ret
+@CURSORon
+
+        ldi I ~SYS_PRINT_CURSOR
+        int $INT_VECTORS
+        ret
+@CURSORoff
+
+        ldi I ~SYS_DEL_CURSOR
+        int $INT_VECTORS
+        ret
+@KEYchar
+:key_loop
+
+            ldi I ~SYS_GET_CHAR
+            int $INT_VECTORS
+            ldm I $p_syscall_status
+    ldx A $_start_memory_
+    tst A 0
+    jmpt :KEYchar_if_end_0
+    ldm I $p_syscall_value
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    jmp :key_end_loop
+:KEYchar_if_end_0
+
+            nop
+            jmp :key_loop
+:key_end_loop
+    ret
+@KEYpressed
+
+        ldi I ~SYS_GET_CHAR
+        int $INT_VECTORS
+        ldm I $p_syscall_status
+    ldx A $_start_memory_
+    tst A 0
+    jmpt :KEYpressed_if_else_1
+    ldm I $p_syscall_value
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    jmp :KEYpressed_if_end_1
+:KEYpressed_if_else_1
+    stack Z $DATASTACK_PTR
+:KEYpressed_if_end_1
+    ret
+@READline
+:readline_loop
+    call @CURSORon
+    call @KEYchar
+    call @CURSORon
+    call @rt_dup
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :READline_if_end_2
+    call @CURSORoff
+    call @PRTchar
+    jmp :finish_readline
+:READline_if_end_2
+    call @rt_dup
+    ldi A 8
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :READline_if_end_3
+    ldm A $input_buffer_index
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :READline_if_else_4
+    call @CURSORoff
+    call @PRTchar
+    ldm B $input_buffer_index
+    ldi A 1
+    sub B A
+    ld A B
+    sto A $input_buffer_index
+    jmp :readline_loop
+    jmp :READline_if_end_4
+:READline_if_else_4
+    call @rt_drop
+    jmp :readline_loop
+:READline_if_end_4
+:READline_if_end_3
+    call @rt_dup
+    call @PRTchar
+    ldi A $input_buffer
+    ld B A
+    ldm A $input_buffer_index
+    add A B
+    sto A $p_input_buffer
+    ustack B $DATASTACK_PTR
+    ldm I $p_input_buffer
+    stx B $_start_memory_
+    ldm B $input_buffer_index
+    ldi A 1
+    add A B
+    sto A $input_buffer_index
+    jmp :readline_loop
+:finish_readline
+    ldi A $input_buffer
+    ld B A
+    ldm A $input_buffer_index
+    add A B
+    sto A $p_input_buffer
+    ld B Z
+    ldm I $p_input_buffer
+    stx B $_start_memory_
+    ld A Z
+    sto A $input_buffer_index
+    ldi A $input_buffer
+    stack A $DATASTACK_PTR
+    ret
+@TOS.check
+
+        ldi K $DATASTACK        ; start adres of buffer in K
+        ldm M $DATASTACK_PTR    ; Current stackpointer in M
+
+        tste K M                ; 0 when stack emty
+        jmpt :stack_empty
+        # ldi A 1
+        # stack A $DATASTACK_PTR
+        sub M K                 ; Calculate stack use
+        stack M $DATASTACK_PTR  ; place numner of stack items at TOS
+        jmp :checkstack_done
+    :stack_empty                ; Stack is empty
+    stack Z $DATASTACK_PTR
+    :checkstack_done
+        ret
+@HALT
+    ldi A $info_mesg0
+    stack A $DATASTACK_PTR
+    call @PRTstring
+:HALT_while_start_0
+    ldi A 1
+    tst A 0
+    jmpt :HALT_while_end_0
+    call @KEYpressed
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :HALT_if_end_5
+    ldi A 27
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :HALT_if_end_6
+
+                    halt
+                :HALT_if_end_6
+:HALT_if_end_5
+    jmp :HALT_while_start_0
+:HALT_while_end_0
+    ret
+
+# .DATA
+% $p_syscall_status 0
+% $p_syscall_value 0
+% $p_input_buffer 0
+% $input_buffer_index 0
+% $info_mesg0 \P \A \N \I \C \: \space \H \a \l \t \e \d \space \a \f \t \e \r \space \a \n \space \n \o \n \- \r \e \c \o \v \e \r \a \b \l \e \space \e \r \r \o \r \. \space \( \p \r \e \s \s \space \< \e \s \c \> \) \Return \null

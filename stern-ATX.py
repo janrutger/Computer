@@ -166,6 +166,7 @@ def main():
     draw_interval = 1.0 / TARGET_FPS
     last_draw_time = time.time()
     total_bursts = 0
+    max_burst_cycles = 0
 
     while running:
         # --- Event Handling ---
@@ -180,12 +181,14 @@ def main():
         # Run a burst of cycles if not halted and not paused by debugger
         if not debugger.in_debug_mode and cpu.state != "HALT":
             total_bursts += 1
+            cycles_this_burst = 0
             for _ in range(BURST_SIZE):
                 # Check for breakpoints (Optimization: only check on FETCH)
                 if cpu.state == "FETCH" and cpu.registers["PC"] in debugger.breakpoints:
                     debugger.enter_debug_mode()
 
                 cpu.tick()
+                cycles_this_burst += 1
                 
                 if cpu.state == "HALT":
                     running = False
@@ -193,6 +196,9 @@ def main():
 
                 if cpu.state == "SLEEP":
                     break
+            
+            if cycles_this_burst > max_burst_cycles:
+                max_burst_cycles = cycles_this_burst
 
         # --- Device Ticks ---
         # Devices tick once per frame/burst
@@ -259,7 +265,7 @@ def main():
         print(f"  Average Core Speed       : {core_speed_val:.2f} {core_speed_unit}")
         print(f"  Average CPI              : {cpi:.2f} Cycles/Instruction")
         print(f"  Average Performance      : {ips_val:.2f} {ips_unit} (Instructions/Second)\n")
-        print(f"  Average Cycles/Burst     : {avg_cycles_per_burst:.0f} (Max: {BURST_SIZE})")
+        print(f"  Average Cycles/Burst     : {avg_cycles_per_burst:.0f} (Max Reached: {max_burst_cycles} / Limit: {BURST_SIZE})")
         print(f"  Avg. Time per Burst      : {avg_burst_time_ms:.2f} ms")
         print(f"  Est. Time per Full Burst : {full_burst_time_ms:.2f} ms\n")
 

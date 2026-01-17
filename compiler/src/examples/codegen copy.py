@@ -7,6 +7,7 @@ from parser import (
     ProgramNode,
     NumberNode,
     StringNode,
+    StackStringNode,
     WordNode,
     IfNode,
     WhileNode,
@@ -133,6 +134,39 @@ class CodeGenerator:
             label = self.add_string_literal(node.value)
             return f"    ldi A ${label}\n    stack A $DATASTACK_PTR\n"
         
+        elif isinstance(node, StackStringNode):
+            # Convert the string to integer values, handling basic escapes
+            vals = []
+            i = 0
+            s = node.value
+            while i < len(s):
+                char = s[i]
+                if char == '\\':
+                    if i + 1 < len(s):
+                        next_char = s[i+1]
+                        if next_char == 'n':
+                            vals.append(13) # \n
+                            i += 2
+                            continue
+                        elif next_char == 't':
+                            vals.append(9) # \t
+                            i += 2
+                            continue
+                        else:
+                            # Escaped char, e.g. \" or \\
+                            vals.append(ord(next_char))
+                            i += 2
+                            continue
+                vals.append(ord(char))
+                i += 1
+            
+            # 1. Push Null Terminator (0)
+            code = "    ldi A 0\n    stack A $DATASTACK_PTR\n"
+            # 2. Push characters in REVERSE order (so first char is at TOS)
+            for val in reversed(vals):
+                code += f"    ldi A {val}\n    stack A $DATASTACK_PTR\n"
+            return code
+
         elif isinstance(node, BacktickNode):
             return f"    call @{node.routine_name}\n"
         

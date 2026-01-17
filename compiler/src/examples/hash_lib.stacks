@@ -1,0 +1,67 @@
+# Internal variables for the hash function
+# VALUE _sh_ptr 0
+# VALUE _sh_acc 0
+
+# DEF HASH.string {
+#     # Stack: ( string_ptr -- hash )
+#     ASM {
+#         # 1. Get String Pointer
+#         ustack A $DATASTACK_PTR ; Pop string pointer into A
+#         sto A $_sh_ptr          ; Store it so LDX can use it as base
+
+#         # 2. Init Hash (DJB2 starts with 5381)
+#         ldi A 5381
+#         sto A $_sh_acc
+        
+#         # 3. Init Index
+#         ldi I 0
+
+#         :hash_loop
+#             ldx A $_sh_ptr   ; Load char at (_sh_ptr + I)
+#             tst A 0          ; Check for null terminator
+#             jmpt :hash_end   ; If 0, we are done
+
+#             ldm B $_sh_acc    ; Load current hash
+#             muli B 33        ; Hash * 33
+#             add B A          ; + Char
+#             sto B $_sh_acc   ; Update hash
+
+#             addi I 1         ; Increment index
+#             jmp :hash_loop
+
+#         :hash_end
+#             ldm A $_sh_acc          ; Load result
+#             stack A $DATASTACK_PTR ; Push to stack
+#     }
+# }
+
+# DEF HASH.stack {
+#     # Stack: ( ... \0 charN ... char1 -- hash )
+#     # Expects a stack-string (created via \"...") where the first char is at TOS.
+#     ASM {
+#         # 1. Init Hash (DJB2 starts with 5381)
+#         ldi A 5381
+#         sto A $_sh_acc
+
+#         :hash_stack_loop
+#             # 2. Pop char from stack
+#             ustack A $DATASTACK_PTR
+            
+#             # 3. Check for null terminator
+#             tst A 0
+#             jmpt :hash_stack_end
+
+#             # 4. Update Hash
+#             ldm B $_sh_acc
+#             muli B 33
+#             add B A
+#             sto B $_sh_acc
+            
+#             jmp :hash_stack_loop
+
+#         :hash_stack_end
+#             # 5. Push result
+#             ldm A $_sh_acc
+#             stack A $DATASTACK_PTR
+#     }
+# }

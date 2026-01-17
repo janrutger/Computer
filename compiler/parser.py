@@ -30,6 +30,14 @@ class StringNode(ASTNode):
     def __repr__(self):
         return f"StringNode('{self.value}')"
 
+class StackStringNode(ASTNode):
+    def __init__(self, token):
+        self.token = token
+        self.value = token.value
+
+    def __repr__(self):
+        return f"StackStringNode('\"{self.value}\"')"
+
 class WordNode(ASTNode):
     """Represents identifiers, keywords, and operators."""
     def __init__(self, token):
@@ -214,6 +222,8 @@ class Parser:
             return NumberNode(token)
         elif token.type == TokenType.STRING:
             return StringNode(token)
+        elif token.type == TokenType.STACK_STRING:
+            return StackStringNode(token)
         elif token.type == TokenType.IF:
             return self.parse_if_statement()
         elif token.type == TokenType.WHILE:

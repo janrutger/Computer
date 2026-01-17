@@ -1,0 +1,55 @@
+{
+  "functions": [
+    "HALT",
+    "KEYchar",
+    "PRTstring",
+    "CURSORon",
+    "READline",
+    "PRTchar",
+    "CURSORoff",
+    "PRTcls",
+    "PRTnum",
+    "TOS.check",
+    "KEYpressed",
+    "io_lib_init"
+  ],
+  "variables": [
+    {
+      "name": "p_syscall_status",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "p_syscall_value",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "input_buffer",
+      "type": "LIST",
+      "size": 80
+    },
+    {
+      "name": "p_input_buffer",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "input_buffer_index",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "info_mesg0",
+      "type": "STRING",
+      "size": 61
+    }
+  ],
+  "constants": {
+    "space": 32,
+    "backspace": 8,
+    "return": 13,
+    "newline": 10,
+    "null": 0
+  }
+}

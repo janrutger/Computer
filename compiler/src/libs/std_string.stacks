@@ -196,3 +196,41 @@ DEF STRcopy {
 
     }
 }   ; End of STRcopy
+
+
+# Internal variables for the hash function
+VALUE _sh_ptr 0
+VALUE _sh_acc 0
+
+DEF STRhash {
+    # Stack: ( string_ptr -- hash )
+    ASM {
+        # 1. Get String Pointer
+        ustack A $DATASTACK_PTR ; Pop string pointer into A
+        sto A $_sh_ptr          ; Store it so LDX can use it as base
+
+        # 2. Init Hash (DJB2 starts with 5381)
+        ldi A 5381
+        sto A $_sh_acc
+        
+        # 3. Init Index
+        ldi I 0
+
+        :hash_loop1
+            ldx A $_sh_ptr   ; Load char at (_sh_ptr + I)
+            tst A 0          ; Check for null terminator
+            jmpt :hash_end   ; If 0, we are done
+
+            ldm B $_sh_acc    ; Load current hash
+            muli B 33        ; Hash * 33
+            add B A          ; + Char
+            sto B $_sh_acc   ; Update hash
+
+            addi I 1         ; Increment index
+            jmp :hash_loop1
+
+        :hash_end
+            ldm A $_sh_acc          ; Load result
+            stack A $DATASTACK_PTR ; Push to stack
+    }
+}

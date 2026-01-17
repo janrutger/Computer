@@ -5,6 +5,7 @@ class TokenType(Enum):
     # Literals
     NUMBER = "NUMBER"
     STRING = "STRING" # For literal values like "hello"
+    STACK_STRING = "STACK_STRING" # For stack strings like \"hello"
     
     # Identifiers
     IDENTIFIER = "IDENTIFIER"
@@ -177,6 +178,27 @@ class Lexer:
         self.advance()  # Consume the closing "
         return Token(TokenType.STRING, result, start_line, start_column)
 
+    def get_stack_string(self):
+        result = ''
+        start_line = self.line
+        start_column = self.column
+        self.advance()  # Consume the backslash
+        self.advance()  # Consume the opening "
+
+        while self.current_char is not None and self.current_char != '"':
+            result += self.current_char
+            self.advance()
+
+        if self.current_char is None:
+            # Unterminated string
+            error_msg = f"Lexer error: Unterminated stack string literal at line {self.line}, column {self.column}"
+            self.errors.append(error_msg)
+            return Token(TokenType.ILLEGAL, result, start_line, start_column)
+
+        # Found the closing quote
+        self.advance()  # Consume the closing "
+        return Token(TokenType.STACK_STRING, result, start_line, start_column)
+
     def get_identifier(self):
         result = ''
         start_column = self.column
@@ -230,6 +252,9 @@ class Lexer:
 
             if self.current_char == '"':
                 return self.get_string()
+
+            if self.current_char == '\\' and self.peek() == '"':
+                return self.get_stack_string()
 
             if self.current_char.isdigit():
                 return self.get_number()

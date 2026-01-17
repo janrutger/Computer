@@ -1,0 +1,163 @@
+# .FUNCTIONS
+@_read_disk_block
+
+        ldi I ~SYS_F_READ_BLOCK
+        int $INT_VECTORS
+        # After read block 12 (or less) bytes from the file are loaded in $disk_io_buffer
+        # \null terminated
+
+        # reset Disk_io_buffer_prt
+        sto Z $disk_io_buffer_ptr
+
+        # Check for error
+        ldm A $SYSCALL_RETURN_STATUS
+        tste A Z
+        ret
+@_check_last_block
+
+        ldm A $SYSCALL_RETURN_VALUE ; check if it was the last block
+        tst A 1
+        ret
+@_read_next_block
+
+        call @_check_last_block
+        jmpt :close_and_end
+        call @_read_disk_block
+        jmpt :close_and_end
+
+        ret
+        ret
+@load_bin_file
+
+        # Pointer to File_name_string on the stack (kernel_stacks.asm)
+        ustack A $DATASTACK_PTR     ; Pop filename pointer into A
+        
+        ##
+        ldi I ~SYS_F_OPEN_READ      ; Open the file for read
+        int $INT_VECTORS
+
+        ldm A $SYSCALL_RETURN_STATUS
+        tste A Z               ; Status is 1 at success
+        jmpt :cmd_load_end     ; do nothing when file error, mesage is already printed
+
+        . $mem_adres 1
+        . $mem_val 1
+        . $is_negative 1
+        . $is_first_digit 1
+
+        # read the first disk block
+        call @_read_disk_block
+        jmpt :close_and_end ; if error, close file and end
+
+        :read_disk_loop
+            # 1 find the adres from the input buffer
+            #   an number seperated by an space (32)
+            #   2 blocks can be needed
+
+            # reset adres and value
+            sto Z $mem_adres
+            sto Z $mem_val
+
+        :adres_lookup_loop
+            inc I $disk_io_buffer_ptr
+            ldx C $disk_io_buffer_base
+            tst C \null
+            jmpf :skip_next0                     ; End of input buffer
+                call @_read_next_block
+                inc I $disk_io_buffer_ptr
+                ldx C $disk_io_buffer_base
+
+            :skip_next0
+
+            tst C \space                    ; check for adres delimiter
+            jmpt :value_lookup_start         ; $mem_adres containts the adres
+
+            ldm A $mem_adres
+            muli A 10                       ; shift result by 10
+            subi C 48                       ; Substract ascci offset
+            add A C 
+            sto A $mem_adres
+
+            jmp :adres_lookup_loop
+            
+        # 2 Find the value of that adres from the input buffer
+        #   an number seperated by Return (13)
+        #   2 block van be needed
+        :value_lookup_start
+            sto Z $is_negative
+            ldi B 1
+            sto B $is_first_digit
+            ;sto Z $is_first_digit
+
+        :value_lookup_loop  
+            inc I $disk_io_buffer_ptr
+            ldx C $disk_io_buffer_base
+            tst C \null                     ; End of input buffer
+            jmpf :skip_next1 
+                call @_read_next_block
+                inc I $disk_io_buffer_ptr
+                ldx C $disk_io_buffer_base
+
+            :skip_next1
+
+            tst C \Return                   ; check for value delimiter
+            jmpt :apply_val_sign
+
+            ldm A $is_first_digit
+            tste A Z
+            jmpt :not_first_digit_val
+
+                ; It is the first char, so we check for sign and spaces
+                sto Z $is_first_digit
+                tst C \-
+                jmpf :not_a_sign_val
+                    ldi B 1
+                    sto B $is_negative
+                    jmp :value_lookup_loop ; read next char
+                :not_a_sign_val
+
+                # tst C ' '
+                # jmpt :value_lookup_loop
+
+            :not_first_digit_val
+            ldm A $mem_val
+            muli A 10                       ; shift result by 10
+            subi C 48                       ; Substract ascci offset
+            add A C 
+            sto A $mem_val
+
+            jmp :value_lookup_loop
+
+        :apply_val_sign
+            ldm A $is_negative
+            tste A Z
+            jmpf :negate_val
+            jmp :store_adres_value_pair
+        :negate_val
+            # ldm A $mem_val
+            # negi A
+            # sto A $mem_val
+            ldm B $mem_val
+            ldi A 0
+            sub A B 
+            sto A $mem_val
+            jmp :store_adres_value_pair
+
+        # 3 Write found value on found adres
+        :store_adres_value_pair
+            ldm I $mem_adres
+            ldm A $mem_val
+
+            stx A $_start_memory_
+
+        # 4 Repeat till last block found
+        jmp :read_disk_loop
+
+
+        :close_and_end
+            ldi I ~SYS_F_CLOSE
+            int $INT_VECTORS
+            pop K               ; Drop return adres, due to jump outside the routine
+            
+        :cmd_load_end
+        ret

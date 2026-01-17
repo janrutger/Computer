@@ -1,187 +1,30 @@
-# Test program for the GPU implementation
-# After the first mile
+USE std_stern_io
+USE std_string
 
-INCLUDE math_lib
-USE std_heap
-INCLUDE fixed_point_lib
-
-INCLUDE gpu3_lib
-
-HEAP.free
-10 FP.set_scale
-
-6 NEW.list AS TDL       # create TDL and save the pointer
-
-
-2 2 NEW.matrix AS matrix_a
-2 2 NEW.matrix AS matrix_b
-2 2 NEW.matrix AS matrix_res
-2 2 NEW.matrix AS matrix_res_mul
-2 2 NEW.matrix AS matrix_res_trans
-
-# --- Populate Matrices ---
-# Matrix A: [[10, 20], [30, 40]]
-# Note: FP.from_int 10 -> 100 (if scale is 10)
-10 FP.from_int 1 1 matrix_a MATRIX.put 
-20 FP.from_int 1 2 matrix_a MATRIX.put 
-30 FP.from_int 2 1 matrix_a MATRIX.put 
-40 FP.from_int 2 2 matrix_a MATRIX.put 
-
-# Matrix B: [[1, 2], [3, 4]]
-1 FP.from_int 1 1 matrix_b MATRIX.put 
-2 FP.from_int 1 2 matrix_b MATRIX.put 
-3 FP.from_int 2 1 matrix_b MATRIX.put 
-4 FP.from_int 2 2 matrix_b MATRIX.put 
-
-# --- Execute GPU Operation ---
-# 1. Matrix Multiplication (DOT)
-# Result = A . B = [[70, 100], [150, 220]]
-matrix_a matrix_b matrix_res 10 MAT.DOT TDL GPU.tdl
-
-TDL GPU.exec 
-DROP # the exit code
-
-# --- Verify DOT Results ---
-"DOT (1,1) should be 70: " PRTstring 1 1 matrix_res MATRIX.get FP.print 13 PRTchar
-"DOT (1,2) should be 100: " PRTstring 1 2 matrix_res MATRIX.get FP.print 13 PRTchar
-"DOT (2,1) should be 150: " PRTstring 2 1 matrix_res MATRIX.get FP.print 13 PRTchar
-"DOT (2,2) should be 220: " PRTstring 2 2 matrix_res MATRIX.get FP.print 13 PRTchar
-
-# 2. Element-wise Multiplication (MUL)
-# Result = A * B = [[10, 40], [90, 160]]
-matrix_a matrix_b matrix_res_mul 10 MAT.MUL TDL GPU.tdl
-TDL GPU.exec
-DROP
-
-# --- Verify MUL Results ---
-"MUL (1,1) should be 10: " PRTstring 1 1 matrix_res_mul MATRIX.get FP.print 13 PRTchar
-"MUL (1,2) should be 40: " PRTstring 1 2 matrix_res_mul MATRIX.get FP.print 13 PRTchar
-"MUL (2,1) should be 90: " PRTstring 2 1 matrix_res_mul MATRIX.get FP.print 13 PRTchar
-"MUL (2,2) should be 160: " PRTstring 2 2 matrix_res_mul MATRIX.get FP.print 13 PRTchar
-
-
-# 2. Transpose Operation (TRANSPOSE)
-# Result = A^T = [[10, 30], [20, 40]]
-matrix_a matrix_b matrix_res_trans 10 MAT.TRANS TDL GPU.tdl
-TDL GPU.exec
-DROP
-
-# --- Verify TRANSPOSE Results ---
-"TRANS (1,1) should be 10: " PRTstring 1 1 matrix_res_trans MATRIX.get FP.print 13 PRTchar
-"TRANS (1,2) should be 30: " PRTstring 1 2 matrix_res_trans MATRIX.get FP.print 13 PRTchar
-"TRANS (2,1) should be 20: " PRTstring 2 1 matrix_res_trans MATRIX.get FP.print 13 PRTchar
-"TRANS (2,2) should be 40: " PRTstring 2 2 matrix_res_trans MATRIX.get FP.print 13 PRTchar
+#INCLUDE hash_lib
 
 
 
-# --- Setup 2x3 Matrix ---
-# [[ 1, 2, 3 ]
-#  [ 4, 5, 6 ]]
-2 3 NEW.matrix AS mat_c
-1 FP.from_int 1 1 mat_c MATRIX.put
-2 FP.from_int 1 2 mat_c MATRIX.put
-3 FP.from_int 1 3 mat_c MATRIX.put
-4 FP.from_int 2 1 mat_c MATRIX.put
-5 FP.from_int 2 2 mat_c MATRIX.put
-6 FP.from_int 2 3 mat_c MATRIX.put
-
-# --- Setup 3x2 Result Matrix ---
-# Must swap dimensions for transpose!
-3 2 NEW.matrix AS mat_result
-
-# --- Execute Transpose ---
-# mat_a -> mat_res
-mat_c mat_c mat_result 10 MAT.TRANS TDL GPU.tdl
-TDL GPU.exec
-DROP
-
-# --- Verify Results ---
-# Expected:
-# [[ 1, 4 ]
-#  [ 2, 5 ]
-#  [ 3, 6 ]]
-"TRANS (1,1) Exp 1: " PRTstring 1 1 mat_result MATRIX.get FP.print 13 PRTchar
-"TRANS (1,2) Exp 4: " PRTstring 1 2 mat_result MATRIX.get FP.print 13 PRTchar
-"TRANS (2,1) Exp 2: " PRTstring 2 1 mat_result MATRIX.get FP.print 13 PRTchar
-"TRANS (2,2) Exp 5: " PRTstring 2 2 mat_result MATRIX.get FP.print 13 PRTchar
-"TRANS (3,1) Exp 3: " PRTstring 3 1 mat_result MATRIX.get FP.print 13 PRTchar
-"TRANS (3,2) Exp 6: " PRTstring 3 2 mat_result MATRIX.get FP.print 13 PRTchar
-
-# --- Setup ReLU Test Matrix ---
-# [[ -10, 20 ]
-#  [  30, -40 ]]
-2 2 NEW.matrix AS matrix_relu_in
-2 2 NEW.matrix AS matrix_res_relu
-
-10 negate FP.from_int 1 1 matrix_relu_in MATRIX.put
-20        FP.from_int 1 2 matrix_relu_in MATRIX.put
-30        FP.from_int 2 1 matrix_relu_in MATRIX.put
-40 negate FP.from_int 2 2 matrix_relu_in MATRIX.put
-
-# --- Execute ReLU ---
-matrix_relu_in 0 matrix_res_relu 10 MAT.RELU TDL GPU.tdl
-TDL GPU.exec
-DROP
-
-# --- Verify ReLU Results ---
-"RELU (1,1) Exp 0: " PRTstring 1 1 matrix_res_relu MATRIX.get FP.print 13 PRTchar
-"RELU (1,2) Exp 20: " PRTstring 1 2 matrix_res_relu MATRIX.get FP.print 13 PRTchar
-"RELU (2,1) Exp 30: " PRTstring 2 1 matrix_res_relu MATRIX.get FP.print 13 PRTchar
-"RELU (2,2) Exp 0: " PRTstring 2 2 matrix_res_relu MATRIX.get FP.print 13 PRTchar
+"Hello World!\n" PRTstring
 
 
 
-# --- Setup 2x3 Matrix ---
-# [[ 1, 2, 3 ]
-#  [ 4, 5, 6 ]]
-2 3 NEW.matrix AS mat_c
-1 FP.from_int 1 1 mat_c MATRIX.put
-2 FP.from_int 1 2 mat_c MATRIX.put
-3 FP.from_int 1 3 mat_c MATRIX.put
-4 FP.from_int 2 1 mat_c MATRIX.put
-5 FP.from_int 2 2 mat_c MATRIX.put
-6 FP.from_int 2 3 mat_c MATRIX.put
+"Hello World!" STRhash PRINT
 
-# --- Setup 3x2 Result Matrix ---
-# Must swap dimensions for transpose!
-3 2 NEW.matrix AS mat_result
+\"Hello World!"  PRINT
 
-# --- Execute Transpose ---
-# mat_a -> mat_res
-mat_c mat_c mat_result 10 MAT.TRANS TDL GPU.tdl
-TDL GPU.exec
-DROP
 
-# --- Verify Results ---
-# Expected:
-# [[ 1, 4 ]
-#  [ 2, 5 ]
-#  [ 3, 6 ]]
-"TRANS (1,1) Exp 1: " PRTstring 1 1 mat_result MATRIX.get FP.print 13 PRTchar
-"TRANS (1,2) Exp 4: " PRTstring 1 2 mat_result MATRIX.get FP.print 13 PRTchar
-"TRANS (2,1) Exp 2: " PRTstring 2 1 mat_result MATRIX.get FP.print 13 PRTchar
-"TRANS (2,2) Exp 5: " PRTstring 2 2 mat_result MATRIX.get FP.print 13 PRTchar
-"TRANS (3,1) Exp 3: " PRTstring 3 1 mat_result MATRIX.get FP.print 13 PRTchar
-"TRANS (3,2) Exp 6: " PRTstring 3 2 mat_result MATRIX.get FP.print 13 PRTchar
 
-# --- Setup ReLU Test Matrix ---
-# [[ -10, 20 ]
-#  [  30, -40 ]]
-2 2 NEW.matrix AS matrix_relu_in
-2 2 NEW.matrix AS matrix_res_relu
+\"name"  AS name
+\"age"   AS age
 
-10 negate FP.from_int 1 1 matrix_relu_in MATRIX.put
-20        FP.from_int 1 2 matrix_relu_in MATRIX.put
-30        FP.from_int 2 1 matrix_relu_in MATRIX.put
-40 negate FP.from_int 2 2 matrix_relu_in MATRIX.put
+name PRINT
+age PRINT
 
-# --- Execute ReLU ---
-matrix_relu_in 0 matrix_res_relu 10 MAT.RELU TDL GPU.tdl
-TDL GPU.exec
-DROP
 
-# --- Verify ReLU Results ---
-"RELU (1,1) Exp 0: " PRTstring 1 1 matrix_res_relu MATRIX.get FP.print 13 PRTchar
-"RELU (1,2) Exp 20: " PRTstring 1 2 matrix_res_relu MATRIX.get FP.print 13 PRTchar
-"RELU (2,1) Exp 30: " PRTstring 2 1 matrix_res_relu MATRIX.get FP.print 13 PRTchar
-"RELU (2,2) Exp 0: " PRTstring 2 2 matrix_res_relu MATRIX.get FP.print 13 PRTchar
+"ABC" PRINT
+"ABC" PRINT
+
+
+# name age 2 STRUCT.new_type AS person
+

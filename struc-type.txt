@@ -13,7 +13,7 @@ Since we want to avoid modifying the compiler, we will implement a **Dynamic Typ
 
 *   **No Compiler Changes:** We use standard Stacks syntax.
 *   **Runtime Resolution:** Field names are resolved to memory offsets while the program runs.
-*   **Hashing:** To speed up lookups, field names (strings) are hashed into integers.
+*   **Hashing:** Field names are hashed into integers *before* calling the library functions.
 
 ## 3. Data Structures
 
@@ -37,9 +37,9 @@ Created many times. Stores the actual data.
 
 ### Defining a Type
 `STRUCT.new_type`
-*   **Stack:** `( field_name_1 ... field_name_N N -- type_ptr )`
-*   **Action:** Creates the Blueprint. Hashes the strings and stores them.
-*   **Example:** `"hp" "xp" 2 STRUCT.new_type AS player_type`
+*   **Stack:** `( field_hash_1 ... field_hash_N N -- type_ptr )`
+*   **Action:** Creates the Blueprint. Stores the provided hashes.
+*   **Example:** `\"hp" HASH.stack \"xp" HASH.stack 2 STRUCT.new_type AS player_type`
 
 ### Creating an Instance
 `STRUCT.new`
@@ -49,63 +49,37 @@ Created many times. Stores the actual data.
 
 ### Writing to a Field
 `STRUCT.put`
-*   **Stack:** `( value field_name instance_ptr -- )`
+*   **Stack:** `( value field_hash instance_ptr -- )`
 *   **Action:**
     1.  Read `type_ptr` from `instance_ptr`.
-    2.  Search `type_ptr` for `hash(field_name)`.
+    2.  Search `type_ptr` for `field_hash`.
     3.  Write `value` to `instance_ptr + found_index`.
 
 ### Reading from a Field
 `STRUCT.get`
-*   **Stack:** `( field_name instance_ptr -- value )`
+*   **Stack:** `( field_hash instance_ptr -- value )`
 *   **Action:** Similar to put, but reads the value.
 
-### Note on Field Names
-Field names passed to the constructor or get/put methods must be **pointers to null-terminated strings**.
-*   **Literals:** You can use string literals directly: `"hp"`.
-*   **Variables:** You can use `STRING` variables: `my_field_name`.
-*   **Mechanism:** The library uses this pointer to read the string characters and compute a unique hash for the field lookup.
+### Note on Field Hashes
+The Struct library expects **Integer Hashes**, not strings.
+*   **Immediate:** Use `\"name" HASH.stack` to generate a hash on the fly.
+*   **Stored:** Use `HASH.string` on a stored string variable.
+*   **Optimized:** Define hashes as `CONST` values to avoid runtime hashing entirely.
 
-## 5. Helper Functions (std_string extension)
 
-The `std_string` library should be expanded with the `STR.hash` function.
-Here is the implementation using the DJB2 algorithm (hash * 33 + char).
 
-```stacks
-# Internal variables for the hash function
-VALUE _sh_ptr 0
-VALUE _sh_acc 0
 
-DEF STR.hash {
-    # Stack: ( string_ptr -- hash )
-    ASM {
-        # 1. Get String Pointer
-        ustack A $DATASTACK_PTR ; Pop string pointer into A
-        sto A @_sh_ptr          ; Store it so LDX can use it as base
 
-        # 2. Init Hash (DJB2 starts with 5381)
-        ldi A 5381
-        sto A @_sh_acc
-        
-        # 3. Init Index
-        ldi I 0
+## 5. Helper Functions (New Library: std_hash)
 
-        :hash_loop
-            ldx A @_sh_ptr   ; Load char at (_sh_ptr + I)
-            tst A 0          ; Check for null terminator
-            jmpt :hash_end   ; If 0, we are done
+The `std_string` library provides the `STRhash' function for runtime hashing of string pointers (e.g. user input).
+For static strings (like field names), the compiler now supports **Compile-Time Hashing** using the `\"string"` syntax.
 
-            ld B @_sh_acc    ; Load current hash
-            muli B 33        ; Hash * 33
-            add B A          ; + Char
-            sto B @_sh_acc   ; Update hash
+### Compile-Time Hashing
+*   **Syntax:** `\"string"`
+*   **Action:** The compiler calculates the DJB2 hash of the string and pushes the resulting integer onto the stack.
+*   **Cost:** 0 Runtime CPU cycles. 0 RAM bytes.
 
-            addi I 1         ; Increment index
-            jmp :hash_loop
+### Runtime Hashing (`std_string`)
+For strings stored in memory (pointers), use `STRhash`.
 
-        :hash_end
-            ld A @_sh_acc          ; Load result
-            stack A $DATASTACK_PTR ; Push to stack
-    }
-}
-```
