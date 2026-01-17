@@ -9,7 +9,7 @@
         "restore_symbols": false
       },
       {
-        "file": "asm/apps/ml_hunter.asm",
+        "file": "asm/apps/test.asm",
         "base_address": 9216,
         "restore_symbols": true
       }

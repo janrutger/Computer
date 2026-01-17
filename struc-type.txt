@@ -70,7 +70,7 @@ The Struct library expects **Integer Hashes**, not strings.
 
 
 
-## 5. Helper Functions (New Library: std_hash)
+## 5. Helper Functions (New Library: std_hash)  Done
 
 The `std_string` library provides the `STRhash' function for runtime hashing of string pointers (e.g. user input).
 For static strings (like field names), the compiler now supports **Compile-Time Hashing** using the `\"string"` syntax.
