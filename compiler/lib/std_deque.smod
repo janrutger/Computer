@@ -1,0 +1,473 @@
+# .HEADER
+. $DEQUE_FREE_HEAD 1
+. $DEQUE_POOL_PAGE_SIZE 1
+. $_dq_i 1
+. $_dq_ptr 1
+. $_dq_next_ptr 1
+. $_dq_node 1
+. $_dq_val 1
+. $_dq_list 1
+. $_dq_head 1
+. $_dq_tail 1
+. $_dq_prev 1
+. $_dq_next 1
+. $_dq_err_empty 27
+# .FUNCTIONS
+@_DEQUE.grow_pool
+    ldm B $DEQUE_POOL_PAGE_SIZE
+    ldi A 3
+    mul B A
+    stack B $DATASTACK_PTR
+    call @NEW.list
+    ustack A $DATASTACK_PTR
+    sto A $_dq_ptr
+    ld A Z
+    sto A $_dq_i
+:_DEQUE.grow_pool_while_start_0
+    ldm A $_dq_i
+    stack A $DATASTACK_PTR
+    ldm B $DEQUE_POOL_PAGE_SIZE
+    ldi A 1
+    sub B A
+    stack B $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_DEQUE.grow_pool_while_end_0
+    ldm A $_dq_ptr
+    stack A $DATASTACK_PTR
+    ldm B $_dq_i
+    ldi A 3
+    mul A B
+    ustack B $DATASTACK_PTR
+    add A B
+    sto A $_dq_node
+    ldm A $_dq_ptr
+    stack A $DATASTACK_PTR
+    ldm B $_dq_i
+    ldi A 1
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 3
+    ustack B $DATASTACK_PTR
+    mul A B
+    ustack B $DATASTACK_PTR
+    add A B
+    sto A $_dq_next_ptr
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldm B $_dq_i
+    ldi A 1
+    add A B
+    sto A $_dq_i
+    jmp :_DEQUE.grow_pool_while_start_0
+:_DEQUE.grow_pool_while_end_0
+    ldm A $_dq_ptr
+    stack A $DATASTACK_PTR
+    ldm B $_dq_i
+    ldi A 3
+    mul A B
+    ustack B $DATASTACK_PTR
+    add A B
+    sto A $_dq_node
+    ldm A $DEQUE_FREE_HEAD
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldm A $_dq_ptr
+    sto A $DEQUE_FREE_HEAD
+    ret
+@DEQUE.init_pool
+    ustack A $DATASTACK_PTR
+    sto A $DEQUE_POOL_PAGE_SIZE
+    ld A Z
+    sto A $DEQUE_FREE_HEAD
+    call @_DEQUE.grow_pool
+    ret
+@_DEQUE.alloc_node
+    ldm A $DEQUE_FREE_HEAD
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_DEQUE.alloc_node_if_end_0
+    call @_DEQUE.grow_pool
+:_DEQUE.alloc_node_if_end_0
+    ldm A $DEQUE_FREE_HEAD
+    sto A $_dq_node
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $DEQUE_FREE_HEAD
+    stack Z $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    stack Z $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    ret
+@_DEQUE.free_node
+    ustack A $DATASTACK_PTR
+    sto A $_dq_node
+    ldm A $DEQUE_FREE_HEAD
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldm A $_dq_node
+    sto A $DEQUE_FREE_HEAD
+    ret
+@DEQUE.new
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @NEW.list
+    ustack A $DATASTACK_PTR
+    sto A $_dq_list
+    stack Z $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_dq_list
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    stack Z $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_dq_list
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldm A $_dq_list
+    stack A $DATASTACK_PTR
+    ret
+@DEQUE.is_empty
+    ustack A $DATASTACK_PTR
+    sto A $_dq_list
+    stack Z $DATASTACK_PTR
+    ldm A $_dq_list
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ret
+@DEQUE.push
+    ustack A $DATASTACK_PTR
+    sto A $_dq_list
+    ustack A $DATASTACK_PTR
+    sto A $_dq_val
+    call @_DEQUE.alloc_node
+    ustack A $DATASTACK_PTR
+    sto A $_dq_node
+    ldm A $_dq_val
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    stack Z $DATASTACK_PTR
+    ldm A $_dq_list
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_dq_head
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    stack Z $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldm A $_dq_head
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :DEQUE.push_if_else_1
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_dq_head
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    jmp :DEQUE.push_if_end_1
+:DEQUE.push_if_else_1
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_dq_list
+    stack A $DATASTACK_PTR
+    call @LIST.put
+:DEQUE.push_if_end_1
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_dq_list
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ret
+@DEQUE.append
+    ustack A $DATASTACK_PTR
+    sto A $_dq_list
+    ustack A $DATASTACK_PTR
+    sto A $_dq_val
+    call @_DEQUE.alloc_node
+    ustack A $DATASTACK_PTR
+    sto A $_dq_node
+    ldm A $_dq_val
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_dq_list
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_dq_tail
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    stack Z $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldm A $_dq_tail
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :DEQUE.append_if_else_2
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_dq_tail
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    jmp :DEQUE.append_if_end_2
+:DEQUE.append_if_else_2
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_dq_list
+    stack A $DATASTACK_PTR
+    call @LIST.put
+:DEQUE.append_if_end_2
+    ldm A $_dq_node
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_dq_list
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ret
+@DEQUE.pop
+    ustack A $DATASTACK_PTR
+    sto A $_dq_list
+    stack Z $DATASTACK_PTR
+    ldm A $_dq_list
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_dq_head
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :DEQUE.pop_if_end_3
+    ldi A $_dq_err_empty
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @HALT
+:DEQUE.pop_if_end_3
+    stack Z $DATASTACK_PTR
+    ldm A $_dq_head
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_dq_val
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_dq_head
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_dq_next
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_dq_list
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldm A $_dq_next
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :DEQUE.pop_if_else_4
+    stack Z $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_dq_next
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    jmp :DEQUE.pop_if_end_4
+:DEQUE.pop_if_else_4
+    stack Z $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_dq_list
+    stack A $DATASTACK_PTR
+    call @LIST.put
+:DEQUE.pop_if_end_4
+    ldm A $_dq_head
+    stack A $DATASTACK_PTR
+    call @_DEQUE.free_node
+    ldm A $_dq_val
+    stack A $DATASTACK_PTR
+    ret
+@DEQUE.pop_tail
+    ustack A $DATASTACK_PTR
+    sto A $_dq_list
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_dq_list
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_dq_tail
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :DEQUE.pop_tail_if_end_5
+    ldi A $_dq_err_empty
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @HALT
+:DEQUE.pop_tail_if_end_5
+    stack Z $DATASTACK_PTR
+    ldm A $_dq_tail
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_dq_val
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_dq_tail
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_dq_prev
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_dq_list
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldm A $_dq_prev
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :DEQUE.pop_tail_if_else_6
+    stack Z $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_dq_prev
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    jmp :DEQUE.pop_tail_if_end_6
+:DEQUE.pop_tail_if_else_6
+    stack Z $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_dq_list
+    stack A $DATASTACK_PTR
+    call @LIST.put
+:DEQUE.pop_tail_if_end_6
+    ldm A $_dq_tail
+    stack A $DATASTACK_PTR
+    call @_DEQUE.free_node
+    ldm A $_dq_val
+    stack A $DATASTACK_PTR
+    ret
+@DEQUE.head
+    stack Z $DATASTACK_PTR
+    call @rt_swap
+    call @LIST.get
+    ret
+@DEQUE.tail
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_swap
+    call @LIST.get
+    ret
+@DEQUE.next
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_swap
+    call @LIST.get
+    ret
+@DEQUE.prev
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @rt_swap
+    call @LIST.get
+    ret
+@DEQUE.value
+    stack Z $DATASTACK_PTR
+    call @rt_swap
+    call @LIST.get
+    ret
+
+# .DATA
+% $DEQUE_FREE_HEAD 0
+% $DEQUE_POOL_PAGE_SIZE 0
+% $_dq_i 0
+% $_dq_ptr 0
+% $_dq_next_ptr 0
+% $_dq_node 0
+% $_dq_val 0
+% $_dq_list 0
+% $_dq_head 0
+% $_dq_tail 0
+% $_dq_prev 0
+% $_dq_next 0
+% $_dq_err_empty \D \E \Q \U \E \. \p \o \p \: \space \D \e \q \u \e \space \i \s \space \e \m \p \t \y \Return \null

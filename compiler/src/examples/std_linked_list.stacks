@@ -1,0 +1,237 @@
+# std_linked_list.stacks
+# Doubly Linked List with Dynamic Node Pool (Slab Allocator)
+# Requires: std_heap
+
+USE std_heap
+
+# --- Configuration ---
+CONST LL_NODE_SIZE 3
+CONST LL_OFF_VAL 0
+CONST LL_OFF_NEXT 1
+CONST LL_OFF_PREV 2
+
+CONST LL_CTRL_HEAD 0
+CONST LL_CTRL_TAIL 1
+
+VALUE LL_FREE_HEAD 0
+VALUE LL_POOL_PAGE_SIZE 0
+
+# Internal Variables
+VALUE _ll_i 0
+VALUE _ll_ptr 0
+VALUE _ll_next_ptr 0
+VALUE _ll_node 0
+VALUE _ll_val 0
+VALUE _ll_list 0
+VALUE _ll_head 0
+VALUE _ll_tail 0
+VALUE _ll_prev 0
+VALUE _ll_next 0
+
+STRING _ll_err_empty "LL.pop: List is empty\n"
+
+# --- Pool Management ---
+
+DEF _LL.grow_pool {
+    # Allocate block
+    LL_POOL_PAGE_SIZE LL_NODE_SIZE * NEW.list AS _ll_ptr
+    
+    # Link nodes
+    0 AS _ll_i
+    WHILE _ll_i LL_POOL_PAGE_SIZE 1 - < DO
+        # Current node address: _ll_ptr + (_ll_i * 3)
+        # Next node address:    _ll_ptr + ((_ll_i + 1) * 3)
+        
+        _ll_ptr _ll_i LL_NODE_SIZE * + AS _ll_node
+        _ll_ptr _ll_i 1 + LL_NODE_SIZE * + AS _ll_next_ptr
+        
+        _ll_next_ptr LL_OFF_NEXT _ll_node LIST.put
+        
+        _ll_i 1 + AS _ll_i
+    DONE
+    
+    # Link last node to current free head
+    _ll_ptr _ll_i LL_NODE_SIZE * + AS _ll_node
+    LL_FREE_HEAD LL_OFF_NEXT _ll_node LIST.put
+    
+    # Update free head to start of new block
+    _ll_ptr AS LL_FREE_HEAD
+}
+
+DEF LL.init_pool {
+    AS LL_POOL_PAGE_SIZE
+    0 AS LL_FREE_HEAD
+    _LL.grow_pool
+}
+
+DEF _LL.alloc_node {
+    LL_FREE_HEAD 0 == IF
+        _LL.grow_pool
+    END
+    
+    LL_FREE_HEAD AS _ll_node
+    
+    # Update free head -> node.next
+    LL_OFF_NEXT _ll_node LIST.get AS LL_FREE_HEAD
+    
+    # Clear pointers for safety
+    0 LL_OFF_NEXT _ll_node LIST.put
+    0 LL_OFF_PREV _ll_node LIST.put
+    
+    _ll_node
+}
+
+DEF _LL.free_node {
+    AS _ll_node
+    # node.next = free_head
+    LL_FREE_HEAD LL_OFF_NEXT _ll_node LIST.put
+    # free_head = node
+    _ll_node AS LL_FREE_HEAD
+}
+
+# --- List Controller ---
+
+DEF LL.new {
+    # Allocate controller [Head, Tail]
+    2 NEW.list AS _ll_list
+    0 LL_CTRL_HEAD _ll_list LIST.put
+    0 LL_CTRL_TAIL _ll_list LIST.put
+    _ll_list
+}
+
+DEF LL.is_empty {
+    AS _ll_list
+    LL_CTRL_HEAD _ll_list LIST.get 0 ==
+}
+
+# --- Insertion ---
+
+DEF LL.push {
+    AS _ll_list
+    AS _ll_val
+    
+    _LL.alloc_node AS _ll_node
+    _ll_val LL_OFF_VAL _ll_node LIST.put
+    
+    LL_CTRL_HEAD _ll_list LIST.get AS _ll_head
+    
+    # node.next = head
+    _ll_head LL_OFF_NEXT _ll_node LIST.put
+    # node.prev = 0
+    0 LL_OFF_PREV _ll_node LIST.put
+    
+    _ll_head 0 != IF
+        # head.prev = node
+        _ll_node LL_OFF_PREV _ll_head LIST.put
+    ELSE
+        # List was empty, tail = node
+        _ll_node LL_CTRL_TAIL _ll_list LIST.put
+    END
+    
+    # head = node
+    _ll_node LL_CTRL_HEAD _ll_list LIST.put
+}
+
+DEF LL.append {
+    AS _ll_list
+    AS _ll_val
+    
+    _LL.alloc_node AS _ll_node
+    _ll_val LL_OFF_VAL _ll_node LIST.put
+    
+    LL_CTRL_TAIL _ll_list LIST.get AS _ll_tail
+    
+    # node.prev = tail
+    _ll_tail LL_OFF_PREV _ll_node LIST.put
+    # node.next = 0
+    0 LL_OFF_NEXT _ll_node LIST.put
+    
+    _ll_tail 0 != IF
+        # tail.next = node
+        _ll_node LL_OFF_NEXT _ll_tail LIST.put
+    ELSE
+        # List was empty, head = node
+        _ll_node LL_CTRL_HEAD _ll_list LIST.put
+    END
+    
+    # tail = node
+    _ll_node LL_CTRL_TAIL _ll_list LIST.put
+}
+
+# --- Removal ---
+
+DEF LL.pop {
+    AS _ll_list
+    
+    LL_CTRL_HEAD _ll_list LIST.get AS _ll_head
+    
+    _ll_head 0 == IF
+        &_ll_err_empty PRTstring HALT
+    END
+    
+    LL_OFF_VAL _ll_head LIST.get AS _ll_val
+    LL_OFF_NEXT _ll_head LIST.get AS _ll_next
+    
+    # head = next
+    _ll_next LL_CTRL_HEAD _ll_list LIST.put
+    
+    _ll_next 0 != IF
+        # next.prev = 0
+        0 LL_OFF_PREV _ll_next LIST.put
+    ELSE
+        # List empty, tail = 0
+        0 LL_CTRL_TAIL _ll_list LIST.put
+    END
+    
+    _ll_head _LL.free_node
+    _ll_val
+}
+
+DEF LL.pop_back {
+    AS _ll_list
+    
+    LL_CTRL_TAIL _ll_list LIST.get AS _ll_tail
+    
+    _ll_tail 0 == IF
+        &_ll_err_empty PRTstring HALT
+    END
+    
+    LL_OFF_VAL _ll_tail LIST.get AS _ll_val
+    LL_OFF_PREV _ll_tail LIST.get AS _ll_prev
+    
+    # tail = prev
+    _ll_prev LL_CTRL_TAIL _ll_list LIST.put
+    
+    _ll_prev 0 != IF
+        # prev.next = 0
+        0 LL_OFF_NEXT _ll_prev LIST.put
+    ELSE
+        # List empty, head = 0
+        0 LL_CTRL_HEAD _ll_list LIST.put
+    END
+    
+    _ll_tail _LL.free_node
+    _ll_val
+}
+
+# --- Traversal ---
+
+DEF LL.head {
+    LL_CTRL_HEAD SWAP LIST.get
+}
+
+DEF LL.tail {
+    LL_CTRL_TAIL SWAP LIST.get
+}
+
+DEF LL.next {
+    LL_OFF_NEXT SWAP LIST.get
+}
+
+DEF LL.prev {
+    LL_OFF_PREV SWAP LIST.get
+}
+
+DEF LL.value {
+    LL_OFF_VAL SWAP LIST.get
+}

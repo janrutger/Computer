@@ -90,3 +90,29 @@ Push the instance pointer onto the stack and call the method.
 ```stacks
 person1 Person.greet
 ```
+
+
+### The C-Style Pattern (Performance) 
+For performance-critical applications (like games), you can bypass the dynamic hash lookup by using static integer offsets. This mimics C structs and offers significantly faster access times at the cost of flexibility. 
+
+**1. Define Offsets:** 
+Use CONST to define field offsets manually. 
+
+```stacks 
+CONST P_X 0 
+CONST P_Y 1 
+CONST P_SIZE 2 
+```
+**2. Allocation:** 
+Use NEW.list from std_heap directly to allocate the memory block. 
+```stacks
+P_SIZE NEW.list AS point_ptr
+```
+**3. Access:** 
+Use LIST.get and LIST.put with the constants to access fields directly. 
+ ```stacks 
+ # Set X
+ 10 P_X point_ptr LIST.put 
+ # Get X
+ P_X point_ptr LIST.get
+ ```

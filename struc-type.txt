@@ -83,3 +83,52 @@ For static strings (like field names), the compiler now supports **Compile-Time 
 ### Runtime Hashing (`std_string`)
 For strings stored in memory (pointers), use `STRhash`.
 
+
+## 6. Future Development: Advanced Data Structures
+
+Building on the success of `std_struct`, the next phase involves creating more flexible dynamic containers.
+
+### 6.1 Dictionary (`std_dict`)
+While `std_struct` is optimized for fixed-shape objects (like C structs), a Dictionary allows keys to be added and removed dynamically at runtime.
+
+*   **Design:** Linear Dictionary (Packed Array of Key-Value pairs).
+    *   **Memory Layout:** `[Capacity, Count, Key1, Value1, Key2, Value2, ...]`
+    *   **Lookup:** Linear scan (loop through keys). Efficient for small collections.
+    *   **Removal:** "Swap-with-Last" (Move last pair to empty slot, decrement count).
+    *   **Fixed Capacity:** No resizing to prevent heap fragmentation.
+    *   **Constraint:** Key `0` is reserved as "Empty" and cannot be used as a valid key.
+*   **Key Difference:** Unlike Structs, the "Type" (list of keys) is not shared or fixed. Each instance manages its own keys.
+*   **API:**
+    *   `DICT.new`: Creates a new empty dictionary with a fixed capacity. All keys initialized to 0.
+    *   `DICT.put`: Adds or updates a key-value pair. Fails if full.
+    *   `DICT.get`: Retrieves a value by key hash.
+    *   `DICT.remove`: Removes a key by swapping it with the last element.
+    *   `DICT.has_key`: Checks existence.
+    *   `DICT.count`: Returns the current number of items.
+    *   `DICT.item`: Retrieves key and value by index (0..count-1). Stack: `( index dict_ptr -- key value )`.
+
+### 6.2 Deque (`std_deque`)
+A Double-Ended Queue, optimized for adding and removing elements from both the front and back.
+
+*   **Design:** Doubly Linked List using a **Dynamic Node Pool (Slab Allocator)**.
+    *   **Problem:** Fixed pools limit capacity; standard allocation fragments memory.
+    *   **Solution:** A pool that grows on demand by allocating "Pages" of nodes from the heap.
+    *   **Mechanism:** When the `Free_List` is empty, a new page is allocated and linked to the free list.
+    *   **Node Layout:** `[Value, Next_Ptr, Prev_Ptr]` (3 words).
+*   **Use Case:** Queues, Stacks, or chains for Hash Map collision handling.
+*   **API:**
+    *   `DEQUE.init_pool`: Initializes the pool with an initial page size. Stack: `( page_size -- )`.
+    *   `DEQUE.new`: Creates a deque controller `[Head_Ptr, Tail_Ptr]` on the heap. Stack: `( -- deque_ptr )`.
+    *   `DEQUE.push`: Gets node from pool (growing if needed), adds to start. Stack: `( value deque_ptr -- )`.
+    *   `DEQUE.append`: Gets node from pool (growing if needed), adds to end. Stack: `( value deque_ptr -- )`.
+    *   `DEQUE.pop`: Removes the first node (head), returns its value, and recycles the node. Stack: `( deque_ptr -- value )`.
+    *   `DEQUE.pop_tail`: Removes the last node (tail), returns its value, and recycles the node. Stack: `( deque_ptr -- value )`.
+    *   `DEQUE.is_empty`: Checks if empty. Stack: `( deque_ptr -- bool )`.
+    *   `DEQUE.head`: Returns the pointer to the first node (or 0 if empty). Stack: `( deque_ptr -- node_ptr )`.
+    *   `DEQUE.tail`: Returns the pointer to the last node (or 0 if empty). Stack: `( deque_ptr -- node_ptr )`.
+    *   `DEQUE.next`: Given a node pointer, returns the next node pointer (or 0). Stack: `( node_ptr -- next_node_ptr )`.
+    *   `DEQUE.prev`: Given a node pointer, returns the previous node pointer (or 0). Stack: `( node_ptr -- prev_node_ptr )`.
+    *   `DEQUE.value`: Given a node pointer, returns the stored value. Stack: `( node_ptr -- value )`.
+
+
+    

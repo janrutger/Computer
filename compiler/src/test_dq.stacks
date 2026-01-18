@@ -1,0 +1,93 @@
+USE std_stern_io
+INCLUDE std_deque
+
+# VAR heap_mem 2048
+VALUE my_deque 0
+VALUE my_deque2 0
+VALUE node 0
+
+# 1. Init Heap and Pool
+# &heap_mem 2048 HEAP.init
+HEAP.free 
+
+# Init pool with small size (2) to test dynamic growth
+2 DEQUE.init_pool
+"Pool initialized (size 2).\n" PRTstring
+
+# 2. Create Deque
+DEQUE.new AS my_deque
+
+# 3. Push items (Front)
+"Pushing 1, 2, 3...\n" PRTstring
+1 my_deque DEQUE.push
+2 my_deque DEQUE.push
+3 my_deque DEQUE.push
+
+# 4. Append items (Back)
+"Appending 4, 5...\n" PRTstring
+4 my_deque DEQUE.append
+5 my_deque DEQUE.append
+
+# Expected order: 3, 2, 1, 4, 5
+
+# 5. Traversal
+"Traversing deque: \n" PRTstring
+my_deque DEQUE.head AS node
+WHILE node 0 != DO
+    node DEQUE.value PRINT
+    node DEQUE.next AS node
+DONE
+
+# 6. Pop Front
+"Popping front (expect 3): " PRTstring
+my_deque DEQUE.pop PRINT
+
+# 7. Pop Back
+"Popping back (expect 5): " PRTstring
+my_deque DEQUE.pop_tail PRINT
+
+# 8. Check remaining
+"Remaining deque: \n" PRTstring
+my_deque DEQUE.head AS node
+WHILE node 0 != DO
+    node DEQUE.value PRINT
+    node DEQUE.next AS node
+DONE
+
+# 9. Empty the deque
+"Emptying deque...\n" PRTstring
+WHILE my_deque DEQUE.is_empty 0 == DO
+    my_deque DEQUE.pop DROP
+DONE
+
+"Is empty? " PRTstring
+my_deque DEQUE.is_empty PRINT
+
+# 10. Two Deques Sharing Pool
+"\n--- Test: Two Deques Sharing Pool ---\n" PRTstring
+DEQUE.new AS my_deque2
+
+"Pushing 100 to D1\n" PRTstring
+100 my_deque DEQUE.push
+
+"Pushing 200 to D2\n" PRTstring
+200 my_deque2 DEQUE.push
+
+"Pushing 101 to D1\n" PRTstring
+101 my_deque DEQUE.push
+
+"Pushing 201 to D2\n" PRTstring
+201 my_deque2 DEQUE.push
+
+"D1 Pop (expect 101): " PRTstring
+my_deque DEQUE.pop PRINT
+
+"D2 Pop (expect 201): " PRTstring
+my_deque2 DEQUE.pop PRINT
+
+"D1 Pop (expect 100): " PRTstring
+my_deque DEQUE.pop PRINT
+
+"D2 Pop (expect 200): " PRTstring
+my_deque2 DEQUE.pop PRINT
+

@@ -1,0 +1,113 @@
+# chaos3a.stacks
+# Rebuild of Chaos Game using std_struct and OOP patterns.
+
+USE std_time
+USE std_stern_io
+INCLUDE std_struct
+
+# # --- Heap Setup --- (is already done by the system)
+# # Reserve 1024 words for the heap to store our Point objects
+# VAR heap_memory 1024
+HEAP.free   ; Just reset the heap at start of main
+
+# --- Globals ---
+VALUE self 0
+VALUE iter 0
+VALUE r 0
+VALUE target 0
+
+# --- Struct Definitions ---
+# Define a Point struct with x and y coordinates
+\"x" \"y" 2 STRUCT.new_type AS t_point
+
+# --- Methods ---
+
+# Point.set ( x y point_ptr -- )
+DEF Point.set {
+    AS self
+    \"y" self STRUCT.put
+    \"x" self STRUCT.put
+}
+
+# Point.draw ( point_ptr -- )
+DEF Point.draw {
+    AS self
+    # Set IO registers for drawing using values from the struct
+    \"y" self STRUCT.get IO 2 Y
+    \"x" self STRUCT.get IO 2 X
+    
+    # Random color calculation
+    RND 15 * 999 // 1 + IO 2 DRAW
+}
+
+# Screen.init
+DEF Screen.init {
+    IO 2 ONLINE
+    IO 2 NEW
+    1 IO 2 COLOR
+    2 IO 2 MODE   # Pixel Mode, Double Buffering
+}
+
+# --- Main Program ---
+
+# # 1. Initialize Heap
+# &heap_memory 1024 HEAP.init
+# HEAP.free   ; Just reset the heap at start of main
+
+# 2. Initialize Screen
+Screen.init
+0 TIME.start
+
+# 3. Create Vertices (Objects on the Heap)
+t_point STRUCT.new AS v1
+10 10 v1 Point.set
+
+t_point STRUCT.new AS v2
+630 10 v2 Point.set
+
+t_point STRUCT.new AS v3
+320 470 v3 Point.set
+
+# 4. Create Cursor (Current Point)
+t_point STRUCT.new AS cursor
+10 10 cursor Point.set
+
+# 5. Main Loop
+WHILE 50000 iter > DO
+    # Pick random vertex (0, 1, or 2)
+    RND 3 * 999 // AS r
+    
+    r 0 == IF v1 AS target END
+    r 1 == IF v2 AS target END
+    r 2 == IF v3 AS target END
+    
+    # Calculate Midpoint: cursor = (cursor + target) / 2
+    # x = (cursor.x + target.x) // 2
+    \"x" cursor STRUCT.get \"x" target STRUCT.get + 2 // 
+    # y = (cursor.y + target.y) // 2
+    \"y" cursor STRUCT.get \"y" target STRUCT.get + 2 // 
+    
+    # Update cursor (stack has: x y)
+    cursor Point.set
+    
+    # Draw cursor
+    cursor Point.draw
+    
+    # Loop maintenance
+    iter 1 + AS iter
+    
+    # Refresh screen every 500 iterations
+    iter 500 % 0 == IF
+        IO 2 FLIP
+        0 TIME.read TIME.as_string 32 PRTchar iter PRINT
+    END
+    
+    # Check for exit key
+    KEYpressed IF
+        DROP
+        GOTO end_of_chaos
+    END
+DONE
+
+:end_of_chaos
+"Total run time: " PRTstring 0 TIME.read TIME.as_string "!!\n" PRTstring

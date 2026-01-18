@@ -1,0 +1,237 @@
+# std_deque.stacks
+# Double-Ended Queue (Deque) with Dynamic Node Pool (Slab Allocator)
+# Requires: std_heap
+
+USE std_heap
+
+# --- Configuration ---
+CONST DEQUE_NODE_SIZE 3
+CONST DEQUE_OFF_VAL 0
+CONST DEQUE_OFF_NEXT 1
+CONST DEQUE_OFF_PREV 2
+
+CONST DEQUE_CTRL_HEAD 0
+CONST DEQUE_CTRL_TAIL 1
+
+VALUE DEQUE_FREE_HEAD 0
+VALUE DEQUE_POOL_PAGE_SIZE 0
+
+# Internal Variables
+VALUE _dq_i 0
+VALUE _dq_ptr 0
+VALUE _dq_next_ptr 0
+VALUE _dq_node 0
+VALUE _dq_val 0
+VALUE _dq_list 0
+VALUE _dq_head 0
+VALUE _dq_tail 0
+VALUE _dq_prev 0
+VALUE _dq_next 0
+
+STRING _dq_err_empty "DEQUE.pop: Deque is empty\n"
+
+# --- Pool Management ---
+
+DEF _DEQUE.grow_pool {
+    # Allocate block
+    DEQUE_POOL_PAGE_SIZE DEQUE_NODE_SIZE * NEW.list AS _dq_ptr
+    
+    # Link nodes
+    0 AS _dq_i
+    WHILE _dq_i DEQUE_POOL_PAGE_SIZE 1 - < DO
+        # Current node address: _dq_ptr + (_dq_i * 3)
+        # Next node address:    _dq_ptr + ((_dq_i + 1) * 3)
+        
+        _dq_ptr _dq_i DEQUE_NODE_SIZE * + AS _dq_node
+        _dq_ptr _dq_i 1 + DEQUE_NODE_SIZE * + AS _dq_next_ptr
+        
+        _dq_next_ptr DEQUE_OFF_NEXT _dq_node LIST.put
+        
+        _dq_i 1 + AS _dq_i
+    DONE
+    
+    # Link last node to current free head
+    _dq_ptr _dq_i DEQUE_NODE_SIZE * + AS _dq_node
+    DEQUE_FREE_HEAD DEQUE_OFF_NEXT _dq_node LIST.put
+    
+    # Update free head to start of new block
+    _dq_ptr AS DEQUE_FREE_HEAD
+}
+
+DEF DEQUE.init_pool {
+    AS DEQUE_POOL_PAGE_SIZE
+    0 AS DEQUE_FREE_HEAD
+    _DEQUE.grow_pool
+}
+
+DEF _DEQUE.alloc_node {
+    DEQUE_FREE_HEAD 0 == IF
+        _DEQUE.grow_pool
+    END
+    
+    DEQUE_FREE_HEAD AS _dq_node
+    
+    # Update free head -> node.next
+    DEQUE_OFF_NEXT _dq_node LIST.get AS DEQUE_FREE_HEAD
+    
+    # Clear pointers for safety
+    0 DEQUE_OFF_NEXT _dq_node LIST.put
+    0 DEQUE_OFF_PREV _dq_node LIST.put
+    
+    _dq_node
+}
+
+DEF _DEQUE.free_node {
+    AS _dq_node
+    # node.next = free_head
+    DEQUE_FREE_HEAD DEQUE_OFF_NEXT _dq_node LIST.put
+    # free_head = node
+    _dq_node AS DEQUE_FREE_HEAD
+}
+
+# --- Deque Controller ---
+
+DEF DEQUE.new {
+    # Allocate controller [Head, Tail]
+    2 NEW.list AS _dq_list
+    0 DEQUE_CTRL_HEAD _dq_list LIST.put
+    0 DEQUE_CTRL_TAIL _dq_list LIST.put
+    _dq_list
+}
+
+DEF DEQUE.is_empty {
+    AS _dq_list
+    DEQUE_CTRL_HEAD _dq_list LIST.get 0 ==
+}
+
+# --- Insertion ---
+
+DEF DEQUE.push {
+    AS _dq_list
+    AS _dq_val
+    
+    _DEQUE.alloc_node AS _dq_node
+    _dq_val DEQUE_OFF_VAL _dq_node LIST.put
+    
+    DEQUE_CTRL_HEAD _dq_list LIST.get AS _dq_head
+    
+    # node.next = head
+    _dq_head DEQUE_OFF_NEXT _dq_node LIST.put
+    # node.prev = 0
+    0 DEQUE_OFF_PREV _dq_node LIST.put
+    
+    _dq_head 0 != IF
+        # head.prev = node
+        _dq_node DEQUE_OFF_PREV _dq_head LIST.put
+    ELSE
+        # List was empty, tail = node
+        _dq_node DEQUE_CTRL_TAIL _dq_list LIST.put
+    END
+    
+    # head = node
+    _dq_node DEQUE_CTRL_HEAD _dq_list LIST.put
+}
+
+DEF DEQUE.append {
+    AS _dq_list
+    AS _dq_val
+    
+    _DEQUE.alloc_node AS _dq_node
+    _dq_val DEQUE_OFF_VAL _dq_node LIST.put
+    
+    DEQUE_CTRL_TAIL _dq_list LIST.get AS _dq_tail
+    
+    # node.prev = tail
+    _dq_tail DEQUE_OFF_PREV _dq_node LIST.put
+    # node.next = 0
+    0 DEQUE_OFF_NEXT _dq_node LIST.put
+    
+    _dq_tail 0 != IF
+        # tail.next = node
+        _dq_node DEQUE_OFF_NEXT _dq_tail LIST.put
+    ELSE
+        # List was empty, head = node
+        _dq_node DEQUE_CTRL_HEAD _dq_list LIST.put
+    END
+    
+    # tail = node
+    _dq_node DEQUE_CTRL_TAIL _dq_list LIST.put
+}
+
+# --- Removal ---
+
+DEF DEQUE.pop {
+    AS _dq_list
+    
+    DEQUE_CTRL_HEAD _dq_list LIST.get AS _dq_head
+    
+    _dq_head 0 == IF
+        &_dq_err_empty PRTstring HALT
+    END
+    
+    DEQUE_OFF_VAL _dq_head LIST.get AS _dq_val
+    DEQUE_OFF_NEXT _dq_head LIST.get AS _dq_next
+    
+    # head = next
+    _dq_next DEQUE_CTRL_HEAD _dq_list LIST.put
+    
+    _dq_next 0 != IF
+        # next.prev = 0
+        0 DEQUE_OFF_PREV _dq_next LIST.put
+    ELSE
+        # List empty, tail = 0
+        0 DEQUE_CTRL_TAIL _dq_list LIST.put
+    END
+    
+    _dq_head _DEQUE.free_node
+    _dq_val
+}
+
+DEF DEQUE.pop_tail {
+    AS _dq_list
+    
+    DEQUE_CTRL_TAIL _dq_list LIST.get AS _dq_tail
+    
+    _dq_tail 0 == IF
+        &_dq_err_empty PRTstring HALT
+    END
+    
+    DEQUE_OFF_VAL _dq_tail LIST.get AS _dq_val
+    DEQUE_OFF_PREV _dq_tail LIST.get AS _dq_prev
+    
+    # tail = prev
+    _dq_prev DEQUE_CTRL_TAIL _dq_list LIST.put
+    
+    _dq_prev 0 != IF
+        # prev.next = 0
+        0 DEQUE_OFF_NEXT _dq_prev LIST.put
+    ELSE
+        # List empty, head = 0
+        0 DEQUE_CTRL_HEAD _dq_list LIST.put
+    END
+    
+    _dq_tail _DEQUE.free_node
+    _dq_val
+}
+
+# --- Traversal ---
+
+DEF DEQUE.head {
+    DEQUE_CTRL_HEAD SWAP LIST.get
+}
+
+DEF DEQUE.tail {
+    DEQUE_CTRL_TAIL SWAP LIST.get
+}
+
+DEF DEQUE.next {
+    DEQUE_OFF_NEXT SWAP LIST.get
+}
+
+DEF DEQUE.prev {
+    DEQUE_OFF_PREV SWAP LIST.get
+}
+
+DEF DEQUE.value {
+    DEQUE_OFF_VAL SWAP LIST.get
+}

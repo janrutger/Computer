@@ -9,7 +9,7 @@
         "restore_symbols": false
       },
       {
-        "file": "asm/apps/test.asm",
+        "file": "asm/apps/test_dq.asm",
         "base_address": 9216,
         "restore_symbols": true
       }
@@ -38,6 +38,14 @@
       {
         "file": "asm/apps/chaos3.asm",
         "output": "../bin/apps/chaos3.bin"
+      },
+      {
+        "file": "asm/apps/chaos3a.asm",
+        "output": "../bin/apps/chaos3a.bin"
+      },
+      {
+        "file": "asm/apps/chaos3b.asm",
+        "output": "../bin/apps/chaos3b.bin"
       },
       {
         "file": "asm/apps/koch.asm",
@@ -78,6 +86,10 @@
       {
         "file": "asm/apps/ml_xor.asm",
         "output": "../bin/apps/ml_xor.bin"
+      },
+      {
+        "file": "asm/apps/ml_hunter.asm",
+        "output": "../bin/apps/ml_hunter.bin"
       },
       {
         "file": "asm/apps/fib.asm",
