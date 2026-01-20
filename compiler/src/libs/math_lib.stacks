@@ -43,3 +43,39 @@ DEF factorial {
     DONE
     res
 }
+
+
+# --- Globals for the function ---
+# Stacks does not have local scopes, so we define these globally.
+VALUE _sqrt_y 0
+VALUE _sqrt_L 0
+VALUE _sqrt_R 0
+VALUE _sqrt_M 0
+
+# --- Integer Square Root Function ---
+# ( y -- result )
+DEF isqrt {
+    AS _sqrt_y
+    
+    # Initialize: L = 0, R = y + 1
+    0 AS _sqrt_L
+    _sqrt_y 1 + AS _sqrt_R
+    
+    # Loop while L != R - 1
+    WHILE _sqrt_L _sqrt_R 1 - != DO
+        # M = (L + R) / 2
+        _sqrt_L _sqrt_R + 2 // AS _sqrt_M
+        
+        # Check: If M * M > y
+        _sqrt_M DUP * _sqrt_y > IF
+            # M is too big, so R = M
+            _sqrt_M AS _sqrt_R
+        ELSE
+            # M is valid (<= y), so L = M
+            _sqrt_M AS _sqrt_L
+        END
+    DONE
+    
+    # Result is L
+    _sqrt_L
+}

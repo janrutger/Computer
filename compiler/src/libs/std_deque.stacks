@@ -1,4 +1,4 @@
-# std_deque.stacks
+# std_deque.stacks 
 # Double-Ended Queue (Deque) with Dynamic Node Pool (Slab Allocator)
 # Requires: std_heap
 

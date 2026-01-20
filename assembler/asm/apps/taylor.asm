@@ -4,6 +4,10 @@
 . $_power_res 1
 . $n 1
 . $res 1
+. $_sqrt_y 1
+. $_sqrt_L 1
+. $_sqrt_R 1
+. $_sqrt_M 1
 . $SCALE_FACTOR 1
 . $FP_DOT_STR 2
 . $div_error 38
@@ -179,6 +183,59 @@
     jmp :factorial_while_start_1
 :factorial_while_end_1
     ldm A $res
+    stack A $DATASTACK_PTR
+    ret
+@isqrt
+    ustack A $DATASTACK_PTR
+    sto A $_sqrt_y
+    ld A Z
+    sto A $_sqrt_L
+    ldm B $_sqrt_y
+    ldi A 1
+    add A B
+    sto A $_sqrt_R
+:isqrt_while_start_2
+    ldm A $_sqrt_L
+    stack A $DATASTACK_PTR
+    ldm B $_sqrt_R
+    ldi A 1
+    sub B A
+    stack B $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :isqrt_while_end_2
+    ldm B $_sqrt_L
+    ldm A $_sqrt_R
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    dmod B A
+    ld A B
+    sto A $_sqrt_M
+    stack A $DATASTACK_PTR
+    call @rt_dup
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    ldm A $_sqrt_y
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :isqrt_if_else_1
+    ldm A $_sqrt_M
+    sto A $_sqrt_R
+    jmp :isqrt_if_end_1
+:isqrt_if_else_1
+    ldm A $_sqrt_M
+    sto A $_sqrt_L
+:isqrt_if_end_1
+    jmp :isqrt_while_start_2
+:isqrt_while_end_2
+    ldm A $_sqrt_L
     stack A $DATASTACK_PTR
     ret
 
@@ -381,6 +438,13 @@
     ldm A $result
     stack A $DATASTACK_PTR
 :_fp_power_end
+    ret
+@FP.sqrt
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    call @isqrt
     ret
 @FP.print
     call @rt_dup
@@ -1860,6 +1924,10 @@
 % $_power_res 0
 % $n 0
 % $res 1
+% $_sqrt_y 0
+% $_sqrt_L 0
+% $_sqrt_R 0
+% $_sqrt_M 0
 
 % $SCALE_FACTOR 1000
 % $FP_DOT_STR \. \null

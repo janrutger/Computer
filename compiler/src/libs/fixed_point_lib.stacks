@@ -148,6 +148,11 @@ DEF FP.power {
     :_fp_power_end
 }
 
+; Calculates the square root of a fixed-point number
+; ( fp -- result )
+DEF FP.sqrt {
+    SCALE_FACTOR * isqrt
+}
 
 ; --- Output Functions ---
 

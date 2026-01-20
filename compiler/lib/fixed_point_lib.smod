@@ -228,6 +228,13 @@
     stack A $DATASTACK_PTR
 :_fp_power_end
     ret
+@FP.sqrt
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    call @isqrt
+    ret
 @FP.print
     call @rt_dup
     stack Z $DATASTACK_PTR

@@ -1,0 +1,232 @@
+# std_dict.stacks
+# Linear Dictionary Library
+# Requires: std_heap
+
+USE std_heap
+
+# --- Configuration ---
+CONST _DICT_OFF_CAP 0
+CONST _DICT_OFF_CNT 1
+CONST _DICT_HDR_SZ 2
+
+# Internal Variables
+VALUE _dict_ptr 0
+VALUE _dict_cap 0
+VALUE _dict_cnt 0
+VALUE _dict_key 0
+VALUE _dict_val 0
+VALUE _dict_idx 0
+VALUE _dict_found 0
+VALUE _dict_offset 0
+VALUE _dict_last_off 0
+VALUE _dict_last_key 0
+VALUE _dict_last_val 0
+
+STRING _dict_err_full "DICT.put: Dictionary is full\n"
+STRING _dict_err_key  "DICT.get: Key not found\n"
+STRING _dict_err_bnd  "DICT.item: Index out of bounds\n"
+STRING _dict_err_inv_key "DICT.put: Key 0 is reserved and cannot be used.\n"
+
+# --- DICT.new ---
+# Creates a new dictionary
+# Stack: ( capacity -- dict_ptr )
+DEF DICT.new {
+    AS _dict_cap
+    
+    # Allocate: Header (2) + Capacity * 2
+    _dict_cap 2 * _DICT_HDR_SZ + NEW.list AS _dict_ptr
+    
+    # Store Capacity
+    _dict_cap _DICT_OFF_CAP _dict_ptr LIST.put
+    
+    # Store Count (0)
+    0 _DICT_OFF_CNT _dict_ptr LIST.put
+    
+    _dict_ptr
+}
+
+# --- DICT.count ---
+# Returns number of items
+# Stack: ( dict_ptr -- count )
+DEF DICT.count {
+    _DICT_OFF_CNT SWAP LIST.get
+}
+
+# --- DICT.put ---
+# Adds or updates a key-value pair
+# Stack: ( value key dict_ptr -- )
+DEF DICT.put {
+    AS _dict_ptr
+    AS _dict_key
+    AS _dict_val
+    
+    _dict_key 0 == IF
+        &_dict_err_inv_key PRTstring HALT
+    END
+    
+    _DICT_OFF_CNT _dict_ptr LIST.get AS _dict_cnt
+    
+    0 AS _dict_found
+    0 AS _dict_idx
+    
+    # Linear scan to check if key exists
+    WHILE _dict_idx _dict_cnt < DO
+        # Offset = 2 + idx * 2
+        _dict_idx 2 * _DICT_HDR_SZ + AS _dict_offset
+        
+        # Check Key
+        _dict_offset _dict_ptr LIST.get _dict_key == IF
+            # Found match. Update Value (Offset + 1)
+            _dict_val _dict_offset 1 + _dict_ptr LIST.put
+            1 AS _dict_found
+            # Exit loop
+            _dict_cnt AS _dict_idx
+        ELSE
+            _dict_idx 1 + AS _dict_idx
+        END
+    DONE
+    
+    _dict_found 0 == IF
+        # Not found, add new
+        _DICT_OFF_CAP _dict_ptr LIST.get AS _dict_cap
+        
+        _dict_cnt _dict_cap == IF
+            &_dict_err_full PRTstring HALT
+        END
+        
+        # Add at end: Offset = 2 + count * 2
+        _dict_cnt 2 * _DICT_HDR_SZ + AS _dict_offset
+        _dict_key _dict_offset _dict_ptr LIST.put
+        _dict_val _dict_offset 1 + _dict_ptr LIST.put
+        
+        # Increment Count
+        _dict_cnt 1 + _DICT_OFF_CNT _dict_ptr LIST.put
+    END
+}
+
+# --- DICT.get ---
+# Retrieves a value by key
+# Stack: ( key dict_ptr -- value )
+DEF DICT.get {
+    AS _dict_ptr
+    AS _dict_key
+    
+    _DICT_OFF_CNT _dict_ptr LIST.get AS _dict_cnt
+    
+    0 AS _dict_found
+    0 AS _dict_idx
+    
+    WHILE _dict_idx _dict_cnt < DO
+        _dict_idx 2 * _DICT_HDR_SZ + AS _dict_offset
+        
+        _dict_offset _dict_ptr LIST.get _dict_key == IF
+            # Found match. Get Value
+            _dict_offset 1 + _dict_ptr LIST.get
+            1 AS _dict_found
+            # Exit loop
+            _dict_cnt AS _dict_idx
+        ELSE
+            _dict_idx 1 + AS _dict_idx
+        END
+    DONE
+    
+    _dict_found 0 == IF
+        &_dict_err_key PRTstring HALT
+    END
+}
+
+# --- DICT.has_key ---
+# Checks if key exists
+# Stack: ( key dict_ptr -- bool )
+DEF DICT.has_key {
+    AS _dict_ptr
+    AS _dict_key
+    
+    _DICT_OFF_CNT _dict_ptr LIST.get AS _dict_cnt
+    
+    0 AS _dict_found
+    0 AS _dict_idx
+    
+    WHILE _dict_idx _dict_cnt < DO
+        _dict_idx 2 * _DICT_HDR_SZ + AS _dict_offset
+        
+        _dict_offset _dict_ptr LIST.get _dict_key == IF
+            1 AS _dict_found
+            _dict_cnt AS _dict_idx
+        ELSE
+            _dict_idx 1 + AS _dict_idx
+        END
+    DONE
+    
+    _dict_found
+}
+
+# --- DICT.remove ---
+# Removes a key by swapping with last element
+# Stack: ( key dict_ptr -- )
+DEF DICT.remove {
+    AS _dict_ptr
+    AS _dict_key
+    
+    _DICT_OFF_CNT _dict_ptr LIST.get AS _dict_cnt
+    
+    0 AS _dict_idx
+    
+    WHILE _dict_idx _dict_cnt < DO
+        _dict_idx 2 * _DICT_HDR_SZ + AS _dict_offset
+        
+        _dict_offset _dict_ptr LIST.get _dict_key == IF
+            # Found match.
+            
+            # If not the last element, swap with last
+            _dict_idx _dict_cnt 1 - < IF
+                # Get offset of last element
+                _dict_cnt 1 - 2 * _DICT_HDR_SZ + AS _dict_last_off
+                
+                # Read last Key and Value
+                _dict_last_off _dict_ptr LIST.get AS _dict_last_key
+                _dict_last_off 1 + _dict_ptr LIST.get AS _dict_last_val
+                
+                # Write last Key and Value to current slot
+                _dict_last_key _dict_offset _dict_ptr LIST.put
+                _dict_last_val _dict_offset 1 + _dict_ptr LIST.put
+            END
+            
+            # Decrement Count
+            _dict_cnt 1 - _DICT_OFF_CNT _dict_ptr LIST.put
+            
+            # Exit loop
+            _dict_cnt AS _dict_idx
+        ELSE
+            _dict_idx 1 + AS _dict_idx
+        END
+    DONE
+}
+
+# --- DICT.clear ---
+# Clears the dictionary (resets count to 0)
+# Stack: ( dict_ptr -- )
+DEF DICT.clear {
+    AS _dict_ptr
+    0 _DICT_OFF_CNT _dict_ptr LIST.put
+}
+
+# --- DICT.item ---
+# Retrieves key and value by index
+# Stack: ( index dict_ptr -- key value )
+DEF DICT.item {
+    AS _dict_ptr
+    AS _dict_idx
+    
+    _DICT_OFF_CNT _dict_ptr LIST.get AS _dict_cnt
+    
+    _dict_idx _dict_cnt < IF
+        _dict_idx 2 * _DICT_HDR_SZ + AS _dict_offset
+        # Push Key
+        _dict_offset _dict_ptr LIST.get
+        # Push Value
+        _dict_offset 1 + _dict_ptr LIST.get
+    ELSE
+        &_dict_err_bnd PRTstring HALT
+    END
+}

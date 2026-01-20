@@ -1,0 +1,72 @@
+; USE std_stern_io
+; USE std_string
+
+#INCLUDE hash_lib
+
+INCLUDE std_struct
+
+VALUE self 0
+
+
+
+; "Hello Struct - World!\n" PRTstring
+
+\"name"  AS name
+\"age"   AS age
+\"city"  AS city
+\"none"  AS none
+
+
+
+name PRINT
+age PRINT
+
+
+
+
+name age city 3 STRUCT.new_type AS t_person
+
+t_person STRUCT.new AS person1
+"Jan" name person1 STRUCT.put
+58    age  person1 STRUCT.put
+020   city person1 STRUCT.put
+
+t_person STRUCT.new AS person2
+#"Rutger" name person2 STRUCT.put
+42       age  person2 STRUCT.put
+010      city person2 STRUCT.put
+
+:debug
+
+"person 1\n" PRTstring
+name person1 STRUCT.get DUP 0 != IF
+    PRTstring "\n" PRTstring
+ELSE
+    DROP
+END
+age  person1 STRUCT.get PRINT
+city person1 STRUCT.get PRINT
+
+"person 2\n" PRTstring
+name person2 STRUCT.get DUP 0 != IF
+    PRTstring "\n" PRTstring
+ELSE
+    DROP
+END
+age  person2 STRUCT.get PRINT
+city person2 STRUCT.get PRINT
+
+DEF Person.greet {
+    AS self
+    "Hello, my name is " PRTstring
+    name self STRUCT.get DUP 0 != IF
+        PRTstring
+    ELSE
+        DROP
+        "Unknown" PRTstring
+    END
+    ".\n" PRTstring
+}
+
+person1 Person.greet
+person2 Person.greet

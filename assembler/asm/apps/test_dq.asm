@@ -235,9 +235,6 @@
     stack A $DATASTACK_PTR
     call @DEQUE.pop
     call @rt_print_tos
-    ldm A $my_deque
-    stack A $DATASTACK_PTR
-    call @DEQUE.pop_tail
     ret
 
 # .FUNCTIONS

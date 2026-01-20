@@ -1,48 +1,41 @@
 {
   "functions": [
-    "DEQUE.init_pool",
-    "TOS.check",
-    "DEQUE.next",
-    "_DEQUE.grow_pool",
-    "HEAP.init",
-    "DEQUE.push",
-    "PRTcls",
-    "DEQUE.pop_tail",
-    "DEQUE.prev",
-    "KEYchar",
-    "LIST.put",
-    "_DEQUE.free_node",
-    "io_lib_init",
-    "ARRAY.size",
-    "MATRIX.put",
-    "CURSORon",
-    "HALT",
-    "DEQUE.append",
-    "PRTstring",
-    "NEW.matrix",
-    "PRTnum",
-    "ARRAY.len",
-    "DEQUE.is_empty",
-    "ARRAY.clear",
-    "MATRIX.get",
-    "ARRAY.get",
-    "_DEQUE.alloc_node",
-    "DEQUE.pop",
-    "DEQUE.tail",
-    "HEAP.free",
-    "NEW.matrix_populate",
-    "ARRAY.append",
-    "NEW.array",
-    "DEQUE.value",
-    "DEQUE.new",
-    "DEQUE.head",
-    "KEYpressed",
-    "LIST.get",
-    "ARRAY.put",
+    "DICT.has_key",
     "CURSORoff",
-    "PRTchar",
+    "DICT.item",
+    "DICT.put",
+    "MATRIX.get",
+    "DICT.remove",
     "READline",
-    "NEW.list"
+    "PRTstring",
+    "ARRAY.get",
+    "LIST.get",
+    "NEW.matrix",
+    "KEYchar",
+    "TOS.check",
+    "ARRAY.put",
+    "ARRAY.append",
+    "PRTcls",
+    "DICT.clear",
+    "NEW.list",
+    "PRTnum",
+    "io_lib_init",
+    "DICT.count",
+    "ARRAY.size",
+    "NEW.array",
+    "ARRAY.clear",
+    "LIST.put",
+    "DICT.get",
+    "PRTchar",
+    "ARRAY.len",
+    "HEAP.free",
+    "DICT.new",
+    "HEAP.init",
+    "CURSORon",
+    "KEYpressed",
+    "NEW.matrix_populate",
+    "MATRIX.put",
+    "HALT"
   ],
   "variables": [
     {
@@ -261,69 +254,79 @@
       "size": 1
     },
     {
-      "name": "DEQUE_FREE_HEAD",
+      "name": "_dict_ptr",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "DEQUE_POOL_PAGE_SIZE",
+      "name": "_dict_cap",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_dq_i",
+      "name": "_dict_cnt",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_dq_ptr",
+      "name": "_dict_key",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_dq_next_ptr",
+      "name": "_dict_val",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_dq_node",
+      "name": "_dict_idx",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_dq_val",
+      "name": "_dict_found",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_dq_list",
+      "name": "_dict_offset",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_dq_head",
+      "name": "_dict_last_off",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_dq_tail",
+      "name": "_dict_last_key",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_dq_prev",
+      "name": "_dict_last_val",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_dq_next",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_dq_err_empty",
+      "name": "_dict_err_full",
       "type": "STRING",
-      "size": 27
+      "size": 30
+    },
+    {
+      "name": "_dict_err_key",
+      "type": "STRING",
+      "size": 25
+    },
+    {
+      "name": "_dict_err_bnd",
+      "type": "STRING",
+      "size": 32
+    },
+    {
+      "name": "_dict_err_inv_key",
+      "type": "STRING",
+      "size": 49
     }
   ],
   "constants": {
@@ -332,11 +335,8 @@
     "return": 13,
     "newline": 10,
     "null": 0,
-    "DEQUE_NODE_SIZE": 3,
-    "DEQUE_OFF_VAL": 0,
-    "DEQUE_OFF_NEXT": 1,
-    "DEQUE_OFF_PREV": 2,
-    "DEQUE_CTRL_HEAD": 0,
-    "DEQUE_CTRL_TAIL": 1
+    "_DICT_OFF_CAP": 0,
+    "_DICT_OFF_CNT": 1,
+    "_DICT_HDR_SZ": 2
   }
 }
