@@ -1,0 +1,56 @@
+In this project i gone try to simutale cell-growth or the grow of veins in a leaf
+herefore we need a alghoritme for the calculations
+
+This is my idea.
+
+
+We using an 480x640 Turtle screen
+Each cell has the size (radius) of two and color green
+each Auxin had the size (radius) of two, and color is red
+
+
+we trace (for now) 200 itterations of growing
+we use max 20 auxins per itterations
+
+
+We start with 1 root cell (x,y) and place this on the screen.
+each cell has an position(x,y) and an direction(x,y)
+Then we check is the number of auxins is less the 21 (20 max), if leq 20, create 5 auxins, to an max of 20
+
+
+at this point we have:
+- one dict for the cells, containing 1 (the root) cell
+- one dict for auxins, containing 5 auxins cells
+
+
+
+REPEAT 200 times:
+    Reset the direction(x,y) of all cells to (0,0)
+
+    we itterate over the auxins, and find the closed cell
+        if:     the distance to the cell is smaller then 20, the auxin 'dies' and is removed from the auxins dict
+        else:   add the vector (auxin - cell) to the cell's direction(x,y)
+
+    we itterate over the cells
+        if direction is not (0,0), normalize it and create a new cell attached to the current one
+
+    And we check the number of auxins if leq 20 generate (max) 5 auxins, to an max of 20
+END
+
+
+HEAP uses
+Objects (Payload):
+200 Cells * 5 words (Type, X, Y, DirX, DirY) = 1000 words
+20 Auxins * 3 words (Type, X, Y) = 60 words
+
+Dictionaries (Containers):
+(200 Cells + 20 Auxins) * 2 words (Key+Value) = 440 words
++ 4 words headers
+
+Total Heap = 1504 words
+
+
+Distance calculation
+Formula: d = sqrt( (x2 - x1)^2 + (y2 - y1)^2 )
+Stacks Logic:
+x1 x2 FP.sub DUP FP.mul y1 y2 FP.sub DUP FP.mul FP.add FP.sqrt

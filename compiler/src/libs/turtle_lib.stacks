@@ -114,7 +114,7 @@ DEF TURTLE.mode {
 }
 
 DEF TURTLE.flip {
-    current_flip IF IO 2 flip END
+    current_flip IF IO 2 FLIP END
 }
 
 
@@ -375,6 +375,3 @@ DEF TURTLE.circle {
 }
 
     
-
-
-

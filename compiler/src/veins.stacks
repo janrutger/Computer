@@ -1,0 +1,375 @@
+USE std_stern_io 
+USE std_heap
+INCLUDE math_lib
+INCLUDE fixed_point_lib
+INCLUDE turtle_lib
+INCLUDE std_dict
+
+# Since we gonne make C-style structs we do not need std_struct
+
+# ---- CONTANTS ----
+CONST SCALE 1000
+CONST SCREEN_W 636
+CONST SCREEN_H 476
+CONST ROOTX 320       #  640 / 2    = 320
+CONST ROOTY 320       # (480 / 3)*2 = 320
+
+
+CONST CELL_COLOR  5     ; green
+CONST AUXIN_COLOR 2     ; red 
+
+CONST OBJ_RADIUS    2   ; the turtle expect an integer
+CONST AUXINS_MAX    40
+CONST GENERATIONS   200 
+CONST KILL_DISTANCE 20
+
+# Lets create the C-type Struct methods
+CONST Xoffset   0       ; The values will be stored as FixedPoint
+CONST Yoffset   1
+CONST DXoffset  2
+CONST DYoffset  3
+
+CONST CELLsize  4       ; the value is an integer
+CONST AUXINsize 2
+
+VALUE _cell_ptr  0
+VALUE _auxin_ptr 0
+VALUE _obj_ptr   0
+VALUE _offset    0
+VALUE _i_value   0
+VALUE _fp_vaule  0
+VALUE _obj1_ptr  0
+VALUE _obj2_ptr  0
+VALUE _x1        0
+VALUE _y1        0
+VALUE _x2        0
+VALUE _y2        0
+VALUE _vx        0
+VALUE _vy        0
+VALUE _dx        0
+VALUE _dy        0
+VALUE _distance  0
+VALUE _space_left 0
+VALUE _num_auxins 0
+VALUE last_distance 0
+VALUE current_cell_ptr 0
+VALUE current_auxin_ptr 0
+VALUE current_auxin 0
+VALUE kill_dict 0
+VALUE generation 0
+
+
+# -- Creates an new cell struct
+# ( -- cell_ptr )
+DEF NEW.cell {
+    CELLsize NEW.list AS _cell_ptr
+    0 Xoffset _cell_ptr LIST.put        ; store FP(0) in Xoffset
+    0 Yoffset _cell_ptr LIST.put
+    0 DXoffset _cell_ptr LIST.put
+    0 DYoffset _cell_ptr LIST.put
+
+    _cell_ptr
+}
+
+# -- Creates an new auxin struct
+# ( -- auxin_ptr )
+DEF NEW.auxin {
+    AUXINsize NEW.list AS _auxin_ptr
+    0 Xoffset _auxin_ptr LIST.put        ; store FP(0) in Xoffset
+    0 Yoffset _auxin_ptr LIST.put
+
+    _auxin_ptr
+}
+
+# -- The object PUT method
+# Where cells and auxins are struct objects
+# ( value offset object_ptr -- )
+DEF OBJ.put {
+    LIST.put        ; are values are in the correct order on the stack
+}
+
+# -- The object GET method
+# Where cells and auxins are struct objects
+# ( offset object_ptr -- value )
+DEF OBJ.get {
+    LIST.get        ; are values are in the correct order on the stack
+}
+ 
+
+# -- Calculate the distance between 2 object
+# -- Expecting the values in Fix point format
+# -- ( obj1_prt obj2_prt -- distance )
+DEF OBJ.distance {
+    AS _obj1_ptr
+    AS _obj2_ptr
+
+    Xoffset _obj1_ptr LIST.get AS _x1
+    Yoffset _obj1_ptr LIST.get AS _y1
+    Xoffset _obj2_ptr LIST.get AS _x2
+    Yoffset _obj2_ptr LIST.get AS _y2
+
+    _x1 _x2 FP.sub DUP FP.mul
+    _y1 _y2 FP.sub DUP FP.mul
+    FP.add FP.sqrt
+}
+## -- Clearing the direction of one cell
+## ( cell_ptr -- )
+DEF CELL.clear_direction {
+    AS _cell_ptr
+    0 DXoffset _cell_ptr LIST.put
+    0 DYoffset _cell_ptr LIST.put
+
+}
+
+## -- Updating the direction of one cell
+## it take an auxin pointer, and the cell pointer as arguments
+## ( distance auxin_ptr cell_ptr -- )
+## 
+DEF CELL.update_direction {
+    AS _obj1_ptr    ; OBJ1 = Cell  Pointer
+    AS _obj2_ptr    ; OBJ2 = Auxin Pointer
+    AS _distance    ; as FP
+
+    Xoffset _obj1_ptr LIST.get AS _x1   ; Cell X
+    Yoffset _obj1_ptr LIST.get AS _y1
+    Xoffset _obj2_ptr LIST.get AS _x2   ; Auxin X
+    Yoffset _obj2_ptr LIST.get AS _y2
+
+    _x2 _x1 FP.sub AS _vx           ; calc direction vector
+    _y2 _y1 FP.sub AS _vy
+
+    _vx _distance FP.div AS _vx     ; Normalize the vectors
+    _vy _distance FP.div AS _vy
+
+    DXoffset _obj1_ptr LIST.get AS _dx  ; recalcutate the direction vector
+    DYoffset _obj1_ptr LIST.get AS _dy
+
+    _dx _vx FP.add AS _dx
+    _dy _vy FP.add AS _dy
+
+    _dx DXoffset _obj1_ptr LIST.put     ; Store the updated direction vector
+    _dy DYoffset _obj1_ptr LIST.put
+}
+
+##### END OF STRUCT HELPERS #####
+
+VALUE Cells_dict   0
+VALUE cell_ptr     0
+VALUE current_cell 0
+
+VALUE auxin_ptr   0
+VALUE Auxins_dict 0
+
+DEF AUXIN.create {
+    Auxins_dict DICT.count AUXINS_MAX < IF
+        AUXINS_MAX Auxins_dict DICT.count - AS _space_left
+        _space_left 5 > IF
+            5 AS _num_auxins
+        ELSE
+            _space_left AS _num_auxins
+        END
+
+        WHILE _num_auxins DO
+            # Random X: (RND * W) / 999
+            RND SCREEN_W * 999 // AS _i_value           ; 1. Get random integer coordinate
+            _i_value FP.from_int AS _x1                 ; 2. Convert to Fixed Point
+            RND SCREEN_H * 999 // AS _i_value           ; 1. Get random integer coordinate
+            _i_value FP.from_int AS _y1                 ; 2. Convert to Fixed Point
+
+
+            NEW.auxin AS auxin_ptr
+            _x1 Xoffset auxin_ptr LIST.put
+            _y1 Yoffset auxin_ptr LIST.put
+
+            auxin_ptr auxin_ptr Auxins_dict DICT.put
+
+            _num_auxins 1 - AS _num_auxins
+        DONE
+    END
+}
+
+DEF DRAW.cells {
+    # Draw the Cells from the Cells_dict
+    CELL_COLOR TURTLE.color
+    0 AS current_cell
+    WHILE current_cell Cells_dict DICT.count < DO
+        current_cell Cells_dict DICT.item AS cell_ptr
+        Xoffset cell_ptr OBJ.get AS _x1
+        Yoffset cell_ptr OBJ.get AS _y1
+
+        _x1 FP.to_int
+        _y1 FP.to_int
+        OBJ_RADIUS TURTLE.circle
+        
+        current_cell 1 + AS current_cell
+        DROP    ; Deleting DICT-key from the stack
+    DONE
+    TURTLE.flip     ; Flip screen buffers
+}
+
+DEF DRAW.auxins {
+    # Draw the Auxins from the Auxins_dict
+    AUXIN_COLOR TURTLE.color
+    0 AS current_cell
+    WHILE current_cell Auxins_dict DICT.count < DO
+        current_cell Auxins_dict DICT.item AS auxin_ptr
+        Xoffset auxin_ptr OBJ.get AS _x1
+        Yoffset auxin_ptr OBJ.get AS _y1
+
+        _x1 FP.to_int
+        _y1 FP.to_int
+        OBJ_RADIUS TURTLE.circle
+        
+        current_cell 1 + AS current_cell
+        DROP    ; Deleting DICT-key from the stack
+    DONE
+    TURTLE.flip     ; Flip screen buffers
+}
+
+
+DEF grow {
+    ####
+    # Clear direction pointer on cells
+    0 AS current_cell
+    WHILE current_cell Cells_dict DICT.count < DO
+        current_cell Cells_dict DICT.item AS cell_ptr DROP ; Deleting DICT-key from the stack
+        cell_ptr CELL.clear_direction
+        current_cell 1 + AS current_cell
+    DONE
+    
+    0 AS current_auxin
+    kill_dict DICT.clear                    # reset the kill list
+    WHILE current_auxin Auxins_dict DICT.count < DO
+        "." PRTstring
+        0 AS current_cell
+        780 FP.from_int AS last_distance    # Max distance as possible
+
+        current_auxin Auxins_dict DICT.item AS auxin_ptr DROP ; Deleting DICT-key from the stack
+        WHILE current_cell Cells_dict DICT.count < DO
+            current_cell Cells_dict DICT.item AS cell_ptr DROP
+
+            auxin_ptr cell_ptr OBJ.distance AS _distance
+            
+            _distance last_distance < IF
+                _distance AS last_distance
+                cell_ptr  AS current_cell_ptr
+                auxin_ptr AS current_auxin_ptr
+            END 
+
+            current_cell 1 + AS current_cell
+        DONE
+
+        last_distance KILL_DISTANCE FP.from_int < IF
+            current_auxin_ptr current_auxin_ptr kill_dict DICT.put 
+        ELSE
+            last_distance current_auxin_ptr current_cell_ptr CELL.update_direction
+        END
+
+        current_auxin  1 + AS current_auxin
+    DONE
+
+    # Delete killed auxins
+    0 AS current_auxin
+    WHILE current_auxin kill_dict DICT.count < DO
+        current_auxin kill_dict DICT.item AS auxin_ptr DROP ; Deleting DICT-key from the stack
+        auxin_ptr Auxins_dict DICT.remove
+
+        current_auxin 1 + AS current_auxin
+    DONE
+
+    # Spawn new cells
+    Cells_dict DICT.count AS initial_cell_count
+    0 AS current_cell
+    
+    WHILE current_cell initial_cell_count < DO
+        current_cell Cells_dict DICT.item AS cell_ptr DROP
+        
+        DXoffset cell_ptr OBJ.get AS _dx
+        DYoffset cell_ptr OBJ.get AS _dy
+        
+        # Check if direction is non-zero
+        _dx ABS _dy ABS + 0 > IF
+             # Calculate Magnitude
+             _dx DUP FP.mul _dy DUP FP.mul FP.add FP.sqrt AS _mag
+             
+             _mag 0 > IF
+                 # Normalize and Scale: New = Old * (Target / Mag)
+                 OBJ_RADIUS 2 * FP.from_int _mag FP.div AS _scale
+                 
+                 # Calculate New Position
+                 Xoffset cell_ptr OBJ.get _dx _scale FP.mul FP.add AS _new_x
+                 Yoffset cell_ptr OBJ.get _dy _scale FP.mul FP.add AS _new_y
+                 
+                 # Create and Store New Cell
+                 NEW.cell AS _new_cell_ptr
+                 _new_x Xoffset _new_cell_ptr OBJ.put
+                 _new_y Yoffset _new_cell_ptr OBJ.put
+                 
+                 _new_cell_ptr _new_cell_ptr Cells_dict DICT.put
+             END
+        END
+        
+        current_cell 1 + AS current_cell
+    DONE
+}
+
+
+
+
+##### MAIN CODE HERE #####
+
+
+
+
+DEF main {
+    # init heap
+    HEAP.free
+    SCALE FP.set_scale
+
+    # Init screen 
+    TURTLE.start
+    db_pixel TURTLE.mode
+
+    "\nStart of Simulation..... \n" PRTstring
+
+    # Create the Cell-dict and populate the root cell
+    250 DICT.new AS Cells_dict                  # Create the dictonary
+    NEW.cell AS cell_ptr                        # Create the root cell
+    ROOTX FP.from_int Xoffset cell_ptr OBJ.put  # Start X
+    ROOTY FP.from_int Yoffset cell_ptr OBJ.put  # Start Y
+    cell_ptr cell_ptr Cells_dict DICT.put       # Store cell in Cells
+    "-- Cell dictonary created\n" PRTstring
+
+    # Create the Auxins-dict and populate the first 5 auxins
+    AUXINS_MAX DICT.new AS Auxins_dict
+    AUXINS_MAX DICT.new AS kill_dict
+    AUXIN.create
+    "-- Auxins created\n" PRTstring
+
+
+    "-- -- Start generator" PRTstring
+    # GENERATIONS AS generation
+    75 AS generation
+    WHILE generation Cells_dict DICT.count 200 < * DO
+        DRAW.cells
+        DRAW.auxins
+        "-- Cells and Auxins drawn\n" PRTstring
+
+        AUXIN.create
+        "-- Auxins created\n" PRTstring
+
+        grow
+        "\n-- Growing done for: " PRTstring generation PRINT
+
+        
+
+
+        # Next generation 
+        generation 1 - AS generation
+        IO 2 NEW ; Create an empty canvas
+    DONE
+
+    "All Done ....\n" PRTstring
+}
+
+main

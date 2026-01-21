@@ -9,7 +9,7 @@
         "restore_symbols": false
       },
       {
-        "file": "asm/apps/test_dq.asm",
+        "file": "asm/apps/veins.asm",
         "base_address": 9216,
         "restore_symbols": true
       }
