@@ -112,6 +112,7 @@
 . $current_auxin 1
 . $kill_dict 1
 . $generation 1
+. $_factor 1
 . $Cells_dict 1
 . $cell_ptr 1
 . $current_cell 1
@@ -124,13 +125,14 @@
 . $_new_x 1
 . $_new_y 1
 . $_new_cell_ptr 1
-. $main_str_1 28
-. $main_str_2 27
-. $main_str_3 19
-. $main_str_4 22
-. $main_str_5 27
-. $main_str_6 23
-. $main_str_7 15
+. $SRAND_str_1 18
+. $main_str_2 28
+. $main_str_3 27
+. $main_str_4 19
+. $main_str_5 22
+. $main_str_6 27
+. $main_str_7 23
+. $main_str_8 15
 
 # .CODE
     call @main
@@ -2153,6 +2155,31 @@
     call @FP.div
     ustack A $DATASTACK_PTR
     sto A $_vy
+    ldi A 20
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    ustack A $DATASTACK_PTR
+    sto A $_factor
+    ldm A $_vx
+    stack A $DATASTACK_PTR
+    ldm A $_factor
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    ldm A $_distance
+    stack A $DATASTACK_PTR
+    call @FP.div
+    ustack A $DATASTACK_PTR
+    sto A $_vx
+    ldm A $_vy
+    stack A $DATASTACK_PTR
+    ldm A $_factor
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    ldm A $_distance
+    stack A $DATASTACK_PTR
+    call @FP.div
+    ustack A $DATASTACK_PTR
+    sto A $_vy
     ldi A 2
     stack A $DATASTACK_PTR
     ldm A $_obj1_ptr
@@ -2200,13 +2227,13 @@
     ldm A $Auxins_dict
     stack A $DATASTACK_PTR
     call @DICT.count
-    ldi A 40
+    ldi A 75
     stack A $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :AUXIN.create_if_end_0
-    ldi A 40
+    ldi A 75
     stack A $DATASTACK_PTR
     ldm A $Auxins_dict
     stack A $DATASTACK_PTR
@@ -2654,7 +2681,11 @@
     jmpt :grow_if_end_7
     ldi A 2
     ld B A
+    ldi A 1
+    add B A
+    stack B $DATASTACK_PTR
     ldi A 2
+    ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
     call @FP.from_int
@@ -2720,16 +2751,31 @@
     jmp :grow_while_start_7
 :grow_while_end_7
     ret
+@SRAND
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    ld B A
+    ldi A 65536
+    dmod B A
+    sto A $random_seed
+    ldi A $SRAND_str_1
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldm A $random_seed
+    stack A $DATASTACK_PTR
+    call @rt_print_tos
+    ret
 @main
     call @HEAP.free
     ldi A 1000
     stack A $DATASTACK_PTR
     call @FP.set_scale
+    call @SRAND
     call @TURTLE.start
     ldi A 2
     stack A $DATASTACK_PTR
     call @TURTLE.mode
-    ldi A $main_str_1
+    ldi A $main_str_2
     stack A $DATASTACK_PTR
     call @PRTstring
     ldi A 250
@@ -2747,7 +2793,7 @@
     ldm A $cell_ptr
     stack A $DATASTACK_PTR
     call @OBJ.put
-    ldi A 320
+    ldi A 240
     stack A $DATASTACK_PTR
     call @FP.from_int
     ldi A 1
@@ -2762,27 +2808,27 @@
     ldm A $Cells_dict
     stack A $DATASTACK_PTR
     call @DICT.put
-    ldi A $main_str_2
+    ldi A $main_str_3
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 40
+    ldi A 75
     stack A $DATASTACK_PTR
     call @DICT.new
     ustack A $DATASTACK_PTR
     sto A $Auxins_dict
-    ldi A 40
+    ldi A 75
     stack A $DATASTACK_PTR
     call @DICT.new
     ustack A $DATASTACK_PTR
     sto A $kill_dict
     call @AUXIN.create
-    ldi A $main_str_3
-    stack A $DATASTACK_PTR
-    call @PRTstring
     ldi A $main_str_4
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 75
+    ldi A $main_str_5
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A 50
     sto A $generation
 :main_while_start_8
     ldm A $generation
@@ -2800,15 +2846,15 @@
     jmpt :main_while_end_8
     call @DRAW.cells
     call @DRAW.auxins
-    ldi A $main_str_5
+    ldi A $main_str_6
     stack A $DATASTACK_PTR
     call @PRTstring
     call @AUXIN.create
-    ldi A $main_str_3
+    ldi A $main_str_4
     stack A $DATASTACK_PTR
     call @PRTstring
     call @grow
-    ldi A $main_str_6
+    ldi A $main_str_7
     stack A $DATASTACK_PTR
     call @PRTstring
     ldm A $generation
@@ -2827,7 +2873,14 @@
     call @rt_udc_control
     jmp :main_while_start_8
 :main_while_end_8
-    ldi A $main_str_7
+    stack Z $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    call @DRAW.cells
+    ldi A $main_str_8
     stack A $DATASTACK_PTR
     call @PRTstring
     ret
@@ -2954,10 +3007,11 @@
 % $auxin_ptr 0
 % $Auxins_dict 0
 % $grow_str_0 \. \null
-% $main_str_1 \Return \S \t \a \r \t \space \o \f \space \S \i \m \u \l \a \t \i \o \n \. \. \. \. \. \space \Return \null
-% $main_str_2 \- \- \space \C \e \l \l \space \d \i \c \t \o \n \a \r \y \space \c \r \e \a \t \e \d \Return \null
-% $main_str_3 \- \- \space \A \u \x \i \n \s \space \c \r \e \a \t \e \d \Return \null
-% $main_str_4 \- \- \space \- \- \space \S \t \a \r \t \space \g \e \n \e \r \a \t \o \r \null
-% $main_str_5 \- \- \space \C \e \l \l \s \space \a \n \d \space \A \u \x \i \n \s \space \d \r \a \w \n \Return \null
-% $main_str_6 \Return \- \- \space \G \r \o \w \i \n \g \space \d \o \n \e \space \f \o \r \: \space \null
-% $main_str_7 \A \l \l \space \D \o \n \e \space \. \. \. \. \Return \null
+% $SRAND_str_1 \N \e \w \space \r \a \n \d \o \m \space \s \e \e \d \: \space \null
+% $main_str_2 \Return \S \t \a \r \t \space \o \f \space \S \i \m \u \l \a \t \i \o \n \. \. \. \. \. \space \Return \null
+% $main_str_3 \- \- \space \C \e \l \l \space \d \i \c \t \o \n \a \r \y \space \c \r \e \a \t \e \d \Return \null
+% $main_str_4 \- \- \space \A \u \x \i \n \s \space \c \r \e \a \t \e \d \Return \null
+% $main_str_5 \- \- \space \- \- \space \S \t \a \r \t \space \g \e \n \e \r \a \t \o \r \null
+% $main_str_6 \- \- \space \C \e \l \l \s \space \a \n \d \space \A \u \x \i \n \s \space \d \r \a \w \n \Return \null
+% $main_str_7 \Return \- \- \space \G \r \o \w \i \n \g \space \d \o \n \e \space \f \o \r \: \space \null
+% $main_str_8 \A \l \l \space \D \o \n \e \space \. \. \. \. \Return \null

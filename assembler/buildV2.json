@@ -94,6 +94,10 @@
       {
         "file": "asm/apps/fib.asm",
         "output": "../bin/apps/fib.bin"
+      },
+      {
+        "file": "asm/apps/veins.asm",
+        "output": "../bin/apps/veins.bin"
       }
     ]
   }

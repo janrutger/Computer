@@ -1,5 +1,7 @@
 USE std_stern_io 
 USE std_heap
+USE std_time
+USE std_stacks_rt
 INCLUDE math_lib
 INCLUDE fixed_point_lib
 INCLUDE turtle_lib
@@ -12,14 +14,14 @@ CONST SCALE 1000
 CONST SCREEN_W 636
 CONST SCREEN_H 476
 CONST ROOTX 320       #  640 / 2    = 320
-CONST ROOTY 320       # (480 / 3)*2 = 320
+CONST ROOTY 240       # (480 / 3)*2 = 320
 
 
 CONST CELL_COLOR  5     ; green
 CONST AUXIN_COLOR 2     ; red 
 
 CONST OBJ_RADIUS    2   ; the turtle expect an integer
-CONST AUXINS_MAX    40
+CONST AUXINS_MAX    75
 CONST GENERATIONS   200 
 CONST KILL_DISTANCE 20
 
@@ -85,16 +87,15 @@ DEF NEW.auxin {
 # Where cells and auxins are struct objects
 # ( value offset object_ptr -- )
 DEF OBJ.put {
-    LIST.put        ; are values are in the correct order on the stack
+    LIST.put        ; All arguments  are in the correct order on the stack
 }
 
 # -- The object GET method
 # Where cells and auxins are struct objects
 # ( offset object_ptr -- value )
 DEF OBJ.get {
-    LIST.get        ; are values are in the correct order on the stack
-}
- 
+    LIST.get        ; All arguments are in the correct order on the stack
+} 
 
 # -- Calculate the distance between 2 object
 # -- Expecting the values in Fix point format
@@ -138,8 +139,18 @@ DEF CELL.update_direction {
     _x2 _x1 FP.sub AS _vx           ; calc direction vector
     _y2 _y1 FP.sub AS _vy
 
+    # vector normalizing
     _vx _distance FP.div AS _vx     ; Normalize the vectors
     _vy _distance FP.div AS _vy
+
+    # Inverse Distance Weighting: Force = KILL_DISTANCE / Distance
+    # We multiply by KILL_DISTANCE first to keep values in a good range (avoiding underflow)
+    # Then divide by distance (avoiding overflow from squaring)
+    KILL_DISTANCE FP.from_int AS _factor
+    _vx _factor FP.mul _distance FP.div AS _vx
+    _vy _factor FP.mul _distance FP.div AS _vy
+
+    # _vx and _vy are normalized vectors
 
     DXoffset _obj1_ptr LIST.get AS _dx  ; recalcutate the direction vector
     DYoffset _obj1_ptr LIST.get AS _dy
@@ -294,7 +305,7 @@ DEF grow {
              
              _mag 0 > IF
                  # Normalize and Scale: New = Old * (Target / Mag)
-                 OBJ_RADIUS 2 * FP.from_int _mag FP.div AS _scale
+                 OBJ_RADIUS 1 + 2 * FP.from_int _mag FP.div AS _scale
                  
                  # Calculate New Position
                  Xoffset cell_ptr OBJ.get _dx _scale FP.mul FP.add AS _new_x
@@ -313,7 +324,11 @@ DEF grow {
     DONE
 }
 
-
+DEF SRAND {     # uses std_stacks_rt to acces rand_m var from RND
+    *p_currentime rand_m % AS random_seed
+    "New random seed: " PRTstring
+    random_seed PRINT
+}
 
 
 ##### MAIN CODE HERE #####
@@ -325,6 +340,7 @@ DEF main {
     # init heap
     HEAP.free
     SCALE FP.set_scale
+    SRAND
 
     # Init screen 
     TURTLE.start
@@ -349,7 +365,7 @@ DEF main {
 
     "-- -- Start generator" PRTstring
     # GENERATIONS AS generation
-    75 AS generation
+    50 AS generation
     WHILE generation Cells_dict DICT.count 200 < * DO
         DRAW.cells
         DRAW.auxins
@@ -361,13 +377,14 @@ DEF main {
         grow
         "\n-- Growing done for: " PRTstring generation PRINT
 
-        
-
 
         # Next generation 
         generation 1 - AS generation
         IO 2 NEW ; Create an empty canvas
     DONE
+
+    IO 2 NEW ; Create an empty canvas
+    DRAW.cells
 
     "All Done ....\n" PRTstring
 }
