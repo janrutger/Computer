@@ -1291,28 +1291,28 @@
     call @NEW.matrix
     ustack A $DATASTACK_PTR
     sto A $_nn_mat_lr
+    stack Z $DATASTACK_PTR
     ldm A $_nn_hidden_layer_ptr
     stack A $DATASTACK_PTR
-    stack Z $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $_nn_h_weights
-    ldm A $_nn_hidden_layer_ptr
-    stack A $DATASTACK_PTR
     ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_hidden_layer_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $_nn_h_bias
+    stack Z $DATASTACK_PTR
     ldm A $_nn_output_layer_ptr
     stack A $DATASTACK_PTR
-    stack Z $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $_nn_o_weights
-    ldm A $_nn_output_layer_ptr
-    stack A $DATASTACK_PTR
     ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_nn_output_layer_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
@@ -1850,9 +1850,9 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :NN.predict_while_end_3
-    ldm A $_nn_predict_input_ptr
-    stack A $DATASTACK_PTR
     ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldm A $_nn_predict_input_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ldi A 1
@@ -1907,9 +1907,9 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :NN.train_while_end_4
-    ldm A $_nn_predict_input_ptr
-    stack A $DATASTACK_PTR
     ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldm A $_nn_predict_input_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ldi A 1
@@ -1939,9 +1939,9 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :NN.train_while_end_5
-    ldm A $_nn_predict_output_ptr
-    stack A $DATASTACK_PTR
     ldm A $_nn_fill_counter
+    stack A $DATASTACK_PTR
+    ldm A $_nn_predict_output_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ldi A 1

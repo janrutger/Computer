@@ -140,6 +140,7 @@ DEF CELL.update_direction {
     _y2 _y1 FP.sub AS _vy
 
     # vector normalizing
+    
     _vx _distance FP.div AS _vx     ; Normalize the vectors
     _vy _distance FP.div AS _vy
 

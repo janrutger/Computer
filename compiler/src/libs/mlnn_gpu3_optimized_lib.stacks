@@ -172,10 +172,14 @@ DEF NN.new_network {
     1 1 NEW.matrix AS _nn_mat_lr
 
     # Cache Layer Pointers
-    _nn_hidden_layer_ptr 0 ARRAY.get AS _nn_h_weights
-    _nn_hidden_layer_ptr 1 ARRAY.get AS _nn_h_bias
-    _nn_output_layer_ptr 0 ARRAY.get AS _nn_o_weights
-    _nn_output_layer_ptr 1 ARRAY.get AS _nn_o_bias
+    # _nn_hidden_layer_ptr 0 ARRAY.get AS _nn_h_weights
+    # _nn_hidden_layer_ptr 1 ARRAY.get AS _nn_h_bias
+    # _nn_output_layer_ptr 0 ARRAY.get AS _nn_o_weights
+    # _nn_output_layer_ptr 1 ARRAY.get AS _nn_o_bias
+    0 _nn_hidden_layer_ptr ARRAY.get AS _nn_h_weights
+    1 _nn_hidden_layer_ptr ARRAY.get AS _nn_h_bias
+    0 _nn_output_layer_ptr ARRAY.get AS _nn_o_weights
+    1 _nn_output_layer_ptr ARRAY.get AS _nn_o_bias
 
     # --- Pre-compile TDLs with Chaining ---
     
@@ -270,7 +274,8 @@ DEF NN.predict {
     # 1. Convert Input Array to Matrix
     0 AS _nn_fill_counter
     WHILE _nn_fill_counter _nn_predict_input_ptr ARRAY.len < DO
-        _nn_predict_input_ptr _nn_fill_counter ARRAY.get
+        # _nn_predict_input_ptr _nn_fill_counter ARRAY.get
+        _nn_fill_counter _nn_predict_input_ptr  ARRAY.get
         1 _nn_fill_counter 1 + _nn_mat_input_wrapper MATRIX.put
         _nn_fill_counter 1 + AS _nn_fill_counter
     DONE
@@ -297,7 +302,8 @@ DEF NN.train {
     # 2. Populate Input Matrix
     0 AS _nn_fill_counter
     WHILE _nn_fill_counter _nn_predict_input_ptr ARRAY.len < DO
-        _nn_predict_input_ptr _nn_fill_counter ARRAY.get
+        # _nn_predict_input_ptr _nn_fill_counter ARRAY.get
+        _nn_fill_counter _nn_predict_input_ptr  ARRAY.get
         1 _nn_fill_counter 1 + _nn_mat_input_wrapper MATRIX.put
         _nn_fill_counter 1 + AS _nn_fill_counter
     DONE
@@ -305,7 +311,8 @@ DEF NN.train {
     # 3. Populate Target Matrix
     0 AS _nn_fill_counter
     WHILE _nn_fill_counter _nn_predict_output_ptr ARRAY.len < DO
-        _nn_predict_output_ptr _nn_fill_counter ARRAY.get
+        # _nn_predict_output_ptr _nn_fill_counter ARRAY.get
+        _nn_fill_counter _nn_predict_output_ptr  ARRAY.get
         1 _nn_fill_counter 1 + _nn_mat_target MATRIX.put
         _nn_fill_counter 1 + AS _nn_fill_counter
     DONE
