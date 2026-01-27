@@ -2,6 +2,7 @@
 # An excellent CPU-bound benchmark to test raw computational performance.
 
 USE std_stern_io
+USE std_time
 
 # -----------------------------------------------------------------------------
 # DEF fib(n)
@@ -49,9 +50,12 @@ DEF fib {
 
 "Calculating fib(24)... This will take some time.\n" PRTstring
 
+0 TIME.start
 24 fib # Put 24 on the stack and call the function.
 
 # Print the final result
 "Result: " PRTstring
 PRINT
 "\n" PRTstring
+
+"Total run time: " PRTstring 0 TIME.read TIME.as_string "!!\n" PRTstring

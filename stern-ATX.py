@@ -7,7 +7,7 @@ import os
 import cProfile
 import pstats
 
-from devices.cpu_m1 import CPU_M1
+from devices.cpu_m1a import CPU_M1
 from devices.cpuR3 import CPU_R3
 
 from devices.memoryR3x import Memory
