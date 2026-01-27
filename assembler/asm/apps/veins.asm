@@ -112,7 +112,6 @@
 . $current_auxin 1
 . $kill_dict 1
 . $generation 1
-. $_factor 1
 . $Cells_dict 1
 . $cell_ptr 1
 . $current_cell 1
@@ -131,8 +130,13 @@
 . $main_str_4 19
 . $main_str_5 22
 . $main_str_6 27
-. $main_str_7 23
-. $main_str_8 15
+. $main_str_7 21
+. $main_str_8 2
+. $main_str_9 21
+. $main_str_10 15
+. $main_str_11 21
+. $main_str_12 15
+. $main_str_13 15
 
 # .CODE
     call @main
@@ -2141,45 +2145,6 @@
     call @FP.sub
     ustack A $DATASTACK_PTR
     sto A $_vy
-    ldm A $_vx
-    stack A $DATASTACK_PTR
-    ldm A $_distance
-    stack A $DATASTACK_PTR
-    call @FP.div
-    ustack A $DATASTACK_PTR
-    sto A $_vx
-    ldm A $_vy
-    stack A $DATASTACK_PTR
-    ldm A $_distance
-    stack A $DATASTACK_PTR
-    call @FP.div
-    ustack A $DATASTACK_PTR
-    sto A $_vy
-    ldi A 20
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ustack A $DATASTACK_PTR
-    sto A $_factor
-    ldm A $_vx
-    stack A $DATASTACK_PTR
-    ldm A $_factor
-    stack A $DATASTACK_PTR
-    call @FP.mul
-    ldm A $_distance
-    stack A $DATASTACK_PTR
-    call @FP.div
-    ustack A $DATASTACK_PTR
-    sto A $_vx
-    ldm A $_vy
-    stack A $DATASTACK_PTR
-    ldm A $_factor
-    stack A $DATASTACK_PTR
-    call @FP.mul
-    ldm A $_distance
-    stack A $DATASTACK_PTR
-    call @FP.div
-    ustack A $DATASTACK_PTR
-    sto A $_vy
     ldi A 2
     stack A $DATASTACK_PTR
     ldm A $_obj1_ptr
@@ -2778,7 +2743,7 @@
     ldi A $main_str_2
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 250
+    ldi A 1050
     stack A $DATASTACK_PTR
     call @DICT.new
     ustack A $DATASTACK_PTR
@@ -2828,15 +2793,20 @@
     ldi A $main_str_5
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldi A 50
+    ldi A 100
     sto A $generation
+    call @DRAW.cells
+    call @DRAW.auxins
+    ldi A $main_str_6
+    stack A $DATASTACK_PTR
+    call @PRTstring
 :main_while_start_8
     ldm A $generation
     stack A $DATASTACK_PTR
     ldm A $Cells_dict
     stack A $DATASTACK_PTR
     call @DICT.count
-    ldi A 200
+    ldi A 1000
     stack A $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
@@ -2844,22 +2814,42 @@
     mul A B
     tst A 0
     jmpt :main_while_end_8
-    call @DRAW.cells
-    call @DRAW.auxins
-    ldi A $main_str_6
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    call @AUXIN.create
-    ldi A $main_str_4
-    stack A $DATASTACK_PTR
-    call @PRTstring
-    call @grow
     ldi A $main_str_7
     stack A $DATASTACK_PTR
     call @PRTstring
     ldm A $generation
     stack A $DATASTACK_PTR
     call @rt_print_tos
+    call @grow
+    ldi A $main_str_8
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldi A $main_str_9
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @DRAW.cells
+    ldi A $main_str_10
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldm A $Cells_dict
+    stack A $DATASTACK_PTR
+    call @DICT.count
+    call @rt_print_tos
+    call @AUXIN.create
+    ldi A $main_str_11
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    call @DRAW.auxins
+    ldi A $main_str_12
+    stack A $DATASTACK_PTR
+    call @PRTstring
+    ldm A $Auxins_dict
+    stack A $DATASTACK_PTR
+    call @DICT.count
+    call @rt_print_tos
+    ldi A $main_str_8
+    stack A $DATASTACK_PTR
+    call @PRTstring
     ldm B $generation
     ldi A 1
     sub B A
@@ -2880,7 +2870,7 @@
     stack A $DATASTACK_PTR
     call @rt_udc_control
     call @DRAW.cells
-    ldi A $main_str_8
+    ldi A $main_str_13
     stack A $DATASTACK_PTR
     call @PRTstring
     ret
@@ -3013,5 +3003,10 @@
 % $main_str_4 \- \- \space \A \u \x \i \n \s \space \c \r \e \a \t \e \d \Return \null
 % $main_str_5 \- \- \space \- \- \space \S \t \a \r \t \space \g \e \n \e \r \a \t \o \r \null
 % $main_str_6 \- \- \space \C \e \l \l \s \space \a \n \d \space \A \u \x \i \n \s \space \d \r \a \w \n \Return \null
-% $main_str_7 \Return \- \- \space \G \r \o \w \i \n \g \space \d \o \n \e \space \f \o \r \: \space \null
-% $main_str_8 \A \l \l \space \D \o \n \e \space \. \. \. \. \Return \null
+% $main_str_7 \G \e \n \e \r \a \t \i \o \n \: \space \space \space \space \space \space \space \space \space \null
+% $main_str_8 \Return \null
+% $main_str_9 \- \- \space \G \r \o \w \i \n \g \space \d \o \n \e \space \space \space \- \space \null
+% $main_str_10 \C \e \l \l \s \space \space \d \r \a \w \n \: \space \null
+% $main_str_11 \- \- \space \A \u \x \i \n \s \space \c \r \e \a \t \e \d \space \- \space \null
+% $main_str_12 \A \u \x \i \n \s \space \d \r \a \w \n \: \space \null
+% $main_str_13 \A \l \l \space \D \o \n \e \space \. \. \. \. \Return \null

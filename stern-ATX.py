@@ -10,7 +10,7 @@ import pstats
 from devices.cpu_m1 import CPU_M1
 from devices.cpuR3 import CPU_R3
 
-from devices.memoryR3 import Memory
+from devices.memoryR3x import Memory
 from devices.interrupt_controller import InterruptController
 from devices.keyboard import Keyboard
 from devices.debugger import Debugger
@@ -25,6 +25,7 @@ from devices.rtc import RTC
 # --- Constants ---
 # Memory Map
 MEM_SIZE = 24576
+MEM_EXTEND_BLOCKS = 8
 MEM_LOADER_START = 0
 MEM_KERNEL_START = 1024
 MEM_INT_VECTORS_START = 8192
@@ -32,7 +33,7 @@ MEM_PROG_START = 9216
 MEM_VAR_START = 18432
 MEM_IO_END = 18431 # IO devices map downwards from here
 MEM_VIDEO_START = 22528
-# MEM_STACK_END = 22527 # Stack grows downwards from here
+
 
 # Display
 SCREEN_WIDTH_CHARS = 80
@@ -64,7 +65,7 @@ def main():
 
     # 2. Initialize Shared Components
     video_end = MEM_VIDEO_START + (SCREEN_WIDTH_CHARS * SCREEN_HEIGHT_CHARS)
-    ram = Memory(size=MEM_SIZE, video_start=MEM_VIDEO_START, video_end=video_end)
+    ram = Memory(size=MEM_SIZE, extent_blocks=MEM_EXTEND_BLOCKS, video_start=MEM_VIDEO_START, video_end=video_end)
     interrupt_controller = InterruptController(ram)
 
     # Register keyboard data address with the interrupt controller
@@ -136,7 +137,8 @@ def main():
             pass
 
     cpu = SelectedCPU(ram, interrupt_controller, debug_mode=debug_mode)
-    cpu.registers["PC"] = MEM_LOADER_START # Set PC to the start of the loaded program
+    cpu.registers["PC"] = MEM_LOADER_START  # Set PC to the start of the loaded program
+    cpu.registers["SP"] = MEM_SIZE - 1      # Set SP to end of system memory
     keyboard = Keyboard(interrupt_controller, vector=KEYBOARD_INTERRUPT_VECTOR)
     rtc = RTC(interrupt_controller, vector=RTC_INTERRUPT_VECTOR)
 

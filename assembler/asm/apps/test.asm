@@ -74,7 +74,6 @@
     stack A $DATASTACK_PTR
     call @ARRAY.get
     call @rt_print_tos
-:break
     ldi A $_main_str_3
     stack A $DATASTACK_PTR
     call @PRTstring

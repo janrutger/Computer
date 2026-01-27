@@ -19,6 +19,6 @@ USE std_stern_io
 3 my_array ARRAY.get PRINT
 4 my_array ARRAY.get PRINT
 
-:break
+
 
 "Done .... \n" PRTstring

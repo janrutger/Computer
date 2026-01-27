@@ -183,10 +183,14 @@ DEF TEST_NETWORK {
             network_ptr input_arr NN.predict AS output_ptr
             
             # Independent Axis Logic (Threshold = 6000/10000)
-            output_ptr 0 ARRAY.get AS val_n
-            output_ptr 1 ARRAY.get AS val_s
-            output_ptr 2 ARRAY.get AS val_e
-            output_ptr 3 ARRAY.get AS val_w
+            # output_ptr 0 ARRAY.get AS val_n
+            # output_ptr 1 ARRAY.get AS val_s
+            # output_ptr 2 ARRAY.get AS val_e
+            # output_ptr 3 ARRAY.get AS val_w
+            0 output_ptr ARRAY.get AS val_n
+            1 output_ptr ARRAY.get AS val_s
+            2 output_ptr ARRAY.get AS val_e
+            3 output_ptr ARRAY.get AS val_w
 
             # Y-Axis Check
             val_n val_s > IF
@@ -253,10 +257,14 @@ DEF VISUALIZE_CHASE {
             network_ptr input_arr NN.predict AS output_ptr
             
             # Independent Axis Logic
-            output_ptr 0 ARRAY.get AS val_n
-            output_ptr 1 ARRAY.get AS val_s
-            output_ptr 2 ARRAY.get AS val_e
-            output_ptr 3 ARRAY.get AS val_w
+            # output_ptr 0 ARRAY.get AS val_n
+            # output_ptr 1 ARRAY.get AS val_s
+            # output_ptr 2 ARRAY.get AS val_e
+            # output_ptr 3 ARRAY.get AS val_w
+            0 output_ptr ARRAY.get AS val_n
+            1 output_ptr ARRAY.get AS val_s
+            2 output_ptr ARRAY.get AS val_e
+            3 output_ptr ARRAY.get AS val_w
 
             val_n val_s > IF
                 val_n 6000 > IF hy 1 - AS hy END

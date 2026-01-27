@@ -123,8 +123,10 @@ WHILE i epochs < DO
 
     # Clear the reusable target array and get the new input/target for this training step
     current_target_ptr ARRAY.clear
-    xor_inputs_ptr rand_idx ARRAY.get AS current_input_ptr
-    xor_targets_ptr rand_idx ARRAY.get current_target_ptr ARRAY.append
+    # xor_inputs_ptr rand_idx ARRAY.get AS current_input_ptr
+    # xor_targets_ptr rand_idx ARRAY.get current_target_ptr ARRAY.append
+    rand_idx xor_inputs_ptr  ARRAY.get AS current_input_ptr
+    rand_idx xor_targets_ptr ARRAY.get current_target_ptr ARRAY.append
 
     # Perform one step of training
     network_ptr current_input_ptr current_target_ptr learning_rate NN.train
@@ -137,8 +139,12 @@ DONE
 0 AS i
 WHILE i 4 < DO
     "  Input " PRTstring i PRTnum " -> Prediction: " PRTstring
-    xor_inputs_ptr i ARRAY.get AS current_input_ptr
-    network_ptr current_input_ptr NN.predict 0 ARRAY.get 4 FP.fprint "\n" PRTstring
+    # xor_inputs_ptr i ARRAY.get AS current_input_ptr
+    i xor_inputs_ptr ARRAY.get AS current_input_ptr
+
+    # network_ptr current_input_ptr NN.predict 0 ARRAY.get 4 FP.fprint "\n" PRTstring
+    0 network_ptr current_input_ptr NN.predict  ARRAY.get 4 FP.fprint "\n" PRTstring
+
     i 1 + AS i
 DONE
 

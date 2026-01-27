@@ -3279,28 +3279,29 @@
     call @NN.predict
     ustack A $DATASTACK_PTR
     sto A $output_ptr
-    stack A $DATASTACK_PTR
     stack Z $DATASTACK_PTR
+    ldm A $output_ptr
+    stack A $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $val_n
-    ldm A $output_ptr
-    stack A $DATASTACK_PTR
     ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $output_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $val_s
-    ldm A $output_ptr
-    stack A $DATASTACK_PTR
     ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $output_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $val_e
-    ldm A $output_ptr
-    stack A $DATASTACK_PTR
     ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $output_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
@@ -3568,28 +3569,29 @@
     call @NN.predict
     ustack A $DATASTACK_PTR
     sto A $output_ptr
-    stack A $DATASTACK_PTR
     stack Z $DATASTACK_PTR
+    ldm A $output_ptr
+    stack A $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $val_n
-    ldm A $output_ptr
-    stack A $DATASTACK_PTR
     ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $output_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $val_s
-    ldm A $output_ptr
-    stack A $DATASTACK_PTR
     ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $output_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $val_e
-    ldm A $output_ptr
-    stack A $DATASTACK_PTR
     ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $output_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR

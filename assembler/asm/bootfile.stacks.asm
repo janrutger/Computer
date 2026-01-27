@@ -81,9 +81,9 @@
     ldi A $SYSCALL_RETURN_VALUE
     stack A $DATASTACK_PTR
     call @io_lib_init
-    ldi A 15360
+    ldi A 24576
     stack A $DATASTACK_PTR
-    ldi A 2048
+    ldi A 8192
     stack A $DATASTACK_PTR
     call @HEAP.init
     call @start_kernel

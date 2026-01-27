@@ -353,16 +353,16 @@
     ldm A $current_target_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.clear
-    ldm A $xor_inputs_ptr
-    stack A $DATASTACK_PTR
     ldm A $rand_idx
+    stack A $DATASTACK_PTR
+    ldm A $xor_inputs_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $current_input_ptr
-    ldm A $xor_targets_ptr
-    stack A $DATASTACK_PTR
     ldm A $rand_idx
+    stack A $DATASTACK_PTR
+    ldm A $xor_targets_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ldm A $current_target_ptr
@@ -409,19 +409,19 @@
     ldi A $_main_str_11
     stack A $DATASTACK_PTR
     call @PRTstring
-    ldm A $xor_inputs_ptr
-    stack A $DATASTACK_PTR
     ldm A $i
+    stack A $DATASTACK_PTR
+    ldm A $xor_inputs_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $current_input_ptr
+    stack Z $DATASTACK_PTR
     ldm A $network_ptr
     stack A $DATASTACK_PTR
     ldm A $current_input_ptr
     stack A $DATASTACK_PTR
     call @NN.predict
-    stack Z $DATASTACK_PTR
     call @ARRAY.get
     ldi A 4
     stack A $DATASTACK_PTR

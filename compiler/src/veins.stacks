@@ -141,15 +141,15 @@ DEF CELL.update_direction {
 
     # vector normalizing
     
-    _vx _distance FP.div AS _vx     ; Normalize the vectors
-    _vy _distance FP.div AS _vy
+    # _vx _distance FP.div AS _vx     ; Normalize the vectors
+    # _vy _distance FP.div AS _vy
 
-    # Inverse Distance Weighting: Force = KILL_DISTANCE / Distance
-    # We multiply by KILL_DISTANCE first to keep values in a good range (avoiding underflow)
-    # Then divide by distance (avoiding overflow from squaring)
-    KILL_DISTANCE FP.from_int AS _factor
-    _vx _factor FP.mul _distance FP.div AS _vx
-    _vy _factor FP.mul _distance FP.div AS _vy
+    # # Inverse Distance Weighting: Force = KILL_DISTANCE / Distance
+    # # We multiply by KILL_DISTANCE first to keep values in a good range (avoiding underflow)
+    # # Then divide by distance (avoiding overflow from squaring)
+    # KILL_DISTANCE FP.from_int AS _factor
+    # _vx _factor FP.mul _distance FP.div AS _vx
+    # _vy _factor FP.mul _distance FP.div AS _vy
 
     # _vx and _vy are normalized vectors
 
@@ -350,7 +350,7 @@ DEF main {
     "\nStart of Simulation..... \n" PRTstring
 
     # Create the Cell-dict and populate the root cell
-    250 DICT.new AS Cells_dict                  # Create the dictonary
+    1050 DICT.new AS Cells_dict                 # Create the dictonary
     NEW.cell AS cell_ptr                        # Create the root cell
     ROOTX FP.from_int Xoffset cell_ptr OBJ.put  # Start X
     ROOTY FP.from_int Yoffset cell_ptr OBJ.put  # Start Y
@@ -366,19 +366,27 @@ DEF main {
 
     "-- -- Start generator" PRTstring
     # GENERATIONS AS generation
-    50 AS generation
-    WHILE generation Cells_dict DICT.count 200 < * DO
+    100 AS generation
+    DRAW.cells
+    DRAW.auxins
+    "-- Cells and Auxins drawn\n" PRTstring
+
+    WHILE generation Cells_dict DICT.count 1000 < * DO
+
+        "Generation:         " PRTstring generation PRINT
+        grow "\n" PRTstring
+        
+        "-- Growing done   - " PRTstring   
         DRAW.cells
-        DRAW.auxins
-        "-- Cells and Auxins drawn\n" PRTstring
+        "Cells  drawn: " PRTstring Cells_dict DICT.count PRINT    
 
         AUXIN.create
-        "-- Auxins created\n" PRTstring
+        "-- Auxins created - " PRTstring
+        DRAW.auxins
+        "Auxins drawn: " PRTstring Auxins_dict DICT.count PRINT
+        "\n" PRTstring
 
-        grow
-        "\n-- Growing done for: " PRTstring generation PRINT
-
-
+        
         # Next generation 
         generation 1 - AS generation
         IO 2 NEW ; Create an empty canvas
