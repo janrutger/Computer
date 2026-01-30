@@ -189,8 +189,11 @@
     jmpt :STRUCT.put_if_end_1
     ldi A $error_mesg10
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :STRUCT.put_if_end_1
     ret
 @STRUCT.get
@@ -265,8 +268,11 @@
     jmpt :STRUCT.get_if_end_3
     ldi A $error_mesg9
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :STRUCT.get_if_end_3
     ret
 

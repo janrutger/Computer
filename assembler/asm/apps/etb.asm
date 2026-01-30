@@ -120,7 +120,8 @@
 . $game_event 1
 
 # .CODE
-    call @HEAP.free
+    ldm A $HEAP_START
+    sto A $HEAP_FREE
     ldi A 200
     stack A $DATASTACK_PTR
     ldi A 1
@@ -533,18 +534,14 @@
     ldm B $player_x
     ldm A $coin_x
     add B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     dmod B A
     ld A B
     sto A $mid_x
     ldm B $player_y
     ldm A $coin_y
     add B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     dmod B A
     ld A B
     sto A $mid_y
@@ -1132,13 +1129,9 @@
     ldm B $loop_y
     ldm A $tile_w
     mul B A
-    stack B $DATASTACK_PTR
     ldm A $loop_x
-    ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     add A B
     ustack B $DATASTACK_PTR
     add A B
@@ -1205,9 +1198,7 @@
     mul A B
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldi A 6
-    ustack B $DATASTACK_PTR
     add A B
     sto A $temp_ptr
     ldm I $temp_ptr
@@ -1285,9 +1276,7 @@
     ldm B $pot_x
     ldm A $pot_w
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $other_x
@@ -1301,9 +1290,7 @@
     ldm B $other_x
     ldm A $other_w
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $pot_x
@@ -1317,9 +1304,7 @@
     ldm B $pot_y
     ldm A $pot_h
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $other_y
@@ -1333,9 +1318,7 @@
     ldm B $other_y
     ldm A $other_h
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $pot_y
@@ -1469,9 +1452,7 @@
     ldm B $pot_x
     ldm A $pot_w
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $other_x
@@ -1485,9 +1466,7 @@
     ldm B $other_x
     ldm A $other_w
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $pot_x
@@ -1501,9 +1480,7 @@
     ldm B $pot_y
     ldm A $pot_h
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $other_y
@@ -1517,9 +1494,7 @@
     ldm B $other_y
     ldm A $other_h
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $pot_y
@@ -1726,9 +1701,7 @@
     mul A B
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldi A 7
-    ustack B $DATASTACK_PTR
     add A B
     sto A $temp_ptr
     ldm I $temp_ptr
@@ -2083,9 +2056,7 @@
     mul A B
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldi A 5
-    ustack B $DATASTACK_PTR
     add A B
     sto A $temp_ptr
     ldm I $temp_ptr
@@ -2489,9 +2460,7 @@
     ldm B $_score
     ldi A 100
     dmod B A
-    stack B $DATASTACK_PTR
     ldi A 48
-    ustack B $DATASTACK_PTR
     add A B
     sto A $_hunreds
     ldm B $_score
@@ -2500,9 +2469,7 @@
     ld B A
     ldi A 10
     dmod B A
-    stack B $DATASTACK_PTR
     ldi A 48
-    ustack B $DATASTACK_PTR
     add A B
     sto A $_tens
     ldm B $_score
@@ -2668,9 +2635,7 @@
     ldm B $_coins
     ldi A 100
     dmod B A
-    stack B $DATASTACK_PTR
     ldi A 48
-    ustack B $DATASTACK_PTR
     add A B
     sto A $_hunreds
     ldm B $_coins
@@ -2679,9 +2644,7 @@
     ld B A
     ldi A 10
     dmod B A
-    stack B $DATASTACK_PTR
     ldi A 48
-    ustack B $DATASTACK_PTR
     add A B
     sto A $_tens
     ldm B $_coins

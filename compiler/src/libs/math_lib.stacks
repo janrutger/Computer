@@ -1,4 +1,11 @@
-DEF gcd {
+# DEF gcd {
+#     WHILE DUP 0 != DO
+#         SWAP OVER %
+#     DONE
+#     DROP
+# }
+
+MACRO gcd {
     WHILE DUP 0 != DO
         SWAP OVER %
     DONE

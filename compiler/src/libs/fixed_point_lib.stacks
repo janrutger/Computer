@@ -16,7 +16,10 @@ STRING FP_DOT_STR "."
 
 STRING div_error "ERROR: Fixed point Division by zero!\n"
 
-DEF FP.set_scale {
+# DEF FP.set_scale {
+#     AS SCALE_FACTOR
+# }
+MACRO FP.set_scale {
     AS SCALE_FACTOR
 }
 
@@ -38,13 +41,19 @@ DEF TOS_nnl {
 
 ; Converts an integer to a fixed-point number
 ; ( int -- fp )
-DEF FP.from_int {
+# DEF FP.from_int {
+#     SCALE_FACTOR *
+# }
+MACRO FP.from_int {
     SCALE_FACTOR *
 }
 
 ; Converts a fixed-point number back to an integer (truncates)
 ; ( fp -- int )
-DEF FP.to_int {
+# DEF FP.to_int {
+#     SCALE_FACTOR //
+# }
+MACRO FP.to_int {
     SCALE_FACTOR //
 }
 
@@ -52,15 +61,23 @@ DEF FP.to_int {
 
 ; Adds two fixed-point numbers
 ; ( fp_a fp_b -- result )
-DEF FP.add {
+# DEF FP.add {
+#     +
+# }
+MACRO FP.add {
     +
 }
 
+
 ; Subtracts two fixed-point numbers
 ; ( fp_a fp_b -- result )
-DEF FP.sub {
+# DEF FP.sub {
+#     -
+# }
+MACRO FP.sub {
     -
 }
+
 
 ; Multiplies two fixed-point numbers
 ; ( fp_a fp_b -- result )
@@ -150,9 +167,13 @@ DEF FP.power {
 
 ; Calculates the square root of a fixed-point number
 ; ( fp -- result )
-DEF FP.sqrt {
+# DEF FP.sqrt {
+#     SCALE_FACTOR * isqrt
+# }
+MACRO FP.sqrt {
     SCALE_FACTOR * isqrt
 }
+
 
 ; --- Output Functions ---
 

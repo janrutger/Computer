@@ -93,11 +93,14 @@
     ld B A
     ldi A 100
     sub B A
+    ldm A $SCALE_FACTOR
+    mul B A
     stack B $DATASTACK_PTR
-    call @FP.from_int
     ldi A 1000
-    stack A $DATASTACK_PTR
-    call @FP.from_int
+    ld B A
+    ldm A $SCALE_FACTOR
+    mul B A
+    stack B $DATASTACK_PTR
     call @FP.div
     ldm A $_nn_weights_ptr
     stack A $DATASTACK_PTR
@@ -227,7 +230,10 @@
     jmpt :_NN.relu_if_end_0
     call @rt_drop
     stack Z $DATASTACK_PTR
-    call @FP.from_int
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
 :_NN.relu_if_end_0
     ret
 @_NN.relu_derivative
@@ -237,12 +243,17 @@
     tst A 0
     jmpt :_NN.relu_derivative_if_else_1
     ldi A 1
-    stack A $DATASTACK_PTR
-    call @FP.from_int
+    ld B A
+    ldm A $SCALE_FACTOR
+    mul B A
+    stack B $DATASTACK_PTR
     jmp :_NN.relu_derivative_if_end_1
 :_NN.relu_derivative_if_else_1
     stack Z $DATASTACK_PTR
-    call @FP.from_int
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
 :_NN.relu_derivative_if_end_1
     ret
 @_NN.forward_pass_layer
@@ -252,9 +263,13 @@
     sto A $_nn_predict_input_ptr
     ustack A $DATASTACK_PTR
     sto A $_nn_predict_layer_ptr
-    ldm A $_nn_predict_output_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.clear
+    ldm B $_nn_predict_output_ptr
+    ldi A 1
+    add A B
+    sto A $_ARR_TEMP_PTR
+    ld B Z
+    ldm I $_ARR_TEMP_PTR
+    stx B $_start_memory_
     ld A Z
     sto A $_nn_predict_neuron_idx
 :_NN.forward_pass_layer_while_start_2
@@ -310,9 +325,8 @@
     call @ARRAY.get
     call @FP.mul
     ldm A $_nn_predict_weighted_sum
-    stack A $DATASTACK_PTR
-    call @FP.add
-    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add A B
     sto A $_nn_predict_weighted_sum
     ldm B $_nn_predict_input_idx
     ldi A 1
@@ -452,9 +466,8 @@
     call @ARRAY.get
     call @FP.mul
     ldm A $_nn_train_weighted_sum
-    stack A $DATASTACK_PTR
-    call @FP.add
-    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add A B
     sto A $_nn_train_weighted_sum
     ldm B $_nn_predict_input_idx
     ldi A 1
@@ -503,8 +516,10 @@
     ldm A $_nn_delta_idx
     stack A $DATASTACK_PTR
     call @ARRAY.get
-    call @FP.sub
     ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
     sto A $_nn_delta_error
     ldm A $_nn_train_output_pre_activations_ptr
     stack A $DATASTACK_PTR
@@ -547,8 +562,9 @@
     tst A 0
     jmpt :_NN.calculate_hidden_deltas_while_end_7
     stack Z $DATASTACK_PTR
-    call @FP.from_int
-    ustack A $DATASTACK_PTR
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul A B
     sto A $_nn_weighted_delta_sum
     ld A Z
     sto A $_nn_output_delta_idx
@@ -586,9 +602,8 @@
     call @ARRAY.get
     call @FP.mul
     ldm A $_nn_weighted_delta_sum
-    stack A $DATASTACK_PTR
-    call @FP.add
-    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add A B
     sto A $_nn_weighted_delta_sum
     ldm B $_nn_output_delta_idx
     ldi A 1
@@ -690,9 +705,8 @@
     stack A $DATASTACK_PTR
     call @ARRAY.get
     ldm A $_nn_update_weight_change
-    stack A $DATASTACK_PTR
-    call @FP.add
-    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add A B
     sto A $_nn_update_new_value
     stack A $DATASTACK_PTR
     ldm A $_nn_update_weight_idx
@@ -718,9 +732,8 @@
     stack Z $DATASTACK_PTR
     call @ARRAY.get
     ldm A $_nn_update_weight_change
-    stack A $DATASTACK_PTR
-    call @FP.add
-    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add A B
     sto A $_nn_update_new_value
     stack A $DATASTACK_PTR
     stack Z $DATASTACK_PTR
@@ -743,24 +756,48 @@
     sto A $_nn_train_input_ptr
     ustack A $DATASTACK_PTR
     sto A $_nn_network_ptr
-    ldm A $_nn_train_hidden_pre_activations_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.clear
-    ldm A $_nn_train_hidden_activations_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.clear
-    ldm A $_nn_train_output_pre_activations_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.clear
-    ldm A $_nn_train_output_activations_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.clear
-    ldm A $_nn_train_output_deltas_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.clear
-    ldm A $_nn_train_hidden_deltas_ptr
-    stack A $DATASTACK_PTR
-    call @ARRAY.clear
+    ldm B $_nn_train_hidden_pre_activations_ptr
+    ldi A 1
+    add A B
+    sto A $_ARR_TEMP_PTR
+    ld B Z
+    ldm I $_ARR_TEMP_PTR
+    stx B $_start_memory_
+    ldm B $_nn_train_hidden_activations_ptr
+    ldi A 1
+    add A B
+    sto A $_ARR_TEMP_PTR
+    ld B Z
+    ldm I $_ARR_TEMP_PTR
+    stx B $_start_memory_
+    ldm B $_nn_train_output_pre_activations_ptr
+    ldi A 1
+    add A B
+    sto A $_ARR_TEMP_PTR
+    ld B Z
+    ldm I $_ARR_TEMP_PTR
+    stx B $_start_memory_
+    ldm B $_nn_train_output_activations_ptr
+    ldi A 1
+    add A B
+    sto A $_ARR_TEMP_PTR
+    ld B Z
+    ldm I $_ARR_TEMP_PTR
+    stx B $_start_memory_
+    ldm B $_nn_train_output_deltas_ptr
+    ldi A 1
+    add A B
+    sto A $_ARR_TEMP_PTR
+    ld B Z
+    ldm I $_ARR_TEMP_PTR
+    stx B $_start_memory_
+    ldm B $_nn_train_hidden_deltas_ptr
+    ldi A 1
+    add A B
+    sto A $_ARR_TEMP_PTR
+    ld B Z
+    ldm I $_ARR_TEMP_PTR
+    stx B $_start_memory_
     ldm A $_nn_network_ptr
     stack A $DATASTACK_PTR
     ldi A 1

@@ -44,11 +44,14 @@
     ld B A
     ldi A 100
     sub B A
+    ldm A $SCALE_FACTOR
+    mul B A
     stack B $DATASTACK_PTR
-    call @FP.from_int
     ldi A 1000
-    stack A $DATASTACK_PTR
-    call @FP.from_int
+    ld B A
+    ldm A $SCALE_FACTOR
+    mul B A
+    stack B $DATASTACK_PTR
     call @FP.div
     ldm A $weights_ptr
     stack A $DATASTACK_PTR
@@ -65,7 +68,10 @@
     ustack A $DATASTACK_PTR
     sto A $perceptron_ptr
     stack Z $DATASTACK_PTR
-    call @FP.from_int
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
     ldm A $perceptron_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.append
@@ -134,12 +140,9 @@
     call @FP.mul
     ustack A $DATASTACK_PTR
     sto A $product
-    ldm A $weighted_sum
-    stack A $DATASTACK_PTR
+    ldm B $weighted_sum
     ldm A $product
-    stack A $DATASTACK_PTR
-    call @FP.add
-    ustack A $DATASTACK_PTR
+    add A B
     sto A $weighted_sum
     ldm B $i
     ldi A 1
@@ -183,10 +186,9 @@
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $weights_ptr
-    ldm A $_error
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ustack A $DATASTACK_PTR
+    ldm B $_error
+    ldm A $SCALE_FACTOR
+    mul A B
     sto A $error_fp
     ldm A $learning_rate
     stack A $DATASTACK_PTR
@@ -195,12 +197,9 @@
     call @FP.mul
     ustack A $DATASTACK_PTR
     sto A $adjustment
-    ldm A $old_bias
-    stack A $DATASTACK_PTR
+    ldm B $old_bias
     ldm A $adjustment
-    stack A $DATASTACK_PTR
-    call @FP.add
-    ustack A $DATASTACK_PTR
+    add A B
     sto A $new_bias
     stack A $DATASTACK_PTR
     stack Z $DATASTACK_PTR
@@ -244,11 +243,9 @@
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $old_weight
-    stack A $DATASTACK_PTR
+    ld B A
     ldm A $weight_delta
-    stack A $DATASTACK_PTR
-    call @FP.add
-    ustack A $DATASTACK_PTR
+    add A B
     sto A $new_weight
     stack A $DATASTACK_PTR
     ldm A $i

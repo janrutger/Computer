@@ -66,8 +66,11 @@
 :_main_if_else_1
     ldi A $_main_str_0
     stack A $DATASTACK_PTR
-    call @PRTstring
-:_main_if_end_1
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+    :_main_if_end_1
     ret
 
 # .FUNCTIONS
@@ -191,9 +194,7 @@
     ldm B $TURTLE_HEADING_DEG
     ldm A $degrees_to_turn
     add B A
-    stack B $DATASTACK_PTR
     ldi A 360
-    ustack B $DATASTACK_PTR
     dmod B A
     sto A $TURTLE_HEADING_DEG
     ret
@@ -204,13 +205,9 @@
     ld B A
     ldm A $TURTLE_HEADING_DEG
     add B A
-    stack B $DATASTACK_PTR
     ldm A $degrees_to_turn
-    ustack B $DATASTACK_PTR
     sub B A
-    stack B $DATASTACK_PTR
     ldi A 360
-    ustack B $DATASTACK_PTR
     dmod B A
     sto A $TURTLE_HEADING_DEG
     ret
@@ -265,9 +262,7 @@
     ldm B $TURTLE_HEADING_DEG
     ldi A 22
     add B A
-    stack B $DATASTACK_PTR
     ldi A 45
-    ustack B $DATASTACK_PTR
     dmod B A
     ld A B
     sto A $TURTLE_HEADING
@@ -361,9 +356,7 @@
     ld B A
     ldm A $i_turtle
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     ldi A 2
@@ -444,9 +437,7 @@
     ldi A 1
     ustack B $DATASTACK_PTR
     sub B A
-    stack B $DATASTACK_PTR
     ldm A $dx
-    ustack B $DATASTACK_PTR
     mul A B
     sto A $dx
 :TURTLE.line_if_end_10
@@ -465,9 +456,7 @@
     ldi A 1
     ustack B $DATASTACK_PTR
     sub B A
-    stack B $DATASTACK_PTR
     ldm A $dy
-    ustack B $DATASTACK_PTR
     mul A B
     sto A $dy
 :TURTLE.line_if_end_11
@@ -509,9 +498,7 @@
     ldi A 1
     ustack B $DATASTACK_PTR
     sub B A
-    stack B $DATASTACK_PTR
     ldm A $dy
-    ustack B $DATASTACK_PTR
     mul A B
     sto A $dy
     ldm B $dx
@@ -710,9 +697,7 @@
     mul A B
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     add A B
     sto A $circ_p
     jmp :TURTLE.circle_if_end_18
@@ -735,9 +720,7 @@
     mul A B
     ustack B $DATASTACK_PTR
     sub B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     add A B
     sto A $circ_p
 :TURTLE.circle_if_end_18

@@ -380,13 +380,9 @@
     ldm B $loop_y
     ldm A $tile_w
     mul B A
-    stack B $DATASTACK_PTR
     ldm A $loop_x
-    ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     add A B
     ustack B $DATASTACK_PTR
     add A B
@@ -453,9 +449,7 @@
     mul A B
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldi A 6
-    ustack B $DATASTACK_PTR
     add A B
     sto A $temp_ptr
     ldm I $temp_ptr
@@ -533,9 +527,7 @@
     ldm B $pot_x
     ldm A $pot_w
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $other_x
@@ -549,9 +541,7 @@
     ldm B $other_x
     ldm A $other_w
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $pot_x
@@ -565,9 +555,7 @@
     ldm B $pot_y
     ldm A $pot_h
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $other_y
@@ -581,9 +569,7 @@
     ldm B $other_y
     ldm A $other_h
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $pot_y
@@ -717,9 +703,7 @@
     ldm B $pot_x
     ldm A $pot_w
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $other_x
@@ -733,9 +717,7 @@
     ldm B $other_x
     ldm A $other_w
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $pot_x
@@ -749,9 +731,7 @@
     ldm B $pot_y
     ldm A $pot_h
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $other_y
@@ -765,9 +745,7 @@
     ldm B $other_y
     ldm A $other_h
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
     ldm A $pot_y
@@ -974,9 +952,7 @@
     mul A B
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldi A 7
-    ustack B $DATASTACK_PTR
     add A B
     sto A $temp_ptr
     ldm I $temp_ptr
@@ -1331,9 +1307,7 @@
     mul A B
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldi A 5
-    ustack B $DATASTACK_PTR
     add A B
     sto A $temp_ptr
     ldm I $temp_ptr

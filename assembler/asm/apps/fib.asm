@@ -8,7 +8,10 @@
 # .CODE
     ldi A $_main_str_0
     stack A $DATASTACK_PTR
-    call @PRTstring
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
     stack Z $DATASTACK_PTR
     call @TIME.start
     ldi A 24
@@ -16,21 +19,33 @@
     call @fib
     ldi A $_main_str_1
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @rt_print_tos
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @rt_print_tos
     ldi A $_main_str_2
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_3
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A $_main_str_3
     stack A $DATASTACK_PTR
-    call @PRTstring
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
     stack Z $DATASTACK_PTR
     call @TIME.read
     call @TIME.as_string
     ldi A $_main_str_4
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ret
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ret
 
 # .FUNCTIONS
 @fib

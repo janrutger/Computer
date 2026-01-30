@@ -1,9 +1,9 @@
 {
   "functions": [
     "_check_last_block",
-    "_read_next_block",
     "_read_disk_block",
-    "load_bin_file"
+    "load_bin_file",
+    "_read_next_block"
   ],
   "variables": [],
   "constants": {}

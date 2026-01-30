@@ -11,7 +11,8 @@
 . $_main_str_1 4
 
 # .CODE
-    call @HEAP.free
+    ldm A $HEAP_START
+    sto A $HEAP_FREE
     call @Screen.init
     stack Z $DATASTACK_PTR
     call @TIME.start
@@ -68,9 +69,7 @@
     ldi A 3
     ustack B $DATASTACK_PTR
     mul B A
-    stack B $DATASTACK_PTR
     ldi A 999
-    ustack B $DATASTACK_PTR
     dmod B A
     ld A B
     sto A $r
@@ -116,9 +115,7 @@
     ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     dmod B A
     stack B $DATASTACK_PTR
     ldi A 1
@@ -134,9 +131,7 @@
     ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     dmod B A
     stack B $DATASTACK_PTR
     ldm A $cursor
@@ -186,14 +181,20 @@
 :end_of_chaos
     ldi A $_main_str_0
     stack A $DATASTACK_PTR
-    call @PRTstring
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
     stack Z $DATASTACK_PTR
     call @TIME.read
     call @TIME.as_string
     ldi A $_main_str_1
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ret
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ret
 
 # .FUNCTIONS
 @Point.new
@@ -240,13 +241,9 @@
     ldi A 15
     ustack B $DATASTACK_PTR
     mul B A
-    stack B $DATASTACK_PTR
     ldi A 999
-    ustack B $DATASTACK_PTR
     dmod B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     ldi A 2

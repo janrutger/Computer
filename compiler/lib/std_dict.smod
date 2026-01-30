@@ -21,9 +21,7 @@
     ld B A
     ldi A 2
     mul B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     call @NEW.list
@@ -66,8 +64,11 @@
     jmpt :DICT.put_if_end_0
     ldi A $_dict_err_inv_key
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :DICT.put_if_end_0
     ldi A 1
     stack A $DATASTACK_PTR
@@ -92,9 +93,7 @@
     ldm B $_dict_idx
     ldi A 2
     mul B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     add A B
     sto A $_dict_offset
     stack A $DATASTACK_PTR
@@ -152,15 +151,16 @@
     jmpt :DICT.put_if_end_3
     ldi A $_dict_err_full
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :DICT.put_if_end_3
     ldm B $_dict_cnt
     ldi A 2
     mul B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     add A B
     sto A $_dict_offset
     ldm A $_dict_key
@@ -218,9 +218,7 @@
     ldm B $_dict_idx
     ldi A 2
     mul B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     add A B
     sto A $_dict_offset
     stack A $DATASTACK_PTR
@@ -262,8 +260,11 @@
     jmpt :DICT.get_if_end_5
     ldi A $_dict_err_key
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :DICT.get_if_end_5
     ret
 @DICT.has_key
@@ -294,9 +295,7 @@
     ldm B $_dict_idx
     ldi A 2
     mul B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     add A B
     sto A $_dict_offset
     stack A $DATASTACK_PTR
@@ -351,9 +350,7 @@
     ldm B $_dict_idx
     ldi A 2
     mul B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     add A B
     sto A $_dict_offset
     stack A $DATASTACK_PTR
@@ -379,13 +376,9 @@
     ldm B $_dict_cnt
     ldi A 1
     sub B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     mul B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     add A B
     sto A $_dict_last_off
     stack A $DATASTACK_PTR
@@ -474,9 +467,7 @@
     ldm B $_dict_idx
     ldi A 2
     mul B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     add A B
     sto A $_dict_offset
     stack A $DATASTACK_PTR
@@ -494,8 +485,11 @@
 :DICT.item_if_else_9
     ldi A $_dict_err_bnd
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :DICT.item_if_end_9
     ret
 

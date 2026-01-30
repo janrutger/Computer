@@ -35,20 +35,27 @@
 . $_main_str_17 22
 
 # .CODE
-    call @HEAP.free
+    ldm A $HEAP_START
+    sto A $HEAP_FREE
     ldi A 2
     stack A $DATASTACK_PTR
     call @DEQUE.init_pool
     ldi A $_main_str_0
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @DEQUE.new
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @DEQUE.new
     ustack A $DATASTACK_PTR
     sto A $my_deque
     ldi A $_main_str_1
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 1
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A 1
     stack A $DATASTACK_PTR
     ldm A $my_deque
     stack A $DATASTACK_PTR
@@ -65,8 +72,11 @@
     call @DEQUE.push
     ldi A $_main_str_2
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 4
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A 4
     stack A $DATASTACK_PTR
     ldm A $my_deque
     stack A $DATASTACK_PTR
@@ -78,8 +88,11 @@
     call @DEQUE.append
     ldi A $_main_str_3
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldm A $my_deque
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $my_deque
     stack A $DATASTACK_PTR
     call @DEQUE.head
     ustack A $DATASTACK_PTR
@@ -105,22 +118,31 @@
 :_main_while_end_0
     ldi A $_main_str_4
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldm A $my_deque
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $my_deque
     stack A $DATASTACK_PTR
     call @DEQUE.pop
     call @rt_print_tos
     ldi A $_main_str_5
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldm A $my_deque
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $my_deque
     stack A $DATASTACK_PTR
     call @DEQUE.pop_tail
     call @rt_print_tos
     ldi A $_main_str_6
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldm A $my_deque
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $my_deque
     stack A $DATASTACK_PTR
     call @DEQUE.head
     ustack A $DATASTACK_PTR
@@ -146,8 +168,11 @@
 :_main_while_end_1
     ldi A $_main_str_7
     stack A $DATASTACK_PTR
-    call @PRTstring
-:_main_while_start_2
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+    :_main_while_start_2
     ldm A $my_deque
     stack A $DATASTACK_PTR
     call @DEQUE.is_empty
@@ -164,74 +189,104 @@
 :_main_while_end_2
     ldi A $_main_str_8
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldm A $my_deque
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $my_deque
     stack A $DATASTACK_PTR
     call @DEQUE.is_empty
     call @rt_print_tos
     ldi A $_main_str_9
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @DEQUE.new
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @DEQUE.new
     ustack A $DATASTACK_PTR
     sto A $my_deque2
     ldi A $_main_str_10
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 100
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A 100
     stack A $DATASTACK_PTR
     ldm A $my_deque
     stack A $DATASTACK_PTR
     call @DEQUE.push
     ldi A $_main_str_11
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 200
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A 200
     stack A $DATASTACK_PTR
     ldm A $my_deque2
     stack A $DATASTACK_PTR
     call @DEQUE.push
     ldi A $_main_str_12
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 101
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A 101
     stack A $DATASTACK_PTR
     ldm A $my_deque
     stack A $DATASTACK_PTR
     call @DEQUE.push
     ldi A $_main_str_13
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 201
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A 201
     stack A $DATASTACK_PTR
     ldm A $my_deque2
     stack A $DATASTACK_PTR
     call @DEQUE.push
     ldi A $_main_str_14
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldm A $my_deque
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $my_deque
     stack A $DATASTACK_PTR
     call @DEQUE.pop
     call @rt_print_tos
     ldi A $_main_str_15
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldm A $my_deque2
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $my_deque2
     stack A $DATASTACK_PTR
     call @DEQUE.pop
     call @rt_print_tos
     ldi A $_main_str_16
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldm A $my_deque
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $my_deque
     stack A $DATASTACK_PTR
     call @DEQUE.pop
     call @rt_print_tos
     ldi A $_main_str_17
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldm A $my_deque2
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $my_deque2
     stack A $DATASTACK_PTR
     call @DEQUE.pop
     call @rt_print_tos
@@ -273,9 +328,7 @@
     ldm B $_dq_i
     ldi A 1
     add B A
-    stack B $DATASTACK_PTR
     ldi A 3
-    ustack B $DATASTACK_PTR
     mul A B
     ustack B $DATASTACK_PTR
     add A B
@@ -538,8 +591,11 @@
     jmpt :DEQUE.pop_if_end_3
     ldi A $_dq_err_empty
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :DEQUE.pop_if_end_3
     stack Z $DATASTACK_PTR
     ldm A $_dq_head
@@ -605,8 +661,11 @@
     jmpt :DEQUE.pop_tail_if_end_5
     ldi A $_dq_err_empty
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :DEQUE.pop_tail_if_end_5
     stack Z $DATASTACK_PTR
     ldm A $_dq_tail

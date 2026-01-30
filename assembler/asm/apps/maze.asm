@@ -26,9 +26,7 @@
     ldi A 2
     ustack B $DATASTACK_PTR
     mul B A
-    stack B $DATASTACK_PTR
     ldi A 999
-    ustack B $DATASTACK_PTR
     dmod B A
     stack B $DATASTACK_PTR
     stack Z $DATASTACK_PTR

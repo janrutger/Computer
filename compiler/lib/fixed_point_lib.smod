@@ -29,10 +29,6 @@
 . $divisor 1
 . $sign 1
 # .FUNCTIONS
-@FP.set_scale
-    ustack A $DATASTACK_PTR
-    sto A $SCALE_FACTOR
-    ret
 @TOS_nnl
 
         ustack A $DATASTACK_PTR
@@ -42,30 +38,6 @@
         int $INT_VECTORS
         
         ret
-@FP.from_int
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    mul B A
-    stack B $DATASTACK_PTR
-    ret
-@FP.to_int
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    dmod B A
-    stack B $DATASTACK_PTR
-    ret
-@FP.add
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ret
-@FP.sub
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    sub B A
-    stack B $DATASTACK_PTR
-    ret
 @FP.mul
     ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
@@ -163,20 +135,19 @@
     jmpt :FP.div_if_else_5
     ldm A $div_error
     stack A $DATASTACK_PTR
-    call @PRTstring
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
     stack Z $DATASTACK_PTR
     jmp :FP.div_if_end_5
 :FP.div_if_else_5
     ldm B $abs_numerator
     ldm A $SCALE_FACTOR
     mul B A
-    stack B $DATASTACK_PTR
     ldm A $abs_denominator
-    ustack B $DATASTACK_PTR
     dmod B A
-    stack B $DATASTACK_PTR
     ldm A $result_sign
-    ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
 :FP.div_if_end_5
@@ -187,9 +158,9 @@
     ustack A $DATASTACK_PTR
     sto A $base
     ldi A 1
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ustack A $DATASTACK_PTR
+    ld B A
+    ldm A $SCALE_FACTOR
+    mul A B
     sto A $result
     ldm A $exponent
     stack A $DATASTACK_PTR
@@ -227,13 +198,6 @@
     ldm A $result
     stack A $DATASTACK_PTR
 :_fp_power_end
-    ret
-@FP.sqrt
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    mul B A
-    stack B $DATASTACK_PTR
-    call @isqrt
     ret
 @FP.print
     call @rt_dup
@@ -485,9 +449,10 @@
     ldm A $total_len
     stack A $DATASTACK_PTR
     call @_STRNatoi
-    call @FP.from_int
-    ldm A $sign
+    ldm A $SCALE_FACTOR
     ustack B $DATASTACK_PTR
+    mul B A
+    ldm A $sign
     mul B A
     stack B $DATASTACK_PTR
     jmp :_fp_from_string_end
@@ -497,15 +462,14 @@
     ldm A $dot_index
     stack A $DATASTACK_PTR
     call @_STRNatoi
-    call @FP.from_int
-    ustack A $DATASTACK_PTR
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul A B
     sto A $int_part_fp
     ldm B $str_ptr
     ldm A $dot_index
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     add A B
     sto A $frac_ptr
     ldm A $str_ptr
@@ -516,9 +480,7 @@
     ld B A
     ldm A $dot_index
     sub B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $frac_len
@@ -539,17 +501,11 @@
     ldm B $frac_as_int
     ldm A $SCALE_FACTOR
     mul B A
-    stack B $DATASTACK_PTR
     ldm A $divisor
-    ustack B $DATASTACK_PTR
     dmod B A
-    stack B $DATASTACK_PTR
     ldm A $int_part_fp
-    ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldm A $sign
-    ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
 :_fp_from_string_end

@@ -47,9 +47,7 @@
     ldm B $_dq_i
     ldi A 1
     add B A
-    stack B $DATASTACK_PTR
     ldi A 3
-    ustack B $DATASTACK_PTR
     mul A B
     ustack B $DATASTACK_PTR
     add A B
@@ -312,8 +310,11 @@
     jmpt :DEQUE.pop_if_end_3
     ldi A $_dq_err_empty
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :DEQUE.pop_if_end_3
     stack Z $DATASTACK_PTR
     ldm A $_dq_head
@@ -379,8 +380,11 @@
     jmpt :DEQUE.pop_tail_if_end_5
     ldi A $_dq_err_empty
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :DEQUE.pop_tail_if_end_5
     stack Z $DATASTACK_PTR
     ldm A $_dq_tail

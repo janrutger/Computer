@@ -1,0 +1,66 @@
+#### 30 jan 2026 Implemented
+
+### Stack compiler extentions
+1) introducing compiler macro's to in-line functions during compile time
+2) Reference (&) and dereference function calls, adding instruction to call an function by an pointer Reference
+
+
+
+## about inline code
+- For savety: 
+-- It not allowed to use GOTO in the marco's
+-- IF, ELSE, WHILE are allowed in marco's 
+-- It not allowed an Macro called his self (recursion) or other macro's (savety first)
+-- Its using the MACRO keyword as in MACRO name {...} where the closing } does not add an return (ret) instruction (like the DEF does)
+
+
+
+## about Reference and indirect calls
+- We can use & to refer to push the pointer to the datastack (& is already used for reference values)
+- we need assembly instruction like icall to fire the function (but this feels like double with the callx instrcution)
+-- The assembly instruction will be `CALLS` (Call Stack). In Stacks language, we use `EXEC` to invoke it.
+
+
+## Implementation Checklist
+
+### 1. Microcode (File: /home/janrutger/git/Computer/microcode_assembler/base_rom.uasm)
+- [x] Define new opcode `95=CALLS` (Call Stack).
+- [x] Implement logic:
+    1. Read Data Stack Pointer (argument $1).
+    2. Decrement Data Stack Pointer (pop logic).
+    3. Read Target Address from Data Stack.
+    *  **CRITICAL:** Store Target Address in `Rb` (not `Ra`) to preserve it during step 4.
+    4. Push current PC to Hardware Return Stack (SP).
+    5. Set PC to Target Address.
+
+### 2. Compiler (Files: /home/janrutger/git/Computer/compiler/lexer.py, parser.py, codegen.py)
+- [x] **Macros:**
+    - [x] **Lexer:** Add `MACRO` keyword.
+    - [x] **Parser:** Add `MACRO` definition parsing (store tokens, do not compile).
+    - [x] **Parser:** Refactor `advance()` to use a `token_queue` to support injection.
+    - [x] **Parser:** Implement macro expansion (inject tokens into stream).
+    - [x] Ensure `IF`/`WHILE` label generation uses a global counter for uniqueness.
+    - [x] **Parser:** Add safety checks in `parse_macro_definition`:
+        - [x] Error if `GOTO` token is found.
+        - [x] Error if token value matches macro name (Self-Recursion).
+        - [x] Error if token value is in `self.macros` (Nesting).
+- [x] **Function Pointers:**
+    - [x] **Codegen:** Implement AST pre-scan to populate `function_symbols` (solves forward reference issues for `&`).
+    - [x] **Codegen:** Update `&` handling to support function labels (ensure correct prefix `@` vs `$`).
+    - [x] **Lexer:** Add `EXEC` keyword.
+    - [x] **Parser:** Add `EXEC` parsing.
+    - [x] **Codegen:** Implement `EXEC` instruction generation (emits `CALLS`).
+
+### Notes
+Implementation verified. The `FP.sqrt` macro demonstrates the clean syntax and efficiency of the new system.
+MACRO FP.sqrt { SCALE_FACTOR * isqrt }
+
+*Operational Note:* When refactoring a library function (`DEF`) to a `MACRO`, a full rebuild (`make clean; make all`) is required. 
+    Applications previously compiled against the library will expect a function symbol for linking, 
+    which no longer exists. They must be recompiled to expand the new macro inline.
+
+### Planned Optimizations
+1. **FP.from_int**: Convert to MACRO.
+   - *Logic*: `SCALE_FACTOR *`
+   - *Assembly Goal*: `ldm A $SCALE_FACTOR; ustack B $DATASTACK_PTR; mul A B` (handled by peephole optimizer).
+   - *Special Case*: `stack A; call; ustack A` -> `ld B A; ldm A $SCALE; mul A B` (via interleaved load & commutative swap optimizations).

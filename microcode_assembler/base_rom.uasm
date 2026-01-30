@@ -363,3 +363,26 @@ def 94=GPU {
     gpu($1)
     ;  set_cpu_state(FETCH)
 }
+
+def 95=CALLS {
+    .format one_addr
+    # Pops a function address from the data stack and calls it.
+    # $1 is the address of the data stack pointer.
+
+    # 1. Push current PC to Hardware Return Stack (Standard CALL logic)
+    move_reg(Ra, SP)            ; Ra = Hardware SP
+    store_mem_reg(SP, PC)       ; Store Return Address (PC) at Hardware SP
+    alu(DEC)                    ; Ra = Ra - 1
+    move_reg(SP, Ra)            ; Update Hardware SP
+
+    # 2 & 3. Pop Target Address from Data Stack
+    read_mem_adres($1, Ra)      ; Ra = Data Stack Pointer
+    alu(DEC)                    ; Ra = Ra - 1
+    load_immediate(Rb, $1)      ; Rb = Address of Data Stack Pointer variable
+    store_mem_reg(Rb, Ra)       ; Update Data Stack Pointer in memory
+    read_mem_reg(Ra, Rb)        ; Rb = Target Address (read from new top of stack)
+
+    # 4. Jump to Target
+    move_reg(PC, Rb)            ; PC = Target Address
+    ;  set_cpu_state(FETCH)
+}

@@ -17,7 +17,8 @@
 . $_main_str_3 47
 
 # .CODE
-    call @HEAP.free
+    ldm A $HEAP_START
+    sto A $HEAP_FREE
     call @TOS.check
     ustack A $DATASTACK_PTR
     tst A 0
@@ -38,8 +39,11 @@
     sto A $count
     ldi A $_main_str_0
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 1
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A 1
     stack A $DATASTACK_PTR
     call @TIME.start
     ldm A $count
@@ -81,11 +85,17 @@
     call @PRTchar
     ldi A $_main_str_1
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_2
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A $_main_str_2
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 1
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A 1
     stack A $DATASTACK_PTR
     call @TIME.start
     call @sort_list
@@ -98,13 +108,19 @@
     call @PRTchar
     ldi A $_main_str_1
     stack A $DATASTACK_PTR
-    call @PRTstring
-    jmp :_main_if_end_1
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        jmp :_main_if_end_1
 :_main_if_else_1
     ldi A $_main_str_3
     stack A $DATASTACK_PTR
-    call @PRTstring
-:_main_if_end_1
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+    :_main_if_end_1
     ret
 
 # .FUNCTIONS

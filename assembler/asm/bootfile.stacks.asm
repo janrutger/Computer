@@ -227,12 +227,6 @@
         ldi I ~SYS_PRINT_CHAR
         int $INT_VECTORS        ; Interrupt to trigger the syscall
         ret
-@PRTstring
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ret
 @PRTnum
 
         ustack A $DATASTACK_PTR
@@ -245,11 +239,6 @@
 @PRTcls
 
         ldi I ~SYS_CLEAR_SCREEN
-        int $INT_VECTORS
-        ret
-@CURSORon
-
-        ldi I ~SYS_PRINT_CURSOR
         int $INT_VECTORS
         ret
 @CURSORoff
@@ -296,10 +285,14 @@
     ret
 @READline
 :readline_loop
-    call @CURSORon
-    call @KEYchar
-    call @CURSORon
-    call @rt_dup
+
+        ldi I ~SYS_PRINT_CURSOR
+        int $INT_VECTORS
+        call @KEYchar
+
+        ldi I ~SYS_PRINT_CURSOR
+        int $INT_VECTORS
+        call @rt_dup
     ldi A 13
     stack A $DATASTACK_PTR
     call @rt_eq
@@ -386,8 +379,11 @@
 @HALT
     ldi A $info_mesg0
     stack A $DATASTACK_PTR
-    call @PRTstring
-:HALT_while_start_0
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+    :HALT_while_start_0
     ldi A 1
     tst A 0
     jmpt :HALT_while_end_0
@@ -663,10 +659,6 @@
     sto A $HEAP_START
     sto A $HEAP_FREE
     ret
-@HEAP.free
-    ldm A $HEAP_START
-    sto A $HEAP_FREE
-    ret
 @NEW.list
     ustack A $DATASTACK_PTR
     sto A $_list_size
@@ -684,8 +676,11 @@
     jmpt :NEW.list_if_end_0
     ldi A $error_mesg4
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :NEW.list_if_end_0
     ldm A $HEAP_FREE
     sto A $_list_ptr
@@ -743,8 +738,11 @@
     jmpt :NEW.array_if_end_1
     ldi A $error_mesg0
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :NEW.array_if_end_1
     ldm A $HEAP_FREE
     sto A $new_array_pointer
@@ -794,8 +792,11 @@
     jmpt :ARRAY.append_if_end_2
     ldi A $error_mesg1
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :ARRAY.append_if_end_2
     ldm A $_count
     stack A $DATASTACK_PTR
@@ -807,15 +808,16 @@
     jmpt :ARRAY.append_if_end_3
     ldi A $error_mesg1
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :ARRAY.append_if_end_3
     ldm B $array_ptr
     ldi A 2
     add B A
-    stack B $DATASTACK_PTR
     ldm A $_count
-    ustack B $DATASTACK_PTR
     add A B
     sto A $dest_addr
     sto A $_ARR_TEMP_PTR
@@ -856,8 +858,11 @@
     jmpt :ARRAY.put_if_end_4
     ldi A $error_mesg2
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :ARRAY.put_if_end_4
     ldm A $_index
     stack A $DATASTACK_PTR
@@ -869,8 +874,11 @@
     jmpt :ARRAY.put_if_end_5
     ldi A $error_mesg2
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :ARRAY.put_if_end_5
     ldm A $_index
     stack A $DATASTACK_PTR
@@ -882,15 +890,16 @@
     jmpt :ARRAY.put_if_end_6
     ldi A $error_mesg2
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :ARRAY.put_if_end_6
     ldm B $array_ptr
     ldi A 2
     add B A
-    stack B $DATASTACK_PTR
     ldm A $_index
-    ustack B $DATASTACK_PTR
     add A B
     sto A $dest_addr
     sto A $_ARR_TEMP_PTR
@@ -920,8 +929,11 @@
     jmpt :ARRAY.get_if_end_7
     ldi A $error_mesg3
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :ARRAY.get_if_end_7
     ldm A $_index
     stack A $DATASTACK_PTR
@@ -933,8 +945,11 @@
     jmpt :ARRAY.get_if_end_8
     ldi A $error_mesg3
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :ARRAY.get_if_end_8
     ldm A $_index
     stack A $DATASTACK_PTR
@@ -946,15 +961,16 @@
     jmpt :ARRAY.get_if_end_9
     ldi A $error_mesg3
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :ARRAY.get_if_end_9
     ldm B $array_ptr
     ldi A 2
     add B A
-    stack B $DATASTACK_PTR
     ldm A $_index
-    ustack B $DATASTACK_PTR
     add A B
     sto A $read_addr
     sto A $_ARR_TEMP_PTR
@@ -981,15 +997,6 @@
     ldx A $_start_memory_
     stack A $DATASTACK_PTR
     ret
-@ARRAY.clear
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    add A B
-    sto A $_ARR_TEMP_PTR
-    ld B Z
-    ldm I $_ARR_TEMP_PTR
-    stx B $_start_memory_
-    ret
 @NEW.matrix
     ustack A $DATASTACK_PTR
     sto A $_MAT_X_DIM
@@ -1005,8 +1012,11 @@
     jmpt :NEW.matrix_if_end_10
     ldi A $error_mesg8
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :NEW.matrix_if_end_10
     ldm A $_MAT_Y_DIM
     stack A $DATASTACK_PTR
@@ -1018,8 +1028,11 @@
     jmpt :NEW.matrix_if_end_11
     ldi A $error_mesg8
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :NEW.matrix_if_end_11
     ldm B $_MAT_X_DIM
     ldm A $_MAT_Y_DIM
@@ -1043,8 +1056,11 @@
     jmpt :NEW.matrix_if_end_12
     ldi A $error_mesg5
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :NEW.matrix_if_end_12
     ldm A $HEAP_FREE
     sto A $_MAT_PTR
@@ -1088,8 +1104,11 @@
     jmpt :MATRIX.put_if_end_13
     ldi A $error_mesg7
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :MATRIX.put_if_end_13
     ldm A $_MAT_PTR
     sto A $_MAT_TEMP_PTR
@@ -1106,8 +1125,11 @@
     jmpt :MATRIX.put_if_end_14
     ldi A $error_mesg7
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :MATRIX.put_if_end_14
     ldm A $_MAT_X_DIM
     stack A $DATASTACK_PTR
@@ -1119,8 +1141,11 @@
     jmpt :MATRIX.put_if_end_15
     ldi A $error_mesg7
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :MATRIX.put_if_end_15
     ldm B $_MAT_PTR
     ldi A 1
@@ -1139,8 +1164,11 @@
     jmpt :MATRIX.put_if_end_16
     ldi A $error_mesg7
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :MATRIX.put_if_end_16
     ldm B $_MAT_X_DIM
     ldi A 1
@@ -1155,13 +1183,9 @@
     ld B A
     ldm A $_MAT_OFFSET
     mul B A
-    stack B $DATASTACK_PTR
     ldm A $_MAT_X_DIM
-    ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     add A B
     sto A $_MAT_OFFSET
     ldm B $_MAT_PTR
@@ -1189,8 +1213,11 @@
     jmpt :MATRIX.get_if_end_17
     ldi A $error_mesg7
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :MATRIX.get_if_end_17
     ldm A $_MAT_PTR
     sto A $_MAT_TEMP_PTR
@@ -1207,8 +1234,11 @@
     jmpt :MATRIX.get_if_end_18
     ldi A $error_mesg7
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :MATRIX.get_if_end_18
     ldm A $_MAT_X_DIM
     stack A $DATASTACK_PTR
@@ -1220,8 +1250,11 @@
     jmpt :MATRIX.get_if_end_19
     ldi A $error_mesg7
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :MATRIX.get_if_end_19
     ldm B $_MAT_PTR
     ldi A 1
@@ -1240,8 +1273,11 @@
     jmpt :MATRIX.get_if_end_20
     ldi A $error_mesg7
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :MATRIX.get_if_end_20
     ldm B $_MAT_X_DIM
     ldi A 1
@@ -1256,13 +1292,9 @@
     ld B A
     ldm A $_MAT_OFFSET
     mul B A
-    stack B $DATASTACK_PTR
     ldm A $_MAT_X_DIM
-    ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     add A B
     sto A $_MAT_OFFSET
     ldm B $_MAT_PTR
@@ -1288,8 +1320,11 @@
     jmpt :NEW.matrix_populate_if_end_21
     ldi A $error_mesg8
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :NEW.matrix_populate_if_end_21
     ldm A $_MAT_Y_DIM
     stack A $DATASTACK_PTR
@@ -1301,8 +1336,11 @@
     jmpt :NEW.matrix_populate_if_end_22
     ldi A $error_mesg8
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :NEW.matrix_populate_if_end_22
     ldm B $_MAT_X_DIM
     ldm A $_MAT_Y_DIM
@@ -1326,8 +1364,11 @@
     jmpt :NEW.matrix_populate_if_end_23
     ldi A $error_mesg5
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :NEW.matrix_populate_if_end_23
     ldm A $HEAP_FREE
     sto A $_MAT_PTR
@@ -1372,8 +1413,11 @@
     jmpt :NEW.matrix_populate_if_end_25
     ldi A $error_mesg6
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @HALT
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :NEW.matrix_populate_if_end_25
     ustack A $DATASTACK_PTR
     sto A $_MAT_VALUE

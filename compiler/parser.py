@@ -1,5 +1,6 @@
 # compiler/parser.py
 
+import os
 from lexer import Lexer, Token, TokenType
 
 # --- AST Nodes -------------------------------------------------------------
@@ -143,6 +144,13 @@ class BacktickNode(ASTNode):
     def __repr__(self):
         return f"BacktickNode('{self.routine_name}')"
 
+class ExecNode(ASTNode):
+    def __init__(self, token):
+        self.token = token
+
+    def __repr__(self):
+        return f"ExecNode()"
+
 class LabelNode(ASTNode):
     def __init__(self, label_name):
         self.label_name = label_name
@@ -201,11 +209,18 @@ class Parser:
     def __init__(self, lexer):
         self.lexer = lexer
         self.errors = []
+        self.macros = {}
+        self.functions = set()
+        self.token_queue = []
 
-        self.current_token = self.lexer.get_next_token()
+        self.current_token = None
+        self.advance()
 
     def advance(self):
-        self.current_token = self.lexer.get_next_token()
+        if self.token_queue:
+            self.current_token = self.token_queue.pop(0)
+        else:
+            self.current_token = self.lexer.get_next_token()
 
     def parse(self):
         program = ProgramNode()
@@ -230,6 +245,10 @@ class Parser:
             return self.parse_while_statement()
         elif token.type == TokenType.DEF:
             return self.parse_function_definition()
+        elif token.type == TokenType.MACRO:
+            return self.parse_macro_definition()
+        elif token.type == TokenType.EXEC:
+            return self.parse_exec_statement()
         elif token.type == TokenType.BACKTICK:
             return self.parse_backtick_call()
         elif token.type in (TokenType.KEYWORD_VAR, TokenType.KEYWORD_VALUE, TokenType.KEYWORD_LIST, TokenType.KEYWORD_STRING, TokenType.KEYWORD_CONST):
@@ -260,6 +279,10 @@ class Parser:
             TokenType.EQ, TokenType.NEQ, TokenType.LT, TokenType.GT, TokenType.RND, TokenType.NEGATE,
             TokenType.ABS,
         ]:
+            # Check if it is a macro expansion
+            if token.type == TokenType.IDENTIFIER and token.value in self.macros:
+                return self.expand_macro(token.value)
+            
             return WordNode(token)
 
         elif token.type == TokenType.ILLEGAL:
@@ -337,6 +360,12 @@ class Parser:
             self.errors.append("Parser error: Expected function name after 'DEF'.")
             return None
         name = self.current_token.value
+
+        if name in self.macros:
+            self.errors.append(f"Parser error: Function name '{name}' conflicts with existing macro.")
+        if name in self.functions:
+            self.errors.append(f"Parser error: Function '{name}' is already defined.")
+        self.functions.add(name)
         self.advance() # Consume function name
 
         if self.current_token.type != TokenType.OPEN_BRACE:
@@ -356,6 +385,66 @@ class Parser:
             return None
         
         return FunctionDefinitionNode(name, body)
+
+    def parse_macro_definition(self):
+        self.advance() # Consume 'MACRO'
+
+        if self.current_token.type != TokenType.IDENTIFIER:
+            self.errors.append("Parser error: Expected macro name after 'MACRO'.")
+            return None
+        name = self.current_token.value
+
+        if name in self.macros:
+            self.errors.append(f"Parser error: Macro '{name}' is already defined.")
+        if name in self.functions:
+            self.errors.append(f"Parser error: Macro name '{name}' conflicts with existing function.")
+
+        self.advance() # Consume macro name
+
+        if self.current_token.type != TokenType.OPEN_BRACE:
+            self.errors.append("Parser error: Expected '{' after macro name.")
+            return None
+        self.advance() # Consume '{'
+
+        body_tokens = []
+        brace_count = 1
+        
+        while self.current_token.type != TokenType.EOF:
+            if self.current_token.type == TokenType.OPEN_BRACE:
+                brace_count += 1
+            elif self.current_token.type == TokenType.CLOSE_BRACE:
+                brace_count -= 1
+                if brace_count == 0:
+                    break
+            
+            # Safety Checks
+            if self.current_token.type == TokenType.GOTO:
+                self.errors.append(f"Parser error: GOTO not allowed in macro '{name}'.")
+            
+            if self.current_token.type == TokenType.IDENTIFIER:
+                if self.current_token.value == name:
+                    self.errors.append(f"Parser error: Recursive macro call detected in '{name}'.")
+                if self.current_token.value in self.macros:
+                    self.errors.append(f"Parser error: Nested macro call detected in '{name}'.")
+
+            body_tokens.append(self.current_token)
+            self.advance()
+
+        if self.current_token.type != TokenType.CLOSE_BRACE:
+            self.errors.append("Parser error: Expected '}' to close macro definition.")
+            return None
+        
+        self.macros[name] = body_tokens
+        return None # Macros do not produce an AST node directly
+
+    def expand_macro(self, macro_name):
+        self.token_queue = self.macros[macro_name] + self.token_queue
+        self.advance()
+        return self.parse_statement()
+
+    def parse_exec_statement(self):
+        token = self.current_token
+        return ExecNode(token)
 
     def parse_backtick_call(self):
         self.advance() # Consume '`'
@@ -423,6 +512,31 @@ class Parser:
 
         return IONode(channel_token, command_token)
 
+    def _import_macros_from_module(self, module_name):
+        # Attempt to find and parse the included file to extract macros
+        possible_paths = [
+            f"{module_name}.stacks",
+            f"compiler/src/libs/{module_name}.stacks",
+            f"libs/{module_name}.stacks"
+        ]
+
+        for path in possible_paths:
+            if os.path.exists(path):
+                try:
+                    with open(path, 'r') as f:
+                        source = f.read()
+                    
+                    inc_lexer = Lexer(source)
+                    inc_parser = Parser(inc_lexer)
+                    inc_parser.parse()
+
+                    for macro_name, tokens in inc_parser.macros.items():
+                        if macro_name not in self.macros:
+                            self.macros[macro_name] = tokens
+                    break # Stop after finding the file
+                except Exception as e:
+                    self.errors.append(f"Parser warning: Failed to parse included module '{module_name}' for macros: {e}")
+
     def parse_use_statement(self):
         self.advance() # Consume 'USE'
 
@@ -431,16 +545,18 @@ class Parser:
             return None
         
         module_name_token = self.current_token
+        self._import_macros_from_module(module_name_token.value)
         return UseNode(module_name_token)
 
     def parse_include_statement(self):
         self.advance() # Consume 'INCLUDE'
-
+        
         if self.current_token.type != TokenType.IDENTIFIER:
             self.errors.append(f"Parser error: Expected module name (identifier) after 'INCLUDE', but got {self.current_token.type}.")
             return None
         
         module_name_token = self.current_token
+        self._import_macros_from_module(module_name_token.value)
         return IncludeNode(module_name_token)
 
 

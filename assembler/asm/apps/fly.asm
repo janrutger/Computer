@@ -45,7 +45,22 @@
     stack A $DATASTACK_PTR
     ldm A $N
     stack A $DATASTACK_PTR
-    call @gcd
+:_main_while_start_1
+    call @rt_dup
+    stack Z $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_main_while_end_1
+    call @rt_swap
+    call @rt_over
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
+    jmp :_main_while_start_1
+:_main_while_end_1
+    call @rt_drop
     ustack A $DATASTACK_PTR
     sto A $C
     stack A $DATASTACK_PTR
@@ -86,24 +101,6 @@
 
 # .FUNCTIONS
 
-@gcd
-:gcd_while_start_0
-    call @rt_dup
-    stack Z $DATASTACK_PTR
-    call @rt_neq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :gcd_while_end_0
-    call @rt_swap
-    call @rt_over
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    dmod B A
-    stack A $DATASTACK_PTR
-    jmp :gcd_while_start_0
-:gcd_while_end_0
-    call @rt_drop
-    ret
 @power
     ustack A $DATASTACK_PTR
     sto A $_power_exp
@@ -142,7 +139,7 @@
     sto A $n
     ldi A 1
     sto A $res
-:factorial_while_start_1
+:factorial_while_start_0
     ldm A $n
     stack A $DATASTACK_PTR
     ldi A 1
@@ -150,7 +147,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :factorial_while_end_1
+    jmpt :factorial_while_end_0
     ldm B $res
     ldm A $n
     mul A B
@@ -160,8 +157,8 @@
     sub B A
     ld A B
     sto A $n
-    jmp :factorial_while_start_1
-:factorial_while_end_1
+    jmp :factorial_while_start_0
+:factorial_while_end_0
     ldm A $res
     stack A $DATASTACK_PTR
     ret
@@ -174,7 +171,7 @@
     ldi A 1
     add A B
     sto A $_sqrt_R
-:isqrt_while_start_2
+:isqrt_while_start_1
     ldm A $_sqrt_L
     stack A $DATASTACK_PTR
     ldm B $_sqrt_R
@@ -184,13 +181,11 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :isqrt_while_end_2
+    jmpt :isqrt_while_end_1
     ldm B $_sqrt_L
     ldm A $_sqrt_R
     add B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     dmod B A
     ld A B
     sto A $_sqrt_M
@@ -213,8 +208,8 @@
     ldm A $_sqrt_M
     sto A $_sqrt_L
 :isqrt_if_end_1
-    jmp :isqrt_while_start_2
-:isqrt_while_end_2
+    jmp :isqrt_while_start_1
+:isqrt_while_end_1
     ldm A $_sqrt_L
     stack A $DATASTACK_PTR
     ret

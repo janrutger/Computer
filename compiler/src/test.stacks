@@ -2,23 +2,11 @@ USE std_heap
 USE std_stern_io
 
 
-"Make array\n" PRTstring
-5 NEW.array AS my_array
-
-"Append to array\n" PRTstring
-10 my_array ARRAY.append
-20 my_array ARRAY.append
-30 my_array ARRAY.append
-40 my_array ARRAY.append
-50 my_array ARRAY.append
-
-"Print array\n" PRTstring
-0 my_array ARRAY.get PRINT
-1 my_array ARRAY.get PRINT
-2 my_array ARRAY.get PRINT
-3 my_array ARRAY.get PRINT
-4 my_array ARRAY.get PRINT
+DEF my_func {
+    DUP *   ; square
+}
 
 
 
-"Done .... \n" PRTstring
+3 &my_func EXEC PRINT   ; Prints 9
+"Hello world\n" PRTstring

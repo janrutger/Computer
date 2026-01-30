@@ -128,24 +128,6 @@
 
 # .FUNCTIONS
 
-@gcd
-:gcd_while_start_0
-    call @rt_dup
-    stack Z $DATASTACK_PTR
-    call @rt_neq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :gcd_while_end_0
-    call @rt_swap
-    call @rt_over
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    dmod B A
-    stack A $DATASTACK_PTR
-    jmp :gcd_while_start_0
-:gcd_while_end_0
-    call @rt_drop
-    ret
 @power
     ustack A $DATASTACK_PTR
     sto A $_power_exp
@@ -184,7 +166,7 @@
     sto A $n
     ldi A 1
     sto A $res
-:factorial_while_start_1
+:factorial_while_start_0
     ldm A $n
     stack A $DATASTACK_PTR
     ldi A 1
@@ -192,7 +174,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :factorial_while_end_1
+    jmpt :factorial_while_end_0
     ldm B $res
     ldm A $n
     mul A B
@@ -202,8 +184,8 @@
     sub B A
     ld A B
     sto A $n
-    jmp :factorial_while_start_1
-:factorial_while_end_1
+    jmp :factorial_while_start_0
+:factorial_while_end_0
     ldm A $res
     stack A $DATASTACK_PTR
     ret
@@ -216,7 +198,7 @@
     ldi A 1
     add A B
     sto A $_sqrt_R
-:isqrt_while_start_2
+:isqrt_while_start_1
     ldm A $_sqrt_L
     stack A $DATASTACK_PTR
     ldm B $_sqrt_R
@@ -226,13 +208,11 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :isqrt_while_end_2
+    jmpt :isqrt_while_end_1
     ldm B $_sqrt_L
     ldm A $_sqrt_R
     add B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     dmod B A
     ld A B
     sto A $_sqrt_M
@@ -255,8 +235,8 @@
     ldm A $_sqrt_M
     sto A $_sqrt_L
 :isqrt_if_end_1
-    jmp :isqrt_while_start_2
-:isqrt_while_end_2
+    jmp :isqrt_while_start_1
+:isqrt_while_end_1
     ldm A $_sqrt_L
     stack A $DATASTACK_PTR
     ret
@@ -381,9 +361,7 @@
     ldm B $TURTLE_HEADING_DEG
     ldm A $degrees_to_turn
     add B A
-    stack B $DATASTACK_PTR
     ldi A 360
-    ustack B $DATASTACK_PTR
     dmod B A
     sto A $TURTLE_HEADING_DEG
     ret
@@ -394,13 +372,9 @@
     ld B A
     ldm A $TURTLE_HEADING_DEG
     add B A
-    stack B $DATASTACK_PTR
     ldm A $degrees_to_turn
-    ustack B $DATASTACK_PTR
     sub B A
-    stack B $DATASTACK_PTR
     ldi A 360
-    ustack B $DATASTACK_PTR
     dmod B A
     sto A $TURTLE_HEADING_DEG
     ret
@@ -455,9 +429,7 @@
     ldm B $TURTLE_HEADING_DEG
     ldi A 22
     add B A
-    stack B $DATASTACK_PTR
     ldi A 45
-    ustack B $DATASTACK_PTR
     dmod B A
     ld A B
     sto A $TURTLE_HEADING
@@ -551,9 +523,7 @@
     ld B A
     ldm A $i_turtle
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     ldi A 2
@@ -634,9 +604,7 @@
     ldi A 1
     ustack B $DATASTACK_PTR
     sub B A
-    stack B $DATASTACK_PTR
     ldm A $dx
-    ustack B $DATASTACK_PTR
     mul A B
     sto A $dx
 :TURTLE.line_if_end_10
@@ -655,9 +623,7 @@
     ldi A 1
     ustack B $DATASTACK_PTR
     sub B A
-    stack B $DATASTACK_PTR
     ldm A $dy
-    ustack B $DATASTACK_PTR
     mul A B
     sto A $dy
 :TURTLE.line_if_end_11
@@ -699,9 +665,7 @@
     ldi A 1
     ustack B $DATASTACK_PTR
     sub B A
-    stack B $DATASTACK_PTR
     ldm A $dy
-    ustack B $DATASTACK_PTR
     mul A B
     sto A $dy
     ldm B $dx
@@ -900,9 +864,7 @@
     mul A B
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     add A B
     sto A $circ_p
     jmp :TURTLE.circle_if_end_18
@@ -925,9 +887,7 @@
     mul A B
     ustack B $DATASTACK_PTR
     sub B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     add A B
     sto A $circ_p
 :TURTLE.circle_if_end_18
@@ -949,10 +909,6 @@
     ret
 
 
-@FP.set_scale
-    ustack A $DATASTACK_PTR
-    sto A $SCALE_FACTOR
-    ret
 @TOS_nnl
 
         ustack A $DATASTACK_PTR
@@ -962,30 +918,6 @@
         int $INT_VECTORS
         
         ret
-@FP.from_int
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    mul B A
-    stack B $DATASTACK_PTR
-    ret
-@FP.to_int
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    dmod B A
-    stack B $DATASTACK_PTR
-    ret
-@FP.add
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ret
-@FP.sub
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    sub B A
-    stack B $DATASTACK_PTR
-    ret
 @FP.mul
     ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
@@ -1083,20 +1015,19 @@
     jmpt :FP.div_if_else_5
     ldm A $div_error
     stack A $DATASTACK_PTR
-    call @PRTstring
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
     stack Z $DATASTACK_PTR
     jmp :FP.div_if_end_5
 :FP.div_if_else_5
     ldm B $abs_numerator
     ldm A $SCALE_FACTOR
     mul B A
-    stack B $DATASTACK_PTR
     ldm A $abs_denominator
-    ustack B $DATASTACK_PTR
     dmod B A
-    stack B $DATASTACK_PTR
     ldm A $result_sign
-    ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
 :FP.div_if_end_5
@@ -1107,9 +1038,9 @@
     ustack A $DATASTACK_PTR
     sto A $base
     ldi A 1
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ustack A $DATASTACK_PTR
+    ld B A
+    ldm A $SCALE_FACTOR
+    mul A B
     sto A $result
     ldm A $exponent
     stack A $DATASTACK_PTR
@@ -1147,13 +1078,6 @@
     ldm A $result
     stack A $DATASTACK_PTR
 :_fp_power_end
-    ret
-@FP.sqrt
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    mul B A
-    stack B $DATASTACK_PTR
-    call @isqrt
     ret
 @FP.print
     call @rt_dup
@@ -1405,9 +1329,10 @@
     ldm A $total_len
     stack A $DATASTACK_PTR
     call @_STRNatoi
-    call @FP.from_int
-    ldm A $sign
+    ldm A $SCALE_FACTOR
     ustack B $DATASTACK_PTR
+    mul B A
+    ldm A $sign
     mul B A
     stack B $DATASTACK_PTR
     jmp :_fp_from_string_end
@@ -1417,15 +1342,14 @@
     ldm A $dot_index
     stack A $DATASTACK_PTR
     call @_STRNatoi
-    call @FP.from_int
-    ustack A $DATASTACK_PTR
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul A B
     sto A $int_part_fp
     ldm B $str_ptr
     ldm A $dot_index
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     add A B
     sto A $frac_ptr
     ldm A $str_ptr
@@ -1436,9 +1360,7 @@
     ld B A
     ldm A $dot_index
     sub B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $frac_len
@@ -1459,17 +1381,11 @@
     ldm B $frac_as_int
     ldm A $SCALE_FACTOR
     mul B A
-    stack B $DATASTACK_PTR
     ldm A $divisor
-    ustack B $DATASTACK_PTR
     dmod B A
-    stack B $DATASTACK_PTR
     ldm A $int_part_fp
-    ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldm A $sign
-    ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
 :_fp_from_string_end
@@ -1477,8 +1393,7 @@
 
 @MAIN_LOOP
     ldi A 1000
-    stack A $DATASTACK_PTR
-    call @FP.set_scale
+    sto A $SCALE_FACTOR
     ldi A $MAIN_LOOP_str_0
     stack A $DATASTACK_PTR
     call @FP.from_string
@@ -1622,19 +1537,19 @@
     ld A Z
     sto A $i
     ldi A 45
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ustack A $DATASTACK_PTR
+    ld B A
+    ldm A $SCALE_FACTOR
+    mul A B
     sto A $SCALE
     ldi A 300
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ustack A $DATASTACK_PTR
+    ld B A
+    ldm A $SCALE_FACTOR
+    mul A B
     sto A $X_OFFSET
     ldi A 160
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ustack A $DATASTACK_PTR
+    ld B A
+    ldm A $SCALE_FACTOR
+    mul A B
     sto A $Y_OFFSET
 :loop_iterations
     ldm A $i
@@ -1667,9 +1582,7 @@
     ldm B $current_color
     ldi A 1
     add B A
-    stack B $DATASTACK_PTR
     ldi A 15
-    ustack B $DATASTACK_PTR
     dmod B A
     ld B A
     ldi A 1
@@ -1701,11 +1614,11 @@
     ldm A $B1
     stack A $DATASTACK_PTR
     call @FP.mul
-    call @FP.add
-    ldm A $E1
-    stack A $DATASTACK_PTR
-    call @FP.add
     ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    ldm A $E1
+    add A B
     sto A $current_x
     ldm A $temp_x
     stack A $DATASTACK_PTR
@@ -1717,11 +1630,11 @@
     ldm A $D1
     stack A $DATASTACK_PTR
     call @FP.mul
-    call @FP.add
-    ldm A $F1
-    stack A $DATASTACK_PTR
-    call @FP.add
     ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    ldm A $F1
+    add A B
     sto A $current_y
     jmp :MAIN_LOOP_if_end_2
 :MAIN_LOOP_if_else_2
@@ -1743,11 +1656,11 @@
     ldm A $B2
     stack A $DATASTACK_PTR
     call @FP.mul
-    call @FP.add
-    ldm A $E2
-    stack A $DATASTACK_PTR
-    call @FP.add
     ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    ldm A $E2
+    add A B
     sto A $current_x
     ldm A $temp_x
     stack A $DATASTACK_PTR
@@ -1759,11 +1672,11 @@
     ldm A $D2
     stack A $DATASTACK_PTR
     call @FP.mul
-    call @FP.add
-    ldm A $F2
-    stack A $DATASTACK_PTR
-    call @FP.add
     ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    ldm A $F2
+    add A B
     sto A $current_y
     jmp :MAIN_LOOP_if_end_3
 :MAIN_LOOP_if_else_3
@@ -1785,11 +1698,11 @@
     ldm A $B3
     stack A $DATASTACK_PTR
     call @FP.mul
-    call @FP.add
-    ldm A $E3
-    stack A $DATASTACK_PTR
-    call @FP.add
     ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    ldm A $E3
+    add A B
     sto A $current_x
     ldm A $temp_x
     stack A $DATASTACK_PTR
@@ -1801,11 +1714,11 @@
     ldm A $D3
     stack A $DATASTACK_PTR
     call @FP.mul
-    call @FP.add
-    ldm A $F3
-    stack A $DATASTACK_PTR
-    call @FP.add
     ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    ldm A $F3
+    add A B
     sto A $current_y
     jmp :MAIN_LOOP_if_end_4
 :MAIN_LOOP_if_else_4
@@ -1819,11 +1732,11 @@
     ldm A $B4
     stack A $DATASTACK_PTR
     call @FP.mul
-    call @FP.add
-    ldm A $E4
-    stack A $DATASTACK_PTR
-    call @FP.add
     ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    ldm A $E4
+    add A B
     sto A $current_x
     ldm A $temp_x
     stack A $DATASTACK_PTR
@@ -1835,11 +1748,11 @@
     ldm A $D4
     stack A $DATASTACK_PTR
     call @FP.mul
-    call @FP.add
-    ldm A $F4
-    stack A $DATASTACK_PTR
-    call @FP.add
     ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    ldm A $F4
+    add A B
     sto A $current_y
 :MAIN_LOOP_if_end_4
 :MAIN_LOOP_if_end_3
@@ -1850,30 +1763,34 @@
     stack A $DATASTACK_PTR
     call @FP.mul
     ldm A $X_OFFSET
-    stack A $DATASTACK_PTR
-    call @FP.add
-    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add A B
     sto A $mapped_x
     ldi A 640
-    stack A $DATASTACK_PTR
-    call @FP.from_int
+    ld B A
+    ldm A $SCALE_FACTOR
+    mul B A
     ldm A $Y_OFFSET
-    stack A $DATASTACK_PTR
-    call @FP.sub
+    sub B A
+    stack B $DATASTACK_PTR
     ldm A $current_y
     stack A $DATASTACK_PTR
     ldm A $SCALE
     stack A $DATASTACK_PTR
     call @FP.mul
-    call @FP.sub
     ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
     sto A $mapped_y
-    ldm A $mapped_x
-    stack A $DATASTACK_PTR
-    call @FP.to_int
-    ldm A $mapped_y
-    stack A $DATASTACK_PTR
-    call @FP.to_int
+    ldm B $mapped_x
+    ldm A $SCALE_FACTOR
+    dmod B A
+    stack B $DATASTACK_PTR
+    ldm B $mapped_y
+    ldm A $SCALE_FACTOR
+    dmod B A
+    stack B $DATASTACK_PTR
     call @TURTLE.goto
     ldm B $i
     ldi A 1

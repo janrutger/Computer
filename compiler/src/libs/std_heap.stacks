@@ -47,7 +47,10 @@ DEF HEAP.init {
     HEAP_START AS HEAP_FREE
 }
 
-DEF HEAP.free {
+# DEF HEAP.free {
+#     HEAP_START AS HEAP_FREE
+# }
+MACRO HEAP.free {
     HEAP_START AS HEAP_FREE
 }
 
@@ -279,7 +282,16 @@ DEF ARRAY.len {
 #
 # Stack: (array_ptr -- )
 # ----------------------------------------------------------------------------
-DEF ARRAY.clear {
+# DEF ARRAY.clear {
+#     # ( array_ptr -- )
+#     # This function takes an array pointer, calculates the address
+#     # of its 'count' field (ptr + 1), and writes a 0 to that address.
+#     # It uses a temporary pointer to avoid side-effects on global variables.
+#     1 + AS _ARR_TEMP_PTR
+#     0 AS *_ARR_TEMP_PTR
+# }
+
+MACRO ARRAY.clear {
     # ( array_ptr -- )
     # This function takes an array pointer, calculates the address
     # of its 'count' field (ptr + 1), and writes a 0 to that address.

@@ -13,6 +13,8 @@ class TokenType(Enum):
 
     # Keywords
     DEF = "DEF"
+    MACRO = "MACRO"
+    EXEC = "EXEC"
     IF = "IF"
     ELSE = "ELSE"
     END = "END"
@@ -68,6 +70,8 @@ class TokenType(Enum):
 # Map string keywords to their TokenType
 KEYWORDS = {
     "DEF": TokenType.DEF,
+    "MACRO": TokenType.MACRO,
+    "EXEC": TokenType.EXEC,
     "IF": TokenType.IF,
     "ELSE": TokenType.ELSE,
     "END": TokenType.END,

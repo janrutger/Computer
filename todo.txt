@@ -1,46 +1,37 @@
-Some idea's to implement in the (near) future:
+# Optimization Candidate: FP.from_int
 
-### Stack compiler extentions
-1) introducing compiler macro's to in-line functions during compile time
-2) Reference (&) and dereference function calls, adding instruction to call an function by an pointer Reference
+## Current Implementation (Function Call)
+    call @FP.from_int
+    ustack A $DATASTACK_PTR
+
+## Target Implementation (Inline Macro)
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul A B
+
+## Special Case (Full Optimization)
+    # When input is in A and result returns to A
+    # Old:
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    ustack A $DATASTACK_PTR
+
+    # New:
+    ld B A
+    ldm A $SCALE_FACTOR
+    mul A B
 
 
+    This one is even more special
 
-## about inline code
-- For savety: 
--- It not allowed to use GOTO in the marco's
--- IF, ELSE, WHILE are allowed in marco's 
--- It not allowed an Macro called his self (recursion) or other macro's (savety first)
--- Its using the MACRO keyword as in MACRO name {...} where the closing } does not add an return (ret) instruction (like the DEF does)
+    Old:
+    stack A $DATASTACK_PTR
+    call @FP.from_int
+    ustack A $DATASTACK_PTR
 
+    New:
+    ld B A
+    ldm A $SCALE_FACTOR
+    mul A B
 
-
-## about Reference and indirect calls
-- We can use & to refer to push the pointer to the datastack (& is already used for reference values)
-- we need assembly instruction like icall to fire the function (but this feels like double with the callx instrcution)
--- The assembly instruction will be `CALLS` (Call Stack). In Stacks language, we use `EXEC` to invoke it.
-
-
-## Implementation Checklist
-
-### 1. Microcode (File: /home/janrutger/git/Computer/microcode_assembler/base_rom.uasm)
-- [ ] Define new opcode `95=CALLS` (Call Stack).
-- [ ] Implement logic:
-    1. Read Data Stack Pointer (argument $1).
-    2. Decrement Data Stack Pointer (pop logic).
-    3. Read Target Address from Data Stack.
-    4. Push current PC to Hardware Return Stack (SP).
-    5. Set PC to Target Address.
-
-### 2. Compiler (Files: /home/janrutger/git/Computer/compiler/lexer.py, parser.py, codegen.py)
-- [ ] **Macros:**
-    - [ ] **Lexer:** Add `MACRO` keyword.
-    - [ ] **Parser:** Add `MACRO` definition parsing (store tokens, do not compile).
-    - [ ] **Parser:** Implement macro expansion (inject tokens into stream).
-    - [ ] Ensure `IF`/`WHILE` label generation uses a global counter for uniqueness.
-    - [ ] Add recursion/nesting detection (error if found).
-- [ ] **Function Pointers:**
-    - [ ] **Codegen:** Update `&` handling to support function labels (ensure correct prefix `@` vs `$`).
-    - [ ] **Lexer:** Add `EXEC` keyword.
-    - [ ] **Parser:** Add `EXEC` parsing.
-    - [ ] **Codegen:** Implement `EXEC` instruction generation (emits `CALLS`).
+    

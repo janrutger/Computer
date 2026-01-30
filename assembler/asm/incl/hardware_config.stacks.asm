@@ -152,13 +152,9 @@
     ldm B $random_seed
     ldi A 134775813
     mul B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldi A 65536
-    ustack B $DATASTACK_PTR
     dmod B A
     sto A $random_seed
     ld B A

@@ -80,7 +80,8 @@
 . $_main_str_10 18
 
 # .CODE
-    call @HEAP.free
+    ldm A $HEAP_START
+    sto A $HEAP_FREE
     call @SRAND
     stack Z $DATASTACK_PTR
     ldi A 2
@@ -102,26 +103,38 @@
     call @rt_udc_control
     ldi A $_main_str_1
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 2
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A 2
     stack A $DATASTACK_PTR
     call @NN.new_perceptron
     ustack A $DATASTACK_PTR
     sto A $perceptron
     ldi A $_main_str_2
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_3
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A $_main_str_3
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 2
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A 2
     stack A $DATASTACK_PTR
     call @NEW.array
     ustack A $DATASTACK_PTR
     sto A $input_array
     ldi A $_main_str_2
     stack A $DATASTACK_PTR
-    call @PRTstring
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
     stack Z $DATASTACK_PTR
     ldm A $input_array
     stack A $DATASTACK_PTR
@@ -132,7 +145,10 @@
     call @ARRAY.append
     ldi A $_main_str_4
     stack A $DATASTACK_PTR
-    call @PRTstring
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
     stack Z $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
@@ -151,16 +167,18 @@
     tst A 0
     jmpt :_main_while_end_0
     call @random_xy
-    ldm A $x_int
-    stack A $DATASTACK_PTR
-    call @FP.from_int
+    ldm B $x_int
+    ldm A $SCALE_FACTOR
+    mul B A
+    stack B $DATASTACK_PTR
     stack Z $DATASTACK_PTR
     ldm A $input_array
     stack A $DATASTACK_PTR
     call @ARRAY.put
-    ldm A $y_int
-    stack A $DATASTACK_PTR
-    call @FP.from_int
+    ldm B $y_int
+    ldm A $SCALE_FACTOR
+    mul B A
+    stack B $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     ldm A $input_array
@@ -206,9 +224,7 @@
     ldm B $x_int
     ldi A 5
     add B A
-    stack B $DATASTACK_PTR
     ldi A 5
-    ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
     ldi A 2
@@ -219,9 +235,7 @@
     ldm B $y_int
     ldi A 5
     add B A
-    stack B $DATASTACK_PTR
     ldi A 4
-    ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
     ldi A 2
@@ -242,7 +256,10 @@
 :_main_while_end_0
     ldi A $_main_str_5
     stack A $DATASTACK_PTR
-    call @PRTstring
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
     ld A Z
     sto A $itter
 :_main_while_start_1
@@ -255,16 +272,18 @@
     tst A 0
     jmpt :_main_while_end_1
     call @random_xy
-    ldm A $x_int
-    stack A $DATASTACK_PTR
-    call @FP.from_int
+    ldm B $x_int
+    ldm A $SCALE_FACTOR
+    mul B A
+    stack B $DATASTACK_PTR
     stack Z $DATASTACK_PTR
     ldm A $input_array
     stack A $DATASTACK_PTR
     call @ARRAY.put
-    ldm A $y_int
-    stack A $DATASTACK_PTR
-    call @FP.from_int
+    ldm B $y_int
+    ldm A $SCALE_FACTOR
+    mul B A
+    stack B $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     ldm A $input_array
@@ -301,8 +320,10 @@
     tst A 0
     jmpt :_main_if_end_3
     ldi A 100
-    stack A $DATASTACK_PTR
-    call @FP.from_int
+    ld B A
+    ldm A $SCALE_FACTOR
+    mul B A
+    stack B $DATASTACK_PTR
     ldm A $error
     stack A $DATASTACK_PTR
     ldm A $input_array
@@ -328,13 +349,9 @@
     ldm B $x_int
     ldi A 5
     add B A
-    stack B $DATASTACK_PTR
     ldi A 5
-    ustack B $DATASTACK_PTR
     mul B A
-    stack B $DATASTACK_PTR
     ldi A 320
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     ldi A 2
@@ -345,9 +362,7 @@
     ldm B $y_int
     ldi A 5
     add B A
-    stack B $DATASTACK_PTR
     ldi A 4
-    ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
     ldi A 2
@@ -368,7 +383,10 @@
 :_main_while_end_1
     ldi A $_main_str_6
     stack A $DATASTACK_PTR
-    call @PRTstring
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
     ld A Z
     sto A $itter
     ld A Z
@@ -383,16 +401,18 @@
     tst A 0
     jmpt :_main_while_end_2
     call @random_xy
-    ldm A $x_int
-    stack A $DATASTACK_PTR
-    call @FP.from_int
+    ldm B $x_int
+    ldm A $SCALE_FACTOR
+    mul B A
+    stack B $DATASTACK_PTR
     stack Z $DATASTACK_PTR
     ldm A $input_array
     stack A $DATASTACK_PTR
     call @ARRAY.put
-    ldm A $y_int
-    stack A $DATASTACK_PTR
-    call @FP.from_int
+    ldm B $y_int
+    ldm A $SCALE_FACTOR
+    mul B A
+    stack B $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     ldm A $input_array
@@ -463,13 +483,9 @@
     ldm B $x_int
     ldi A 5
     add B A
-    stack B $DATASTACK_PTR
     ldi A 5
-    ustack B $DATASTACK_PTR
     mul B A
-    stack B $DATASTACK_PTR
     ldi A 320
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     ldi A 2
@@ -480,13 +496,9 @@
     ldm B $y_int
     ldi A 5
     add B A
-    stack B $DATASTACK_PTR
     ldi A 4
-    ustack B $DATASTACK_PTR
     mul B A
-    stack B $DATASTACK_PTR
     ldi A 240
-    ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
     ldi A 2
@@ -507,44 +519,38 @@
 :_main_while_end_2
     ldi A $_main_str_7
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldm A $error_count
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $error_count
     stack A $DATASTACK_PTR
     call @PRTnum
     ldi A $_main_str_8
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 1000
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A 1000
     stack A $DATASTACK_PTR
     call @PRTnum
     ldi A $_main_str_9
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $_main_str_10
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A $_main_str_10
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ret
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ret
 
 # .FUNCTIONS
 
-@gcd
-:gcd_while_start_0
-    call @rt_dup
-    stack Z $DATASTACK_PTR
-    call @rt_neq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :gcd_while_end_0
-    call @rt_swap
-    call @rt_over
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    dmod B A
-    stack A $DATASTACK_PTR
-    jmp :gcd_while_start_0
-:gcd_while_end_0
-    call @rt_drop
-    ret
 @power
     ustack A $DATASTACK_PTR
     sto A $_power_exp
@@ -583,7 +589,7 @@
     sto A $n
     ldi A 1
     sto A $res
-:factorial_while_start_1
+:factorial_while_start_0
     ldm A $n
     stack A $DATASTACK_PTR
     ldi A 1
@@ -591,7 +597,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :factorial_while_end_1
+    jmpt :factorial_while_end_0
     ldm B $res
     ldm A $n
     mul A B
@@ -601,8 +607,8 @@
     sub B A
     ld A B
     sto A $n
-    jmp :factorial_while_start_1
-:factorial_while_end_1
+    jmp :factorial_while_start_0
+:factorial_while_end_0
     ldm A $res
     stack A $DATASTACK_PTR
     ret
@@ -615,7 +621,7 @@
     ldi A 1
     add A B
     sto A $_sqrt_R
-:isqrt_while_start_2
+:isqrt_while_start_1
     ldm A $_sqrt_L
     stack A $DATASTACK_PTR
     ldm B $_sqrt_R
@@ -625,13 +631,11 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :isqrt_while_end_2
+    jmpt :isqrt_while_end_1
     ldm B $_sqrt_L
     ldm A $_sqrt_R
     add B A
-    stack B $DATASTACK_PTR
     ldi A 2
-    ustack B $DATASTACK_PTR
     dmod B A
     ld A B
     sto A $_sqrt_M
@@ -654,17 +658,13 @@
     ldm A $_sqrt_M
     sto A $_sqrt_L
 :isqrt_if_end_1
-    jmp :isqrt_while_start_2
-:isqrt_while_end_2
+    jmp :isqrt_while_start_1
+:isqrt_while_end_1
     ldm A $_sqrt_L
     stack A $DATASTACK_PTR
     ret
 
 
-@FP.set_scale
-    ustack A $DATASTACK_PTR
-    sto A $SCALE_FACTOR
-    ret
 @TOS_nnl
 
         ustack A $DATASTACK_PTR
@@ -674,30 +674,6 @@
         int $INT_VECTORS
         
         ret
-@FP.from_int
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    mul B A
-    stack B $DATASTACK_PTR
-    ret
-@FP.to_int
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    dmod B A
-    stack B $DATASTACK_PTR
-    ret
-@FP.add
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    add B A
-    stack B $DATASTACK_PTR
-    ret
-@FP.sub
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    sub B A
-    stack B $DATASTACK_PTR
-    ret
 @FP.mul
     ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
@@ -795,20 +771,19 @@
     jmpt :FP.div_if_else_5
     ldm A $div_error
     stack A $DATASTACK_PTR
-    call @PRTstring
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
     stack Z $DATASTACK_PTR
     jmp :FP.div_if_end_5
 :FP.div_if_else_5
     ldm B $abs_numerator
     ldm A $SCALE_FACTOR
     mul B A
-    stack B $DATASTACK_PTR
     ldm A $abs_denominator
-    ustack B $DATASTACK_PTR
     dmod B A
-    stack B $DATASTACK_PTR
     ldm A $result_sign
-    ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
 :FP.div_if_end_5
@@ -819,9 +794,9 @@
     ustack A $DATASTACK_PTR
     sto A $base
     ldi A 1
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ustack A $DATASTACK_PTR
+    ld B A
+    ldm A $SCALE_FACTOR
+    mul A B
     sto A $result
     ldm A $exponent
     stack A $DATASTACK_PTR
@@ -859,13 +834,6 @@
     ldm A $result
     stack A $DATASTACK_PTR
 :_fp_power_end
-    ret
-@FP.sqrt
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    mul B A
-    stack B $DATASTACK_PTR
-    call @isqrt
     ret
 @FP.print
     call @rt_dup
@@ -1117,9 +1085,10 @@
     ldm A $total_len
     stack A $DATASTACK_PTR
     call @_STRNatoi
-    call @FP.from_int
-    ldm A $sign
+    ldm A $SCALE_FACTOR
     ustack B $DATASTACK_PTR
+    mul B A
+    ldm A $sign
     mul B A
     stack B $DATASTACK_PTR
     jmp :_fp_from_string_end
@@ -1129,15 +1098,14 @@
     ldm A $dot_index
     stack A $DATASTACK_PTR
     call @_STRNatoi
-    call @FP.from_int
-    ustack A $DATASTACK_PTR
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul A B
     sto A $int_part_fp
     ldm B $str_ptr
     ldm A $dot_index
     add B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     add A B
     sto A $frac_ptr
     ldm A $str_ptr
@@ -1148,9 +1116,7 @@
     ld B A
     ldm A $dot_index
     sub B A
-    stack B $DATASTACK_PTR
     ldi A 1
-    ustack B $DATASTACK_PTR
     sub B A
     ld A B
     sto A $frac_len
@@ -1171,17 +1137,11 @@
     ldm B $frac_as_int
     ldm A $SCALE_FACTOR
     mul B A
-    stack B $DATASTACK_PTR
     ldm A $divisor
-    ustack B $DATASTACK_PTR
     dmod B A
-    stack B $DATASTACK_PTR
     ldm A $int_part_fp
-    ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldm A $sign
-    ustack B $DATASTACK_PTR
     mul B A
     stack B $DATASTACK_PTR
 :_fp_from_string_end
@@ -1213,11 +1173,14 @@
     ld B A
     ldi A 100
     sub B A
+    ldm A $SCALE_FACTOR
+    mul B A
     stack B $DATASTACK_PTR
-    call @FP.from_int
     ldi A 1000
-    stack A $DATASTACK_PTR
-    call @FP.from_int
+    ld B A
+    ldm A $SCALE_FACTOR
+    mul B A
+    stack B $DATASTACK_PTR
     call @FP.div
     ldm A $weights_ptr
     stack A $DATASTACK_PTR
@@ -1234,7 +1197,10 @@
     ustack A $DATASTACK_PTR
     sto A $perceptron_ptr
     stack Z $DATASTACK_PTR
-    call @FP.from_int
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
     ldm A $perceptron_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.append
@@ -1303,12 +1269,9 @@
     call @FP.mul
     ustack A $DATASTACK_PTR
     sto A $product
-    ldm A $weighted_sum
-    stack A $DATASTACK_PTR
+    ldm B $weighted_sum
     ldm A $product
-    stack A $DATASTACK_PTR
-    call @FP.add
-    ustack A $DATASTACK_PTR
+    add A B
     sto A $weighted_sum
     ldm B $i
     ldi A 1
@@ -1352,10 +1315,9 @@
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $weights_ptr
-    ldm A $_error
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ustack A $DATASTACK_PTR
+    ldm B $_error
+    ldm A $SCALE_FACTOR
+    mul A B
     sto A $error_fp
     ldm A $learning_rate
     stack A $DATASTACK_PTR
@@ -1364,12 +1326,9 @@
     call @FP.mul
     ustack A $DATASTACK_PTR
     sto A $adjustment
-    ldm A $old_bias
-    stack A $DATASTACK_PTR
+    ldm B $old_bias
     ldm A $adjustment
-    stack A $DATASTACK_PTR
-    call @FP.add
-    ustack A $DATASTACK_PTR
+    add A B
     sto A $new_bias
     stack A $DATASTACK_PTR
     stack Z $DATASTACK_PTR
@@ -1413,11 +1372,9 @@
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $old_weight
-    stack A $DATASTACK_PTR
+    ld B A
     ldm A $weight_delta
-    stack A $DATASTACK_PTR
-    call @FP.add
-    ustack A $DATASTACK_PTR
+    add A B
     sto A $new_weight
     stack A $DATASTACK_PTR
     ldm A $i
@@ -1442,8 +1399,11 @@
     sto A $random_seed
     ldi A $SRAND_str_0
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldm A $random_seed
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $random_seed
     stack A $DATASTACK_PTR
     call @rt_print_tos
     ret
@@ -1452,9 +1412,7 @@
     ldi A 50
     ustack B $DATASTACK_PTR
     mul B A
-    stack B $DATASTACK_PTR
     ldi A 999
-    ustack B $DATASTACK_PTR
     dmod B A
     ld A B
     sto A $x_int
@@ -1462,9 +1420,7 @@
     ldi A 50
     ustack B $DATASTACK_PTR
     mul B A
-    stack B $DATASTACK_PTR
     ldi A 999
-    ustack B $DATASTACK_PTR
     dmod B A
     ld A B
     sto A $y_int

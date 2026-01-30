@@ -58,8 +58,11 @@ MALLOC $next_board 13488
     call @TIME.as_string
     ldi A $_main_str_0
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldm A $counter
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $counter
     stack A $DATASTACK_PTR
     call @rt_print_tos
     stack Z $DATASTACK_PTR
@@ -301,9 +304,7 @@ MALLOC $next_board 13488
     mul A B
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldm A $x_coord
-    ustack B $DATASTACK_PTR
     add A B
     sto A $p_current
     ldm I $p_current
@@ -325,9 +326,7 @@ MALLOC $next_board 13488
     mul A B
     ustack B $DATASTACK_PTR
     add B A
-    stack B $DATASTACK_PTR
     ldm A $x_coord
-    ustack B $DATASTACK_PTR
     add A B
     sto A $p_current
     ldm A $value_in

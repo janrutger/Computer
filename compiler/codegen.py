@@ -24,6 +24,7 @@ from parser import (
     UseNode,
     IncludeNode,
     AsmNode,
+    ExecNode,
     # The following nodes will be used in upcoming steps
     # AssignmentNode,
     # VariableNode,
@@ -74,6 +75,11 @@ class CodeGenerator:
         self.current_context = "_main"
         self.labels = {}
         
+        # Pre-scan for function definitions to allow forward references
+        for statement in ast.statements:
+            if isinstance(statement, FunctionDefinitionNode):
+                self.function_symbols.add(statement.name)
+
         # Main code generation
         self.code_section = self.generate_program(ast, is_module_compilation=setModule)
 
@@ -174,6 +180,9 @@ class CodeGenerator:
         elif isinstance(node, BacktickNode):
             return f"    call @{node.routine_name}\n"
         
+        elif isinstance(node, ExecNode):
+            return f"    calls $DATASTACK_PTR\n"
+        
         elif isinstance(node, LabelNode):
             self.labels[node.label_name] = len(self.code_section)
             return f":{node.label_name}\n"
@@ -197,7 +206,8 @@ class CodeGenerator:
                 return f"    ustack A $DATASTACK_PTR\n    sto A ${var_name}\n"
 
         elif isinstance(node, AddressOfNode):
-            return f"    ldi A ${node.var_name}\n    stack A $DATASTACK_PTR\n"
+            prefix = "@" if node.var_name in self.function_symbols else "$"
+            return f"    ldi A {prefix}{node.var_name}\n    stack A $DATASTACK_PTR\n"
 
         elif isinstance(node, DereferenceNode):
             return f"    ldm I ${node.var_name}\n    ldx A $_start_memory_\n    stack A $DATASTACK_PTR\n"
@@ -661,6 +671,27 @@ class CodeGenerator:
                                 optimized_lines.append(lines[i+1])
                                 i += 3
                                 lines_removed_count += 1
+                                continue
+                    
+                    # Pattern 8: Redundant Save/Restore around independent instruction
+                    # stack B $PTR -> ldm A $VAR -> ustack B $PTR
+                    # Becomes: ldm A $VAR
+                    # Condition: Middle instruction must not modify the saved register.
+                    if i + 2 < len(lines):
+                        line3 = lines[i+2].strip()
+                        parts3 = line3.split()
+                        
+                        if len(parts1) > 2 and len(parts3) > 2 and \
+                           parts1[0] == 'stack' and parts3[0] == 'ustack' and \
+                           parts1[2:] == parts3[2:] and parts1[1] == parts3[1]:
+                            
+                            reg = parts1[1]
+                            safe_ops = ['ldm', 'ldi', 'ld', 'add', 'sub', 'mul']
+                            
+                            if len(parts2) >= 2 and parts2[0] in safe_ops and parts2[1] != reg:
+                                optimized_lines.append(lines[i+1])
+                                i += 3
+                                lines_removed_count += 2
                                 continue
 
                     # Pattern 5: Load A then Move to B optimization

@@ -1250,6 +1250,90 @@
                     "comment": null
                 }
             ]
+        },
+        "95": {
+            "name": "CALLS",
+            "format": "one_addr",
+            "code": [
+                {
+                    "instruction": [
+                        "move_reg",
+                        "Ra",
+                        "SP"
+                    ],
+                    "comment": "Ra = Hardware SP"
+                },
+                {
+                    "instruction": [
+                        "store_mem_reg",
+                        "SP",
+                        "PC"
+                    ],
+                    "comment": "Store Return Address (PC) at Hardware SP"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "DEC"
+                    ],
+                    "comment": "Ra = Ra - 1"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "SP",
+                        "Ra"
+                    ],
+                    "comment": "Update Hardware SP"
+                },
+                {
+                    "instruction": [
+                        "read_mem_adres",
+                        "arg1",
+                        "Ra"
+                    ],
+                    "comment": "Ra = Data Stack Pointer"
+                },
+                {
+                    "instruction": [
+                        "alu",
+                        "DEC"
+                    ],
+                    "comment": "Ra = Ra - 1"
+                },
+                {
+                    "instruction": [
+                        "load_immediate",
+                        "Rb",
+                        "arg1"
+                    ],
+                    "comment": "Rb = Address of Data Stack Pointer variable"
+                },
+                {
+                    "instruction": [
+                        "store_mem_reg",
+                        "Rb",
+                        "Ra"
+                    ],
+                    "comment": "Update Data Stack Pointer in memory"
+                },
+                {
+                    "instruction": [
+                        "read_mem_reg",
+                        "Ra",
+                        "Rb"
+                    ],
+                    "comment": "Rb = Target Address (read from new top of stack)"
+                },
+                {
+                    "instruction": [
+                        "move_reg",
+                        "PC",
+                        "Rb"
+                    ],
+                    "comment": "PC = Target Address"
+                }
+            ]
         }
     }
 }

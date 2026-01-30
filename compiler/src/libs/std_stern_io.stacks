@@ -45,7 +45,14 @@ DEF PRTchar {
 }
 
 # Prints a null-terminated string. Pointer should be on Top of Stack.
-DEF PRTstring {
+# DEF PRTstring {
+#     ASM {
+#         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+#         ldi I ~SYS_PRINT_STRING
+#         int $INT_VECTORS         ; Interrupt to trigger the syscall
+#     }
+# }
+MACRO PRTstring {
     ASM {
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
@@ -74,7 +81,14 @@ DEF PRTcls {
 }
 
 # Shows the cursor
-DEF CURSORon {
+# DEF CURSORon {
+#     ASM {
+#         ldi I ~SYS_PRINT_CURSOR
+#         int $INT_VECTORS
+#     }
+# }
+
+MACRO CURSORon {
     ASM {
         ldi I ~SYS_PRINT_CURSOR
         int $INT_VECTORS

@@ -19,12 +19,6 @@
         ldi I ~SYS_PRINT_CHAR
         int $INT_VECTORS        ; Interrupt to trigger the syscall
         ret
-@PRTstring
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ret
 @PRTnum
 
         ustack A $DATASTACK_PTR
@@ -37,11 +31,6 @@
 @PRTcls
 
         ldi I ~SYS_CLEAR_SCREEN
-        int $INT_VECTORS
-        ret
-@CURSORon
-
-        ldi I ~SYS_PRINT_CURSOR
         int $INT_VECTORS
         ret
 @CURSORoff
@@ -88,10 +77,14 @@
     ret
 @READline
 :readline_loop
-    call @CURSORon
-    call @KEYchar
-    call @CURSORon
-    call @rt_dup
+
+        ldi I ~SYS_PRINT_CURSOR
+        int $INT_VECTORS
+        call @KEYchar
+
+        ldi I ~SYS_PRINT_CURSOR
+        int $INT_VECTORS
+        call @rt_dup
     ldi A 13
     stack A $DATASTACK_PTR
     call @rt_eq
@@ -178,8 +171,11 @@
 @HALT
     ldi A $info_mesg0
     stack A $DATASTACK_PTR
-    call @PRTstring
-:HALT_while_start_0
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+    :HALT_while_start_0
     ldi A 1
     tst A 0
     jmpt :HALT_while_end_0

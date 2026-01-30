@@ -455,8 +455,11 @@ MALLOC $bytecode_buffer 8704
     tst A 0
     jmpt :EXECUTE_BYTECODE_if_end_11
     call @rt_dup
-    call @PRTstring
-    ldi A 13
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A 13
     stack A $DATASTACK_PTR
     call @PRTchar
     call @load_bin_file
@@ -502,20 +505,29 @@ MALLOC $bytecode_buffer 8704
     call @TOS.check
     ldi A $InfoMessage0
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @rt_print_tos
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @rt_print_tos
     call @rt_dup
     ldi A $InfoMessage1
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @rt_print_tos
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @rt_print_tos
     jmp :EXECUTE_BYTECODE_if_end_15
 :EXECUTE_BYTECODE_if_else_15
     stack Z $DATASTACK_PTR
     ldi A $InfoMessage0
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @rt_print_tos
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @rt_print_tos
 :EXECUTE_BYTECODE_if_end_15
     jmp :execution_loop
 :EXECUTE_BYTECODE_if_end_14
@@ -529,7 +541,10 @@ MALLOC $bytecode_buffer 8704
     jmpt :EXECUTE_BYTECODE_if_end_16
     ldi A $ErrorMessage
     stack A $DATASTACK_PTR
-    call @PRTstring
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
     ldm B $bytecode_execution_ptr
     ldi A 1
     add A B
@@ -538,28 +553,43 @@ MALLOC $bytecode_buffer 8704
 :EXECUTE_BYTECODE_if_end_16
     ldi A $ErrorMessage
     stack A $DATASTACK_PTR
-    call @PRTstring
-    jmp :execution_end
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        jmp :execution_end
 :execution_end
     ret
 
 @start_kernel
     ldi A $start_kernel_str_0
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A $start_kernel_str_1
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A $start_kernel_str_1
     stack A $DATASTACK_PTR
-    call @PRTstring
-:main_loop
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+    :main_loop
     ldi A $start_kernel_str_2
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @TOS.check
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @TOS.check
     call @PRTnum
     ldi A $start_kernel_str_3
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @READline
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @READline
     call @rt_dup
     ldi A $start_kernel_str_4
     stack A $DATASTACK_PTR
@@ -628,8 +658,11 @@ MALLOC $bytecode_buffer 8704
     jmpt :start_kernel_if_end_4
     ldi A $start_kernel_str_6
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @rt_drop
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @rt_drop
     ldi A 2
     stack A $DATASTACK_PTR
     call @WRITE_TO_BYTECODE
@@ -644,8 +677,11 @@ MALLOC $bytecode_buffer 8704
     jmpt :start_kernel_if_end_5
     ldi A $start_kernel_str_8
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @rt_drop
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @rt_drop
     ldi A 3
     stack A $DATASTACK_PTR
     call @WRITE_TO_BYTECODE
@@ -660,8 +696,11 @@ MALLOC $bytecode_buffer 8704
     jmpt :start_kernel_if_end_6
     ldi A $start_kernel_str_10
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @rt_drop
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @rt_drop
     ldi A 8
     stack A $DATASTACK_PTR
     call @WRITE_TO_BYTECODE
@@ -676,8 +715,11 @@ MALLOC $bytecode_buffer 8704
     jmpt :start_kernel_if_end_7
     ldi A $start_kernel_str_12
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @rt_drop
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @rt_drop
     ldi A 5
     stack A $DATASTACK_PTR
     call @WRITE_TO_BYTECODE
@@ -692,8 +734,11 @@ MALLOC $bytecode_buffer 8704
     jmpt :start_kernel_if_end_8
     ldi A $start_kernel_str_14
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @rt_drop
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @rt_drop
     ldi A 7
     stack A $DATASTACK_PTR
     call @WRITE_TO_BYTECODE
@@ -705,8 +750,11 @@ MALLOC $bytecode_buffer 8704
     jmpt :start_kernel_if_else_9
     ldi A $start_kernel_str_15
     stack A $DATASTACK_PTR
-    call @PRTstring
-    call @rt_dup
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @rt_dup
     call @rt_print_tos
     ldi A 1
     stack A $DATASTACK_PTR
@@ -720,8 +768,11 @@ MALLOC $bytecode_buffer 8704
     stack A $DATASTACK_PTR
     ldi A $start_kernel_str_16
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ldi A 6
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A 6
     stack A $DATASTACK_PTR
     call @WRITE_TO_BYTECODE
 :start_kernel_if_end_9
@@ -729,8 +780,11 @@ MALLOC $bytecode_buffer 8704
 :end_kernel
     ldi A $start_kernel_str_17
     stack A $DATASTACK_PTR
-    call @PRTstring
-    ret
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ret
 
 # .DATA
 
