@@ -77,7 +77,7 @@ Point.new AS cursor
 10 10 cursor Point.set
 
 # 5. Main Loop
-WHILE 50000 iter > DO
+WHILE 20000 iter > DO
     # Pick random vertex (0, 1, or 2)
     RND 3 * 999 // AS r
     

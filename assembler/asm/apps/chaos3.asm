@@ -19,7 +19,7 @@
     call @TIME.start
     call @screen
 :_main_while_start_0
-    ldi A 50000
+    ldi A 20000
     stack A $DATASTACK_PTR
     ldm A $N
     stack A $DATASTACK_PTR

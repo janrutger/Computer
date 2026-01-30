@@ -179,9 +179,10 @@ def main():
             if event.type == pygame.KEYDOWN:
                 keyboard.handle_key_event(event)
 
-        # --- CPU Burst ---
-        # Run a burst of cycles if not halted and not paused by debugger
+        # # --- CPU Burst ---
+        # # Run a burst of cycles if not halted and not paused by debugger
         if not debugger.in_debug_mode and cpu.state != "HALT":
+            tick = cpu.tick
             total_bursts += 1
             cycles_this_burst = 0
             for _ in range(BURST_SIZE):
@@ -189,7 +190,8 @@ def main():
                 if cpu.state == "FETCH" and cpu.registers["PC"] in debugger.breakpoints:
                     debugger.enter_debug_mode()
 
-                cpu.tick()
+                #cpu.tick()
+                tick()
                 cycles_this_burst += 1
                 
                 if cpu.state == "HALT":
@@ -202,6 +204,7 @@ def main():
             if cycles_this_burst > max_burst_cycles:
                 max_burst_cycles = cycles_this_burst
 
+        
         # --- Device Ticks ---
         # Devices tick once per frame/burst
         if not debugger.in_debug_mode:
