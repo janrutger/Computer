@@ -22,16 +22,4 @@
     mul A B
 
 
-    This one is even more special
-
-    Old:
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ustack A $DATASTACK_PTR
-
-    New:
-    ld B A
-    ldm A $SCALE_FACTOR
-    mul A B
-
     
