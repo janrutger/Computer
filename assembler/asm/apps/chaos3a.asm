@@ -47,7 +47,15 @@
     sto A $t_point
     call @Screen.init
     stack Z $DATASTACK_PTR
-    call @TIME.start
+    ldm A $p_watch_list
+    ustack B $DATASTACK_PTR
+    add A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    ld B A
+    ldm I $current_watch
+    stx B $_start_memory_
     ldm A $t_point
     stack A $DATASTACK_PTR
     call @STRUCT.new
@@ -202,7 +210,18 @@
     stack A $DATASTACK_PTR
     call @rt_udc_control
     stack Z $DATASTACK_PTR
-    call @TIME.read
+    ldm A $p_watch_list
+    ustack B $DATASTACK_PTR
+    add A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldm I $current_watch
+    ldx A $_start_memory_
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
     call @TIME.as_string
     ldi A 32
     stack A $DATASTACK_PTR
@@ -228,7 +247,18 @@
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
     stack Z $DATASTACK_PTR
-    call @TIME.read
+    ldm A $p_watch_list
+    ustack B $DATASTACK_PTR
+    add A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldm I $current_watch
+    ldx A $_start_memory_
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
     call @TIME.as_string
     ldi A $_main_str_1
     stack A $DATASTACK_PTR

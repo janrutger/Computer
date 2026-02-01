@@ -158,11 +158,12 @@ def main():
     # 4. Main Loop
     print("Starting Stern-ATX System...")
     start_time = time.time()
+    io_time = 0
     
     running = True
     
-    # Tuning: BURST_SIZE determines how many CPU cycles run per screen refresh.
-    # Higher = Faster CPU, Lower = More responsive GUI.
+    # Tuning: BURST_SIZE determines the maximum CPU cycles per loop iteration.
+    # With yielding NOPs (SLEEP), the actual burst size may be smaller.
     BURST_SIZE = cpu_burst_size
     TARGET_FPS = 30
     draw_interval = 1.0 / TARGET_FPS
@@ -172,12 +173,14 @@ def main():
 
     while running:
         # --- Event Handling ---
+        io_start = time.time()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             # Pass keyboard events to the keyboard device
             if event.type == pygame.KEYDOWN:
                 keyboard.handle_key_event(event)
+        io_time += (time.time() - io_start)
 
         # # --- CPU Burst ---
         # # Run a burst of cycles if not halted and not paused by debugger
@@ -185,9 +188,13 @@ def main():
             tick = cpu.tick
             total_bursts += 1
             cycles_this_burst = 0
+            
+            # Optimization: Cache breakpoint check to avoid overhead in tight loop
+            has_breakpoints = bool(debugger.breakpoints)
+
             for _ in range(BURST_SIZE):
                 # Check for breakpoints (Optimization: only check on FETCH)
-                if cpu.state == "FETCH" and cpu.registers["PC"] in debugger.breakpoints:
+                if has_breakpoints and cpu.state == "FETCH" and cpu.registers["PC"] in debugger.breakpoints:
                     debugger.enter_debug_mode()
 
                 #cpu.tick()
@@ -207,6 +214,7 @@ def main():
         
         # --- Device Ticks ---
         # Devices tick once per frame/burst
+        io_start = time.time()
         if not debugger.in_debug_mode:
              rtc.tick()
              vdisk.access()
@@ -236,6 +244,7 @@ def main():
                             char_surface = font.render(chr(char_code), True, FG_COLOR)
                             screen.blit(char_surface, (x * CHAR_WIDTH, y * CHAR_HEIGHT))
                 pygame.display.flip()
+        io_time += (time.time() - io_start)
 
 
     # 5. Shutdown
@@ -248,10 +257,14 @@ def main():
     total_instructions = cpu.instructions_executed
     total_cycles = cpu.cycles_executed
 
+    cpu_time = elapsed_time - io_time
+    # Use cpu_time for performance metrics if valid, otherwise fallback to elapsed_time
+    calc_time = cpu_time if cpu_time > 0 else elapsed_time
+
     if elapsed_time > 0 and total_instructions > 0 and total_cycles > 0:
         cpi = total_cycles / total_instructions
-        core_speed = total_cycles / elapsed_time
-        ips = total_instructions / elapsed_time
+        core_speed = total_cycles / calc_time
+        ips = total_instructions / calc_time
 
         # Format Core Speed
         core_speed_val, core_speed_unit = (core_speed / 1_000_000, "MHz") if core_speed > 1_000_000 else ((core_speed / 1_000, "kHz") if core_speed > 1_000 else (core_speed, "Hz"))
@@ -265,6 +278,7 @@ def main():
         avg_burst_time_ms = (avg_cycles_per_burst / core_speed) * 1000
 
         print(f"  Total Simulation Time    : {elapsed_time:.2f} seconds")
+        print(f"  Time Spent in CPU        : {cpu_time:.2f} seconds ({cpu_time/elapsed_time*100:.1f}%)")
         print(f"  Total Cycles (ticks)     : {total_cycles:,}")
         print(f"  Total Instructions       : {total_instructions:,}\n")        
         print(f"  Average Core Speed       : {core_speed_val:.2f} {core_speed_unit}")

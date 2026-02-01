@@ -1533,7 +1533,15 @@
     stack A $DATASTACK_PTR
     call @TURTLE.color
     stack Z $DATASTACK_PTR
-    call @TIME.start
+    ldm A $p_watch_list
+    ustack B $DATASTACK_PTR
+    add A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    ld B A
+    ldm I $current_watch
+    stx B $_start_memory_
     ld A Z
     sto A $i
     ldi A 45
@@ -1571,7 +1579,18 @@
     jmpt :MAIN_LOOP_if_end_1
     call @TURTLE.flip
     stack Z $DATASTACK_PTR
-    call @TIME.read
+    ldm A $p_watch_list
+    ustack B $DATASTACK_PTR
+    add A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldm I $current_watch
+    ldx A $_start_memory_
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
     call @TIME.as_string
     ldi A 32
     stack A $DATASTACK_PTR
@@ -1807,7 +1826,18 @@
 :MAIN_LOOP_if_end_0
 :end_of_barnsly
     stack Z $DATASTACK_PTR
-    call @TIME.read
+    ldm A $p_watch_list
+    ustack B $DATASTACK_PTR
+    add A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldm I $current_watch
+    ldx A $_start_memory_
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
     call @TIME.as_string
     ldi A 32
     stack A $DATASTACK_PTR

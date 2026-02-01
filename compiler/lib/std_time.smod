@@ -24,31 +24,6 @@
     sub B A
     stack B $DATASTACK_PTR
     ret
-@TIME.start
-    ldm A $p_watch_list
-    ustack B $DATASTACK_PTR
-    add A B
-    sto A $current_watch
-    ldm I $p_currentime
-    ldx A $_start_memory_
-    ld B A
-    ldm I $current_watch
-    stx B $_start_memory_
-    ret
-@TIME.read
-    ldm A $p_watch_list
-    ustack B $DATASTACK_PTR
-    add A B
-    sto A $current_watch
-    ldm I $p_currentime
-    ldx A $_start_memory_
-    stack A $DATASTACK_PTR
-    ldm I $current_watch
-    ldx A $_start_memory_
-    ustack B $DATASTACK_PTR
-    sub B A
-    stack B $DATASTACK_PTR
-    ret
 @TIME.wait
     ldm I $p_currentime
     ldx A $_start_memory_

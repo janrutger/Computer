@@ -25,13 +25,13 @@ DEF TIME.uptime {
 }
 
 # expect the watch to watch as number on the stack
-DEF TIME.start {
+MACRO TIME.start {
     p_watch_list + AS current_watch
     *p_currentime AS *current_watch
 }
 
 
-DEF TIME.read {
+MACRO TIME.read {
     p_watch_list + AS current_watch
     *p_currentime *current_watch -
 }

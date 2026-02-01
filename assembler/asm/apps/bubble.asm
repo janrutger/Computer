@@ -44,8 +44,15 @@
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
         ldi A 1
-    stack A $DATASTACK_PTR
-    call @TIME.start
+    ld B A
+    ldm A $p_watch_list
+    add A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    ld B A
+    ldm I $current_watch
+    stx B $_start_memory_
     ldm A $count
     stack A $DATASTACK_PTR
     call @NEW.array
@@ -77,8 +84,18 @@
     jmp :_main_while_start_3
 :_main_while_end_3
     ldi A 1
+    ld B A
+    ldm A $p_watch_list
+    add A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
     stack A $DATASTACK_PTR
-    call @TIME.read
+    ldm I $current_watch
+    ldx A $_start_memory_
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
     call @TIME.as_string
     ldi A 32
     stack A $DATASTACK_PTR
@@ -96,12 +113,29 @@
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
         ldi A 1
-    stack A $DATASTACK_PTR
-    call @TIME.start
+    ld B A
+    ldm A $p_watch_list
+    add A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    ld B A
+    ldm I $current_watch
+    stx B $_start_memory_
     call @sort_list
     ldi A 1
+    ld B A
+    ldm A $p_watch_list
+    add A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
     stack A $DATASTACK_PTR
-    call @TIME.read
+    ldm I $current_watch
+    ldx A $_start_memory_
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
     call @TIME.as_string
     ldi A 32
     stack A $DATASTACK_PTR

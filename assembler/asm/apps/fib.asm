@@ -2,8 +2,6 @@
 . $_main_str_0 50
 . $_main_str_1 9
 . $_main_str_2 2
-. $_main_str_3 17
-. $_main_str_4 4
 
 # .CODE
     ldi A $_main_str_0
@@ -12,9 +10,7 @@
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-    stack Z $DATASTACK_PTR
-    call @TIME.start
-    ldi A 24
+        ldi A 24
     stack A $DATASTACK_PTR
     call @fib
     ldi A $_main_str_1
@@ -25,21 +21,6 @@
         int $INT_VECTORS         ; Interrupt to trigger the syscall
         call @rt_print_tos
     ldi A $_main_str_2
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldi A $_main_str_3
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-    stack Z $DATASTACK_PTR
-    call @TIME.read
-    call @TIME.as_string
-    ldi A $_main_str_4
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
@@ -81,5 +62,3 @@
 % $_main_str_0 \C \a \l \c \u \l \a \t \i \n \g \space \f \i \b \( \2 \4 \) \. \. \. \space \T \h \i \s \space \w \i \l \l \space \t \a \k \e \space \s \o \m \e \space \t \i \m \e \. \Return \null
 % $_main_str_1 \R \e \s \u \l \t \: \space \null
 % $_main_str_2 \Return \null
-% $_main_str_3 \T \o \t \a \l \space \r \u \n \space \t \i \m \e \: \space \null
-% $_main_str_4 \! \! \Return \null

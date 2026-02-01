@@ -94,10 +94,29 @@
 
 # .CODE
     stack Z $DATASTACK_PTR
-    call @TIME.start
+    ldm A $p_watch_list
+    ustack B $DATASTACK_PTR
+    add A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    ld B A
+    ldm I $current_watch
+    stx B $_start_memory_
     call @main
     stack Z $DATASTACK_PTR
-    call @TIME.read
+    ldm A $p_watch_list
+    ustack B $DATASTACK_PTR
+    add A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldm I $current_watch
+    ldx A $_start_memory_
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
     call @TIME.as_string
     ldi A 13
     stack A $DATASTACK_PTR

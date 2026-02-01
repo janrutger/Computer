@@ -50,7 +50,7 @@ DEF fib {
 
 "Calculating fib(24)... This will take some time.\n" PRTstring
 
-0 TIME.start
+# 0 TIME.start
 24 fib # Put 24 on the stack and call the function.
 
 # Print the final result
@@ -58,4 +58,4 @@ DEF fib {
 PRINT
 "\n" PRTstring
 
-"Total run time: " PRTstring 0 TIME.read TIME.as_string "!!\n" PRTstring
+# "Total run time: " PRTstring 0 TIME.read TIME.as_string "!!\n" PRTstring

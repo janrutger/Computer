@@ -34,7 +34,7 @@
         "keywords": {
             "patterns": [
                 { "name": "keyword.control.stacks", "match": "\\b(DEF|IF|ELSE|END|WHILE|DO|DONE|GOTO|USE|INCLUDE|ASM|MACRO)\\b" },
-                { "name": "keyword.other.stacks", "match": "\\b(DUP|SWAP|DROP|OVER|RND|IO|PRINT|AS|EXEC)\\b" },
+                { "name": "keyword.other.stacks", "match": "\\b(DUP|SWAP|DROP|OVER|RND|ABS|NEGATE|IO|PRINT|AS|EXEC)\\b" },
                 { "name": "keyword.declaration.stacks", "match": "\\b(VAR|LIST|STRING|VALUE|CONST)\\b" }
             ]
         },

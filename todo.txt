@@ -1,25 +1,179 @@
-# Optimization Candidate: FP.from_int
+### Start 1 feb 2026
+### Next project description and todo list to build this
 
-## Current Implementation (Function Call)
-    call @FP.from_int
-    ustack A $DATASTACK_PTR
+## DO NOT START CODING, JUST ADVISE ON THIS PLAN!!
 
-## Target Implementation (Inline Macro)
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    mul A B
+## ##
+In this project i like to develop an Stacks library to run code in Sandboxes or sort of VM
+Since the Stern-ATX is already an Virtual machine, those sandboxes also called VVM, (Virtual on Virtual Machine)
+The ultimate goal is to end up with an new SIMPL target for my Stacks compilers, so ican use an subset of Stacks language to run on this VVM
 
-## Special Case (Full Optimization)
-    # When input is in A and result returns to A
-    # Old:
-    stack A $DATASTACK_PTR
-    call @FP.from_int
-    ustack A $DATASTACK_PTR
+An VVM is an memory construction with an 
+    VVM-status,             Running, Error, Idle, SYS, Halt
+    VVM-size,               default 1024 (or 1024xN)
+    VVM-PC,                 program counter, an offset to the VVM-code start point
+    VVM-SP,     
+    VVM-stack,              (size 16)
+    VVM-registers           26 registers [A ..Z], 
+    VVM-HOST-pointer,       a deque pointer to communcate with the host computer (the stern-ATX)
+    VVM-code                The code section of the VVM (size - HEADER)
 
-    # New:
-    ld B A
-    ldm A $SCALE_FACTOR
-    mul A B
+The size of the VVM is set at initialisation, the smallest is 1024 word (like an ZX81 on VVM), but can be exteded with blocks of 1024 words as long it fits in memory
+The VVM's can  life high in program memory, or in an reserved block in extended memory of the Stern-ATX
+
+The VVM are programmed in an language calles Stacks Imediate Machine Programming Language what actually is an Intermediate Language (IL) for the VVM
+The SIMPL code is transpiled to byte code, for effcient store in the VMM-code section
+
+The SIMPL instructions can have zero or one operand, like 
+    PUSH <value>
+    GET <register>
+    SET <register>
+    ADD
+    SUB
+    MUL
+    BRA <label adres>           Jump always
+    BRZ <label adres>           jump when zero
+    BRP <label adres>           jump when positive
+    BNZ <label adres>           jump when not zero
+    BRN <label adres>           jump when negative
+
+    OUT                         saves TOS to VVM-HOST-pointer
+    SYS                         calls the syscall system of the host, the arguments are on the VVM-HOST-pointer
+                                When SYS is called, and the previous status was running it does not update the PC
+                                after returning from the SYSCALL and the status is IDLE, update the PC to the next instruction and set the status to running
+    FETCH                       reads the VVM-HOST-pointer and put the value TOS
+
+    :label                      Label directive
+
+    etc. etc....
+
+where byte code instructions are integers [0 ..255], registers are integers [0 .. 25] and integer values.
+to create an VVM i expect an Stacks instruction like
+    &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
+
+    Where 
+    &SIMPL-code, is the pointer to an deque holdng the raw SIMPL code tokens,
+    VVM-size, the size of the VVM, minimal 1024 words, or 1024xN words for lager machines
+    &VVM-HOST-pointer, pointer to an already defined deque for VVM -  Host communcation
+    &VVM-pointer, Named pointer where the VVM lives in memory.
+
+    During creation the Memory structure is setup and the SIMPL code is transpiled to byte code and loaded at VVM-code
 
 
+To crank the VVM i expect an Stacks instruction like
+    &VVM-pointer VVM.run
+
+    where
+    &VVM-pointer, named pointer where the VVM lives in memory.
+
+    it read an instruction and execute/finisch them in one tick,
+    it calls SYS routines using the VVM-HOST-pointer deque
+
+    The VVM Status is used as follows
+    When the status is:
+        Running:        The VVM will execute the next instruction 'normally', The status will remain running
+        Error:          No execution, the host knows this VVM is in trouble, the status will remain Error
+        Idle:           Is set by the host after running an SYSCALL, and return values is set on the deque, When no return data, the host set the status to Running. 
+                        The VVM see the Idle, FETCH the data, and sets the Status to Running.
+        SYS:            Is set by the VVM after issueing an SYSCALL, when the VVM sees an SYS status, it return, status remains SYS
+        Halt:           No execution, the host knows the VVM is halted normaly, the status will remain Halt
+
+To run Syscalls on the host by VVM-request
+    &VVM-pointer VVM.check_syscalls
+
+    where
+    &VVM-pointer, named pointer where the VVM lives in memory.
+
+    It checks the status and if requered it starts the syscall, by
+    reading the syscall-ID from the VVM-HOST-pointer,
+    reading the number of arguments from the VVM-HOST-pointer,
+    reading the arguments from the VVM-host-pointer,
+    executes the SYSCALL
+    Update the status to Running, if no return value(s)
+    Update the status to Idle, when return values on the VVM-HOST-pointer
+
+
+
+
+
+The Stacks main programming running on the Stern-ATX should, first create the VVM, then run/crank them in a loop.
+Where the main can run an other function/program, whille running this crank-loop.
+
+to supports this all we need:
+    &SIMPL-code,        type deque, hold thhe raw tokens of the SIMPL code \"PUSH", 10, \"PUSH", 2, \"ADD" (for fase one "the scout")
+    &SIMPL-code2,       type deque, hold thhe raw tokens of the SIMPL code, for Fase two, "the baker". 
+                                    the transpilers reads &SIMPL-code in the first fase, puts them on the &SIMPL-code2 queue, where fase 2 is reding from
+
+    &VVM-HOST-pointer,  type deque, holds syscall arguments
+
+    opcodes-table,      type dict,  Size 100, To translate the SIMPL instruction to the opcode \"PUSH" -> 0, \"ADD" -> 1
+    opcodes-lentgh      type list,  size 100, (i expect max 100 SIMPL instrcutions), where the index is opcode, and the value 0 or 1 the lentgh of the instruction
+    opcodes-runtimes    type list,  size 100, where the index is the opcode, and the value an pointer to the opcode handler to run the instruction
+    label-adresses      type dict,  size 50,  to store the label adresses (max 50 labels)
+
+    &VVM-pointer        type VAR,   An named pointer to the VVM, where the VVM lives in memory VAR VVM1 <adres> (eg 14336), its programmers responsibility to make sure this is an free 1kxN memory block
     
+## ##   
+
+
+
+Steps todo list:
+
+- [ ] **Main program to test this all**
+    - [ ] Include the **new** VVM_library
+    - [ ] Specify memory location of the VVM
+    - [ ] Declare VVM-HOST-pointer
+    - [ ] Declare &SIMPL-code, and push a simple test script on it
+
+- [ ] **Develop the VVM_library**
+    - [ ] **Optimization Tip:**
+        - [ ] Ensure your opcode handlers are written in the fastest native Stacks words available 
+        - [ ] Or even ASM blocks if the Stern-ATX supports them.
+        - [ ] Beaware of the new opcode table, 0 .. 49 no arguments, 50 .. 99 one argument
+    - [ ] **Setup runtime env**
+        - [ ] Write runtime handlers
+        - [ ] Write Syscall handlers
+        - [ ] Create/populate opcodes-table
+        - [-] Create/populate opcodes-length [Due a new opcode schema, this is not needed]
+        - [ ] Create/populate opcodes-runtimes
+        - [ ] Create &SIMPL-code2
+        - [ ] Define VVM-HEADER
+    - [ ] **VVM.create**
+        - [ ] Create memory structure
+        - [ ] Pass 1: Label Scanning (The Scout)
+        - [ ] Pass 2: Bytecode Baking (The Baker)
+        - [ ] Transpile code
+        - [ ] Load code to VM
+    - [ ] **VVM.run**
+        - [ ] Check status
+        - [ ] Fetch instruction
+        - [ ] Look-up Handler, and execute handler
+    - [ ] **VVM.check_syscalls**
+        - [ ] Check if any action (running a syscall) is expected, and execute
+
+
+### some developer information
+
+## VVM memory structure
+| Offset | Name | Description |
+| :--- | :--- | :--- |
+| 0 | VVM.STATUS | 0=Idle, 1=Running, 2=Error, 3=SYS, 4=Halt |
+| 1 | VVM.SIZE | Size in 1024-word blocks |
+| 2 | VVM.PC | Program Counter (Relative to Code Start) |
+| 3 | VVM.SP | Stack Pointer (0–15) |
+| 4 | VVM.HOST_PTR | Pointer to the communication Deque |
+| 6-21 | VVM.STACK | The 16-word internal data stack |
+| 22-47 | VVM.REGS | Registers A-Z (26 words) |
+| 50+ | VVM.CODE | The Start of Bytecode |
+
+
+## OPCODE table
+| Range | Group | Example Opcodes | Operand |
+| :--- | :--- | :--- | :--- |
+| 00 - 09 | System | HALT, NOP, SYS, OUT, FETCH | None |
+| 10 - 19 | Stack Logic | DUP, DROP, SWAP, OVER, CLEAR | None |
+| 20 - 29 | Math & Logic | ADD, SUB, MUL, DIV, EQ, GT | None |
+| 30 - 49 | Reserverd | None | |
+| 50 - 59 | Data Transfer | PUSH, GET, SET | Yes (Value/Reg) |
+| 60 - 69 | Flow Control | BRA, BRZ, BNZ, BRP, BRN | Yes (Address) |
+| 70 - 99 | reserved | | Yes |
