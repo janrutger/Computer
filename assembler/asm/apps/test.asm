@@ -32,8 +32,8 @@
 MALLOC $VVM0 15360
 . $main_str_0 29
 . $VVM_HOST_ptr 1
-. $SIMPL_code1 1
-. $SIMPL_code2 1
+. $SIMPL_code 1
+. $main_str_1 30
 
 # .CODE
     call @main
@@ -950,6 +950,22 @@ MALLOC $VVM0 15360
     call @rt_swap
     call @LIST.get
     ret
+@DEQUE.is_last
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_swap
+    call @LIST.get
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ret
+@DEQUE.is_first
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @rt_swap
+    call @LIST.get
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ret
 @DEQUE.next
     ldi A 1
     stack A $DATASTACK_PTR
@@ -1356,67 +1372,74 @@ MALLOC $VVM0 15360
     sto A $VVM_HOST_ptr
     call @DEQUE.new
     ustack A $DATASTACK_PTR
-    sto A $SIMPL_code1
-    call @DEQUE.new
-    ustack A $DATASTACK_PTR
-    sto A $SIMPL_code2
+    sto A $SIMPL_code
     ldi A 6384411237
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code1
+    ldm A $SIMPL_code
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 12
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code1
+    ldm A $SIMPL_code
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 6384411237
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code1
+    ldm A $SIMPL_code
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 30
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code1
+    ldm A $SIMPL_code
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 193450094
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code1
+    ldm A $SIMPL_code
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 193465917
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code1
+    ldm A $SIMPL_code
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 6384411237
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code1
+    ldm A $SIMPL_code
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 10
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code1
+    ldm A $SIMPL_code
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 193465917
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code1
+    ldm A $SIMPL_code
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 193470404
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code1
+    ldm A $SIMPL_code
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 6384101742
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code1
+    ldm A $SIMPL_code
     stack A $DATASTACK_PTR
     call @DEQUE.append
     call @VVM.init
-    ldi A 20
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.count
+    call @PRTnum
+    ldi A $main_str_1
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A 20
     stack A $DATASTACK_PTR
     ldm A $opcode_runtimes
     stack A $DATASTACK_PTR
@@ -1465,3 +1488,4 @@ MALLOC $VVM0 15360
 % $opcode_table 0
 % $opcode_runtimes 0
 % $main_str_0 \P \o \o \l \space \i \n \i \t \i \a \l \i \z \e \d \space \( \s \i \z \e \space \1 \0 \) \. \Return \null
+% $main_str_1 \space \o \p \c \o \d \e \s \space \i \n \space \t \h \e \space \o \p \c \o \d \e \space \t \a \b \l \e \Return \null

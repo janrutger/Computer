@@ -443,6 +443,22 @@
     call @rt_swap
     call @LIST.get
     ret
+@DEQUE.is_last
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_swap
+    call @LIST.get
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ret
+@DEQUE.is_first
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @rt_swap
+    call @LIST.get
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ret
 @DEQUE.next
     ldi A 1
     stack A $DATASTACK_PTR

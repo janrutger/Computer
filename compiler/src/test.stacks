@@ -17,17 +17,17 @@ VAR VVM0 15360                      ; The memory adres-pointer for the VVM0, 6K 
 
 
 MACRO load_simple_test_code {
-    \"PUSH"     SIMPL_code1 DEQUE.append
-    12          SIMPL_code1 DEQUE.append
-    \"PUSH"     SIMPL_code1 DEQUE.append
-    30          SIMPL_code1 DEQUE.append
-    \"ADD"      SIMPL_code1 DEQUE.append
-    \"OUT"      SIMPL_code1 DEQUE.append
-    \"PUSH"     SIMPL_code1 DEQUE.append
-    10          SIMPL_code1 DEQUE.append
-    \"OUT"      SIMPL_code1 DEQUE.append
-    \"SYS"      SIMPL_code1 DEQUE.append
-    \"HALT"     SIMPL_code1 DEQUE.append
+    \"PUSH"     SIMPL_code DEQUE.append
+    12          SIMPL_code DEQUE.append
+    \"PUSH"     SIMPL_code DEQUE.append
+    30          SIMPL_code DEQUE.append
+    \"ADD"      SIMPL_code DEQUE.append
+    \"OUT"      SIMPL_code DEQUE.append
+    \"PUSH"     SIMPL_code DEQUE.append
+    10          SIMPL_code DEQUE.append
+    \"OUT"      SIMPL_code DEQUE.append
+    \"SYS"      SIMPL_code DEQUE.append
+    \"HALT"     SIMPL_code DEQUE.append
 }
     
 
@@ -37,17 +37,17 @@ DEF main {
     10 DEQUE.init_pool "Pool initialized (size 10).\n" PRTstring
 
     DEQUE.new AS VVM_HOST_ptr       ; Declare a pointer to the deque for host communication 
-    DEQUE.new AS SIMPL_code1        ; Program buffer deque fase 1
-    DEQUE.new AS SIMPL_code2        ; Program buffer deque fase 2
+    DEQUE.new AS SIMPL_code        ; Program buffer for transpiling
+    
 
     load_simple_test_code
 
     VVM.init                        ; init VVM environment
+    opcode_table DICT.count PRTnum " opcodes in the opcode table\n" PRTstring
 
-    # some debugging lines
+     # some debugging lines
     _add_ opcode_runtimes LIST.get PRINT
     \"ADD" opcode_table DICT.get PRINT 
-
 
 }
 

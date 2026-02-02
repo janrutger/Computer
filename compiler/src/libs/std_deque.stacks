@@ -224,6 +224,16 @@ DEF DEQUE.tail {
     DEQUE_CTRL_TAIL SWAP LIST.get
 }
 
+DEF DEQUE.is_last {
+    # ( node_ptr -- bool )
+    DEQUE_OFF_NEXT SWAP LIST.get 0 ==
+}
+
+DEF DEQUE.is_first {
+    # ( node_ptr -- bool )
+    DEQUE_OFF_PREV SWAP LIST.get 0 ==
+}
+
 DEF DEQUE.next {
     DEQUE_OFF_NEXT SWAP LIST.get
 }

@@ -1,7 +1,7 @@
 ### Start 1 feb 2026
 ### Next project description and todo list to build this
 
-## DO NOT START CODING, JUST ADVISE ON THIS PLAN!!
+GEMINI: DO NOT START CODING, JUST ADVISE ON THIS PLAN!!
 
 ## ##
 In this project i like to develop an Stacks library to run code in Sandboxes or sort of VM
@@ -100,14 +100,15 @@ The Stacks main programming running on the Stern-ATX should, first create the VV
 Where the main can run an other function/program, whille running this crank-loop.
 
 to supports this all we need:
-    &SIMPL-code,        type deque, hold the raw tokens of the SIMPL code \"PUSH", 10, \"PUSH", 2, \"ADD" (for phase one "the scout")
-    &SIMPL-code2,       type deque, hold the raw tokens of the SIMPL code, for Phase two, "the baker". 
-                                    the transpilers reads &SIMPL-code in the first phase, puts them on the &SIMPL-code2 queue, where phase 2 is reading from
+    &SIMPL-code,        type deque, hold the raw tokens of the SIMPL code. Used for both transpiler passes.
+    # &SIMPL-code2 is no longer needed. The std_deque library supports non-destructive
+    # traversal, allowing two passes (Scout and Baker) over the same deque.
 
     &VVM-HOST-pointer,  type deque, holds syscall arguments
 
     opcodes-table,      type dict,  Size 100, To translate the SIMPL instruction to the opcode \"PUSH" -> 0, \"ADD" -> 1
-    opcodes-length      type list,  size 100, (i expect max 100 SIMPL instructions), where the index is opcode, and the value 0 or 1 the length of the instruction
+    # Obsolete due to new opcode schema
+    # opcodes-length    type list,  size 100, (i expect max 100 SIMPL instructions), where the index is opcode, and the value 0 or 1 the length of the instruction
     opcodes-runtimes    type list,  size 100, where the index is the opcode, and the value an pointer to the opcode handler to run the instruction
     label-addresses     type dict,  size 50,  to store the label addresses (max 50 labels)
 
@@ -136,7 +137,7 @@ Steps todo list:
         - [x] Create/populate opcodes-table
         - [-] Create/populate opcodes-length [Due a new opcode schema, this is not needed]
         - [x] Create/populate opcodes-runtimes
-        - [x] Create &SIMPL-code2, [created in main program]
+        - [-] Create &SIMPL-code2 [Obsolete due to single-deque transpiler strategy]
         - [x] Define VVM-HEADER (Constants defined in vvm_env_lib)
     - [ ] **VVM.create**
         - [ ] Create memory structure
@@ -209,10 +210,25 @@ Steps todo list:
     LABEL exit      # \"LABEL \"exit"
         HALT        # \"HALT"
 
+# Example 3
+    PUSH 10
+
+    LABEL loop
+        DUP 
+        BRZ exit
+
+        PUSH 1
+        SUB
+        BRA loop
+    LABEL exit
+        DROP
+        HALT
 
 
 
-## Project Status Summary
+### Project Status Summary
+
+## update: 2 feb 2026
 
 Project status is GREEN. Excellent progress has been made on the VVM library.
 The foundational 'Setup runtime env' phase is now largely complete.
@@ -234,16 +250,3 @@ The project is now perfectly positioned to begin the next major phase:
 implementing the core logic in `vvm_core_lib.stacks`. The immediate next
 steps are to build out the `VVM.create` and `VVM.run` functions.
 
-# Example 3
-    PUSH 10
-
-    LABEL loop
-        DUP 
-        BRZ exit
-
-        PUSH 1
-        SUB
-        BRA loop
-    LABEL exit
-        DROP
-        HALT
