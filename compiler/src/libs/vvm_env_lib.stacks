@@ -1,0 +1,198 @@
+USE std_heap
+USE std_stern_io
+
+USE std_dict
+USE std_deque
+
+VALUE opcode_table 0
+VALUE opcode_runtimes 0
+
+
+# Setup VVM memory structure
+CONST VVM_status    0
+CONST VVM_size      1
+CONST VVM_PC        2
+CONST VVM_SP        3
+CONST VVM_HOST_ptr  4
+CONST VVM_stack     6   ; reservation of 16 words
+CONST VVM_regs      22  ; reservation for 26 registers
+CONST VVM_code      50  ; Start of code block
+
+# Setup VVM status codes
+CONST VVM_Running   0
+CONST VVM_Sys       1
+CONST VVM_Idle      2
+CONST VVM_Error     3
+CONST VVM_Halted    4
+
+
+# Setup opcodes
+# 0 .. 49 zero argument opcodes
+CONST _halt_        0
+CONST _nop_         1
+CONST _sys_         2
+CONST _out_         3
+CONST _fetch_       4
+
+CONST _dup_         10
+CONST _drop_        11
+CONST _swap_        12
+CONST _over_        13
+
+CONST _add_         20
+CONST _sub_         21
+CONST _mul_         22
+CONST _div_         23
+CONST _mod_         24
+# 50 .. 99 one argument opcodes
+CONST _push_        50
+CONST _get_         51
+CONST _set_         52
+
+CONST _label_       60
+CONST _bra_         61
+CONST _brz_         62
+CONST _bnz_         63
+CONST _brp_         64
+CONST _brn_         65
+
+### end of the opcodes
+
+## Setup runtime handlers
+DEF s_halt {
+}
+
+DEF s_nop {
+}
+
+DEF s_sys {
+}
+
+DEF s_out {
+}
+
+DEF s_fetch {
+}
+
+DEF s_dup {
+}
+
+DEF s_drop {
+}
+
+DEF s_swap {
+}
+
+DEF s_over {
+}
+
+DEF s_add {
+}
+
+DEF s_sub {
+}
+
+DEF s_mul {
+}
+
+DEF s_div {
+}
+
+DEF s_mod {
+}
+
+DEF s_push {
+}
+
+DEF s_get {
+}
+
+DEF s_set {
+}
+
+# there is no s_label needed on runtime
+
+DEF s_bra {
+}
+
+DEF s_brz {
+}
+
+DEF s_bnz {
+}
+
+DEF s_brp {
+}
+
+DEF s_brn {
+}
+
+
+
+DEF VVM.init {
+    100 DICT.new AS opcode_table
+    100 NEW.list AS opcode_runtimes
+
+    # System Opcodes
+    _halt_ \"HALT" opcode_table DICT.put
+    &s_halt _halt_ opcode_runtimes LIST.put
+    _nop_ \"NOP" opcode_table DICT.put
+    &s_nop _nop_ opcode_runtimes LIST.put
+    _sys_ \"SYS" opcode_table DICT.put
+    &s_sys _sys_ opcode_runtimes LIST.put
+    _out_ \"OUT" opcode_table DICT.put
+    &s_out _out_ opcode_runtimes LIST.put
+    _fetch_ \"FETCH" opcode_table DICT.put
+    &s_fetch _fetch_ opcode_runtimes LIST.put
+
+    # Stack Logic Opcodes
+    _dup_ \"DUP" opcode_table DICT.put
+    &s_dup _dup_ opcode_runtimes LIST.put
+    _drop_ \"DROP" opcode_table DICT.put
+    &s_drop _drop_ opcode_runtimes LIST.put
+    _swap_ \"SWAP" opcode_table DICT.put
+    &s_swap _swap_ opcode_runtimes LIST.put
+    _over_ \"OVER" opcode_table DICT.put
+    &s_over _over_ opcode_runtimes LIST.put
+
+    # Math & Logic Opcodes
+    _add_ \"ADD" opcode_table DICT.put
+    &s_add _add_ opcode_runtimes LIST.put
+    _sub_ \"SUB" opcode_table DICT.put
+    &s_sub _sub_ opcode_runtimes LIST.put
+    _mul_ \"MUL" opcode_table DICT.put
+    &s_mul _mul_ opcode_runtimes LIST.put
+    _div_ \"DIV" opcode_table DICT.put
+    &s_div _div_ opcode_runtimes LIST.put
+    _mod_ \"MOD" opcode_table DICT.put
+    &s_mod _mod_ opcode_runtimes LIST.put
+
+    # Data Transfer Opcodes
+    _push_ \"PUSH" opcode_table DICT.put
+    &s_push _push_ opcode_runtimes LIST.put
+    _get_ \"GET" opcode_table DICT.put
+    &s_get _get_ opcode_runtimes LIST.put
+    _set_ \"SET" opcode_table DICT.put
+    &s_set _set_ opcode_runtimes LIST.put
+
+    # Flow Control Opcodes
+    _label_ \"LABEL" opcode_table DICT.put  # For transpiler only, no runtime handler
+    _bra_ \"BRA" opcode_table DICT.put
+    &s_bra _bra_ opcode_runtimes LIST.put
+    _brz_ \"BRZ" opcode_table DICT.put
+    &s_brz _brz_ opcode_runtimes LIST.put
+    _bnz_ \"BNZ" opcode_table DICT.put
+    &s_bnz _bnz_ opcode_runtimes LIST.put
+    _brp_ \"BRP" opcode_table DICT.put
+    &s_brp _brp_ opcode_runtimes LIST.put
+    _brn_ \"BRN" opcode_table DICT.put
+    &s_brn _brn_ opcode_runtimes LIST.put
+
+
+}
+
+
+
+
+
+

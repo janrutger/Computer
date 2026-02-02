@@ -1,0 +1,377 @@
+# .HEADER
+. $opcode_table 1
+. $opcode_runtimes 1
+# .FUNCTIONS
+@s_halt
+    ret
+@s_nop
+    ret
+@s_sys
+    ret
+@s_out
+    ret
+@s_fetch
+    ret
+@s_dup
+    ret
+@s_drop
+    ret
+@s_swap
+    ret
+@s_over
+    ret
+@s_add
+    ret
+@s_sub
+    ret
+@s_mul
+    ret
+@s_div
+    ret
+@s_mod
+    ret
+@s_push
+    ret
+@s_get
+    ret
+@s_set
+    ret
+@s_bra
+    ret
+@s_brz
+    ret
+@s_bnz
+    ret
+@s_brp
+    ret
+@s_brn
+    ret
+@VVM.init
+    ldi A 100
+    stack A $DATASTACK_PTR
+    call @DICT.new
+    ustack A $DATASTACK_PTR
+    sto A $opcode_table
+    ldi A 100
+    stack A $DATASTACK_PTR
+    call @NEW.list
+    ustack A $DATASTACK_PTR
+    sto A $opcode_runtimes
+    stack Z $DATASTACK_PTR
+    ldi A 6384101742
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_halt
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 193464626
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_nop
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 193470404
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_sys
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 193465917
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_out
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldi A 210673137615
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_fetch
+    stack A $DATASTACK_PTR
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldi A 193453934
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_dup
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 11
+    stack A $DATASTACK_PTR
+    ldi A 6383976602
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_drop
+    stack A $DATASTACK_PTR
+    ldi A 11
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 12
+    stack A $DATASTACK_PTR
+    ldi A 6384520640
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_swap
+    stack A $DATASTACK_PTR
+    ldi A 12
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 13
+    stack A $DATASTACK_PTR
+    ldi A 6384375937
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_over
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldi A 193450094
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_add
+    stack A $DATASTACK_PTR
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 21
+    stack A $DATASTACK_PTR
+    ldi A 193470255
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_sub
+    stack A $DATASTACK_PTR
+    ldi A 21
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ldi A 193463731
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_mul
+    stack A $DATASTACK_PTR
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 23
+    stack A $DATASTACK_PTR
+    ldi A 193453544
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_div
+    stack A $DATASTACK_PTR
+    ldi A 23
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 24
+    stack A $DATASTACK_PTR
+    ldi A 193463525
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_mod
+    stack A $DATASTACK_PTR
+    ldi A 24
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 50
+    stack A $DATASTACK_PTR
+    ldi A 6384411237
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_push
+    stack A $DATASTACK_PTR
+    ldi A 50
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 51
+    stack A $DATASTACK_PTR
+    ldi A 193456677
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_get
+    stack A $DATASTACK_PTR
+    ldi A 51
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 52
+    stack A $DATASTACK_PTR
+    ldi A 193469745
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_set
+    stack A $DATASTACK_PTR
+    ldi A 52
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 60
+    stack A $DATASTACK_PTR
+    ldi A 210680089861
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A 61
+    stack A $DATASTACK_PTR
+    ldi A 193451642
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_bra
+    stack A $DATASTACK_PTR
+    ldi A 61
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 62
+    stack A $DATASTACK_PTR
+    ldi A 193451667
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_brz
+    stack A $DATASTACK_PTR
+    ldi A 62
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 63
+    stack A $DATASTACK_PTR
+    ldi A 193451535
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_bnz
+    stack A $DATASTACK_PTR
+    ldi A 63
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 64
+    stack A $DATASTACK_PTR
+    ldi A 193451657
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_brp
+    stack A $DATASTACK_PTR
+    ldi A 64
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 65
+    stack A $DATASTACK_PTR
+    ldi A 193451655
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_brn
+    stack A $DATASTACK_PTR
+    ldi A 65
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ret
+
+# .DATA
+% $opcode_table 0
+% $opcode_runtimes 0

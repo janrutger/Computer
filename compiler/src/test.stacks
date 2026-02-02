@@ -1,12 +1,56 @@
+# Test program to run the VVM/SIMPL Sandbox
+####
+
 USE std_heap
 USE std_stern_io
 
+# its not allowed to use INCLUDE in an Library
+# So all libs should be included in the main file
+INCLUDE std_dict
+INCLUDE std_deque
 
-DEF my_func {
-    DUP *   ; square
+INCLUDE vvm_env_lib
+INCLUDE vvm_core_lib
+
+
+VAR VVM0 15360                      ; The memory adres-pointer for the VVM0, 6K remaining for program code
+
+
+MACRO load_simple_test_code {
+    \"PUSH"     SIMPL_code1 DEQUE.append
+    12          SIMPL_code1 DEQUE.append
+    \"PUSH"     SIMPL_code1 DEQUE.append
+    30          SIMPL_code1 DEQUE.append
+    \"ADD"      SIMPL_code1 DEQUE.append
+    \"OUT"      SIMPL_code1 DEQUE.append
+    \"PUSH"     SIMPL_code1 DEQUE.append
+    10          SIMPL_code1 DEQUE.append
+    \"OUT"      SIMPL_code1 DEQUE.append
+    \"SYS"      SIMPL_code1 DEQUE.append
+    \"HALT"     SIMPL_code1 DEQUE.append
+}
+    
+
+# The main program
+DEF main {
+    HEAP.free
+    10 DEQUE.init_pool "Pool initialized (size 10).\n" PRTstring
+
+    DEQUE.new AS VVM_HOST_ptr       ; Declare a pointer to the deque for host communication 
+    DEQUE.new AS SIMPL_code1        ; Program buffer deque fase 1
+    DEQUE.new AS SIMPL_code2        ; Program buffer deque fase 2
+
+    load_simple_test_code
+
+    VVM.init                        ; init VVM environment
+
+    # some debugging lines
+    _add_ opcode_runtimes LIST.get PRINT
+    \"ADD" opcode_table DICT.get PRINT 
+
+
 }
 
 
-
-3 &my_func EXEC PRINT   ; Prints 9
-"Hello world\n" PRTstring
+# Running main by calling main
+main
