@@ -6,6 +6,8 @@ USE std_deque
 
 VALUE opcode_table 0
 VALUE opcode_runtimes 0
+VALUE label_addresses 0
+
 
 
 # Setup VVM memory structure
@@ -133,6 +135,8 @@ DEF VVM.init {
     100 DICT.new AS opcode_table
     100 NEW.list AS opcode_runtimes
 
+    100 DICT.new AS label_addresses
+
     # System Opcodes
     _halt_ \"HALT" opcode_table DICT.put
     &s_halt _halt_ opcode_runtimes LIST.put
@@ -190,9 +194,3 @@ DEF VVM.init {
 
 
 }
-
-
-
-
-
-

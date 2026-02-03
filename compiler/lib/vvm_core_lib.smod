@@ -1,7 +1,263 @@
+# .HEADER
+. $_temp_ptr 1
+. $_temp_idx 1
+. $_temp_val 1
+. $_scan_ptr 1
+. $_vvm_pc_offset 1
+. $_opcode 1
+. $_is_opcode 1
+. $error_no_code 26
+. $msg_labels_found 15
+. $_VVMpointer 1
+. $_VVMHOSTpointer 1
+. $_VVMsize 1
+. $_SIMPLcode 1
 # .FUNCTIONS
+@VVMpeek
+    ustack A $DATASTACK_PTR
+    sto A $_temp_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_temp_idx
+    ldm I $_temp_ptr
+    ldx A $_start_memory_
+    sto A $_temp_ptr
+    ld B A
+    ldm A $_temp_idx
+    add A B
+    sto A $_temp_ptr
+    ldm I $_temp_ptr
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ret
+@VVMpoke
+    ustack A $DATASTACK_PTR
+    sto A $_temp_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_temp_idx
+    ustack A $DATASTACK_PTR
+    sto A $_temp_val
+    ldm I $_temp_ptr
+    ldx A $_start_memory_
+    sto A $_temp_ptr
+    ld B A
+    ldm A $_temp_idx
+    add A B
+    sto A $_temp_ptr
+    ldm A $_temp_val
+    ld B A
+    ldm I $_temp_ptr
+    stx B $_start_memory_
+    ret
 @VVM.create
+    ustack A $DATASTACK_PTR
+    sto A $_VVMpointer
+    ustack A $DATASTACK_PTR
+    sto A $_VVMHOSTpointer
+    ustack A $DATASTACK_PTR
+    sto A $_VVMsize
+    ustack A $DATASTACK_PTR
+    sto A $_SIMPLcode
+    ldi A 4
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ldm A $_VVMsize
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ldm I $_VVMpointer
+    ldx A $_start_memory_
+    ld B A
+    ldi A 50
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ldm I $_VVMpointer
+    ldx A $_start_memory_
+    ld B A
+    ldi A 6
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ldm I $_VVMHOSTpointer
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ldm A $label_addresses
+    stack A $DATASTACK_PTR
+    call @DICT.clear
+    ld A Z
+    sto A $_vvm_pc_offset
+    ldm I $_SIMPLcode
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    call @DEQUE.is_empty
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.create_if_else_0
+    ldi A $error_no_code
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
+    jmp :VVM.create_if_end_0
+:VVM.create_if_else_0
+    ldm I $_SIMPLcode
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    call @DEQUE.head
+    ustack A $DATASTACK_PTR
+    sto A $_scan_ptr
+:VVM.create_while_start_0
+    ldm A $_scan_ptr
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.create_while_end_0
+    ldm A $_scan_ptr
+    stack A $DATASTACK_PTR
+    call @DEQUE.value
+    ustack A $DATASTACK_PTR
+    sto A $_temp_val
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.has_key
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.create_if_else_1
+    ldm A $_temp_val
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.get
+    ustack A $DATASTACK_PTR
+    sto A $_opcode
+    stack A $DATASTACK_PTR
+    ldi A 60
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.create_if_else_2
+    ldm A $_scan_ptr
+    stack A $DATASTACK_PTR
+    call @DEQUE.next
+    ustack A $DATASTACK_PTR
+    sto A $_scan_ptr
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.create_if_end_3
+    ldm A $_scan_ptr
+    stack A $DATASTACK_PTR
+    call @DEQUE.value
+    ustack A $DATASTACK_PTR
+    sto A $_temp_val
+    ldm A $_vvm_pc_offset
+    stack A $DATASTACK_PTR
+    ldm A $_temp_val
+    stack A $DATASTACK_PTR
+    ldm A $label_addresses
+    stack A $DATASTACK_PTR
+    call @DICT.put
+:VVM.create_if_end_3
+    jmp :VVM.create_if_end_2
+:VVM.create_if_else_2
+    ldm A $_opcode
+    stack A $DATASTACK_PTR
+    ldi A 50
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.create_if_else_4
+    ldm B $_vvm_pc_offset
+    ldi A 1
+    add A B
+    sto A $_vvm_pc_offset
+    jmp :VVM.create_if_end_4
+:VVM.create_if_else_4
+    ldm B $_vvm_pc_offset
+    ldi A 2
+    add A B
+    sto A $_vvm_pc_offset
+    ldm A $_scan_ptr
+    stack A $DATASTACK_PTR
+    call @DEQUE.next
+    ustack A $DATASTACK_PTR
+    sto A $_scan_ptr
+:VVM.create_if_end_4
+:VVM.create_if_end_2
+    jmp :VVM.create_if_end_1
+:VVM.create_if_else_1
+:VVM.create_if_end_1
+    ldm A $_scan_ptr
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.create_if_end_5
+    ldm A $_scan_ptr
+    stack A $DATASTACK_PTR
+    call @DEQUE.next
+    ustack A $DATASTACK_PTR
+    sto A $_scan_ptr
+:VVM.create_if_end_5
+    jmp :VVM.create_while_start_0
+:VVM.create_while_end_0
+    ldm A $label_addresses
+    stack A $DATASTACK_PTR
+    call @DICT.count
+    call @PRTnum
+    ldi A $msg_labels_found
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+    :VVM.create_if_end_0
     ret
 @VVM.start
     ret
 @VVM.run
     ret
+
+# .DATA
+% $_temp_ptr 0
+% $_temp_idx 0
+% $_temp_val 0
+% $_scan_ptr 0
+% $_vvm_pc_offset 0
+% $_opcode 0
+% $_is_opcode 0
+% $error_no_code \N \o \space \S \I \M \P \L \space \c \o \d \e \space \p \r \o \v \i \d \e \d \. \space \Return \null
+% $msg_labels_found \space \l \a \b \e \l \s \space \f \o \u \n \d \Return \null
+% $_VVMpointer 0
+% $_VVMHOSTpointer 0
+% $_VVMsize 0
+% $_SIMPLcode 0

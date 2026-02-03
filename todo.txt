@@ -11,8 +11,8 @@ The ultimate goal is to end up with an new SIMPL target for my Stacks compilers,
 An VVM is an memory construction with an 
     VVM-status,             Running, Error, Idle, SYS, Halt
     VVM-size,               default 1024 (or 1024xN)
-    VVM-PC,                 program counter, an offset to the VVM-code start point
-    VVM-SP,     
+    VVM-PC,                 program counter, an absolute memory address
+    VVM-SP,                 stack pointer, an absolute memory address
     VVM-stack,              (size 16)
     VVM-registers           26 registers [A ..Z], 
     VVM-HOST-pointer,       a deque pointer to communcate with the host computer (the stern-ATX)
@@ -153,8 +153,8 @@ Steps todo list:
         - [-] Create &SIMPL-code2 [Obsolete due to single-deque transpiler strategy]
         - [x] Define VVM-HEADER (Constants defined in vvm_env_lib)
     - [ ] **VVM.create**
-        - [ ] Create memory structure
-        - [ ] Pass 1: Label Scanning (The Scout)
+        - [x] Create memory structure
+        - [/] Pass 1: Label Scanning (The Scout)
         - [ ] Pass 2: Bytecode Baking (The Baker)
         - [ ] Transpile code
         - [ ] Load code to VM
@@ -177,8 +177,8 @@ Steps todo list:
 | :--- | :--- | :--- |
 | 0 | VVM.STATUS | 0=Idle, 1=Running, 2=Error, 3=SYS, 4=Halt |
 | 1 | VVM.SIZE | Size in 1024-word blocks |
-| 2 | VVM.PC | Program Counter (Relative to Code Start) |
-| 3 | VVM.SP | Stack Pointer (0–15) |
+| 2 | VVM.PC | Program Counter (Absolute Memory Address) |
+| 3 | VVM.SP | Stack Pointer (Absolute Memory Address) |
 | 4 | VVM.HOST_PTR | Pointer to the communication Deque |
 | 6-21 | VVM.STACK | The 16-word internal data stack |
 | 22-47 | VVM.REGS | Registers A-Z (26 words) |
@@ -266,3 +266,24 @@ VVM memory layout and status codes are now formally defined as constants.
 The project is now perfectly positioned to begin the next major phase:
 implementing the core logic in `vvm_core_lib.stacks`. The immediate next
 steps are to build out the `VVM.create` and `VVM.run` functions.
+
+## update: 3 feb 2026
+
+Project status remains GREEN. Today was a day of significant progress and crucial debugging.
+
+The first major part of `VVM.create` is now complete and verified. The function
+successfully allocates and initializes the VVM header structure in memory.
+Debugger output confirms that all header fields (Status, Size, absolute PC,
+absolute SP, and Host Pointer) are being set correctly.
+
+Several important architectural decisions were solidified: both the Program
+Counter (PC) and Stack Pointer (SP) will be stored as absolute memory
+addresses, an optimization that will significantly speed up the `VVM.run` loop.
+
+A series of subtle but critical pointer-related issues were identified and
+resolved, particularly concerning pointer indirection when passing arguments
+to `VVM.create` and when accessing the `SIMPL_code` deque. These fixes have
+made the foundation of the library much more robust.
+
+With the VVM header creation now stable, the project is ready to proceed with
+the first pass of the transpiler: "Pass 1: Label Scanning (The Scout)".

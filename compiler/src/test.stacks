@@ -13,10 +13,12 @@ INCLUDE vvm_env_lib
 INCLUDE vvm_core_lib
 
 
-VAR VVM0 15360                      ; The memory adres-pointer for the VVM0, 6K remaining for program code
+VALUE VVM0 15360                    ; The memory address for VVM0, stored in a variable.
 
 
 MACRO load_simple_test_code {
+    \"LABEL"    SIMPL_code DEQUE.append
+    \"mylabel"  SIMPL_code DEQUE.append
     \"PUSH"     SIMPL_code DEQUE.append
     12          SIMPL_code DEQUE.append
     \"PUSH"     SIMPL_code DEQUE.append
@@ -29,25 +31,31 @@ MACRO load_simple_test_code {
     \"SYS"      SIMPL_code DEQUE.append
     \"HALT"     SIMPL_code DEQUE.append
 }
-    
+
+VALUE host_comm_deque_ptr 0
+VALUE SIMPL_code 0
 
 # The main program
 DEF main {
     HEAP.free
-    10 DEQUE.init_pool "Pool initialized (size 10).\n" PRTstring
+    50 DEQUE.init_pool "Pool initialized (size 10).\n" PRTstring
 
-    DEQUE.new AS VVM_HOST_ptr       ; Declare a pointer to the deque for host communication 
-    DEQUE.new AS SIMPL_code        ; Program buffer for transpiling
+    DEQUE.new AS host_comm_deque_ptr   ; Get a pointer for the host communication deque
+    DEQUE.new AS SIMPL_code     ; Get a pointer for the SIMPL code buffer
     
 
     load_simple_test_code
 
     VVM.init                        ; init VVM environment
-    opcode_table DICT.count PRTnum " opcodes in the opcode table\n" PRTstring
+    "VVM Environment Initialized.\n" PRTstring
 
-     # some debugging lines
-    _add_ opcode_runtimes LIST.get PRINT
-    \"ADD" opcode_table DICT.get PRINT 
+    "SIMPL_code pointer         : " PRTstring SIMPL_code PRINT # This is the variable holding the deque pointer
+    "host_comm_deque_ptr pointer: " PRTstring host_comm_deque_ptr PRINT # This is the variable holding the deque pointer
+    "VVM0 base address          : " PRTstring VVM0 PRINT
+    "Address of VVM0 variable   : " PRTstring &VVM0 PRINT
+
+    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
+    &SIMPL_code 1024 &host_comm_deque_ptr &VVM0 VVM.create
 
 }
 

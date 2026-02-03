@@ -6,10 +6,132 @@ USE std_deque
 
 USE vvm_env_lib
 
+VALUE _temp_ptr 0
+VALUE _temp_idx 0
+VALUE _temp_val 0
+VALUE _scan_ptr 0
+VALUE _vvm_pc_offset 0
+VALUE _opcode 0
+VALUE _is_opcode 0
 
+STRING error_no_code "No SIMPL code provided. \n"
+STRING msg_labels_found " labels found\n"
 
+# Peek a value from the VVM struct
+# ( index &VVM-pointer -- value )
+DEF VVMpeek {
+    # Pop the arguments into temporary variables
+    AS _temp_ptr    # _temp_ptr = &VVM-pointer (address of the pointer variable)
+    AS _temp_idx    # _temp_idx = index
+    
+    # Dereference the pointer to get the VVM's base address
+    *_temp_ptr AS _temp_ptr
+    
+    # Calculate the final address and store it back in _temp_ptr
+    _temp_ptr _temp_idx + AS _temp_ptr
+    
+    # Read from the final address and push it to the stack
+    *_temp_ptr
+}
 
+# Poke a value in the VVM struct
+# ( value index &VVM-pointer -- )
+DEF VVMpoke {
+    # Pop the arguments into temporary variables
+    AS _temp_ptr    # _temp_ptr = &VVM-pointer
+    AS _temp_idx    # _temp_idx = index
+    AS _temp_val    # _temp_val = value
+    
+    # Dereference the pointer to get the VVM's base address
+    *_temp_ptr AS _temp_ptr
+    
+    # Calculate the final address and store it back in _temp_ptr
+    _temp_ptr _temp_idx + AS _temp_ptr
+    
+    # Write the value to the final address
+    _temp_val AS *_temp_ptr
+}
+
+VALUE _VVMpointer     0
+VALUE _VVMHOSTpointer 0
+VALUE _VVMsize        0
+VALUE _SIMPLcode      0
+
+# ( &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer -- )
 DEF VVM.create {
+    AS _VVMpointer
+    AS _VVMHOSTpointer
+    AS _VVMsize
+    AS _SIMPLcode
+
+    # Step 1: Create the struct
+    VVM_Halted               VVM_status   _VVMpointer VVMpoke # Set initial status
+    _VVMsize                 VVM_size     _VVMpointer VVMpoke # Set VVM size in blocks
+    # PC is absolute. Initialize it to the start of the code section.
+    *_VVMpointer VVM_code +  VVM_PC _VVMpointer VVMpoke
+    # SP is absolute. Initialize it to the start of the VVM's stack area.
+    *_VVMpointer VVM_stack + VVM_SP       _VVMpointer VVMpoke
+    # Dereference the host pointer to get the actual deque address and store it
+    *_VVMHOSTpointer         VVM_HOST_ptr _VVMpointer VVMpoke
+    
+    # Step 2: Phase 1, let us find the labels
+    label_addresses DICT.clear      # Clean old labels
+    0 AS _vvm_pc_offset             # Reset PC offset counter
+
+    *_SIMPLcode DEQUE.is_empty IF
+        &error_no_code PRTstring HALT
+    ELSE
+        # Get the head node to start scanning
+        *_SIMPLcode DEQUE.head AS _scan_ptr
+        
+        WHILE _scan_ptr 0 != DO
+            # Get the value (token)
+            _scan_ptr DEQUE.value AS _temp_val
+            
+            # Check if the token is a recognized opcode
+            _temp_val opcode_table DICT.has_key IF
+                # It's an opcode, get its numeric value
+                _temp_val opcode_table DICT.get AS _opcode
+                
+                _opcode _label_ == IF
+                    # It's a LABEL directive. It takes 0 words.
+                    # Advance to the next token, which is the label name.
+                    _scan_ptr DEQUE.next AS _scan_ptr
+                    _scan_ptr 0 != IF
+                        _scan_ptr DEQUE.value AS _temp_val # The label name
+                        # Store the label and its address. Do NOT increment the PC offset.
+                        _vvm_pc_offset _temp_val label_addresses DICT.put
+                    END
+                ELSE
+                    _opcode 50 < IF
+                        # Zero-operand instruction (<50). Takes 1 word.
+                        _vvm_pc_offset 1 + AS _vvm_pc_offset
+                    ELSE
+                        # One-operand instruction (>=50). Takes 2 words.
+                        _vvm_pc_offset 2 + AS _vvm_pc_offset
+                        # Crucially, we must skip the operand token in the deque.
+                        _scan_ptr DEQUE.next AS _scan_ptr
+                    END
+                END
+            ELSE
+                # This token is not an opcode. This is an error in SIMPL code
+                # (e.g., a stray number or a misspelled opcode).
+                # A real compiler would error here, but for now we ignore it.
+            END
+            
+            # Move to the next token for the next instruction
+            _scan_ptr 0 != IF
+                _scan_ptr DEQUE.next AS _scan_ptr
+            END
+        DONE
+        
+        label_addresses DICT.count PRTnum &msg_labels_found PRTstring
+    END
+    
+
+
+
+    # step 3: Phase 2, transpile the code and load VVM
 
 }
 
@@ -20,5 +142,5 @@ DEF VVM.start {
 
 
 DEF VVM.run {
-    
+
 }
