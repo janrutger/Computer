@@ -322,7 +322,10 @@
         "@s_brp": 10111,
         "@s_brn": 10112,
         "@VVM.init": 10113,
-        "@main": 10437
+        "@VVM.create": 10437,
+        "@VVM.start": 10438,
+        "@VVM.run": 10439,
+        "@main": 10440
     },
     "labels": [
         {

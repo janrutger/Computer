@@ -144,6 +144,7 @@ $(LIB_OUT_DIR)/array_lib.smod:       $(LIB_OUT_DIR)/std_stern_io.smod
 $(LIB_OUT_DIR)/game_lib.smod:        $(LIB_OUT_DIR)/std_stern_io.smod
 $(LIB_OUT_DIR)/game_lib.smod:        $(LIB_OUT_DIR)/std_string.smod
 $(LIB_OUT_DIR)/game_lib.smod:        $(LIB_OUT_DIR)/std_heap.smod
+
 $(LIB_OUT_DIR)/vvm_core_lib.smod:    $(LIB_OUT_DIR)/vvm_env_lib.smod
 
 

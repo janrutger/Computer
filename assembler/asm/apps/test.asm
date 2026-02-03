@@ -1355,6 +1355,13 @@ MALLOC $VVM0 15360
     call @LIST.put
     ret
 
+
+@VVM.create
+    ret
+@VVM.start
+    ret
+@VVM.run
+    ret
 @main
     ldm A $HEAP_START
     sto A $HEAP_FREE

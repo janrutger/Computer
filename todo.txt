@@ -59,6 +59,20 @@ to create an VVM i expect an Stacks instruction like
 
     During creation the Memory structure is setup and the SIMPL code is transpiled to byte code and loaded at VVM-code
 
+to start an VVM i expect an Stacks instruction like
+    arg1 ... argn argc &VVM-pointer VVM.start
+
+    where
+    &VVM-pointer, named pointer where the VVM lives in memory.
+    argc, the number of arguments
+    arg1 .. argn, the arguments 
+
+    After creation the VVM status is halt, this method places the argument in registers (A..Z), and set the status to running
+    The arguments will be stored in the register table where A holds argc, the arguments in B .. Z
+
+
+
+
 
 To crank the VVM i expect an Stacks instruction like
     &VVM-pointer VVM.run
@@ -91,7 +105,6 @@ To run Syscalls on the host by VVM-request
     puts the optional results to VVM-HOST-pointer,
     update the status to Idle,
      *) its programmers responsibility to get the Results when returning in SIMPL
-
 
 
 
@@ -145,6 +158,10 @@ Steps todo list:
         - [ ] Pass 2: Bytecode Baking (The Baker)
         - [ ] Transpile code
         - [ ] Load code to VM
+    - [ ] **VVM.start**
+        - [ ] Place the arguments in the registers
+        - [ ] Set the PC to 0
+        - [ ] Set the status to running
     - [ ] **VVM.run**
         - [ ] Check status
         - [ ] Fetch instruction
@@ -249,4 +266,3 @@ VVM memory layout and status codes are now formally defined as constants.
 The project is now perfectly positioned to begin the next major phase:
 implementing the core logic in `vvm_core_lib.stacks`. The immediate next
 steps are to build out the `VVM.create` and `VVM.run` functions.
-

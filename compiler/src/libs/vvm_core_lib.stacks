@@ -5,3 +5,20 @@ USE std_dict
 USE std_deque
 
 USE vvm_env_lib
+
+
+
+
+DEF VVM.create {
+
+}
+
+
+DEF VVM.start {
+
+}
+
+
+DEF VVM.run {
+    
+}

@@ -1,0 +1,7 @@
+# .FUNCTIONS
+@VVM.create
+    ret
+@VVM.start
+    ret
+@VVM.run
+    ret
