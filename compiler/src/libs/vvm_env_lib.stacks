@@ -68,6 +68,9 @@ DEF s_nop {
 }
 
 DEF s_sys {
+    # This handler is a no-op. The _sys_ opcode is a special signal
+    # caught by the VVM.run loop to change the VVM's state. It does not
+    # perform an action itself.
 }
 
 DEF s_out {

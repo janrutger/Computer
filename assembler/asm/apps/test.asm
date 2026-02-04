@@ -42,6 +42,11 @@
 . $error_label_unknown 23
 . $error_vvm_overflow 23
 . $msg_labels_found 15
+. $_run_pc 1
+. $_run_opcode 1
+. $_run_handler 1
+. $_start_argc 1
+. $_start_idx 1
 . $_VVMpointer 1
 . $_VVMHOSTpointer 1
 . $_VVMsize 1
@@ -59,6 +64,8 @@
 . $main_str_3 30
 . $main_str_4 30
 . $main_str_5 30
+. $main_str_6 23
+. $main_str_7 14
 
 # .CODE
     call @main
@@ -1786,10 +1793,193 @@
 :VVM.create_while_end_1
     ret
 @VVM.start
+    ustack A $DATASTACK_PTR
+    sto A $_VVMpointer
+    ustack A $DATASTACK_PTR
+    sto A $_start_argc
+    stack A $DATASTACK_PTR
+    ldi A 22
+    stack A $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ldm A $_start_argc
+    sto A $_start_idx
+:VVM.start_while_start_2
+    ldm A $_start_idx
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.start_while_end_2
+    ustack A $DATASTACK_PTR
+    sto A $_temp_val
+    stack A $DATASTACK_PTR
+    ldi A 22
+    ld B A
+    ldm A $_start_idx
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ldm B $_start_idx
+    ldi A 1
+    sub B A
+    ld A B
+    sto A $_start_idx
+    jmp :VVM.start_while_start_2
+:VVM.start_while_end_2
+    ldm I $_VVMpointer
+    ldx A $_start_memory_
+    ld B A
+    ldi A 50
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    stack Z $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpoke
     ret
 @VVM.run
+    ustack A $DATASTACK_PTR
+    sto A $_VVMpointer
+    stack Z $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ustack A $DATASTACK_PTR
+    sto A $_temp_val
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.run_if_else_12
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ustack A $DATASTACK_PTR
+    sto A $_run_pc
+    ldm I $_run_pc
+    ldx A $_start_memory_
+    sto A $_run_opcode
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.run_if_else_13
+    ldi A 1
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    jmp :VVM.run_if_end_13
+:VVM.run_if_else_13
+    ldm B $_run_pc
+    ldi A 1
+    add A B
+    sto A $_run_pc
+    ldm A $_run_opcode
+    stack A $DATASTACK_PTR
+    ldi A 49
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.run_if_end_14
+    ldm I $_run_pc
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldm B $_run_pc
+    ldi A 1
+    add A B
+    sto A $_run_pc
+:VVM.run_if_end_14
+    ldm A $_run_pc
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ldm A $_run_opcode
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_run_handler
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    ldm A $_run_handler
+    stack A $DATASTACK_PTR
+    calls $DATASTACK_PTR
+:VVM.run_if_end_13
+    jmp :VVM.run_if_end_12
+:VVM.run_if_else_12
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.run_if_end_15
+    ldm A $_temp_val
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    stack Z $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+:VVM.run_if_end_15
+:VVM.run_if_end_12
     ret
 @VVM.check_syscalls
+    ustack A $DATASTACK_PTR
+    sto A $_VVMpointer
+    stack Z $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.check_syscalls_if_end_16
+    ldi A 2
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+:VVM.check_syscalls_if_end_16
     ret
 
 @main
@@ -1810,16 +2000,6 @@
     call @DEQUE.new
     ustack A $DATASTACK_PTR
     sto A $SIMPL_code
-    ldi A 210680089861
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 229475478725931
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
     ldi A 6384411237
     stack A $DATASTACK_PTR
     ldm A $SIMPL_code
@@ -1846,16 +2026,6 @@
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 193465917
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 193451642
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 6953802385631
     stack A $DATASTACK_PTR
     ldm A $SIMPL_code
     stack A $DATASTACK_PTR
@@ -1937,6 +2107,26 @@
     ldi A $VVM0
     stack A $DATASTACK_PTR
     call @VVM.create
+    ldi A $main_str_6
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+    stack Z $DATASTACK_PTR
+    ldi A $VVM0
+    stack A $DATASTACK_PTR
+    call @VVM.start
+    ldi A $main_str_7
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A $VVM0
+    stack A $DATASTACK_PTR
+    call @VVM.run
+:DEBUG
     ret
 
 # .DATA
@@ -1987,6 +2177,11 @@
 % $error_label_unknown \V \V \M \space \l \a \b \e \l \space \n \o \t \space \f \o \u \n \d \. \space \Return \null
 % $error_vvm_overflow \V \V \M \space \m \e \m \o \r \y \space \o \v \e \r \f \l \o \w \. \space \Return \null
 % $msg_labels_found \space \l \a \b \e \l \s \space \f \o \u \n \d \Return \null
+% $_run_pc 0
+% $_run_opcode 0
+% $_run_handler 0
+% $_start_argc 0
+% $_start_idx 0
 % $_VVMpointer 0
 % $_VVMHOSTpointer 0
 % $_VVMsize 0
@@ -2004,3 +2199,5 @@
 % $main_str_3 \h \o \s \t \_ \c \o \m \m \_ \d \e \q \u \e \_ \p \t \r \space \p \o \i \n \t \e \r \: \space \null
 % $main_str_4 \V \V \M \0 \space \b \a \s \e \space \a \d \d \r \e \s \s \space \space \space \space \space \space \space \space \space \space \: \space \null
 % $main_str_5 \A \d \d \r \e \s \s \space \o \f \space \V \V \M \0 \space \v \a \r \i \a \b \l \e \space \space \space \: \space \null
+% $main_str_6 \V \V \M \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \null
+% $main_str_7 \V \V \M \space \s \t \a \r \t \e \d \space \Return \null

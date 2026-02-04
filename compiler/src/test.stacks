@@ -17,16 +17,12 @@ VALUE VVM0 15360                    ; The memory address for VVM0, stored in a v
 
 
 MACRO load_simple_test_code {
-    \"LABEL"    SIMPL_code DEQUE.append
-    \"mylabel"  SIMPL_code DEQUE.append
     \"PUSH"     SIMPL_code DEQUE.append
     12          SIMPL_code DEQUE.append
     \"PUSH"     SIMPL_code DEQUE.append
     30          SIMPL_code DEQUE.append
     \"ADD"      SIMPL_code DEQUE.append
     \"OUT"      SIMPL_code DEQUE.append
-    \"BRA"      SIMPL_code DEQUE.append
-    "mylabel"  SIMPL_code DEQUE.append
     \"PUSH"     SIMPL_code DEQUE.append
     10          SIMPL_code DEQUE.append
     \"OUT"      SIMPL_code DEQUE.append
@@ -58,6 +54,17 @@ DEF main {
 
     # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
     &SIMPL_code 1024 &host_comm_deque_ptr &VVM0 VVM.create
+    "VVM instance created \n" PRTstring
+
+    # Start the VVM
+    # ( arg1 ... argn argc &VVM-pointer -- )
+    0 &VVM0 VVM.start
+    "VVM started \n" PRTstring
+
+    &VVM0 VVM.run 
+
+ 
+:DEBUG
 
 }
 

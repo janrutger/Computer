@@ -19,6 +19,11 @@ STRING error_no_opcode      "VVM invalid OPCODE found. \n"
 STRING error_label_unknown  "VVM label not found. \n"
 STRING error_vvm_overflow   "VVM memory overflow. \n"
 STRING msg_labels_found     " labels found\n"
+VALUE _run_pc 0
+VALUE _run_opcode 0
+VALUE _run_handler 0
+VALUE _start_argc 0
+VALUE _start_idx 0
 
 # Peek a value from the VVM struct
 # ( index &VVM-pointer -- value )
@@ -201,16 +206,89 @@ DEF VVM.create {
 
 }
 
-
+# ( arg1 ... argn argc &VVM-pointer -- )
 DEF VVM.start {
+    AS _VVMpointer
+    AS _start_argc # argc
 
+    # 1. Store argc in Register A (VVM_regs + 0)
+    _start_argc VVM_regs _VVMpointer VVMpoke
+
+    # 2. Store arguments in Registers B..Z
+    # Stack: arg1 ... argn (TOS). We pop argn first.
+    _start_argc AS _start_idx # Use argc as loop counter
+    
+    WHILE _start_idx 0 > DO
+        AS _temp_val # Pop argument
+        # Store at VVM_regs + index (e.g., Reg B is index 1)
+        _temp_val VVM_regs _start_idx + _VVMpointer VVMpoke
+        _start_idx 1 - AS _start_idx
+    DONE
+
+    # 3. Reset PC to start of code
+    *_VVMpointer VVM_code + VVM_PC _VVMpointer VVMpoke
+
+    # 4. Set Status to Running
+    VVM_Running VVM_status _VVMpointer VVMpoke
 }
 
-
 DEF VVM.run {
+    AS _VVMpointer
+    
+    # 1. Get current status
+    VVM_status _VVMpointer VVMpeek AS _temp_val
 
+    # 2. Handle based on status
+    _temp_val VVM_Running == IF
+        # --- STATUS: RUNNING ---
+        # Fetch PC and Opcode
+        VVM_PC _VVMpointer VVMpeek AS _run_pc
+        *_run_pc AS _run_opcode
+
+        # Check for special case: SYS instruction
+        _run_opcode _sys_ == IF
+            # Set status to Sys and do NOT advance PC
+            VVM_Sys VVM_status _VVMpointer VVMpoke
+        ELSE
+            # --- Normal Instruction Execution ---
+            # Advance PC past opcode
+            _run_pc 1 + AS _run_pc
+
+            # Check for operand
+            _run_opcode 49 > IF
+                *_run_pc # Fetch operand for handler
+                _run_pc 1 + AS _run_pc # Advance PC past operand
+            END
+
+            _run_pc VVM_PC _VVMpointer VVMpoke # Update PC in VVM struct
+            _run_opcode opcode_runtimes LIST.get AS _run_handler
+            _VVMpointer _run_handler EXEC # Execute handler
+        END
+    ELSE IF _temp_val VVM_Idle ==
+        # --- STATUS: IDLE ---
+        # This state occurs after a host-handled SYSCALL.
+        # We advance the PC past the SYS instruction and resume.
+        VVM_PC _VVMpointer VVMpeek 1 + VVM_PC _VVMpointer VVMpoke
+        VVM_Running VVM_status _VVMpointer VVMpoke
+    END END
+    # If status is Sys, Halted, or Error, do nothing.
 }
 
 DEF VVM.check_syscalls {
+    AS _VVMpointer
 
+    # 1. Check if VVM is requesting a syscall
+    VVM_status _VVMpointer VVMpeek VVM_Sys == IF
+        # --- HOST SYSCALL LOGIC WOULD GO HERE ---
+        # For example:
+        # 1. Read syscall ID from host deque
+        # 2. Read args from host deque
+        # 3. Execute the host-side function
+        # 4. Push results back to host deque
+        # --- END OF HOST LOGIC ---
+
+        # 5. Signal to VVM that the syscall is complete by setting the
+        #    status to Idle. VVM.run will see this and resume execution.
+        VVM_Idle VVM_status _VVMpointer VVMpoke
+    END
 }

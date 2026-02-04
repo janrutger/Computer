@@ -304,3 +304,16 @@ Debugger output confirms that the VVM header, code section, and all operand type
 The `VVM.create` function is now considered stable and robust.
 
 The project is now ready to move on to the execution phase, starting with the implementation of `VVM.start` and `VVM.run`.
+
+## append update: 4 feb 2026
+
+Project status is GREEN. The execution engine (`VVM.start` and `VVM.run`) has been successfully implemented but not yet verified.
+
+Key achievements:
+-   `VVM.start` is fully functional. It correctly initializes the VVM state, resets the PC, and loads arguments into the registers (A..Z). A critical bug involving global variable collision during the argument loading loop was identified and resolved by isolating the function's state.
+-   `VVM.run` now implements a robust Fetch-Decode-Execute cycle. It correctly handles:
+    -   Instruction fetching and PC advancement.
+    -   Operand fetching for instructions that require them (opcodes > 49).
+    -   The complex state machine required for System Calls (`Running` -> `Sys` -> `Idle` -> `Running`), ensuring the VVM pauses execution while the host handles the request.
+-   `VVM.check_syscalls` stub is be implemented to handle the host-side logic of the syscall handshake.
+
