@@ -14,8 +14,11 @@ VALUE _vvm_pc_offset 0
 VALUE _opcode 0
 VALUE _is_opcode 0
 
-STRING error_no_code "No SIMPL code provided. \n"
-STRING msg_labels_found " labels found\n"
+STRING error_no_code        "No SIMPL code provided. \n"
+STRING error_no_opcode      "VVM invalid OPCODE found. \n"
+STRING error_label_unknown  "VVM label not found. \n"
+STRING error_vvm_overflow   "VVM memory overflow. \n"
+STRING msg_labels_found     " labels found\n"
 
 # Peek a value from the VVM struct
 # ( index &VVM-pointer -- value )
@@ -74,6 +77,8 @@ DEF VVM.create {
     # Dereference the host pointer to get the actual deque address and store it
     *_VVMHOSTpointer         VVM_HOST_ptr _VVMpointer VVMpoke
     
+
+
     # Step 2: Phase 1, let us find the labels
     label_addresses DICT.clear      # Clean old labels
     0 AS _vvm_pc_offset             # Reset PC offset counter
@@ -116,7 +121,7 @@ DEF VVM.create {
             ELSE
                 # This token is not an opcode. This is an error in SIMPL code
                 # (e.g., a stray number or a misspelled opcode).
-                # A real compiler would error here, but for now we ignore it.
+                &error_no_opcode PRTstring HALT
             END
             
             # Move to the next token for the next instruction
@@ -128,10 +133,71 @@ DEF VVM.create {
         label_addresses DICT.count PRTnum &msg_labels_found PRTstring
     END
     
+    VALUE _vvm_max_size 0
+    VALUE _vvm_needed_size 0
+    
+    # Check VVM Size
+    _VVMsize 1024 * AS _vvm_max_size
+    VVM_code _vvm_pc_offset + AS _vvm_needed_size
+    _vvm_needed_size _vvm_max_size > IF
+        &error_vvm_overflow PRTstring HALT
+    END
+    
+    # Step 3: Phase 2, The Baker - Transpile and Load Bytecode
+    # We iterate through the SIMPL code deque a second time. We know all
+    # opcodes are valid and all label addresses have been calculated.
+    VALUE _vvm_code_start 0
+    VALUE _vvm_write_ptr 0
+
+    # 1. Setup Pointers
+    *_VVMpointer AS _temp_ptr               # Get VVM Base
+    _temp_ptr VVM_code + AS _vvm_code_start # Absolute address of code start
+    _vvm_code_start AS _vvm_write_ptr       # Current writing pointer
+
+    # 2. Loop through the SIMPL code deque
+    WHILE *_SIMPLcode DEQUE.is_empty 0 == DO
+        # Pop Token
+        *_SIMPLcode DEQUE.pop AS _temp_val
+        
+        # Get Opcode
+        _temp_val opcode_table DICT.get AS _opcode
+        
+        # Case: LABEL (60)
+        _opcode _label_ == IF
+            *_SIMPLcode DEQUE.pop DROP      # Discard label name
+        ELSE
+            # Write Opcode
+            _opcode AS *_vvm_write_ptr
+            _vvm_write_ptr 1 + AS _vvm_write_ptr
+            
+            # Case: One Operand (>= 50)
+            _opcode 49 > IF
+                # Pop Operand
+                *_SIMPLcode DEQUE.pop AS _temp_val
+                
+                # Check if Branch (> 60, since 60 is label)
+                _opcode 60 > IF
+                    _temp_val label_addresses DICT.has_key IF
+                        # Resolve Label to Absolute Address
+                        _temp_val label_addresses DICT.get _vvm_code_start + AS _temp_val
+                    ELSE
+                        &error_label_unknown PRTstring HALT
+                    END
+                ELSE
+                    # Handle Register Operands for GET (51) and SET (52)
+                    _opcode 51 == _opcode 52 == + IF
+                        *_temp_val 65 - AS _temp_val
+                    END
+                END
+                
+                # Write Operand (Literal or Resolved Address)
+                _temp_val AS *_vvm_write_ptr
+                _vvm_write_ptr 1 + AS _vvm_write_ptr
+            END
+        END
+    DONE
 
 
-
-    # step 3: Phase 2, transpile the code and load VVM
 
 }
 
@@ -142,5 +208,9 @@ DEF VVM.start {
 
 
 DEF VVM.run {
+
+}
+
+DEF VVM.check_syscalls {
 
 }

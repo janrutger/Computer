@@ -154,10 +154,10 @@ Steps todo list:
         - [x] Define VVM-HEADER (Constants defined in vvm_env_lib)
     - [ ] **VVM.create**
         - [x] Create memory structure
-        - [/] Pass 1: Label Scanning (The Scout)
-        - [ ] Pass 2: Bytecode Baking (The Baker)
-        - [ ] Transpile code
-        - [ ] Load code to VM
+        - [x] Pass 1: Label Scanning (The Scout)
+        - [x] Pass 2: Bytecode Baking (The Baker)
+        - [x] Transpile code
+        - [x] Load code to VM
     - [ ] **VVM.start**
         - [ ] Place the arguments in the registers
         - [ ] Set the PC to 0
@@ -287,3 +287,20 @@ made the foundation of the library much more robust.
 
 With the VVM header creation now stable, the project is ready to proceed with
 the first pass of the transpiler: "Pass 1: Label Scanning (The Scout)".
+
+## update: 4 feb 2026
+
+Project status is GREEN. The `VVM.create` function is now feature-complete and fully verified.
+
+The two-pass transpiler is working flawlessly. 
+"Pass 1: The Scout" correctly identifies all labels and calculates their relative offsets. 
+"Pass 2: The Baker" then uses this information to generate correct bytecode, successfully resolving label names into absolute jump addresses.
+
+Significant progress was made in the "Baker" phase:
+-   A crucial memory overflow check was added to ensure the transpiled code fits within the allocated VVM size.
+-   The logic to handle operands for `GET` and `SET` was implemented and debugged, correctly converting register name strings (e.g., `"A"`) into their integer equivalents (e.g., `0`).
+
+Debugger output confirms that the VVM header, code section, and all operand types (literals, addresses, registers) are being written to memory exactly as expected. 
+The `VVM.create` function is now considered stable and robust.
+
+The project is now ready to move on to the execution phase, starting with the implementation of `VVM.start` and `VVM.run`.

@@ -25,6 +25,8 @@ MACRO load_simple_test_code {
     30          SIMPL_code DEQUE.append
     \"ADD"      SIMPL_code DEQUE.append
     \"OUT"      SIMPL_code DEQUE.append
+    \"BRA"      SIMPL_code DEQUE.append
+    "mylabel"  SIMPL_code DEQUE.append
     \"PUSH"     SIMPL_code DEQUE.append
     10          SIMPL_code DEQUE.append
     \"OUT"      SIMPL_code DEQUE.append

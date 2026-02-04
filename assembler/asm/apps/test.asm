@@ -38,11 +38,18 @@
 . $_opcode 1
 . $_is_opcode 1
 . $error_no_code 26
+. $error_no_opcode 28
+. $error_label_unknown 23
+. $error_vvm_overflow 23
 . $msg_labels_found 15
 . $_VVMpointer 1
 . $_VVMHOSTpointer 1
 . $_VVMsize 1
 . $_SIMPLcode 1
+. $_vvm_max_size 1
+. $_vvm_needed_size 1
+. $_vvm_code_start 1
+. $_vvm_write_ptr 1
 . $VVM0 1
 . $host_comm_deque_ptr 1
 . $SIMPL_code 1
@@ -1580,6 +1587,13 @@
 :VVM.create_if_end_2
     jmp :VVM.create_if_end_1
 :VVM.create_if_else_1
+    ldi A $error_no_opcode
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
 :VVM.create_if_end_1
     ldm A $_scan_ptr
     stack A $DATASTACK_PTR
@@ -1607,10 +1621,175 @@
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
     :VVM.create_if_end_0
+    ldm B $_VVMsize
+    ldi A 1024
+    mul A B
+    sto A $_vvm_max_size
+    ldi A 50
+    ld B A
+    ldm A $_vvm_pc_offset
+    add A B
+    sto A $_vvm_needed_size
+    stack A $DATASTACK_PTR
+    ldm A $_vvm_max_size
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.create_if_end_6
+    ldi A $error_vvm_overflow
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
+:VVM.create_if_end_6
+    ldm I $_VVMpointer
+    ldx A $_start_memory_
+    sto A $_temp_ptr
+    ld B A
+    ldi A 50
+    add A B
+    sto A $_vvm_code_start
+    sto A $_vvm_write_ptr
+:VVM.create_while_start_1
+    ldm I $_SIMPLcode
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    call @DEQUE.is_empty
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.create_while_end_1
+    ldm I $_SIMPLcode
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    call @DEQUE.pop
+    ustack A $DATASTACK_PTR
+    sto A $_temp_val
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.get
+    ustack A $DATASTACK_PTR
+    sto A $_opcode
+    stack A $DATASTACK_PTR
+    ldi A 60
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.create_if_else_7
+    ldm I $_SIMPLcode
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    call @DEQUE.pop
+    call @rt_drop
+    jmp :VVM.create_if_end_7
+:VVM.create_if_else_7
+    ldm A $_opcode
+    ld B A
+    ldm I $_vvm_write_ptr
+    stx B $_start_memory_
+    ldm B $_vvm_write_ptr
+    ldi A 1
+    add A B
+    sto A $_vvm_write_ptr
+    ldm A $_opcode
+    stack A $DATASTACK_PTR
+    ldi A 49
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.create_if_end_8
+    ldm I $_SIMPLcode
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    call @DEQUE.pop
+    ustack A $DATASTACK_PTR
+    sto A $_temp_val
+    ldm A $_opcode
+    stack A $DATASTACK_PTR
+    ldi A 60
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.create_if_else_9
+    ldm A $_temp_val
+    stack A $DATASTACK_PTR
+    ldm A $label_addresses
+    stack A $DATASTACK_PTR
+    call @DICT.has_key
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.create_if_else_10
+    ldm A $_temp_val
+    stack A $DATASTACK_PTR
+    ldm A $label_addresses
+    stack A $DATASTACK_PTR
+    call @DICT.get
+    ldm A $_vvm_code_start
+    ustack B $DATASTACK_PTR
+    add A B
+    sto A $_temp_val
+    jmp :VVM.create_if_end_10
+:VVM.create_if_else_10
+    ldi A $error_label_unknown
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
+:VVM.create_if_end_10
+    jmp :VVM.create_if_end_9
+:VVM.create_if_else_9
+    ldm A $_opcode
+    stack A $DATASTACK_PTR
+    ldi A 51
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ldm A $_opcode
+    stack A $DATASTACK_PTR
+    ldi A 52
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add A B
+    tst A 0
+    jmpt :VVM.create_if_end_11
+    ldm I $_temp_val
+    ldx A $_start_memory_
+    ld B A
+    ldi A 65
+    sub B A
+    ld A B
+    sto A $_temp_val
+:VVM.create_if_end_11
+:VVM.create_if_end_9
+    ldm A $_temp_val
+    ld B A
+    ldm I $_vvm_write_ptr
+    stx B $_start_memory_
+    ldm B $_vvm_write_ptr
+    ldi A 1
+    add A B
+    sto A $_vvm_write_ptr
+:VVM.create_if_end_8
+:VVM.create_if_end_7
+    jmp :VVM.create_while_start_1
+:VVM.create_while_end_1
     ret
 @VVM.start
     ret
 @VVM.run
+    ret
+@VVM.check_syscalls
     ret
 
 @main
@@ -1667,6 +1846,16 @@
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 193465917
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193451642
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6953802385631
     stack A $DATASTACK_PTR
     ldm A $SIMPL_code
     stack A $DATASTACK_PTR
@@ -1794,11 +1983,18 @@
 % $_opcode 0
 % $_is_opcode 0
 % $error_no_code \N \o \space \S \I \M \P \L \space \c \o \d \e \space \p \r \o \v \i \d \e \d \. \space \Return \null
+% $error_no_opcode \V \V \M \space \i \n \v \a \l \i \d \space \O \P \C \O \D \E \space \f \o \u \n \d \. \space \Return \null
+% $error_label_unknown \V \V \M \space \l \a \b \e \l \space \n \o \t \space \f \o \u \n \d \. \space \Return \null
+% $error_vvm_overflow \V \V \M \space \m \e \m \o \r \y \space \o \v \e \r \f \l \o \w \. \space \Return \null
 % $msg_labels_found \space \l \a \b \e \l \s \space \f \o \u \n \d \Return \null
 % $_VVMpointer 0
 % $_VVMHOSTpointer 0
 % $_VVMsize 0
 % $_SIMPLcode 0
+% $_vvm_max_size 0
+% $_vvm_needed_size 0
+% $_vvm_code_start 0
+% $_vvm_write_ptr 0
 % $VVM0 15360
 % $host_comm_deque_ptr 0
 % $SIMPL_code 0
