@@ -8,6 +8,7 @@
 . $_is_opcode 1
 . $error_no_code 26
 . $error_no_opcode 28
+. $error_no_syscall 33
 . $error_label_unknown 23
 . $error_vvm_overflow 23
 . $msg_labels_found 15
@@ -16,6 +17,8 @@
 . $_run_handler 1
 . $_start_argc 1
 . $_start_idx 1
+. $_syscall_id 1
+. $_syscall_handler 1
 . $_VVMpointer 1
 . $_VVMHOSTpointer 1
 . $_VVMsize 1
@@ -527,14 +530,14 @@
 :VVM.run_if_end_13
     jmp :VVM.run_if_end_12
 :VVM.run_if_else_12
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :VVM.run_if_end_15
     ldm A $_temp_val
     stack A $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.run_if_end_15
     ldi A 2
     stack A $DATASTACK_PTR
     ldm A $_VVMpointer
@@ -570,6 +573,46 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :VVM.check_syscalls_if_end_16
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ustack A $DATASTACK_PTR
+    sto A $_temp_val
+    stack A $DATASTACK_PTR
+    call @DEQUE.pop_tail
+    ustack A $DATASTACK_PTR
+    sto A $_syscall_id
+    stack A $DATASTACK_PTR
+    ldm A $syscall_table
+    stack A $DATASTACK_PTR
+    call @DICT.has_key
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.check_syscalls_if_else_17
+    ldm A $_syscall_id
+    stack A $DATASTACK_PTR
+    ldm A $syscall_table
+    stack A $DATASTACK_PTR
+    call @DICT.get
+    ustack A $DATASTACK_PTR
+    sto A $_syscall_handler
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    ldm A $_syscall_handler
+    stack A $DATASTACK_PTR
+    calls $DATASTACK_PTR
+    jmp :VVM.check_syscalls_if_end_17
+:VVM.check_syscalls_if_else_17
+    ldi A $error_no_syscall
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
+:VVM.check_syscalls_if_end_17
     ldi A 2
     stack A $DATASTACK_PTR
     stack Z $DATASTACK_PTR
@@ -589,6 +632,7 @@
 % $_is_opcode 0
 % $error_no_code \N \o \space \S \I \M \P \L \space \c \o \d \e \space \p \r \o \v \i \d \e \d \. \space \Return \null
 % $error_no_opcode \V \V \M \space \i \n \v \a \l \i \d \space \O \P \C \O \D \E \space \f \o \u \n \d \. \space \Return \null
+% $error_no_syscall \V \V \M \space \i \n \v \a \l \i \d \space \S \Y \S \C \A \L \L \space \i \s \space \c \a \l \l \e \d \. \space \Return \null
 % $error_label_unknown \V \V \M \space \l \a \b \e \l \space \n \o \t \space \f \o \u \n \d \. \space \Return \null
 % $error_vvm_overflow \V \V \M \space \m \e \m \o \r \y \space \o \v \e \r \f \l \o \w \. \space \Return \null
 % $msg_labels_found \space \l \a \b \e \l \s \space \f \o \u \n \d \Return \null
@@ -597,6 +641,8 @@
 % $_run_handler 0
 % $_start_argc 0
 % $_start_idx 0
+% $_syscall_id 0
+% $_syscall_handler 0
 % $_VVMpointer 0
 % $_VVMHOSTpointer 0
 % $_VVMsize 0

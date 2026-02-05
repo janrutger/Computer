@@ -146,7 +146,7 @@ Steps todo list:
         - [ ] Beaware of the new opcode table, 0 .. 49 no arguments, 50 .. 99 one argument
     - [ ] **Setup runtime env**
         - [/] Write runtime handlers (Stubs created)
-        - [ ] Write Syscall handlers
+        - [/] Write Syscall handlers
         - [x] Create/populate opcodes-table
         - [-] Create/populate opcodes-length [Due a new opcode schema, this is not needed]
         - [x] Create/populate opcodes-runtimes
@@ -167,7 +167,7 @@ Steps todo list:
         - [x] Fetch instruction
         - [x] Look-up Handler, and execute handler
     - [ ] **VVM.check_syscalls**
-        - [ ] Check if any action (running a syscall) is expected, and execute
+        - [x] Check if any action (running a syscall) is expected, and execute
 
 
 ### some developer information
@@ -196,6 +196,14 @@ Steps todo list:
 | 60 - 69 | Flow Control | LABEL, BRA, BRZ, BNZ, BRP, BRN | Yes (Address) |
 | 70 - 99 | reserved | | Yes |
 
+## SYSCALL TABLE
+| ID | Group | Name | Description |
+| :--- | :--- | :--- | :--- |
+| 10 | Console | PRINT_NUM | Print number to console |
+| 11 | Console | PRINT_CHAR | Print character to console |
+| 20 | Input | READ_CHAR | Read character from keyboard |
+| 30 | System | GET_TICKS | Get system time in ticks |
+| 50 | Device | UDC_CMD | Send command to UDC device |
 
 ## SIMPL example programs
 
@@ -328,3 +336,27 @@ Key achievements:
 -   `s_halt` correctly sets the VVM status to `Halted`.
 -   Refactored `VVMpeek` and `VVMpoke` into `vvm_env_lib` to be accessible by all handlers.
 -   Verified the execution of a simple SIMPL script (`PUSH 12`, `PUSH 30`, `ADD`, `HALT`) using the debugger, confirming correct stack manipulation and program flow.
+
+## append update: 5 feb 2026
+
+Project status is GREEN. Today marked a major milestone with the successful implementation and debugging of the entire VVM syscall mechanism. The VVM is now fully operational and capable of interacting with the host system.
+
+Key achievements:
+
+-   **Syscall Architecture:**
+    -   Designed and documented a foundational set of system calls, including Console I/O, User Input, and System/Device control.
+    -   Made a key architectural decision to use an "Implicit Contract" for syscalls, where the Syscall ID implies the number of arguments. This improves performance and code clarity.
+
+-   **Syscall Implementation:**
+    -   A `syscall_table` dictionary was created and populated in `VVM.init` to map syscall IDs to their handlers.
+    -   The `VVM.check_syscalls` function was implemented as a robust dispatcher that executes the correct handler based on the ID.
+    -   The first syscall, `s_print_num`, was successfully implemented and tested, allowing the VVM to print a number to the host console.
+
+-   **Critical Debugging & Verification:**
+    -   A complex bug in the `VVM.run` state machine was identified and resolved. The issue was a subtle but critical syntax error (`ELSE IF`) common in stack-based languages.
+    -   Fixing this bug stabilized the entire `Running -> Sys -> Idle -> Running` lifecycle, making the VVM's interaction with the host reliable and predictable.
+
+-   **Instruction Set Expansion:**
+    -   Completed the arithmetic instruction set by implementing the `s_sub`, `s_mul`, `s_div`, and `s_mod` runtime handlers, making the VVM capable of all basic math operations.
+
+With the core execution loop, math operations, and host communication now complete and verified, the VVM is ready for the implementation of more advanced features, such as flow control and register manipulation.

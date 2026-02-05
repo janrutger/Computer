@@ -8,6 +8,8 @@ VALUE opcode_table 0
 VALUE opcode_runtimes 0
 VALUE label_addresses 0
 
+VALUE syscall_table 0
+
 # Internal variables for runtime handlers
 VALUE _env_vvm_ptr 0
 VALUE _env_sp_ptr_loc 0
@@ -94,6 +96,20 @@ CONST _brn_         65
 
 ### end of the opcodes
 
+### Setup the Syscalls constants
+# CONSOLE
+CONST PRINT_NUM     10 
+CONST PRINT_CHAR    11
+# INPUT
+CONST READ_NUM      20
+CONST READ_CHAR     21
+# SYSTEM
+# DEVICES
+
+### end of the syscalls
+
+
+
 ## Setup runtime handlers
 DEF s_halt {
     AS _env_vvm_ptr
@@ -102,6 +118,7 @@ DEF s_halt {
 }
 
 DEF s_nop {
+    DROP
 }
 
 DEF s_sys {
@@ -111,6 +128,16 @@ DEF s_sys {
 }
 
 DEF s_out {
+    AS _env_vvm_ptr
+
+    # Pop value from VVM Stack
+    VVM_SP _env_vvm_ptr VVMpeek 1 - AS _env_sp_addr
+    *_env_sp_addr AS _env_val
+    _env_sp_addr VVM_SP _env_vvm_ptr VVMpoke
+
+    # Append to Host Deque
+    VVM_HOST_ptr _env_vvm_ptr VVMpeek AS _env_host_dq
+    _env_val _env_host_dq DEQUE.append
 }
 
 DEF s_fetch {
@@ -197,7 +224,39 @@ DEF s_brp {
 
 DEF s_brn {
 }
+# End of instrcution handlers
 
+
+
+# Setup SYSCALL handlers
+DEF s_print_num {
+    AS _env_vvm_ptr
+    
+    # Get Host Deque
+    VVM_HOST_ptr _env_vvm_ptr VVMpeek AS _env_host_dq
+    
+    # Pop argument (number to print)
+    # Use pop_tail to get the most recently pushed argument (LIFO)
+    _env_host_dq DEQUE.pop_tail AS _env_val
+    
+    # Print it
+    _env_val PRINT
+    
+}
+
+DEF s_print_char {
+
+}
+
+DEF s_read_num {
+
+}
+
+DEF s_read_char {
+
+}
+
+# End of syscall handlers
 
 
 DEF VVM.init {
@@ -205,6 +264,10 @@ DEF VVM.init {
     100 NEW.list AS opcode_runtimes
 
     100 DICT.new AS label_addresses
+
+    50 DICT.new AS syscall_table
+
+
 
     # System Opcodes
     _halt_ \"HALT" opcode_table DICT.put
@@ -260,6 +323,12 @@ DEF VVM.init {
     &s_brp _brp_ opcode_runtimes LIST.put
     _brn_ \"BRN" opcode_table DICT.put
     &s_brn _brn_ opcode_runtimes LIST.put
+
+    # Syscalls
+    &s_print_num  PRINT_NUM  syscall_table DICT.put
+    &s_print_char PRINT_CHAR syscall_table DICT.put
+    &s_read_num   READ_NUM   syscall_table DICT.put
+    &s_read_char  READ_CHAR  syscall_table DICT.put
 
 
 }

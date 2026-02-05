@@ -16,14 +16,18 @@ VALUE _is_opcode 0
 
 STRING error_no_code        "No SIMPL code provided. \n"
 STRING error_no_opcode      "VVM invalid OPCODE found. \n"
+STRING error_no_syscall     "VVM invalid SYSCALL is called. \n"
 STRING error_label_unknown  "VVM label not found. \n"
 STRING error_vvm_overflow   "VVM memory overflow. \n"
 STRING msg_labels_found     " labels found\n"
+
 VALUE _run_pc 0
 VALUE _run_opcode 0
 VALUE _run_handler 0
 VALUE _start_argc 0
 VALUE _start_idx 0
+VALUE _syscall_id 0
+VALUE _syscall_handler 0
 
 VALUE _VVMpointer     0
 VALUE _VVMHOSTpointer 0
@@ -229,7 +233,7 @@ DEF VVM.run {
             _run_opcode opcode_runtimes LIST.get AS _run_handler
             _VVMpointer _run_handler EXEC # Execute handler
         END
-    ELSE IF _temp_val VVM_Idle ==
+    ELSE _temp_val VVM_Idle == IF
         # --- STATUS: IDLE ---
         # This state occurs after a host-handled SYSCALL.
         # We advance the PC past the SYS instruction and resume.
@@ -244,16 +248,22 @@ DEF VVM.check_syscalls {
 
     # 1. Check if VVM is requesting a syscall
     VVM_status _VVMpointer VVMpeek VVM_Sys == IF
-        # --- HOST SYSCALL LOGIC WOULD GO HERE ---
-        # For example:
-        # 1. Read syscall ID from host deque
-        # 2. Read args from host deque
-        # 3. Execute the host-side function
-        # 4. Push results back to host deque
-        # --- END OF HOST LOGIC ---
+        # 2. Get the host deque
+        VVM_HOST_ptr _VVMpointer VVMpeek AS _temp_val
 
-        # 5. Signal to VVM that the syscall is complete by setting the
-        #    status to Idle. VVM.run will see this and resume execution.
+        # 3. Pop the syscall ID from the host deque
+        _temp_val DEQUE.pop_tail AS _syscall_id
+
+        # 4. Look up and execute the handler
+        _syscall_id syscall_table DICT.has_key IF
+            _syscall_id syscall_table DICT.get AS _syscall_handler
+            _VVMpointer _syscall_handler EXEC
+        ELSE
+            &error_no_syscall PRTstring HALT
+        END
+
+        # 5. Signal to VVM that the syscall is complete
         VVM_Idle VVM_status _VVMpointer VVMpoke
     END
+    
 }

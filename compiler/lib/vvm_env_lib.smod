@@ -2,6 +2,7 @@
 . $opcode_table 1
 . $opcode_runtimes 1
 . $label_addresses 1
+. $syscall_table 1
 . $_env_vvm_ptr 1
 . $_env_sp_ptr_loc 1
 . $_env_sp_addr 1
@@ -61,10 +62,45 @@
     call @VVMpoke
     ret
 @s_nop
+    call @rt_drop
     ret
 @s_sys
     ret
 @s_out
+    ustack A $DATASTACK_PTR
+    sto A $_env_vvm_ptr
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $_env_sp_addr
+    ldm I $_env_sp_addr
+    ldx A $_start_memory_
+    sto A $_env_val
+    ldm A $_env_sp_addr
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ustack A $DATASTACK_PTR
+    sto A $_env_host_dq
+    ldm A $_env_val
+    stack A $DATASTACK_PTR
+    ldm A $_env_host_dq
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
     ret
 @s_fetch
     ret
@@ -165,6 +201,29 @@
     ret
 @s_brn
     ret
+@s_print_num
+    ustack A $DATASTACK_PTR
+    sto A $_env_vvm_ptr
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ustack A $DATASTACK_PTR
+    sto A $_env_host_dq
+    stack A $DATASTACK_PTR
+    call @DEQUE.pop_tail
+    ustack A $DATASTACK_PTR
+    sto A $_env_val
+    stack A $DATASTACK_PTR
+    call @rt_print_tos
+    ret
+@s_print_char
+    ret
+@s_read_num
+    ret
+@s_read_char
+    ret
 @VVM.init
     ldi A 100
     stack A $DATASTACK_PTR
@@ -181,6 +240,11 @@
     call @DICT.new
     ustack A $DATASTACK_PTR
     sto A $label_addresses
+    ldi A 50
+    stack A $DATASTACK_PTR
+    call @DICT.new
+    ustack A $DATASTACK_PTR
+    sto A $syscall_table
     stack Z $DATASTACK_PTR
     ldi A 6384101742
     stack A $DATASTACK_PTR
@@ -494,12 +558,41 @@
     ldm A $opcode_runtimes
     stack A $DATASTACK_PTR
     call @LIST.put
+    ldi A @s_print_num
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldm A $syscall_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_print_char
+    stack A $DATASTACK_PTR
+    ldi A 11
+    stack A $DATASTACK_PTR
+    ldm A $syscall_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_read_num
+    stack A $DATASTACK_PTR
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldm A $syscall_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_read_char
+    stack A $DATASTACK_PTR
+    ldi A 21
+    stack A $DATASTACK_PTR
+    ldm A $syscall_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
     ret
 
 # .DATA
 % $opcode_table 0
 % $opcode_runtimes 0
 % $label_addresses 0
+% $syscall_table 0
 % $_env_vvm_ptr 0
 % $_env_sp_ptr_loc 0
 % $_env_sp_addr 0
