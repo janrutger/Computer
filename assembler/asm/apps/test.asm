@@ -30,6 +30,18 @@
 . $opcode_table 1
 . $opcode_runtimes 1
 . $label_addresses 1
+. $_env_vvm_ptr 1
+. $_env_sp_ptr_loc 1
+. $_env_sp_addr 1
+. $_env_val 1
+. $_env_host_ptr_loc 1
+. $_env_host_dq 1
+. $_env_count 1
+. $_env_ptr 1
+. $_env_idx 1
+. $_env_val_tmp 1
+. $_math_a 1
+. $_math_b 1
 . $_temp_ptr 1
 . $_temp_idx 1
 . $_temp_val 1
@@ -1017,7 +1029,50 @@
     ret
 
 
+@VVMpeek
+    ustack A $DATASTACK_PTR
+    sto A $_env_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_env_idx
+    ldm I $_env_ptr
+    ldx A $_start_memory_
+    sto A $_env_ptr
+    ld B A
+    ldm A $_env_idx
+    add A B
+    sto A $_env_ptr
+    ldm I $_env_ptr
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ret
+@VVMpoke
+    ustack A $DATASTACK_PTR
+    sto A $_env_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_env_idx
+    ustack A $DATASTACK_PTR
+    sto A $_env_val_tmp
+    ldm I $_env_ptr
+    ldx A $_start_memory_
+    sto A $_env_ptr
+    ld B A
+    ldm A $_env_idx
+    add A B
+    sto A $_env_ptr
+    ldm A $_env_val_tmp
+    ld B A
+    ldm I $_env_ptr
+    stx B $_start_memory_
+    ret
 @s_halt
+    ustack A $DATASTACK_PTR
+    sto A $_env_vvm_ptr
+    ldi A 4
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
     ret
 @s_nop
     ret
@@ -1036,6 +1091,45 @@
 @s_over
     ret
 @s_add
+    ustack A $DATASTACK_PTR
+    sto A $_env_vvm_ptr
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ustack A $DATASTACK_PTR
+    sto A $_env_sp_addr
+    ld B A
+    ldi A 1
+    sub B A
+    ld A B
+    sto A $_env_sp_addr
+    ldm I $_env_sp_addr
+    ldx A $_start_memory_
+    sto A $_math_b
+    ldm B $_env_sp_addr
+    ldi A 1
+    sub B A
+    ld A B
+    sto A $_env_sp_addr
+    ldm I $_env_sp_addr
+    ldx A $_start_memory_
+    sto A $_math_a
+    ld B A
+    ldm A $_math_b
+    add B A
+    ldm I $_env_sp_addr
+    stx B $_start_memory_
+    ldm B $_env_sp_addr
+    ldi A 1
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
     ret
 @s_sub
     ret
@@ -1046,6 +1140,30 @@
 @s_mod
     ret
 @s_push
+    ustack A $DATASTACK_PTR
+    sto A $_env_vvm_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_env_val
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ustack A $DATASTACK_PTR
+    sto A $_env_sp_addr
+    ldm A $_env_val
+    ld B A
+    ldm I $_env_sp_addr
+    stx B $_start_memory_
+    ldm B $_env_sp_addr
+    ldi A 1
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
     ret
 @s_get
     ret
@@ -1393,41 +1511,6 @@
     ret
 
 
-@VVMpeek
-    ustack A $DATASTACK_PTR
-    sto A $_temp_ptr
-    ustack A $DATASTACK_PTR
-    sto A $_temp_idx
-    ldm I $_temp_ptr
-    ldx A $_start_memory_
-    sto A $_temp_ptr
-    ld B A
-    ldm A $_temp_idx
-    add A B
-    sto A $_temp_ptr
-    ldm I $_temp_ptr
-    ldx A $_start_memory_
-    stack A $DATASTACK_PTR
-    ret
-@VVMpoke
-    ustack A $DATASTACK_PTR
-    sto A $_temp_ptr
-    ustack A $DATASTACK_PTR
-    sto A $_temp_idx
-    ustack A $DATASTACK_PTR
-    sto A $_temp_val
-    ldm I $_temp_ptr
-    ldx A $_start_memory_
-    sto A $_temp_ptr
-    ld B A
-    ldm A $_temp_idx
-    add A B
-    sto A $_temp_ptr
-    ldm A $_temp_val
-    ld B A
-    ldm I $_temp_ptr
-    stx B $_start_memory_
-    ret
 @VVM.create
     ustack A $DATASTACK_PTR
     sto A $_VVMpointer
@@ -2025,31 +2108,6 @@
     ldm A $SIMPL_code
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 193465917
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 6384411237
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 10
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 193465917
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 193470404
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
     ldi A 6384101742
     stack A $DATASTACK_PTR
     ldm A $SIMPL_code
@@ -2123,9 +2181,42 @@
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldi A $VVM0
+        ldi A 1
+    ld B A
+    ldm A $p_watch_list
+    add A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    ld B A
+    ldm I $current_watch
+    stx B $_start_memory_
+    ldi A $VVM0
     stack A $DATASTACK_PTR
     call @VVM.run
+    ldi A $VVM0
+    stack A $DATASTACK_PTR
+    call @VVM.run
+    ldi A $VVM0
+    stack A $DATASTACK_PTR
+    call @VVM.run
+    ldi A $VVM0
+    stack A $DATASTACK_PTR
+    call @VVM.run
+    ldi A 1
+    ld B A
+    ldm A $p_watch_list
+    add A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldm I $current_watch
+    ldx A $_start_memory_
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    call @TIME.as_string
 :DEBUG
     ret
 
@@ -2164,6 +2255,18 @@
 % $opcode_table 0
 % $opcode_runtimes 0
 % $label_addresses 0
+% $_env_vvm_ptr 0
+% $_env_sp_ptr_loc 0
+% $_env_sp_addr 0
+% $_env_val 0
+% $_env_host_ptr_loc 0
+% $_env_host_dq 0
+% $_env_count 0
+% $_env_ptr 0
+% $_env_idx 0
+% $_env_val_tmp 0
+% $_math_a 0
+% $_math_b 0
 
 % $_temp_ptr 0
 % $_temp_idx 0

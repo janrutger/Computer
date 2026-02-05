@@ -159,13 +159,13 @@ Steps todo list:
         - [x] Transpile code
         - [x] Load code to VM
     - [ ] **VVM.start**
-        - [ ] Place the arguments in the registers
-        - [ ] Set the PC to 0
-        - [ ] Set the status to running
+        - [x] Place the arguments in the registers
+        - [x] Set the PC to 0
+        - [x] Set the status to running
     - [ ] **VVM.run**
-        - [ ] Check status
-        - [ ] Fetch instruction
-        - [ ] Look-up Handler, and execute handler
+        - [x] Check status
+        - [x] Fetch instruction
+        - [x] Look-up Handler, and execute handler
     - [ ] **VVM.check_syscalls**
         - [ ] Check if any action (running a syscall) is expected, and execute
 
@@ -317,3 +317,14 @@ Key achievements:
     -   The complex state machine required for System Calls (`Running` -> `Sys` -> `Idle` -> `Running`), ensuring the VVM pauses execution while the host handles the request.
 -   `VVM.check_syscalls` stub is be implemented to handle the host-side logic of the syscall handshake.
 
+## update: 5 feb 2026
+
+Project status is GREEN. The execution engine (`VVM.start` and `VVM.run`) has been successfully verified with a test script.
+
+Key achievements:
+-   Implemented and verified runtime handlers for `s_push`, `s_add`, `s_out`, and `s_halt`.
+-   `s_push` correctly pushes values to the VVM stack, updating the SP.
+-   `s_add` correctly pops two values, adds them, and pushes the result, using isolated temporary variables to avoid state collision.
+-   `s_halt` correctly sets the VVM status to `Halted`.
+-   Refactored `VVMpeek` and `VVMpoke` into `vvm_env_lib` to be accessible by all handlers.
+-   Verified the execution of a simple SIMPL script (`PUSH 12`, `PUSH 30`, `ADD`, `HALT`) using the debugger, confirming correct stack manipulation and program flow.

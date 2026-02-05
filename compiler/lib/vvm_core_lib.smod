@@ -25,41 +25,6 @@
 . $_vvm_code_start 1
 . $_vvm_write_ptr 1
 # .FUNCTIONS
-@VVMpeek
-    ustack A $DATASTACK_PTR
-    sto A $_temp_ptr
-    ustack A $DATASTACK_PTR
-    sto A $_temp_idx
-    ldm I $_temp_ptr
-    ldx A $_start_memory_
-    sto A $_temp_ptr
-    ld B A
-    ldm A $_temp_idx
-    add A B
-    sto A $_temp_ptr
-    ldm I $_temp_ptr
-    ldx A $_start_memory_
-    stack A $DATASTACK_PTR
-    ret
-@VVMpoke
-    ustack A $DATASTACK_PTR
-    sto A $_temp_ptr
-    ustack A $DATASTACK_PTR
-    sto A $_temp_idx
-    ustack A $DATASTACK_PTR
-    sto A $_temp_val
-    ldm I $_temp_ptr
-    ldx A $_start_memory_
-    sto A $_temp_ptr
-    ld B A
-    ldm A $_temp_idx
-    add A B
-    sto A $_temp_ptr
-    ldm A $_temp_val
-    ld B A
-    ldm I $_temp_ptr
-    stx B $_start_memory_
-    ret
 @VVM.create
     ustack A $DATASTACK_PTR
     sto A $_VVMpointer

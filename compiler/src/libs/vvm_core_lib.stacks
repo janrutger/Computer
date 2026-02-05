@@ -25,41 +25,6 @@ VALUE _run_handler 0
 VALUE _start_argc 0
 VALUE _start_idx 0
 
-# Peek a value from the VVM struct
-# ( index &VVM-pointer -- value )
-DEF VVMpeek {
-    # Pop the arguments into temporary variables
-    AS _temp_ptr    # _temp_ptr = &VVM-pointer (address of the pointer variable)
-    AS _temp_idx    # _temp_idx = index
-    
-    # Dereference the pointer to get the VVM's base address
-    *_temp_ptr AS _temp_ptr
-    
-    # Calculate the final address and store it back in _temp_ptr
-    _temp_ptr _temp_idx + AS _temp_ptr
-    
-    # Read from the final address and push it to the stack
-    *_temp_ptr
-}
-
-# Poke a value in the VVM struct
-# ( value index &VVM-pointer -- )
-DEF VVMpoke {
-    # Pop the arguments into temporary variables
-    AS _temp_ptr    # _temp_ptr = &VVM-pointer
-    AS _temp_idx    # _temp_idx = index
-    AS _temp_val    # _temp_val = value
-    
-    # Dereference the pointer to get the VVM's base address
-    *_temp_ptr AS _temp_ptr
-    
-    # Calculate the final address and store it back in _temp_ptr
-    _temp_ptr _temp_idx + AS _temp_ptr
-    
-    # Write the value to the final address
-    _temp_val AS *_temp_ptr
-}
-
 VALUE _VVMpointer     0
 VALUE _VVMHOSTpointer 0
 VALUE _VVMsize        0

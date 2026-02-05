@@ -8,6 +8,40 @@ VALUE opcode_table 0
 VALUE opcode_runtimes 0
 VALUE label_addresses 0
 
+# Internal variables for runtime handlers
+VALUE _env_vvm_ptr 0
+VALUE _env_sp_ptr_loc 0
+VALUE _env_sp_addr 0
+VALUE _env_val 0
+VALUE _env_host_ptr_loc 0
+VALUE _env_host_dq 0
+VALUE _env_count 0
+VALUE _env_ptr 0
+VALUE _env_idx 0
+VALUE _env_val_tmp 0
+VALUE _math_a 0
+VALUE _math_b 0
+
+# Peek a value from the VVM struct
+# ( index &VVM-pointer -- value )
+DEF VVMpeek {
+    AS _env_ptr
+    AS _env_idx
+    *_env_ptr AS _env_ptr
+    _env_ptr _env_idx + AS _env_ptr
+    *_env_ptr
+}
+
+# Poke a value in the VVM struct
+# ( value index &VVM-pointer -- )
+DEF VVMpoke {
+    AS _env_ptr
+    AS _env_idx
+    AS _env_val_tmp
+    *_env_ptr AS _env_ptr
+    _env_ptr _env_idx + AS _env_ptr
+    _env_val_tmp AS *_env_ptr
+}
 
 
 # Setup VVM memory structure
@@ -62,6 +96,9 @@ CONST _brn_         65
 
 ## Setup runtime handlers
 DEF s_halt {
+    AS _env_vvm_ptr
+    # Set status to Halted
+    VVM_Halted VVM_status _env_vvm_ptr VVMpoke
 }
 
 DEF s_nop {
@@ -92,6 +129,24 @@ DEF s_over {
 }
 
 DEF s_add {
+    AS _env_vvm_ptr
+
+    # Get SP
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+    # Pop B
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_b
+
+    # Pop A
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_a
+
+    # Push A + B
+    _math_a _math_b + AS *_env_sp_addr
+
+    # Update SP
+    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
 }
 
 DEF s_sub {
@@ -107,6 +162,17 @@ DEF s_mod {
 }
 
 DEF s_push {
+    AS _env_vvm_ptr
+    AS _env_val
+    
+    # Get SP (Absolute Address)
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+    # Push value to VVM stack (Absolute write)
+    _env_val AS *_env_sp_addr
+    
+    # Increment SP and update
+    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
 }
 
 DEF s_get {

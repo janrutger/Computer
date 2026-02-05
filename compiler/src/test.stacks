@@ -2,6 +2,7 @@
 ####
 
 USE std_heap
+USE std_time
 USE std_stern_io
 
 # its not allowed to use INCLUDE in an Library
@@ -22,11 +23,11 @@ MACRO load_simple_test_code {
     \"PUSH"     SIMPL_code DEQUE.append
     30          SIMPL_code DEQUE.append
     \"ADD"      SIMPL_code DEQUE.append
-    \"OUT"      SIMPL_code DEQUE.append
-    \"PUSH"     SIMPL_code DEQUE.append
-    10          SIMPL_code DEQUE.append
-    \"OUT"      SIMPL_code DEQUE.append
-    \"SYS"      SIMPL_code DEQUE.append
+    # \"OUT"      SIMPL_code DEQUE.append
+    # \"PUSH"     SIMPL_code DEQUE.append
+    # 10          SIMPL_code DEQUE.append
+    # \"OUT"      SIMPL_code DEQUE.append
+    # \"SYS"      SIMPL_code DEQUE.append
     \"HALT"     SIMPL_code DEQUE.append
 }
 
@@ -61,7 +62,13 @@ DEF main {
     0 &VVM0 VVM.start
     "VVM started \n" PRTstring
 
-    &VVM0 VVM.run 
+1 TIME.start
+    &VVM0 VVM.run  # PUSH
+    &VVM0 VVM.run  # PUSH
+    &VVM0 VVM.run  # ADD
+    &VVM0 VVM.run  # HALT
+1 TIME.read TIME.as_string 
+
 
  
 :DEBUG
