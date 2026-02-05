@@ -360,3 +360,12 @@ Key achievements:
     -   Completed the arithmetic instruction set by implementing the `s_sub`, `s_mul`, `s_div`, and `s_mod` runtime handlers, making the VVM capable of all basic math operations.
 
 With the core execution loop, math operations, and host communication now complete and verified, the VVM is ready for the implementation of more advanced features, such as flow control and register manipulation.
+
+## append update: 5 feb 2026 (Part 2)
+
+Project status is GREEN. A key architectural refinement was made regarding register addressing.
+
+Key Decision:
+-   **Integer Register Indices:** To ensure portability and simplify the VVM loader, register operands in the bytecode will now be stored as integer indices (0-25) rather than string pointers or names (e.g., "A").
+-   **Compiler Responsibility:** The responsibility for translating register names (like "A", "B") into indices (0, 1) is moved to the compiler/tokenizer layer. The VVM loader (`VVM.create`) now expects raw integers.
+-   **Implementation:** The `VVM.create` function was updated to remove the ASCII conversion logic and instead implements a range check (0-25) to ensure valid register access. This makes the bytecode serialization-friendly and the loader more robust.

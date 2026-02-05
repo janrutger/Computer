@@ -18,6 +18,7 @@ STRING error_no_code        "No SIMPL code provided. \n"
 STRING error_no_opcode      "VVM invalid OPCODE found. \n"
 STRING error_no_syscall     "VVM invalid SYSCALL is called. \n"
 STRING error_label_unknown  "VVM label not found. \n"
+STRING error_invalid_reg    "VVM invalid register index. \n"
 STRING error_vvm_overflow   "VVM memory overflow. \n"
 STRING msg_labels_found     " labels found\n"
 
@@ -160,7 +161,9 @@ DEF VVM.create {
                 ELSE
                     # Handle Register Operands for GET (51) and SET (52)
                     _opcode 51 == _opcode 52 == + IF
-                        *_temp_val 65 - AS _temp_val
+                        _temp_val 0 < _temp_val 25 > + IF
+                            &error_invalid_reg PRTstring HALT
+                        END
                     END
                 END
                 

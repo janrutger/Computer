@@ -24,6 +24,11 @@ MACRO load_simple_test_code {
     30          SIMPL_code DEQUE.append
     \"ADD"      SIMPL_code DEQUE.append
     \"OUT"      SIMPL_code DEQUE.append     # OUT arg1
+
+    \"PUSH"     SIMPL_code DEQUE.append
+    10          SIMPL_code DEQUE.append
+    \"SET"      SIMPL_code DEQUE.append
+    0           SIMPL_code DEQUE.append     # Adres index of the 26
     
     \"PUSH"     SIMPL_code DEQUE.append
     10          SIMPL_code DEQUE.append

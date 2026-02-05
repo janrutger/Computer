@@ -54,6 +54,7 @@
 . $error_no_opcode 28
 . $error_no_syscall 33
 . $error_label_unknown 23
+. $error_invalid_reg 30
 . $error_vvm_overflow 23
 . $msg_labels_found 15
 . $_run_pc 1
@@ -1948,13 +1949,28 @@
     add A B
     tst A 0
     jmpt :VVM.create_if_end_11
-    ldm I $_temp_val
-    ldx A $_start_memory_
-    ld B A
-    ldi A 65
-    sub B A
-    ld A B
-    sto A $_temp_val
+    ldm A $_temp_val
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_lt
+    ldm A $_temp_val
+    stack A $DATASTACK_PTR
+    ldi A 25
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add A B
+    tst A 0
+    jmpt :VVM.create_if_end_12
+    ldi A $error_invalid_reg
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
+:VVM.create_if_end_12
 :VVM.create_if_end_11
 :VVM.create_if_end_9
     ldm A $_temp_val
@@ -2040,7 +2056,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :VVM.run_if_else_12
+    jmpt :VVM.run_if_else_13
     ldi A 2
     stack A $DATASTACK_PTR
     ldm A $_VVMpointer
@@ -2057,15 +2073,15 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :VVM.run_if_else_13
+    jmpt :VVM.run_if_else_14
     ldi A 1
     stack A $DATASTACK_PTR
     stack Z $DATASTACK_PTR
     ldm A $_VVMpointer
     stack A $DATASTACK_PTR
     call @VVMpoke
-    jmp :VVM.run_if_end_13
-:VVM.run_if_else_13
+    jmp :VVM.run_if_end_14
+:VVM.run_if_else_14
     ldm B $_run_pc
     ldi A 1
     add A B
@@ -2077,7 +2093,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :VVM.run_if_end_14
+    jmpt :VVM.run_if_end_15
     ldm I $_run_pc
     ldx A $_start_memory_
     stack A $DATASTACK_PTR
@@ -2085,7 +2101,7 @@
     ldi A 1
     add A B
     sto A $_run_pc
-:VVM.run_if_end_14
+:VVM.run_if_end_15
     ldm A $_run_pc
     stack A $DATASTACK_PTR
     ldi A 2
@@ -2105,9 +2121,9 @@
     ldm A $_run_handler
     stack A $DATASTACK_PTR
     calls $DATASTACK_PTR
-:VVM.run_if_end_13
-    jmp :VVM.run_if_end_12
-:VVM.run_if_else_12
+:VVM.run_if_end_14
+    jmp :VVM.run_if_end_13
+:VVM.run_if_else_13
     ldm A $_temp_val
     stack A $DATASTACK_PTR
     ldi A 2
@@ -2115,7 +2131,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :VVM.run_if_end_15
+    jmpt :VVM.run_if_end_16
     ldi A 2
     stack A $DATASTACK_PTR
     ldm A $_VVMpointer
@@ -2135,8 +2151,8 @@
     ldm A $_VVMpointer
     stack A $DATASTACK_PTR
     call @VVMpoke
-:VVM.run_if_end_15
-:VVM.run_if_end_12
+:VVM.run_if_end_16
+:VVM.run_if_end_13
     ret
 @VVM.check_syscalls
     ustack A $DATASTACK_PTR
@@ -2150,7 +2166,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :VVM.check_syscalls_if_end_16
+    jmpt :VVM.check_syscalls_if_end_17
     ldi A 4
     stack A $DATASTACK_PTR
     ldm A $_VVMpointer
@@ -2168,7 +2184,7 @@
     call @DICT.has_key
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :VVM.check_syscalls_if_else_17
+    jmpt :VVM.check_syscalls_if_else_18
     ldm A $_syscall_id
     stack A $DATASTACK_PTR
     ldm A $syscall_table
@@ -2181,8 +2197,8 @@
     ldm A $_syscall_handler
     stack A $DATASTACK_PTR
     calls $DATASTACK_PTR
-    jmp :VVM.check_syscalls_if_end_17
-:VVM.check_syscalls_if_else_17
+    jmp :VVM.check_syscalls_if_end_18
+:VVM.check_syscalls_if_else_18
     ldi A $error_no_syscall
     stack A $DATASTACK_PTR
 
@@ -2190,14 +2206,14 @@
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
         call @HALT
-:VVM.check_syscalls_if_end_17
+:VVM.check_syscalls_if_end_18
     ldi A 2
     stack A $DATASTACK_PTR
     stack Z $DATASTACK_PTR
     ldm A $_VVMpointer
     stack A $DATASTACK_PTR
     call @VVMpoke
-:VVM.check_syscalls_if_end_16
+:VVM.check_syscalls_if_end_17
     ret
 
 @main
@@ -2244,6 +2260,26 @@
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 193465917
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6384411237
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193469745
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 345
     stack A $DATASTACK_PTR
     ldm A $SIMPL_code
     stack A $DATASTACK_PTR
@@ -2446,6 +2482,7 @@
 % $error_no_opcode \V \V \M \space \i \n \v \a \l \i \d \space \O \P \C \O \D \E \space \f \o \u \n \d \. \space \Return \null
 % $error_no_syscall \V \V \M \space \i \n \v \a \l \i \d \space \S \Y \S \C \A \L \L \space \i \s \space \c \a \l \l \e \d \. \space \Return \null
 % $error_label_unknown \V \V \M \space \l \a \b \e \l \space \n \o \t \space \f \o \u \n \d \. \space \Return \null
+% $error_invalid_reg \V \V \M \space \i \n \v \a \l \i \d \space \r \e \g \i \s \t \e \r \space \i \n \d \e \x \. \space \Return \null
 % $error_vvm_overflow \V \V \M \space \m \e \m \o \r \y \space \o \v \e \r \f \l \o \w \. \space \Return \null
 % $msg_labels_found \space \l \a \b \e \l \s \space \f \o \u \n \d \Return \null
 % $_run_pc 0
