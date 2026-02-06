@@ -143,19 +143,125 @@ DEF s_out {
 DEF s_fetch {
 }
 
+# ( A B -- (a b b))
 DEF s_dup {
+    AS _env_vvm_ptr
+
+    # Get SP
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+    # Pop B
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_b 
+
+    # Push B twice
+    _env_sp_addr 1 + AS _env_sp_addr
+    _math_b AS *_env_sp_addr
+
+    # Update SP
+    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+
 }
 
+# ( A B -- (a))
 DEF s_drop {
+    AS _env_vvm_ptr
+    # Get SP, decrement, and update
+    VVM_SP _env_vvm_ptr VVMpeek 1 - VVM_SP _env_vvm_ptr VVMpoke
 }
 
+# ( A B -- (b a))
 DEF s_swap {
+    AS _env_vvm_ptr
+
+    # Get SP
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+    # Read TOS (B)
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_b
+
+    # Read Next (A)
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_a
+
+    # Write B to A's slot
+    _math_b AS *_env_sp_addr
+
+    # Write A to B's slot
+    _env_sp_addr 1 + AS _env_sp_addr
+    _math_a AS *_env_sp_addr
 }
 
+# ( A B -- (a b a))
 DEF s_over {
+    AS _env_vvm_ptr
+
+    # Get SP
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+    # Read A (SP-2)
+    _env_sp_addr 2 - AS _env_ptr
+    *_env_ptr AS _math_a
+
+    # Push A (at SP)
+    _math_a AS *_env_sp_addr
+
+    # Update SP
+    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
 }
 
+# ( A B -- (a + b))
 DEF s_add {
+    AS _env_vvm_ptr
+
+    # Get SP
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+    # Pop B
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_b
+
+
+    # Pop A
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_a
+
+    # Push A + B
+    _math_a _math_b + AS *_env_sp_addr
+
+    # Update SP
+    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+}
+
+# ( A B -- ( a - b))
+DEF s_sub {
+    AS _env_vvm_ptr
+
+    # Get SP
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+    # Pop B
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_b
+
+    _math_b 0 == IF
+        &error_div_zero PRTstring HALT
+    END
+
+    # Pop A
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_a
+
+    # Push A - B
+    _math_a _math_b - AS *_env_sp_addr
+
+    # Update SP
+    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+}
+
+# ( A B -- ( a * b))
+DEF s_mul {
     AS _env_vvm_ptr
 
     # Get SP
@@ -169,23 +275,63 @@ DEF s_add {
     _env_sp_addr 1 - AS _env_sp_addr
     *_env_sp_addr AS _math_a
 
-    # Push A + B
-    _math_a _math_b + AS *_env_sp_addr
+    # Push A * B
+    _math_a _math_b * AS *_env_sp_addr
 
     # Update SP
     _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
 }
 
-DEF s_sub {
-}
-
-DEF s_mul {
-}
-
+# ( A B -- ( a // b))
 DEF s_div {
+    AS _env_vvm_ptr
+
+    # Get SP
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+    # Pop B
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_b
+
+    _math_b 0 == IF
+        &error_div_zero PRTstring HALT
+    END
+
+    # Pop A
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_a
+
+    # Push A // B
+    _math_a _math_b // AS *_env_sp_addr
+
+    # Update SP
+    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
 }
 
+# ( A B -- ( a % b))
 DEF s_mod {
+    AS _env_vvm_ptr
+
+    # Get SP
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+    # Pop B
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_b
+
+    _math_b 0 == IF
+        &error_div_zero PRTstring HALT
+    END
+
+    # Pop A
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_a
+
+    # Push A % B
+    _math_a _math_b % AS *_env_sp_addr
+
+    # Update SP
+    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
 }
 
 DEF s_push {

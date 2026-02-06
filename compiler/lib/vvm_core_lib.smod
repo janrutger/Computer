@@ -11,6 +11,7 @@
 . $error_no_syscall 33
 . $error_label_unknown 23
 . $error_invalid_reg 30
+. $error_div_zero 30
 . $error_vvm_overflow 23
 . $msg_labels_found 15
 . $_run_pc 1
@@ -651,6 +652,7 @@
 % $error_no_syscall \V \V \M \space \i \n \v \a \l \i \d \space \S \Y \S \C \A \L \L \space \i \s \space \c \a \l \l \e \d \. \space \Return \null
 % $error_label_unknown \V \V \M \space \l \a \b \e \l \space \n \o \t \space \f \o \u \n \d \. \space \Return \null
 % $error_invalid_reg \V \V \M \space \i \n \v \a \l \i \d \space \r \e \g \i \s \t \e \r \space \i \n \d \e \x \. \space \Return \null
+% $error_div_zero \V \V \M \space \d \i \v \i \s \i \o \n \space \b \y \space \z \e \r \o \space \e \r \r \o \r \. \space \Return \null
 % $error_vvm_overflow \V \V \M \space \m \e \m \o \r \y \space \o \v \e \r \f \l \o \w \. \space \Return \null
 % $msg_labels_found \space \l \a \b \e \l \s \space \f \o \u \n \d \Return \null
 % $_run_pc 0

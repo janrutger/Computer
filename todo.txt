@@ -369,3 +369,19 @@ Key Decision:
 -   **Integer Register Indices:** To ensure portability and simplify the VVM loader, register operands in the bytecode will now be stored as integer indices (0-25) rather than string pointers or names (e.g., "A").
 -   **Compiler Responsibility:** The responsibility for translating register names (like "A", "B") into indices (0, 1) is moved to the compiler/tokenizer layer. The VVM loader (`VVM.create`) now expects raw integers.
 -   **Implementation:** The `VVM.create` function was updated to remove the ASCII conversion logic and instead implements a range check (0-25) to ensure valid register access. This makes the bytecode serialization-friendly and the loader more robust.
+
+## append update: 6 feb 2026
+
+Project status is GREEN. Significant progress has been made in expanding the VVM's instruction set and refining the runtime environment.
+
+Key achievements:
+-   **Math Handlers:** The full suite of arithmetic operations (`s_add`, `s_sub`, `s_mul`, `s_div`, `s_mod`) has been implemented and verified.
+    -   A critical safety check for **division by zero** was added to `s_div` and `s_mod`, preventing host system crashes.
+    -   The handlers follow a consistent, robust pattern using isolated temporary variables (`_math_a`, `_math_b`).
+-   **Stack Logic:** Handlers for `s_dup`, `s_drop`, `s_swap`, and `s_over` have been implemented.
+    -   `s_dup` was optimized to avoid redundant memory writes.
+    -   `s_swap` correctly swaps values in place without modifying the stack pointer.
+-   **Code Review:** A comprehensive review of `vvm_env_lib.stacks` confirmed the library's structural integrity and correctness. A minor bug in `s_sub` (an incorrect zero-check) was identified and slated for removal.
+-   **Optimization:** An attempt to use inline assembly (`USTACK`/`STACK`) for math ops was explored but correctly reverted due to the dynamic memory model of the VVM. The Stacks-based implementation remains the correct approach.
+
+The project is now poised to tackle the final major components: flow control (`s_bra`, etc.) and register access (`s_get`, `s_set`).

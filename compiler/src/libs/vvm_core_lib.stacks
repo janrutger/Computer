@@ -19,6 +19,7 @@ STRING error_no_opcode      "VVM invalid OPCODE found. \n"
 STRING error_no_syscall     "VVM invalid SYSCALL is called. \n"
 STRING error_label_unknown  "VVM label not found. \n"
 STRING error_invalid_reg    "VVM invalid register index. \n"
+STRING error_div_zero       "VVM division by zero error. \n"
 STRING error_vvm_overflow   "VVM memory overflow. \n"
 STRING msg_labels_found     " labels found\n"
 
