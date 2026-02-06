@@ -22,7 +22,7 @@ MACRO load_simple_test_code {
     # This verifies the functionality of BRZ (Branch if Zero).
 
     \"PUSH"      SIMPL_code DEQUE.append
-    3           SIMPL_code DEQUE.append     # Start counter at 3 (Host compiler issue with -3)
+    3            SIMPL_code DEQUE.append     # Start counter at 3 (Host compiler issue with -3)
     \"NEG"       SIMPL_code DEQUE.append     # Negate the counter
 
     \"LABEL"     SIMPL_code DEQUE.append
@@ -31,26 +31,26 @@ MACRO load_simple_test_code {
     \"DUP"       SIMPL_code DEQUE.append     # Duplicate counter for printing
     \"OUT"       SIMPL_code DEQUE.append     # Send counter to host
     \"PUSH"      SIMPL_code DEQUE.append
-    10          SIMPL_code DEQUE.append     # Syscall ID for PRINT_NUM
+    10           SIMPL_code DEQUE.append     # Syscall ID for PRINT_NUM
     \"OUT"       SIMPL_code DEQUE.append
     \"SYS"       SIMPL_code DEQUE.append
 
     \"PUSH"      SIMPL_code DEQUE.append
-    1           SIMPL_code DEQUE.append
+    1            SIMPL_code DEQUE.append
     \"ADD"       SIMPL_code DEQUE.append     # Decrement the counter
 
     \"DUP"       SIMPL_code DEQUE.append     # Duplicate counter for the branch check
     \"BRZ"       SIMPL_code DEQUE.append     # If counter is zero, branch to exit
     \"exit_loop" SIMPL_code DEQUE.append
 
-    \"BRA"      SIMPL_code DEQUE.append
-    \"loop"     SIMPL_code DEQUE.append
+    \"BRA"       SIMPL_code DEQUE.append
+    \"loop"      SIMPL_code DEQUE.append
 
     \"LABEL"     SIMPL_code DEQUE.append
     \"exit_loop" SIMPL_code DEQUE.append
 
     \"DROP"      SIMPL_code DEQUE.append     # Clean up the final 0 from the stack
-    \"HALT"     SIMPL_code DEQUE.append
+    \"HALT"      SIMPL_code DEQUE.append
 }
 
 VALUE host_comm_deque_ptr 0

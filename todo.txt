@@ -144,6 +144,14 @@ Steps todo list:
         - [ ] Ensure your opcode handlers are written in the fastest native Stacks words available 
         - [ ] Or even ASM blocks if the Stern-ATX supports them.
         - [x] Beaware of the new opcode table, 0 .. 49 no arguments, 50 .. 99 one argument
+        - [ ] Implement "Store-and-Load-to-Different-Register" peephole optimization.
+                # Found in VVMpeek
+                Example:
+                sto A $var
+                ldm I $var
+                ->
+                sto A $var
+                ld I A
     - [ ] **Setup runtime env**
         - [x] Write runtime handlers (Stubs created)
         - [/] Write Syscall handlers
@@ -404,3 +412,69 @@ Key achievements:
 -   **Verification:** Successfully ran a test program counting from -3 to 0 using `NEG`, `ADD`, and `BRZ`, confirming the stability of the new instructions and the workaround for host compiler limitations.
 
 Next steps: Implement the remaining system calls (`PRINT_CHAR`, `READ_CHAR`) and the `FETCH` instruction.
+
+## append update: 6 feb 2026 (Part 4)
+
+Project status is GREEN. A major architectural decision has been made to support SIMPL libraries and subroutines.
+
+Key Decision:
+-   **Dedicated Return Stack:** To enable efficient `CALL` and `RET` instructions without code bloat (inlining) or data stack corruption, the VVM will implement a dedicated Return Stack.
+-   **Memory Layout:** The Return Stack will be located at the top of the VVM's allocated memory and grow downwards. This allows it to dynamically share the free space with the Code section (which grows upwards), maximizing memory efficiency.
+
+
+
+
+
+### Start 9 feb 2026
+### Next project description: Subroutines & Completeness
+
+## ##
+Building on the solid foundation of the VVM, this week focuses on enabling modular programming through subroutines and recursion.
+The introduction of the Return Stack is the critical enabler for this.
+Once `CALL` and `RET` are functional, we can implement the remaining IO instructions and verify the system with complex algorithms.
+## ##
+
+Steps todo list:
+
+- [ ] **Implement Return Stack Architecture**
+    - [ ] Define `VVM_RSP` constant (Offset 5).
+    - [ ] Update `VVM.create` to initialize `VVM_RSP` to the end of the allocated memory block.
+    - [ ] Implement `CALL` (Opcode ~66): Push `PC` to Return Stack, Jump to Label.
+    - [ ] Implement `RET` (Opcode ~06): Pop `PC` from Return Stack.
+    - [ ] Add runtime collision detection: `if PC >= RSP` then `Error`.
+
+- [ ] **Complete Instruction Set**
+    - [ ] Implement `FETCH` (Opcode ~05): Read from `VVM_HOST_PTR` to TOS.
+    - [ ] Implement Syscalls: `PRINT_CHAR` (11) and `READ_CHAR` (20).
+
+- [ ] **Verification & Stress Testing**
+    - [ ] Write a test program using `CALL`/`RET` (e.g., a simple function).
+    - [ ] Write a recursive test program (e.g., Factorial or Fibonacci) to stress the Return Stack.
+
+
+
+
+### Start 12 feb 2026
+### Next project description: The "Scalar Stacks" Compiler Target
+
+## ##
+To run Stacks code on the VVM, we need a new target in the compiler.
+This target will produce SIMPL bytecode instead of Stern-ATX Assembly.
+We accept the "ZX81 Constraints": No arrays, no string literals, max 26 variables.
+## ##
+
+Steps todo list:
+
+- [ ] **Compiler Infrastructure**
+    - [ ] Add `--target simpl` flag to `compiler.py`.
+    - [ ] Create `SimplCodeGenerator` class (skeleton based on `CodeGenerator`).
+
+- [ ] **Scalar Stacks Implementation**
+    - [ ] **Register Allocator:** Map `VALUE/VAR` names to VVM Registers (0-25). Error if > 26.
+    - [ ] **Math & Logic:** Map `+ - * / %` to `ADD SUB MUL DIV MOD`.
+    - [ ] **Flow Control:** Map `IF/WHILE` to `BRZ/BRA` (using the existing label logic).
+    - [ ] **Unsupported Features:** Throw explicit errors for `ASM {}`, Strings, and Arrays.
+
+- [ ] **Integration Test**
+    - [ ] Compile a Stacks "Fibonacci" program to SIMPL.
+    - [ ] Load the generated SIMPL code into the VVM and run it.

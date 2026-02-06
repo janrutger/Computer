@@ -1,10 +1,10 @@
 {
   "functions": [
-    "STRatoi",
-    "STRcopy",
-    "STRcmp",
-    "STRhash",
     "STRfind",
+    "STRhash",
+    "STRcmp",
+    "STRcopy",
+    "STRatoi",
     "STRlen"
   ],
   "variables": [
