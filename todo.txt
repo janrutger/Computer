@@ -143,9 +143,9 @@ Steps todo list:
     - [ ] **Optimization Tip:**
         - [ ] Ensure your opcode handlers are written in the fastest native Stacks words available 
         - [ ] Or even ASM blocks if the Stern-ATX supports them.
-        - [ ] Beaware of the new opcode table, 0 .. 49 no arguments, 50 .. 99 one argument
+        - [x] Beaware of the new opcode table, 0 .. 49 no arguments, 50 .. 99 one argument
     - [ ] **Setup runtime env**
-        - [/] Write runtime handlers (Stubs created)
+        - [x] Write runtime handlers (Stubs created)
         - [/] Write Syscall handlers
         - [x] Create/populate opcodes-table
         - [-] Create/populate opcodes-length [Due a new opcode schema, this is not needed]
@@ -370,7 +370,7 @@ Key Decision:
 -   **Compiler Responsibility:** The responsibility for translating register names (like "A", "B") into indices (0, 1) is moved to the compiler/tokenizer layer. The VVM loader (`VVM.create`) now expects raw integers.
 -   **Implementation:** The `VVM.create` function was updated to remove the ASCII conversion logic and instead implements a range check (0-25) to ensure valid register access. This makes the bytecode serialization-friendly and the loader more robust.
 
-## append update: 6 feb 2026
+## update: 6 feb 2026
 
 Project status is GREEN. Significant progress has been made in expanding the VVM's instruction set and refining the runtime environment.
 
@@ -385,3 +385,22 @@ Key achievements:
 -   **Optimization:** An attempt to use inline assembly (`USTACK`/`STACK`) for math ops was explored but correctly reverted due to the dynamic memory model of the VVM. The Stacks-based implementation remains the correct approach.
 
 The project is now poised to tackle the final major components: flow control (`s_bra`, etc.) and register access (`s_get`, `s_set`).
+
+## append update: 6 feb 2026 (Part 2)
+
+Identified a limitation in the host Stacks compiler/toolchain.
+
+-   **Negative Literals:** The host compiler does not correctly handle negative integer literals (e.g., `-3`) in the source code, leading to crashes.
+-   **Workaround:** Use positive integers and subtraction (e.g., `3` then `SUB` or `0 3 -`) or a `NEGATE` operation if available to generate negative values at runtime. The VVM itself handles negative numbers correctly once they are on the stack.
+
+## append update: 6 feb 2026 (Part 3)
+
+Project status is GREEN. The VVM instruction set is nearing completion.
+
+Key achievements:
+-   **Flow Control:** Implemented and verified `s_bra`, `s_brz`, `s_bnz`, `s_brp`, and `s_brn`. Loops and conditionals are now functional.
+-   **Register Access:** Implemented `s_get` and `s_set` using integer indices (0-25), enabling variable storage in the VVM.
+-   **Math Extensions:** Implemented `s_neg` (Negate) to support negative number generation and arithmetic.
+-   **Verification:** Successfully ran a test program counting from -3 to 0 using `NEG`, `ADD`, and `BRZ`, confirming the stability of the new instructions and the workaround for host compiler limitations.
+
+Next steps: Implement the remaining system calls (`PRINT_CHAR`, `READ_CHAR`) and the `FETCH` instruction.

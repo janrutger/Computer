@@ -1306,20 +1306,6 @@
     ldm I $_env_sp_addr
     ldx A $_start_memory_
     sto A $_math_b
-    stack A $DATASTACK_PTR
-    stack Z $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :s_sub_if_end_0
-    ldi A $error_div_zero
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        call @HALT
-:s_sub_if_end_0
     ldm B $_env_sp_addr
     ldi A 1
     sub B A
@@ -1407,7 +1393,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :s_div_if_end_1
+    jmpt :s_div_if_end_0
     ldi A $error_div_zero
     stack A $DATASTACK_PTR
 
@@ -1415,7 +1401,7 @@
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
         call @HALT
-:s_div_if_end_1
+:s_div_if_end_0
     ldm B $_env_sp_addr
     ldi A 1
     sub B A
@@ -1462,7 +1448,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :s_mod_if_end_2
+    jmpt :s_mod_if_end_1
     ldi A $error_div_zero
     stack A $DATASTACK_PTR
 
@@ -1470,7 +1456,7 @@
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
         call @HALT
-:s_mod_if_end_2
+:s_mod_if_end_1
     ldm B $_env_sp_addr
     ldi A 1
     sub B A
@@ -1494,6 +1480,27 @@
     ldm A $_env_vvm_ptr
     stack A $DATASTACK_PTR
     call @VVMpoke
+    ret
+@s_neg
+    ustack A $DATASTACK_PTR
+    sto A $_env_vvm_ptr
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $_env_sp_addr
+    stack Z $DATASTACK_PTR
+    ldm I $_env_sp_addr
+    ldx A $_start_memory_
+    ustack B $DATASTACK_PTR
+    sub B A
+    ldm I $_env_sp_addr
+    stx B $_start_memory_
     ret
 @s_push
     ustack A $DATASTACK_PTR
@@ -1522,18 +1529,257 @@
     call @VVMpoke
     ret
 @s_get
+    ustack A $DATASTACK_PTR
+    sto A $_env_vvm_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_math_a
+    ldm I $_env_vvm_ptr
+    ldx A $_start_memory_
+    ld B A
+    ldi A 22
+    add B A
+    ldm A $_math_a
+    add A B
+    sto A $_env_ptr
+    ldm I $_env_ptr
+    ldx A $_start_memory_
+    sto A $_env_val
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ustack A $DATASTACK_PTR
+    sto A $_env_sp_addr
+    ldm A $_env_val
+    ld B A
+    ldm I $_env_sp_addr
+    stx B $_start_memory_
+    ldm B $_env_sp_addr
+    ldi A 1
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
     ret
 @s_set
+    ustack A $DATASTACK_PTR
+    sto A $_env_vvm_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_math_a
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $_env_sp_addr
+    ldm I $_env_sp_addr
+    ldx A $_start_memory_
+    sto A $_env_val
+    ldm A $_env_sp_addr
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ldm I $_env_vvm_ptr
+    ldx A $_start_memory_
+    ld B A
+    ldi A 22
+    add B A
+    ldm A $_math_a
+    add A B
+    sto A $_env_ptr
+    ldm A $_env_val
+    ld B A
+    ldm I $_env_ptr
+    stx B $_start_memory_
     ret
 @s_bra
+    ustack A $DATASTACK_PTR
+    sto A $_env_vvm_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_math_a
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
     ret
 @s_brz
+    ustack A $DATASTACK_PTR
+    sto A $_env_vvm_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_math_a
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $_env_sp_addr
+    ldm I $_env_sp_addr
+    ldx A $_start_memory_
+    sto A $_env_val
+    ldm A $_env_sp_addr
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ldm A $_env_val
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :s_brz_if_end_2
+    ldm A $_math_a
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+:s_brz_if_end_2
     ret
 @s_bnz
+    ustack A $DATASTACK_PTR
+    sto A $_env_vvm_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_math_a
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $_env_sp_addr
+    ldm I $_env_sp_addr
+    ldx A $_start_memory_
+    sto A $_env_val
+    ldm A $_env_sp_addr
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ldm A $_env_val
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :s_bnz_if_end_3
+    ldm A $_math_a
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+:s_bnz_if_end_3
     ret
 @s_brp
+    ustack A $DATASTACK_PTR
+    sto A $_env_vvm_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_math_a
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $_env_sp_addr
+    ldm I $_env_sp_addr
+    ldx A $_start_memory_
+    sto A $_env_val
+    ldm A $_env_sp_addr
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ldm A $_env_val
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_lt
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :s_brp_if_end_4
+    ldm A $_math_a
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+:s_brp_if_end_4
     ret
 @s_brn
+    ustack A $DATASTACK_PTR
+    sto A $_env_vvm_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_math_a
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $_env_sp_addr
+    ldm I $_env_sp_addr
+    ldx A $_start_memory_
+    sto A $_env_val
+    ldm A $_env_sp_addr
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ldm A $_env_val
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :s_brn_if_end_5
+    ldm A $_math_a
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+:s_brn_if_end_5
     ret
 @s_print_num
     ustack A $DATASTACK_PTR
@@ -1769,6 +2015,20 @@
     ldi A @s_mod
     stack A $DATASTACK_PTR
     ldi A 24
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 25
+    stack A $DATASTACK_PTR
+    ldi A 193464287
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_neg
+    stack A $DATASTACK_PTR
+    ldi A 25
     stack A $DATASTACK_PTR
     ldm A $opcode_runtimes
     stack A $DATASTACK_PTR
@@ -2555,22 +2815,27 @@
     ldm A $SIMPL_code
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 12
+    ldi A 3
     stack A $DATASTACK_PTR
     ldm A $SIMPL_code
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 6384411237
+    ldi A 193464287
     stack A $DATASTACK_PTR
     ldm A $SIMPL_code
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 30
+    ldi A 210680089861
     stack A $DATASTACK_PTR
     ldm A $SIMPL_code
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 193450094
+    ldi A 6385446751
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193453934
     stack A $DATASTACK_PTR
     ldm A $SIMPL_code
     stack A $DATASTACK_PTR
@@ -2596,6 +2861,61 @@
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 193470404
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6384411237
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193450094
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193453934
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193451667
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 249887499311019352
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193451642
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6385446751
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 210680089861
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 249887499311019352
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6383976602
     stack A $DATASTACK_PTR
     ldm A $SIMPL_code
     stack A $DATASTACK_PTR

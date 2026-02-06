@@ -82,6 +82,7 @@ CONST _sub_         21
 CONST _mul_         22
 CONST _div_         23
 CONST _mod_         24
+CONST _neg_         25
 # 50 .. 99 one argument opcodes
 CONST _push_        50
 CONST _get_         51
@@ -245,10 +246,6 @@ DEF s_sub {
     _env_sp_addr 1 - AS _env_sp_addr
     *_env_sp_addr AS _math_b
 
-    _math_b 0 == IF
-        &error_div_zero PRTstring HALT
-    END
-
     # Pop A
     _env_sp_addr 1 - AS _env_sp_addr
     *_env_sp_addr AS _math_a
@@ -334,6 +331,19 @@ DEF s_mod {
     _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
 }
 
+# ( A -- (0 - a))
+DEF s_neg {
+    AS _env_vvm_ptr
+    
+    # Get SP (points to next free), decrement to get TOS
+    VVM_SP _env_vvm_ptr VVMpeek 1 - AS _env_sp_addr
+    
+    # In-place negation: read, negate, write back
+    # *_env_sp_addr -1 * AS *_env_sp_addr
+    0 *_env_sp_addr - AS *_env_sp_addr
+
+}
+
 DEF s_push {
     AS _env_vvm_ptr
     AS _env_val
@@ -349,28 +359,103 @@ DEF s_push {
 }
 
 DEF s_get {
+    AS _env_vvm_ptr
+    AS _math_a # Register index
+
+    # Read Register
+    *_env_vvm_ptr VVM_regs + _math_a + AS _env_ptr
+    *_env_ptr AS _env_val
+
+    # Push to VVM Stack
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+    _env_val AS *_env_sp_addr
+    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
 }
 
 DEF s_set {
+    AS _env_vvm_ptr
+    AS _math_a # Register index
+
+    # Pop Value from VVM Stack
+    VVM_SP _env_vvm_ptr VVMpeek 1 - AS _env_sp_addr
+    *_env_sp_addr AS _env_val
+    _env_sp_addr VVM_SP _env_vvm_ptr VVMpoke
+
+    # Write to Register
+    *_env_vvm_ptr VVM_regs + _math_a + AS _env_ptr
+    _env_val AS *_env_ptr
 }
 
 # there is no s_label needed on runtime
 
 DEF s_bra {
+    AS _env_vvm_ptr
+    AS _math_a # target address
+
+    # Set PC to target address
+    _math_a VVM_PC _env_vvm_ptr VVMpoke
 }
 
 DEF s_brz {
+    AS _env_vvm_ptr
+    AS _math_a # target address
+
+    # Pop value from VVM Stack
+    VVM_SP _env_vvm_ptr VVMpeek 1 - AS _env_sp_addr
+    *_env_sp_addr AS _env_val
+    _env_sp_addr VVM_SP _env_vvm_ptr VVMpoke
+
+    # Check condition
+    _env_val 0 == IF
+        _math_a VVM_PC _env_vvm_ptr VVMpoke
+    END
 }
 
 DEF s_bnz {
+    AS _env_vvm_ptr
+    AS _math_a # target address
+
+    # Pop value from VVM Stack
+    VVM_SP _env_vvm_ptr VVMpeek 1 - AS _env_sp_addr
+    *_env_sp_addr AS _env_val
+    _env_sp_addr VVM_SP _env_vvm_ptr VVMpoke
+
+    # Check condition
+    _env_val 0 != IF
+        _math_a VVM_PC _env_vvm_ptr VVMpoke
+    END
 }
 
 DEF s_brp {
+    AS _env_vvm_ptr
+    AS _math_a # target address
+
+    # Pop value from VVM Stack
+    VVM_SP _env_vvm_ptr VVMpeek 1 - AS _env_sp_addr
+    *_env_sp_addr AS _env_val
+    _env_sp_addr VVM_SP _env_vvm_ptr VVMpoke
+
+    # Check condition (Positive or Zero)
+    _env_val 0 < 0 == IF
+        _math_a VVM_PC _env_vvm_ptr VVMpoke
+    END
 }
 
 DEF s_brn {
+    AS _env_vvm_ptr
+    AS _math_a # target address
+
+    # Pop value from VVM Stack
+    VVM_SP _env_vvm_ptr VVMpeek 1 - AS _env_sp_addr
+    *_env_sp_addr AS _env_val
+    _env_sp_addr VVM_SP _env_vvm_ptr VVMpoke
+
+    # Check condition (Negative)
+    _env_val 0 < IF
+        _math_a VVM_PC _env_vvm_ptr VVMpoke
+    END
 }
-# End of instrcution handlers
+# End of instruction handlers
 
 
 
@@ -448,6 +533,8 @@ DEF VVM.init {
     &s_div _div_ opcode_runtimes LIST.put
     _mod_ \"MOD" opcode_table DICT.put
     &s_mod _mod_ opcode_runtimes LIST.put
+    _neg_ \"NEG" opcode_table DICT.put
+    &s_neg _neg_ opcode_runtimes LIST.put
 
     # Data Transfer Opcodes
     _push_ \"PUSH" opcode_table DICT.put
