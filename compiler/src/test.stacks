@@ -53,6 +53,89 @@ MACRO load_simple_test_code {
     \"HALT"      SIMPL_code DEQUE.append
 }
 
+MACRO load_call_ret_test_code {
+    # Test program for CALL and RET
+    # Main: Pushes 10, Calls 'add_five', Prints result (15)
+    
+    \"PUSH"      SIMPL_code DEQUE.append
+    10           SIMPL_code DEQUE.append
+    
+    \"CALL"      SIMPL_code DEQUE.append
+    \"add_five"  SIMPL_code DEQUE.append
+    
+    # Print Result
+    \"OUT"       SIMPL_code DEQUE.append
+    \"PUSH"      SIMPL_code DEQUE.append
+    10           SIMPL_code DEQUE.append
+    \"OUT"       SIMPL_code DEQUE.append
+    \"SYS"       SIMPL_code DEQUE.append
+    
+    \"HALT"      SIMPL_code DEQUE.append
+
+    # Subroutine
+    \"LABEL"     SIMPL_code DEQUE.append
+    \"add_five"  SIMPL_code DEQUE.append
+    
+    \"PUSH"      SIMPL_code DEQUE.append
+    5            SIMPL_code DEQUE.append
+    
+    \"ADD"       SIMPL_code DEQUE.append
+
+    \"RET"       SIMPL_code DEQUE.append
+}
+
+MACRO load_factorial_test_code {
+    # Test program for Recursion (Factorial)
+    # Main: Pushes 5, Calls 'factorial', Prints result (120)
+    
+    \"PUSH"      SIMPL_code DEQUE.append
+    5            SIMPL_code DEQUE.append
+    
+    \"CALL"      SIMPL_code DEQUE.append
+    \"factorial" SIMPL_code DEQUE.append
+    
+    # Print Result
+    \"OUT"       SIMPL_code DEQUE.append
+    \"PUSH"      SIMPL_code DEQUE.append
+    10           SIMPL_code DEQUE.append
+    \"OUT"       SIMPL_code DEQUE.append
+    \"SYS"       SIMPL_code DEQUE.append
+    
+    \"HALT"      SIMPL_code DEQUE.append
+
+    # Subroutine ( N -- N! )
+    \"LABEL"     SIMPL_code DEQUE.append
+    \"factorial" SIMPL_code DEQUE.append
+    
+    # Check Base Case (N < 2)
+    \"DUP"       SIMPL_code DEQUE.append
+    \"PUSH"      SIMPL_code DEQUE.append
+    2            SIMPL_code DEQUE.append
+    \"SUB"       SIMPL_code DEQUE.append
+    \"BRN"       SIMPL_code DEQUE.append
+    \"base_case" SIMPL_code DEQUE.append
+    
+    # Recursive Step: N * fact(N-1)
+    \"DUP"       SIMPL_code DEQUE.append
+    \"PUSH"      SIMPL_code DEQUE.append
+    1            SIMPL_code DEQUE.append
+    \"SUB"       SIMPL_code DEQUE.append
+    
+    \"CALL"      SIMPL_code DEQUE.append
+    \"factorial" SIMPL_code DEQUE.append
+    
+    \"MUL"       SIMPL_code DEQUE.append
+    \"RET"       SIMPL_code DEQUE.append
+    
+    # Base Case: Return 1
+    \"LABEL"     SIMPL_code DEQUE.append
+    \"base_case" SIMPL_code DEQUE.append
+    \"DROP"      SIMPL_code DEQUE.append # Drop N
+    \"PUSH"      SIMPL_code DEQUE.append
+    1            SIMPL_code DEQUE.append
+    \"RET"       SIMPL_code DEQUE.append
+}
+
 VALUE host_comm_deque_ptr 0
 VALUE SIMPL_code 0
 
@@ -64,8 +147,9 @@ DEF main {
     DEQUE.new AS host_comm_deque_ptr   ; Get a pointer for the host communication deque
     DEQUE.new AS SIMPL_code     ; Get a pointer for the SIMPL code buffer
     
-
-    load_simple_test_code
+    # load_simple_test_code
+    # load_call_ret_test_code
+    load_factorial_test_code
 
     VVM.init                        ; init VVM environment
     "VVM Environment Initialized.\n" PRTstring

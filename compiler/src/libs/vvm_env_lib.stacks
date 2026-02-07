@@ -24,6 +24,8 @@ VALUE _env_val_tmp 0
 VALUE _math_a 0
 VALUE _math_b 0
 
+STRING error_stack_collision "VVM Stack Collision (PC>=RSP). \n"
+
 # Peek a value from the VVM struct
 # ( index &VVM-pointer -- value )
 DEF VVMpeek {
@@ -52,6 +54,7 @@ CONST VVM_size      1
 CONST VVM_PC        2
 CONST VVM_SP        3
 CONST VVM_HOST_ptr  4
+CONST VVM_RSP       5
 CONST VVM_stack     6   ; reservation of 16 words
 CONST VVM_regs      22  ; reservation for 26 registers
 CONST VVM_code      50  ; Start of code block
@@ -71,6 +74,8 @@ CONST _nop_         1
 CONST _sys_         2
 CONST _out_         3
 CONST _fetch_       4
+CONST _ret_         6
+
 
 CONST _dup_         10
 CONST _drop_        11
@@ -94,6 +99,8 @@ CONST _brz_         62
 CONST _bnz_         63
 CONST _brp_         64
 CONST _brn_         65
+CONST _call_        66
+
 
 ### end of the opcodes
 
@@ -116,6 +123,44 @@ DEF s_halt {
     AS _env_vvm_ptr
     # Set status to Halted
     VVM_Halted VVM_status _env_vvm_ptr VVMpoke
+}
+
+DEF s_call { 
+    AS _env_vvm_ptr
+    AS _math_a # target address (Label)
+    
+    # 1. Get current PC (Return Address)
+    VVM_PC _env_vvm_ptr VVMpeek AS _env_val
+    
+    # 2. Get RSP and Decrement (Full Descending Stack)
+    VVM_RSP _env_vvm_ptr VVMpeek 1 - AS _env_sp_addr
+    
+    # 3. Check Collision (PC >= RSP)
+    # We check if (PC < RSP) is False (0). 
+    # If so, PC >= RSP, which is a collision.
+    _env_val _env_sp_addr < 0 == IF
+        &error_stack_collision PRTstring HALT
+    END
+    
+    # 4. Push Return Address and Update RSP
+    _env_val AS *_env_sp_addr
+    _env_sp_addr VVM_RSP _env_vvm_ptr VVMpoke
+    
+    # 5. Jump to target
+    _math_a VVM_PC _env_vvm_ptr VVMpoke
+}
+
+DEF s_ret {
+    AS _env_vvm_ptr
+    # 1. Pop Return Address from RSP
+    VVM_RSP _env_vvm_ptr VVMpeek AS _env_sp_addr
+    *_env_sp_addr AS _env_val
+    
+    # 2. Increment RSP and Update
+    _env_sp_addr 1 + VVM_RSP _env_vvm_ptr VVMpoke
+    
+    # 3. Set PC (Return)
+    _env_val VVM_PC _env_vvm_ptr VVMpoke
 }
 
 DEF s_nop {
@@ -511,6 +556,8 @@ DEF VVM.init {
     &s_out _out_ opcode_runtimes LIST.put
     _fetch_ \"FETCH" opcode_table DICT.put
     &s_fetch _fetch_ opcode_runtimes LIST.put
+    _ret_ \"RET" opcode_table DICT.put
+    &s_ret _ret_ opcode_runtimes LIST.put
 
     # Stack Logic Opcodes
     _dup_ \"DUP" opcode_table DICT.put
@@ -556,6 +603,10 @@ DEF VVM.init {
     &s_brp _brp_ opcode_runtimes LIST.put
     _brn_ \"BRN" opcode_table DICT.put
     &s_brn _brn_ opcode_runtimes LIST.put
+    _call_ \"CALL" opcode_table DICT.put
+    &s_call _call_ opcode_runtimes LIST.put
+
+
 
     # Syscalls
     &s_print_num  PRINT_NUM  syscall_table DICT.put

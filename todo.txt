@@ -425,7 +425,7 @@ Key Decision:
 
 
 
-### Start 9 feb 2026
+### Start 7 feb 2026
 ### Next project description: Subroutines & Completeness
 
 ## ##
@@ -436,22 +436,40 @@ Once `CALL` and `RET` are functional, we can implement the remaining IO instruct
 
 Steps todo list:
 
-- [ ] **Implement Return Stack Architecture**
-    - [ ] Define `VVM_RSP` constant (Offset 5).
-    - [ ] Update `VVM.create` to initialize `VVM_RSP` to the end of the allocated memory block.
-    - [ ] Implement `CALL` (Opcode ~66): Push `PC` to Return Stack, Jump to Label.
-    - [ ] Implement `RET` (Opcode ~06): Pop `PC` from Return Stack.
-    - [ ] Add runtime collision detection: `if PC >= RSP` then `Error`.
+- [x] **Implement Return Stack Architecture**
+    - [x] Define `VVM_RSP` constant (Offset 5).
+    - [x] Update `VVM.create` to initialize `VVM_RSP` to the end of the allocated memory block.
+    - [x] Implement `CALL` (Opcode ~66): Push `PC` to Return Stack, Jump to Label.
+    - [x] Implement `RET` (Opcode ~06): Pop `PC` from Return Stack.
+    - [x] Add runtime collision detection: `if PC >= RSP` then `Error`.
 
 - [ ] **Complete Instruction Set**
     - [ ] Implement `FETCH` (Opcode ~05): Read from `VVM_HOST_PTR` to TOS.
     - [ ] Implement Syscalls: `PRINT_CHAR` (11) and `READ_CHAR` (20).
 
-- [ ] **Verification & Stress Testing**
-    - [ ] Write a test program using `CALL`/`RET` (e.g., a simple function).
-    - [ ] Write a recursive test program (e.g., Factorial or Fibonacci) to stress the Return Stack.
+- [x] **Verification & Stress Testing**
+    - [x] Write a test program using `CALL`/`RET` (e.g., a simple function).
+    - [x] Write a recursive test program (e.g., Factorial or Fibonacci) to stress the Return Stack.
 
 
+## update: 7 feb 2026
+
+Project status is GREEN. The VVM now supports subroutines and recursion, marking a major milestone.
+
+Key achievements:
+-   **Return Stack Architecture:**
+    -   Implemented a dedicated Return Stack growing downwards from the top of VVM memory (`VVM_RSP`).
+    -   Updated `VVM.create` to initialize `VVM_RSP` correctly based on the allocated VVM size.
+-   **Flow Control Instructions:**
+    -   Implemented `s_call` (Opcode 66): Pushes PC to Return Stack and jumps to label.
+    -   Implemented `s_ret` (Opcode 06): Pops PC from Return Stack and restores execution flow.
+-   **Safety Mechanisms:**
+    -   Implemented runtime collision detection (`PC >= RSP`) in `s_call`.
+    -   This protects the host system from infinite recursion crashes (Stack Overflow).
+-   **Verification:**
+    -   Validated the architecture with a recursive Factorial program (`5! = 120`).
+    -   Confirmed collision detection using a deliberate infinite recursion test.
+    -   The VVM is now a fully functional, Turing-complete execution environment.
 
 
 ### Start 12 feb 2026
@@ -468,6 +486,7 @@ Steps todo list:
 - [ ] **Compiler Infrastructure**
     - [ ] Add `--target simpl` flag to `compiler.py`.
     - [ ] Create `SimplCodeGenerator` class (skeleton based on `CodeGenerator`).
+    - [ ] Output Strategy: Generate a `.stacks` file with a MACRO to populate the VVM code deque.
 
 - [ ] **Scalar Stacks Implementation**
     - [ ] **Register Allocator:** Map `VALUE/VAR` names to VVM Registers (0-25). Error if > 26.

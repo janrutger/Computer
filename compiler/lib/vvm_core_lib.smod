@@ -82,6 +82,17 @@
     ldm A $_VVMpointer
     stack A $DATASTACK_PTR
     call @VVMpoke
+    ldm I $_VVMpointer
+    ldx A $_start_memory_
+    ld B A
+    ldm A $_VVMsize
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 5
+    stack A $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpoke
     ldm A $label_addresses
     stack A $DATASTACK_PTR
     call @DICT.clear
@@ -230,9 +241,7 @@
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
     :VVM.create_if_end_0
-    ldm B $_VVMsize
-    ldi A 1024
-    mul A B
+    ldm A $_VVMsize
     sto A $_vvm_max_size
     ldi A 50
     ld B A

@@ -47,11 +47,15 @@ DEF VVM.create {
     VVM_Halted               VVM_status   _VVMpointer VVMpoke # Set initial status
     _VVMsize                 VVM_size     _VVMpointer VVMpoke # Set VVM size in blocks
     # PC is absolute. Initialize it to the start of the code section.
-    *_VVMpointer VVM_code +  VVM_PC _VVMpointer VVMpoke
+    *_VVMpointer VVM_code +  VVM_PC       _VVMpointer VVMpoke
     # SP is absolute. Initialize it to the start of the VVM's stack area.
     *_VVMpointer VVM_stack + VVM_SP       _VVMpointer VVMpoke
     # Dereference the host pointer to get the actual deque address and store it
     *_VVMHOSTpointer         VVM_HOST_ptr _VVMpointer VVMpoke
+    # Setup Retrun Stack Pointer (RSP) Start + size
+    *_VVMpointer _VVMsize +  VVM_RSP      _VVMpointer VVMpoke
+
+
     
 
 
@@ -113,7 +117,7 @@ DEF VVM.create {
     VALUE _vvm_needed_size 0
     
     # Check VVM Size
-    _VVMsize 1024 * AS _vvm_max_size
+    _VVMsize AS _vvm_max_size
     VVM_code _vvm_pc_offset + AS _vvm_needed_size
     _vvm_needed_size _vvm_max_size > IF
         &error_vvm_overflow PRTstring HALT
