@@ -481,19 +481,102 @@ This target will produce SIMPL bytecode instead of Stern-ATX Assembly.
 We accept the "ZX81 Constraints": No arrays, no string literals, max 26 variables.
 ## ##
 
+
+### Before coding:
+Since this partial project has a mind-blowing impact and touches several existing 'system' files of the tool-chain,
+I want to make really sure we are reading the same page from the same book here.
+
+The toolchain files we are going to touch/create are:
+compiler/codegen.py         Refactor to extract BaseGenerator.
+compiler/simplgen.py        (New) The SIMPL target generator.
+compiler/compiler.py        Add target flag logic.
+Makefile.mk                 Add build rules for VVM files.
+
+The current build process (Makefile):
+1) Compile libraries (src/libs) to .smod.
+2) Compile kernel files (src/kernel_files) to .asm includes.
+3) Compile boot file (src/boot_files) to .asm.
+4) Compile apps to .asm.
+5) Assemble microcode.
+6) Assemble final binaries.
+
+The NEW build process adds "Step 0":
+0) Compile Stacks files from `src/vvm` to Stacks library files (`.stacks`) in `src/generated_libs` using `--target simpl`.
+1) Compile libraries: Check `src/libs` AND `src/generated_libs`, compiling them to `.smod`.
+2) ... (Rest remains the same).
+
+**Important Note on Makefile:**
+The `wildcard` function in Make is evaluated at parse time. If we rely on `wildcard` to find the generated libraries in `src/generated_libs`, it will fail after a `make clean` because the directory will be empty when Make starts.
+We must explicitly define the VVM source files and their expected generated library names in the Makefile, rather than relying on `wildcard` for the generated directory.
+
+**Compiler Architecture Refactoring:**
+* **Refactoring Strategy:** Instead of `SimplGenerator` inheriting directly from the ASM `CodeGenerator` (which would inherit unwanted ASM logic), we should extract a `BaseGenerator` class.
+    * `BaseGenerator` (in `codegen.py`): Handles AST traversal, symbol tables, and scope management.
+    * `AsmGenerator` (in `codegen.py`): Inherits `BaseGenerator`, emits Stern-ATX Assembly (Existing logic).
+    * `SimplGenerator` (in `simplgen.py`): Inherits `BaseGenerator`, emits SIMPL macros.
+* This ensures the new generator starts with a clean slate and doesn't accidentally emit ASM code.
+* `SimplGenerator` will throw errors for unsupported features (Arrays, Strings, Structs, ASM blocks).
+* All production rules for supported instruction had to be defined in the simplgen.py file
+  These overrule the default codegen rules.
+
+**Compiler Interface:**
+* Add a new flag: `--target simpl` (default is `asm`).
+
+### Design Spec: Compiler Refactoring
+
+**1. BaseGenerator (Abstract Parent)**
+*   **Location:** `compiler/codegen.py`
+*   **Responsibilities:**
+    *   **State:** Manages `symbols`, `constants`, `functions`, `scopes`, and `label_counter`.
+    *   **Helpers:** Provides `declare_variable()`, `lookup_variable()`, `new_label()`, and `error()`.
+    *   **Traversal:** Provides the `visit()` dispatcher.
+*   **Note:** Does NOT contain any emission logic (`emit()`). It is purely for AST state management.
+
+**2. AsmGenerator (ASM Target)**
+*   **Location:** `compiler/codegen.py`
+*   **Inherits:** `BaseGenerator`
+*   **Responsibilities:**
+    *   Implements `visit_*` methods to emit Stern-ATX Assembly.
+    *   Manages physical memory concepts (Stack Frames, Heap).
+
+**3. SimplGenerator (SIMPL Target)**
+*   **Location:** `compiler/simplgen.py`
+*   **Inherits:** `BaseGenerator`
+*   **Responsibilities:**
+    *   Implements `visit_*` methods to emit SIMPL tokens (via Stacks MACRO syntax).
+    *   **Register Allocator:** Maps variables to VVM Registers (0-25).
+    *   **Constraints:** Throws errors for unsupported features (Arrays, Strings, ASM).
+
+##
+
 Steps todo list:
 
-- [ ] **Compiler Infrastructure**
-    - [ ] Add `--target simpl` flag to `compiler.py`.
-    - [ ] Create `SimplCodeGenerator` class (skeleton based on `CodeGenerator`).
-    - [ ] Output Strategy: Generate a `.stacks` file with a MACRO to populate the VVM code deque.
+- [ ] **Phase 1: Compiler Refactoring (The Split)**
+    - [ ] Extract `BaseGenerator` class in `codegen.py`.
+        - [ ] Move AST traversal logic (Visitor pattern) to Base.
+        - [ ] Move Symbol Table and Scope management to Base.
+    - [ ] Refactor existing `CodeGenerator` to `AsmGenerator` (inheriting from `BaseGenerator`) in `codegen.py`.
+        - [ ] Keep only ASM-specific emission logic in `AsmGenerator`.
+    - [ ] Verify that the current build (ASM target) still works correctly.
 
-- [ ] **Scalar Stacks Implementation**
+- [ ] **Phase 2: New Target Infrastructure**
+    - [ ] Create `simplgen.py` containing `SimplGenerator` (inherits `BaseGenerator`).
+    - [ ] Update `compiler.py` to handle `--target simpl` flag.
+    - [ ] Implement Output Strategy: Generate a `.stacks` file with a `MACRO` that pushes SIMPL tokens to a deque.
+
+- [ ] **Phase 3: Scalar Stacks Implementation**
     - [ ] **Register Allocator:** Map `VALUE/VAR` names to VVM Registers (0-25). Error if > 26.
-    - [ ] **Math & Logic:** Map `+ - * / %` to `ADD SUB MUL DIV MOD`.
-    - [ ] **Flow Control:** Map `IF/WHILE` to `BRZ/BRA` (using the existing label logic).
-    - [ ] **Unsupported Features:** Throw explicit errors for `ASM {}`, Strings, and Arrays.
+    - [ ] **Math & Logic:** Implement visitors for `+ - * / %` -> `ADD SUB MUL DIV MOD`.
+    - [ ] **Built-ins:** Implement `RND` -> `RND` opcode (requires adding `s_rnd` to `vvm_env_lib`).
+    - [ ] **Flow Control:** Implement visitors for `IF/WHILE` -> `BRZ/BRA/LABEL`.
+    - [ ] **Subroutines:** Implement `Call` -> `CALL` opcode.
+    - [ ] **Constraints:** Throw explicit errors for `ASM {}`, Strings, Arrays, and Structs.
 
-- [ ] **Integration Test**
-    - [ ] Compile a Stacks "Fibonacci" program to SIMPL.
-    - [ ] Load the generated SIMPL code into the VVM and run it.
+- [ ] **Phase 4: Build System & Verification**
+    - [ ] **Makefile Updates:**
+        - [ ] Explicitly list VVM source files (avoid `wildcard` trap).
+        - [ ] Add rules to compile `src/vvm/*.stacks` -> `src/generated_libs/*_lib.stacks`.
+    - [ ] **Integration Test:**
+        - [ ] Create `src/vvm/fib.stacks`.
+        - [ ] Compile it to SIMPL library.
+        - [ ] Write a host test program to load and run the Fibonacci VVM.

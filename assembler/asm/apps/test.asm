@@ -75,6 +75,7 @@
 . $_vvm_code_start 1
 . $_vvm_write_ptr 1
 . $VVM0 1
+. $VVM1 1
 . $host_comm_deque_ptr 1
 . $SIMPL_code 1
 . $main_str_0 29
@@ -83,8 +84,10 @@
 . $main_str_3 30
 . $main_str_4 30
 . $main_str_5 30
-. $main_str_6 23
-. $main_str_7 14
+. $main_str_6 24
+. $main_str_7 24
+. $main_str_8 15
+. $main_str_9 15
 
 # .CODE
     call @main
@@ -2937,6 +2940,49 @@
     call @DEQUE.new
     ustack A $DATASTACK_PTR
     sto A $SIMPL_code
+    call @VVM.init
+    ldi A $main_str_1
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A $main_str_2
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @rt_print_tos
+    ldi A $main_str_3
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $host_comm_deque_ptr
+    stack A $DATASTACK_PTR
+    call @rt_print_tos
+    ldi A $main_str_4
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $VVM0
+    stack A $DATASTACK_PTR
+    call @rt_print_tos
+    ldi A $main_str_5
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A $VVM0
+    stack A $DATASTACK_PTR
+    call @rt_print_tos
     ldi A 6384411237
     stack A $DATASTACK_PTR
     ldm A $SIMPL_code
@@ -3097,49 +3143,6 @@
     ldm A $SIMPL_code
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    call @VVM.init
-    ldi A $main_str_1
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldi A $main_str_2
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @rt_print_tos
-    ldi A $main_str_3
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldm A $host_comm_deque_ptr
-    stack A $DATASTACK_PTR
-    call @rt_print_tos
-    ldi A $main_str_4
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldm A $VVM0
-    stack A $DATASTACK_PTR
-    call @rt_print_tos
-    ldi A $main_str_5
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldi A $VVM0
-    stack A $DATASTACK_PTR
-    call @rt_print_tos
     ldi A $SIMPL_code
     stack A $DATASTACK_PTR
     ldi A 1024
@@ -3155,11 +3158,151 @@
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A 6384411237
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193464287
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 210680089861
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6385446751
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193453934
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193465917
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6384411237
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193465917
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193470404
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6384411237
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193450094
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193453934
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193451667
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 249887499311019352
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193451642
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6385446751
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 210680089861
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 249887499311019352
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6383976602
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6384101742
+    stack A $DATASTACK_PTR
+    ldm A $SIMPL_code
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A $SIMPL_code
+    stack A $DATASTACK_PTR
+    ldi A 1024
+    stack A $DATASTACK_PTR
+    ldi A $host_comm_deque_ptr
+    stack A $DATASTACK_PTR
+    ldi A $VVM1
+    stack A $DATASTACK_PTR
+    call @VVM.create
+    ldi A $main_str_7
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
     stack Z $DATASTACK_PTR
     ldi A $VVM0
     stack A $DATASTACK_PTR
     call @VVM.start
-    ldi A $main_str_7
+    ldi A $main_str_8
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+    stack Z $DATASTACK_PTR
+    ldi A $VVM1
+    stack A $DATASTACK_PTR
+    call @VVM.start
+    ldi A $main_str_9
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
@@ -3183,13 +3326,28 @@
     ldi A 4
     stack A $DATASTACK_PTR
     call @rt_neq
+    stack Z $DATASTACK_PTR
+    ldi A $VVM1
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ldi A 4
+    stack A $DATASTACK_PTR
+    call @rt_neq
     ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add A B
     tst A 0
     jmpt :main_while_end_0
     ldi A $VVM0
     stack A $DATASTACK_PTR
     call @VVM.run
     ldi A $VVM0
+    stack A $DATASTACK_PTR
+    call @VVM.check_syscalls
+    ldi A $VVM1
+    stack A $DATASTACK_PTR
+    call @VVM.run
+    ldi A $VVM1
     stack A $DATASTACK_PTR
     call @VVM.check_syscalls
     jmp :main_while_start_0
@@ -3291,6 +3449,7 @@
 % $_vvm_code_start 0
 % $_vvm_write_ptr 0
 % $VVM0 15360
+% $VVM1 16384
 % $host_comm_deque_ptr 0
 % $SIMPL_code 0
 % $main_str_0 \P \o \o \l \space \i \n \i \t \i \a \l \i \z \e \d \space \( \s \i \z \e \space \1 \0 \) \. \Return \null
@@ -3299,5 +3458,7 @@
 % $main_str_3 \h \o \s \t \_ \c \o \m \m \_ \d \e \q \u \e \_ \p \t \r \space \p \o \i \n \t \e \r \: \space \null
 % $main_str_4 \V \V \M \0 \space \b \a \s \e \space \a \d \d \r \e \s \s \space \space \space \space \space \space \space \space \space \space \: \space \null
 % $main_str_5 \A \d \d \r \e \s \s \space \o \f \space \V \V \M \0 \space \v \a \r \i \a \b \l \e \space \space \space \: \space \null
-% $main_str_6 \V \V \M \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \null
-% $main_str_7 \V \V \M \space \s \t \a \r \t \e \d \space \Return \null
+% $main_str_6 \V \V \M \0 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \null
+% $main_str_7 \V \V \M \1 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \null
+% $main_str_8 \V \V \M \0 \space \s \t \a \r \t \e \d \space \Return \null
+% $main_str_9 \V \V \M \1 \space \s \t \a \r \t \e \d \space \Return \null

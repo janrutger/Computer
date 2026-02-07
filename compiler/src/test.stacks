@@ -15,7 +15,7 @@ INCLUDE vvm_core_lib
 
 
 VALUE VVM0 15360                    ; The memory address for VVM0, stored in a variable.
-
+VALUE VVM1 16384
 
 MACRO load_simple_test_code {
     # Test program to count from -3 up to 0 and then exit a loop.
@@ -149,7 +149,7 @@ DEF main {
     
     # load_simple_test_code
     # load_call_ret_test_code
-    load_factorial_test_code
+    
 
     VVM.init                        ; init VVM environment
     "VVM Environment Initialized.\n" PRTstring
@@ -159,19 +159,33 @@ DEF main {
     "VVM0 base address          : " PRTstring VVM0  PRINT
     "Address of VVM0 variable   : " PRTstring &VVM0 PRINT
 
+    load_factorial_test_code
     # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
     &SIMPL_code 1024 &host_comm_deque_ptr &VVM0 VVM.create
-    "VVM instance created \n" PRTstring
+    "VVM0 instance created \n" PRTstring
+
+    load_simple_test_code
+    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
+    &SIMPL_code 1024 &host_comm_deque_ptr &VVM1 VVM.create
+    "VVM1 instance created \n" PRTstring
+
 
     # Start the VVM
     # ( arg1 ... argn argc &VVM-pointer -- )
     0 &VVM0 VVM.start
-    "VVM started \n" PRTstring
+    "VVM0 started \n" PRTstring
+
+    0 &VVM1 VVM.start
+    "VVM1 started \n" PRTstring
 
     1 TIME.start
-    WHILE VVM_status &VVM0 VVMpeek VVM_Halted != DO
+    WHILE VVM_status &VVM0 VVMpeek VVM_Halted != 
+          VVM_status &VVM1 VVMpeek VVM_Halted != + DO
         &VVM0 VVM.run
         &VVM0 VVM.check_syscalls
+
+        &VVM1 VVM.run
+        &VVM1 VVM.check_syscalls
     DONE
     1 TIME.read TIME.as_string 
 
