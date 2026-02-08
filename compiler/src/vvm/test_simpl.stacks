@@ -1,0 +1,16 @@
+# Test Script for SIMPL Target
+
+VALUE test 10
+VALUE b 20
+
+# 1. Test Math (Should emit PUSH, SET, GET, ADD)
+test b +
+
+# 2. Test Flow Control (Should emit SUB, BRZ, LABEL)
+# Note: 'IF' consumes the value on the stack.
+# a - b will be non-zero (True) if a != b.
+test b - IF
+    100
+ELSE
+    200
+END

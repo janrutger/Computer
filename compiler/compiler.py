@@ -1,7 +1,8 @@
 import argparse
 from lexer import Lexer
 from parser import Parser
-from codegen import CodeGenerator
+from codegen import CodeGenerator, AsmGenerator
+from simplgen import SimplGenerator
 import os
 import json
 
@@ -9,6 +10,13 @@ def main():
     parser = argparse.ArgumentParser(description='Compile a source file to assembly.')
     parser.add_argument('input_file', help='The source file to compile.')
     parser.add_argument('-o', '--output', help='The output assembly file.')
+    
+    parser.add_argument(
+        '--target',
+        choices=['asm', 'simpl'],
+        default='asm',
+        help='Target architecture: "asm" (default) or "simpl".'
+    )
 
     # Add the flag to compile as a library module
     parser.add_argument(
@@ -29,7 +37,17 @@ def main():
 
     is_module_compilation = args.module
 
-    if args.module:
+    if args.target == 'simpl':
+        input_filename = os.path.basename(args.input_file)
+        base_name = os.path.splitext(input_filename)[0]
+        
+        if not args.output:
+            output_dir = "compiler/src/simpl_libs"
+            args.output = os.path.join(output_dir, f"simpl_{base_name}_lib.stacks")
+            
+        macro_name = f"load_simpl_{base_name}"
+
+    elif args.module:
         # For modules, output is .smod and .sym, not .asm
         # Get just the filename from the input path (e.g., "math_lib.stacks")
         input_filename = os.path.basename(args.input_file)
@@ -71,10 +89,18 @@ def main():
         exit(1)
     
     try:
-        codegen = CodeGenerator()
-        assembly = codegen.generate(ast, is_module_compilation, args.block)
+        if args.target == 'simpl':
+            codegen = SimplGenerator()
+            output = codegen.generate(ast, macro_name=macro_name)
+            
+            os.makedirs(os.path.dirname(args.output), exist_ok=True)
+            with open(args.output, 'w') as f:
+                f.write(output)
+            print(f"Successfully compiled '{args.input_file}' to '{args.output}' (Target: SIMPL).")
 
-        if is_module_compilation:
+        elif is_module_compilation:
+            codegen = AsmGenerator()
+            assembly = codegen.generate(ast, is_module_compilation, args.block)
             # Write the .smod file
             os.makedirs(os.path.dirname(smod_output), exist_ok=True)
             with open(smod_output, 'w') as f:
@@ -95,6 +121,8 @@ def main():
                 json.dump(symbols_to_export, f, indent=2)
             print(f"Successfully wrote symbols to '{sym_output}'.")
         else:
+            codegen = AsmGenerator()
+            assembly = codegen.generate(ast, is_module_compilation, args.block)
             with open(args.output, 'w') as f:
                 f.write(assembly)
             print(f"Successfully compiled '{args.input_file}' to '{args.output}'.")

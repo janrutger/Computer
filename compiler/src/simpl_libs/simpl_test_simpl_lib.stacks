@@ -1,0 +1,36 @@
+USE std_deque
+
+MACRO load_simpl_test_simpl {
+    AS _sq_
+
+    \"PUSH"      _sq_ DEQUE.append
+    10           _sq_ DEQUE.append
+    \"SET"       _sq_ DEQUE.append
+    0            _sq_ DEQUE.append
+    \"PUSH"      _sq_ DEQUE.append
+    20           _sq_ DEQUE.append
+    \"SET"       _sq_ DEQUE.append
+    1            _sq_ DEQUE.append
+    \"GET"       _sq_ DEQUE.append
+    0            _sq_ DEQUE.append
+    \"GET"       _sq_ DEQUE.append
+    1            _sq_ DEQUE.append
+    \"ADD"       _sq_ DEQUE.append
+    \"GET"       _sq_ DEQUE.append
+    0            _sq_ DEQUE.append
+    \"GET"       _sq_ DEQUE.append
+    1            _sq_ DEQUE.append
+    \"SUB"       _sq_ DEQUE.append
+    \"BRZ"       _sq_ DEQUE.append
+    \"else_0"    _sq_ DEQUE.append
+    \"PUSH"      _sq_ DEQUE.append
+    100          _sq_ DEQUE.append
+    \"BRA"       _sq_ DEQUE.append
+    \"end_0"     _sq_ DEQUE.append
+    \"LABEL"     _sq_ DEQUE.append
+    \"else_0"    _sq_ DEQUE.append
+    \"PUSH"      _sq_ DEQUE.append
+    200          _sq_ DEQUE.append
+    \"LABEL"     _sq_ DEQUE.append
+    \"end_0"     _sq_ DEQUE.append
+}

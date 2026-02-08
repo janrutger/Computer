@@ -559,10 +559,10 @@ Steps todo list:
         - [x] Keep only ASM-specific emission logic in `AsmGenerator`.
     - [x] Verify that the current build (ASM target) still works correctly.
 
-- [ ] **Phase 2: New Target Infrastructure**
-    - [ ] Create `simplgen.py` containing `SimplGenerator` (inherits `BaseGenerator`).
-    - [ ] Update `compiler.py` to handle `--target simpl` flag.
-    - [ ] Implement Output Strategy: Generate a `.stacks` file with a `MACRO` that pushes SIMPL tokens to a deque.
+- [x] **Phase 2: New Target Infrastructure**
+    - [x] Create `simplgen.py` containing `SimplGenerator` (inherits `BaseGenerator`).
+    - [x] Update `compiler.py` to handle `--target simpl` flag.
+    - [x] Implement Output Strategy: Generate a `.stacks` file with a `MACRO` that pushes SIMPL tokens to a deque.
 
 - [ ] **Phase 3: Scalar Stacks Implementation**
     - [ ] **Register Allocator:** Map `VALUE/VAR` names to VVM Registers (0-25). Error if > 26.
@@ -575,7 +575,7 @@ Steps todo list:
 - [ ] **Phase 4: Build System & Verification**
     - [ ] **Makefile Updates:**
         - [ ] Explicitly list VVM source files (avoid `wildcard` trap).
-        - [ ] Add rules to compile `src/vvm/*.stacks` -> `src/generated_libs/*_lib.stacks`.
+        - [ ] Add rules to compile `src/vvm/*.stacks` -> `src/simpl_libs/*_lib.stacks`.
     - [ ] **Integration Test:**
         - [ ] Create `src/vvm/fib.stacks`.
         - [ ] Compile it to SIMPL library.
@@ -600,3 +600,24 @@ Key achievements:
 -   **Verification:** Confirmed that the generated assembly output for existing projects is bit-for-bit identical to the previous version.
 
 This lays the solid foundation required for Phase 2: implementing the `SimplGenerator`.
+
+
+## update: 8 feb 2026 (Phase 2)
+
+Project status is GREEN. Phase 2 "New Target Infrastructure" is complete.
+The compiler now supports a new target architecture: SIMPL (Stacks Intermediate Machine Programming Language).
+
+Key achievements:
+-   **SimplGenerator Implementation:** Created `compiler/simplgen.py`.
+    -   Inherits from `BaseGenerator` to reuse AST traversal.
+    -   Implements a "Meta-Compiler" strategy: instead of binary, it emits Stacks source code (a MACRO).
+    -   This MACRO, when executed by the Host, populates a Deque with SIMPL bytecode tokens.
+-   **Compiler Interface:** Updated `compiler.py` to accept `--target simpl`.
+    -   Defaults to `asm` for backward compatibility.
+    -   Automatically handles output paths for generated libraries (`src/simpl_libs`).
+-   **Dependency Injection:** The generated macros accept a deque pointer argument (`_sq_`), allowing flexible loading of VVM code into any host deque.
+-   **Verification:** Successfully compiled a test script (`test_simpl.stacks`) into a valid Stacks library (`simpl_test_simpl_lib.stacks`).
+    -   Verified correct register allocation (mapping variables to indices 0-25).
+    -   Verified flow control translation (flattening IF/ELSE to BRZ/BRA/LABEL).
+
+The infrastructure is now ready for Phase 3: implementing the full Scalar Stacks language feature set.
