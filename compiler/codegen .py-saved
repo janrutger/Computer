@@ -31,35 +31,8 @@ from parser import (
 )
 from lexer import Token, TokenType
 
-class BaseGenerator:
+class CodeGenerator:
     def __init__(self):
-        self.reset_state()
-
-    def reset_state(self):
-        self.symbols = {}
-        self.constants = {}
-        self.function_symbols = set()
-        self.current_context = "_main"
-        self.while_loop_count = 0
-        self.if_label_count = 0
-        self.labels = {}
-
-    def visit(self, node):
-        method_name = 'visit_' + node.__class__.__name__
-        visitor = getattr(self, method_name, self.generic_visit)
-        return visitor(node)
-
-    def generic_visit(self, node):
-        raise Exception(f"No visit_{node.__class__.__name__} method")
-
-    def declare_variable(self, name, type_, size=1):
-        if name in self.symbols:
-            raise Exception(f"Duplicate variable declaration: '{name}' is already defined.")
-        self.symbols[name] = {'name': name, 'type': type_, 'size': size}
-
-class AsmGenerator(BaseGenerator):
-    def __init__(self):
-        super().__init__()
         self.header_section = ""
         self.code_section = ""
         self.data_section = ""
@@ -67,6 +40,14 @@ class AsmGenerator(BaseGenerator):
         
         self.string_literals = {}
         self.next_string_label = 0
+        self.while_loop_count = 0
+        self.if_label_count = 0
+        
+        self.symbols = {}
+        self.constants = {}
+        self.current_context = "_main" # To scope labels for if/while
+        self.function_symbols = set()
+        self.labels = {}
         
         self.udc_commands = {
             # Generic Commands
@@ -80,15 +61,19 @@ class AsmGenerator(BaseGenerator):
 
     def generate(self, ast, setModule=False, is_code_block=False):
         # Reset sections for each generation run
-        self.reset_state()
         self.header_section = ""
         self.code_section = ""
         self.data_section = ""
         self.functions_section = ""
         self.string_literals = {}
         self.next_string_label = 0
-        
-        self.is_module_compilation = setModule
+        self.while_loop_count = 0
+        self.if_label_count = 0
+        self.symbols = {}
+        self.constants = {}
+        self.function_symbols = set()
+        self.current_context = "_main"
+        self.labels = {}
         
         # Pre-scan for function definitions to allow forward references
         for statement in ast.statements:
@@ -96,7 +81,7 @@ class AsmGenerator(BaseGenerator):
                 self.function_symbols.add(statement.name)
 
         # Main code generation
-        self.code_section = self.visit(ast)
+        self.code_section = self.generate_program(ast, is_module_compilation=setModule)
 
         # Peephole optimization
         self.code_section      = self.peephole_optimize(self.code_section, "CODE")
@@ -140,25 +125,26 @@ class AsmGenerator(BaseGenerator):
 
         return final_assembly
 
-    def visit_ProgramNode(self, node):
+    def generate_program(self, node, is_module_compilation=False):
         code = ""
         for statement in node.statements:
             # When compiling a module, only process declarations and function definitions.
             # Ignore all other "mainline" code.
-            if self.is_module_compilation and self.current_context == "_main" and not isinstance(statement, (VarDeclarationNode, ConstDeclarationNode, FunctionDefinitionNode, UseNode, IncludeNode)):
+            if is_module_compilation and not isinstance(statement, (VarDeclarationNode, ConstDeclarationNode, FunctionDefinitionNode, UseNode, IncludeNode)):
                 continue
 
-            code += self.visit(statement)
+            code += self.generate_statement(statement)
         return code
 
-    def visit_NumberNode(self, node):
-        return f"    ldi A {node.value}\n    stack A $DATASTACK_PTR\n"
+    def generate_statement(self, node):
+        if isinstance(node, NumberNode):
+            return f"    ldi A {node.value}\n    stack A $DATASTACK_PTR\n"
         
-    def visit_StringNode(self, node):
-        label = self.add_string_literal(node.value)
-        return f"    ldi A ${label}\n    stack A $DATASTACK_PTR\n"
+        elif isinstance(node, StringNode):
+            label = self.add_string_literal(node.value)
+            return f"    ldi A ${label}\n    stack A $DATASTACK_PTR\n"
         
-    def visit_StackStringNode(self, node):
+        elif isinstance(node, StackStringNode):
             # Convert the string to integer values, handling basic escapes
             vals = []
             i = 0
@@ -191,24 +177,24 @@ class AsmGenerator(BaseGenerator):
             
             return f"    ldi A {hash_val}\n    stack A $DATASTACK_PTR\n"
 
-    def visit_BacktickNode(self, node):
-        return f"    call @{node.routine_name}\n"
+        elif isinstance(node, BacktickNode):
+            return f"    call @{node.routine_name}\n"
         
-    def visit_ExecNode(self, node):
-        return f"    calls $DATASTACK_PTR\n"
+        elif isinstance(node, ExecNode):
+            return f"    calls $DATASTACK_PTR\n"
         
-    def visit_LabelNode(self, node):
-        self.labels[node.label_name] = len(self.code_section)
-        return f":{node.label_name}\n"
+        elif isinstance(node, LabelNode):
+            self.labels[node.label_name] = len(self.code_section)
+            return f":{node.label_name}\n"
 
-    def visit_GotoNode(self, node):
+        elif isinstance(node, GotoNode):
             # if node.label_name in self.labels:
             #     # offset = self.labels[node.label_name] - len(self.code_section)
             #     return f"    jmp :{node.label_name}\n"
             # else:
             #     raise Exception(f"Undefined label '{node.label_name}'.")
             return f"    jmp :{node.label_name}\n"
-    def visit_AsNode(self, node):
+        elif isinstance(node, AsNode):
             var_name = node.var_name
             if var_name not in self.symbols:
                 self.symbols[var_name] = {'type': 'VAR', 'size': 1}
@@ -219,14 +205,14 @@ class AsmGenerator(BaseGenerator):
             else:
                 return f"    ustack A $DATASTACK_PTR\n    sto A ${var_name}\n"
 
-    def visit_AddressOfNode(self, node):
-        prefix = "@" if node.var_name in self.function_symbols else "$"
-        return f"    ldi A {prefix}{node.var_name}\n    stack A $DATASTACK_PTR\n"
+        elif isinstance(node, AddressOfNode):
+            prefix = "@" if node.var_name in self.function_symbols else "$"
+            return f"    ldi A {prefix}{node.var_name}\n    stack A $DATASTACK_PTR\n"
 
-    def visit_DereferenceNode(self, node):
-        return f"    ldm I ${node.var_name}\n    ldx A $_start_memory_\n    stack A $DATASTACK_PTR\n"
+        elif isinstance(node, DereferenceNode):
+            return f"    ldm I ${node.var_name}\n    ldx A $_start_memory_\n    stack A $DATASTACK_PTR\n"
 
-    def visit_VarDeclarationNode(self, node):
+        elif isinstance(node, VarDeclarationNode):
             var_name = node.var_name
             if var_name in self.symbols:
                 raise Exception(f"Duplicate variable declaration: '{var_name}' is already defined.")
@@ -291,7 +277,7 @@ class AsmGenerator(BaseGenerator):
             self.symbols[var_name] = symbol_info
             return ""
 
-    def visit_ConstDeclarationNode(self, node):
+        elif isinstance(node, ConstDeclarationNode):
             const_name = node.const_name
             if const_name in self.symbols or const_name in self.function_symbols or const_name in self.constants:
                 raise Exception(f"Duplicate symbol declaration for '{const_name}'.")
@@ -299,7 +285,7 @@ class AsmGenerator(BaseGenerator):
             self.constants[const_name] = node.value_node
             return "" # No code is generated for a const declaration itself
 
-    def visit_FunctionDefinitionNode(self, node):
+        elif isinstance(node, FunctionDefinitionNode):
             # Add the function name to the function symbol table so it can be called
             self.function_symbols.add(node.name)
             
@@ -308,7 +294,7 @@ class AsmGenerator(BaseGenerator):
             self.current_context = node.name
 
             # Generate the assembly code for the function's body
-            function_body_code = self.visit(node.body)
+            function_body_code = self.generate_program(node.body)
             
             # Restore previous context
             self.current_context = previous_context
@@ -321,17 +307,17 @@ class AsmGenerator(BaseGenerator):
             # A function definition does not produce inline code, so return an empty string
             return ""
 
-    def visit_WordNode(self, node):
-        return self.generate_word(node)
+        elif isinstance(node, WordNode):
+            return self.generate_word(node)
 
-    def visit_IfNode(self, node):
+        elif isinstance(node, IfNode):
             if_id = self.if_label_count
             self.if_label_count += 1
             
-            true_code = self.visit(node.true_branch)
+            true_code = self.generate_program(node.true_branch)
             
             if node.false_branch:
-                false_code = self.visit(node.false_branch)
+                false_code = self.generate_program(node.false_branch)
                 else_label = f"{self.current_context}_if_else_{if_id}"
                 end_label = f"{self.current_context}_if_end_{if_id}"
                 
@@ -355,14 +341,14 @@ class AsmGenerator(BaseGenerator):
                     f":{end_label}\n"
                 )
 
-    def visit_WhileNode(self, node):
+        elif isinstance(node, WhileNode):
             loop_id = self.while_loop_count
             self.while_loop_count += 1
             start_label = f"{self.current_context}_while_start_{loop_id}"
             end_label = f"{self.current_context}_while_end_{loop_id}"
 
-            condition_code = self.visit(node.condition)
-            body_code = self.visit(node.body)
+            condition_code = self.generate_program(node.condition)
+            body_code = self.generate_program(node.body)
 
             return (
                 f":{start_label}\n"
@@ -375,7 +361,7 @@ class AsmGenerator(BaseGenerator):
                 f":{end_label}\n"
             )
         
-    def visit_IONode(self, node):
+        elif isinstance(node, IONode):
             command_upper = node.command.upper()
             if command_upper not in self.udc_commands:
                 raise Exception(f"Unknown IO command '{node.command}'.")
@@ -396,7 +382,7 @@ class AsmGenerator(BaseGenerator):
             code += f"    ldi A {channel}\n    stack A $DATASTACK_PTR\n    ldi A {command_code}\n    stack A $DATASTACK_PTR\n    call @rt_udc_control\n"
             return code
 
-    def visit_IncludeNode(self, node):
+        elif isinstance(node, IncludeNode):
             module_name = node.module_name
             # Assuming modules are in a 'lib' directory relative to the compiler's execution path
             # A more robust solution might search multiple paths.
@@ -459,7 +445,7 @@ class AsmGenerator(BaseGenerator):
 
             return "" # The USE statement itself produces no inline code
         
-    def visit_UseNode(self, node): 
+        elif isinstance(node, UseNode): 
             module_name = node.module_name
             # Assuming modules are in a 'lib' directory relative to the compiler's execution path
             # A more robust solution might search multiple paths.
@@ -500,8 +486,12 @@ class AsmGenerator(BaseGenerator):
             
             return ""
 
-    def visit_AsmNode(self, node):
-        return node.asm_code
+        elif isinstance(node, AsmNode):
+            # For an ASM block, just return the raw code it contains.
+            return node.asm_code
+
+        else:
+            raise Exception(f"Unknown AST node type: {type(node)}")
 
     def generate_word(self, node):
         op = node.value if node.value is not None else node.token.type.value
@@ -510,7 +500,7 @@ class AsmGenerator(BaseGenerator):
             const_value_node = self.constants[op]
 
             # We can just re-use the statement generator for number and string literals
-            return self.visit(const_value_node)
+            return self.generate_statement(const_value_node)
 
         if op in self.function_symbols:
             return f"    call @{op}\n"
@@ -763,9 +753,6 @@ class AsmGenerator(BaseGenerator):
             print(f"Peephole optimization removed {lines_removed_count} lines from {section_name} section.")
             
         return optimized_code
-
-# Alias for backward compatibility
-CodeGenerator = AsmGenerator
 
 # --- Main (for testing) ----------------------------------------------------
 if __name__ == '__main__':

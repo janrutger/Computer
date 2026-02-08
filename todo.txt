@@ -551,13 +551,13 @@ We must explicitly define the VVM source files and their expected generated libr
 
 Steps todo list:
 
-- [ ] **Phase 1: Compiler Refactoring (The Split)**
-    - [ ] Extract `BaseGenerator` class in `codegen.py`.
-        - [ ] Move AST traversal logic (Visitor pattern) to Base.
-        - [ ] Move Symbol Table and Scope management to Base.
-    - [ ] Refactor existing `CodeGenerator` to `AsmGenerator` (inheriting from `BaseGenerator`) in `codegen.py`.
-        - [ ] Keep only ASM-specific emission logic in `AsmGenerator`.
-    - [ ] Verify that the current build (ASM target) still works correctly.
+- [x] **Phase 1: Compiler Refactoring (The Split)**
+    - [x] Extract `BaseGenerator` class in `codegen.py`.
+        - [x] Move AST traversal logic (Visitor pattern) to Base.
+        - [x] Move Symbol Table and Scope management to Base.
+    - [x] Refactor existing `CodeGenerator` to `AsmGenerator` (inheriting from `BaseGenerator`) in `codegen.py`.
+        - [x] Keep only ASM-specific emission logic in `AsmGenerator`.
+    - [x] Verify that the current build (ASM target) still works correctly.
 
 - [ ] **Phase 2: New Target Infrastructure**
     - [ ] Create `simplgen.py` containing `SimplGenerator` (inherits `BaseGenerator`).
@@ -580,3 +580,23 @@ Steps todo list:
         - [ ] Create `src/vvm/fib.stacks`.
         - [ ] Compile it to SIMPL library.
         - [ ] Write a host test program to load and run the Fibonacci VVM.
+
+
+## update: 8 feb 2026
+
+Project status is GREEN. Phase 1 of the compiler refactoring is complete and verified.
+The `codegen.py` file has been successfully refactored to support multiple compilation targets.
+
+Key achievements:
+-   **BaseGenerator Extraction:** Created a new abstract base class `BaseGenerator` that handles:
+    -   AST Traversal (Visitor Pattern).
+    -   Symbol Table and Constant management.
+    -   Scope context (`current_context`) and label generation counters.
+-   **AsmGenerator Specialization:** Renamed the original `CodeGenerator` to `AsmGenerator`.
+    -   It now inherits from `BaseGenerator`.
+    -   It retains all Stern-ATX Assembly emission logic.
+-   **Backward Compatibility:** Added `CodeGenerator = AsmGenerator` alias to ensure existing tools (`compiler.py`) continue to work without modification.
+-   **Bug Fix:** Identified and resolved a critical issue in `visit_ProgramNode` where function bodies were being incorrectly filtered out during module compilation.
+-   **Verification:** Confirmed that the generated assembly output for existing projects is bit-for-bit identical to the previous version.
+
+This lays the solid foundation required for Phase 2: implementing the `SimplGenerator`.
