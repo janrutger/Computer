@@ -517,6 +517,7 @@ class Parser:
         possible_paths = [
             f"{module_name}.stacks",
             f"compiler/src/libs/{module_name}.stacks",
+            f"compiler/src/simpl_libs/{module_name}.stacks",
             f"libs/{module_name}.stacks"
         ]
 

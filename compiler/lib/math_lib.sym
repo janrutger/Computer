@@ -1,7 +1,7 @@
 {
   "functions": [
-    "factorial",
     "isqrt",
+    "factorial",
     "power"
   ],
   "variables": [

@@ -23,6 +23,8 @@ BIN_DIR := bin
 SRC_DIR := compiler/src
 LIB_SRC_DIR := $(SRC_DIR)/libs
 LIB_OUT_DIR := compiler/lib
+VVM_SRC_DIR := $(SRC_DIR)/vvm
+SIMPL_LIB_DIR := $(SRC_DIR)/simpl_libs
 KERNEL_STACKS_SRC_DIR := $(SRC_DIR)/kernel_files
 BOOT_FILES_SRC_DIR := $(SRC_DIR)/boot_files
 ASM_DIR := assembler/asm
@@ -53,6 +55,7 @@ MICROCODE_ROM := $(BIN_DIR)/stern_rom.json
 # =============================================================================
 
 LIB_STACKS_SOURCES    := $(wildcard $(LIB_SRC_DIR)/*.stacks)
+VVM_SOURCES           := $(wildcard $(VVM_SRC_DIR)/*.stacks)
 KERNEL_STACKS_SOURCES := $(wildcard $(KERNEL_STACKS_SRC_DIR)/*.stacks)
 BOOT_FILES_SOURCES    := $(wildcard $(BOOT_FILES_SRC_DIR)/*.stacks)
 MAIN_PROGRAMS_SOURCES := $(addsuffix .stacks, $(addprefix $(SRC_DIR)/, $(MAIN_PROGRAMS)))
@@ -61,13 +64,15 @@ MICROCODE_SOURCES     := $(MICROCODE_DIR)/base_rom.uasm
 
 # --- Define paths for generated files ---
 COMPILED_LIBS := $(patsubst $(LIB_SRC_DIR)/%.stacks,$(LIB_OUT_DIR)/%.smod,$(LIB_STACKS_SOURCES))
+GENERATED_SIMPL_LIBS := $(patsubst $(VVM_SRC_DIR)/%.stacks,$(SIMPL_LIB_DIR)/simpl_%_lib.stacks,$(VVM_SOURCES))
+COMPILED_SIMPL_LIBS  := $(patsubst $(SIMPL_LIB_DIR)/%.stacks,$(LIB_OUT_DIR)/%.smod,$(GENERATED_SIMPL_LIBS))
 GENERATED_KERNEL_ASM := $(patsubst $(KERNEL_STACKS_SRC_DIR)/%.stacks,$(INCL_DIR)/%.stacks.asm,$(KERNEL_STACKS_SOURCES))
 GENERATED_BOOT_ASM   := $(patsubst $(BOOT_FILES_SRC_DIR)/%.stacks,$(ASM_DIR)/%.stacks.asm,$(BOOT_FILES_SOURCES))
 COMPILED_APPS_ASM    := $(patsubst $(SRC_DIR)/%.stacks,$(APPS_DIR)/%.asm,$(MAIN_PROGRAMS_SOURCES))
 
 
 # Prevent Make from deleting the compiled library files as 'intermediate' files.
-.SECONDARY: $(COMPILED_LIBS)
+.SECONDARY: $(COMPILED_LIBS) $(GENERATED_SIMPL_LIBS) $(COMPILED_SIMPL_LIBS)
 
 
 # =============================================================================
@@ -99,7 +104,7 @@ debug: $(PROGRAM_ROM)
 
 clean:
 	@echo "====== Cleaning up build artifacts ======"
-	rm -rf $(BUILD_DIR) $(BIN_DIR) $(LIB_OUT_DIR) $(APPS_DIR)
+	rm -rf $(BUILD_DIR) $(BIN_DIR) $(LIB_OUT_DIR) $(APPS_DIR) $(SIMPL_LIB_DIR)
 	rm -f $(GENERATED_KERNEL_ASM) $(GENERATED_BOOT_ASM) $(COMPILED_APPS_ASM)
 
 
@@ -120,7 +125,7 @@ $(MICROCODE_ROM): $(MICROCODE_SOURCES)
 	$(MICROCODE_ASSEMBLER) $(MICROCODE_SOURCES)
 
 # --- 3. Main Program(s) Compilation ---
-$(APPS_DIR)/%.asm: $(SRC_DIR)/%.stacks $(COMPILED_LIBS)
+$(APPS_DIR)/%.asm: $(SRC_DIR)/%.stacks $(COMPILED_LIBS) $(COMPILED_SIMPL_LIBS)
 	@echo "====== Compiling Main Program: $< ======"
 	@mkdir -p $(@D)
 	$(COMPILER) $< -o $@
@@ -128,6 +133,18 @@ $(APPS_DIR)/%.asm: $(SRC_DIR)/%.stacks $(COMPILED_LIBS)
 # --- 4. Stacks Library Compilation ---
 $(LIB_OUT_DIR)/%.smod: $(LIB_SRC_DIR)/%.stacks
 	@echo "====== Compiling Stacks Library: $< ======"
+	@mkdir -p $(@D)
+	$(COMPILER) $< --module
+
+# --- 4b. VVM Source -> SIMPL Library Generation (Step 0) ---
+$(SIMPL_LIB_DIR)/simpl_%_lib.stacks: $(VVM_SRC_DIR)/%.stacks
+	@echo "====== Generating SIMPL Library: $< ======"
+	@mkdir -p $(@D)
+	$(COMPILER) $< --target simpl -o $@
+
+# --- 4c. SIMPL Library Compilation (Step 1) ---
+$(LIB_OUT_DIR)/%.smod: $(SIMPL_LIB_DIR)/%.stacks
+	@echo "====== Compiling Generated Library: $< ======"
 	@mkdir -p $(@D)
 	$(COMPILER) $< --module
 

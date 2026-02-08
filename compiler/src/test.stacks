@@ -13,6 +13,8 @@ INCLUDE std_deque
 INCLUDE vvm_env_lib
 INCLUDE vvm_core_lib
 
+INCLUDE simpl_test_simpl_lib
+
 
 VALUE VVM0 15360                    ; The memory address for VVM0, stored in a variable.
 VALUE VVM1 16384
@@ -159,7 +161,9 @@ DEF main {
     "VVM0 base address          : " PRTstring VVM0  PRINT
     "Address of VVM0 variable   : " PRTstring &VVM0 PRINT
 
-    load_factorial_test_code
+
+    SIMPL_code load_simpl_test_simpl
+    # load_factorial_test_code
     # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
     &SIMPL_code 1024 &host_comm_deque_ptr &VVM0 VVM.create
     "VVM0 instance created \n" PRTstring

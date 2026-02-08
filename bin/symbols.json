@@ -324,10 +324,11 @@
         "$main_str_3": 20000,
         "$main_str_4": 20030,
         "$main_str_5": 20060,
-        "$main_str_6": 20090,
-        "$main_str_7": 20114,
-        "$main_str_8": 20138,
-        "$main_str_9": 20153,
+        "$_sq_": 20090,
+        "$main_str_6": 20091,
+        "$main_str_7": 20115,
+        "$main_str_8": 20139,
+        "$main_str_9": 20154,
         "@DICT.new": 9218,
         "@DICT.count": 9244,
         "@DICT.put": 9249,
@@ -662,8 +663,8 @@
             ":VVM.check_syscalls_if_else_18": 11870,
             ":VVM.check_syscalls_if_end_18": 11876,
             ":VVM.check_syscalls_if_end_17": 11882,
-            ":main_while_start_0": 12268,
-            ":main_while_end_0": 12300
+            ":main_while_start_0": 12257,
+            ":main_while_end_0": 12289
         }
     ]
 }

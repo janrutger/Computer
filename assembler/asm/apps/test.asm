@@ -84,6 +84,7 @@
 . $main_str_3 30
 . $main_str_4 30
 . $main_str_5 30
+. $_sq_ 1
 . $main_str_6 24
 . $main_str_7 24
 . $main_str_8 15
@@ -2983,164 +2984,153 @@
         ldi A $VVM0
     stack A $DATASTACK_PTR
     call @rt_print_tos
+    ldm A $SIMPL_code
+    sto A $_sq_
     ldi A 6384411237
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 5
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 6383922049
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 249887917765824666
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 193465917
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 6384411237
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 10
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 193465917
+    ldi A 193469745
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 193470404
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 6384101742
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 210680089861
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 249887917765824666
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 193453934
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    stack Z $DATASTACK_PTR
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 6384411237
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 2
+    ldi A 20
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 193470255
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 193451655
+    ldi A 193469745
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 249882312188286395
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 193453934
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 6384411237
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 1
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 193470255
+    ldi A 193456677
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 6383922049
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 249887917765824666
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 193463731
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    stack Z $DATASTACK_PTR
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 193468656
+    ldi A 193456677
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 210680089861
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 249882312188286395
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 6383976602
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 6384411237
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 1
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 193468656
+    ldi A 193450094
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193456677
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    stack Z $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193456677
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193470255
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193451667
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6953474141277
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6384411237
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 100
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193451642
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 210711392907
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 210680089861
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6953474141277
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6384411237
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 200
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 210680089861
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 210711392907
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A $SIMPL_code
