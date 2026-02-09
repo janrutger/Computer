@@ -17,6 +17,9 @@ VALUE test 12
 VALUE b 30
 VALUE result 0
 
+CONST jr 43
+
+
 ## Not supported yet, 
 # VAR jr 10
 # LIST jr 3
@@ -24,8 +27,8 @@ VALUE result 0
 # \"JRK"
 # USE std_deque
 # INCLUDE std_deque
-# CONST jr 43
 # ASM {}
+
 
 # Calling an function/Subroutine
 
@@ -39,4 +42,6 @@ ELSE
 END
 
 RND NEGATE DUP ABS PRINT PRINT
+
+jr 1 - PRINT
 

@@ -571,8 +571,9 @@ Steps todo list:
         - [x] **PRINT**
         - [x] **ABS**
         - [x] **NEGATE**
+        - [x] **CONST**]
         - [x] **VAR** Not supported, trow an error, 
-                like: LIST, STRING, Stack Stings, USE, INCLUDE, CONSTS
+                like: LIST, STRING, Stack Stings, USE, INCLUDE
         - [x] **DEF** Should produce code at the end of the code block
         - [x] **MACRO** should inline the code
         - [x] **Comparison** ==, !=, < and > implemented

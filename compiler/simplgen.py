@@ -101,6 +101,16 @@ class SimplGenerator(BaseGenerator):
     def visit_WordNode(self, node):
         word = node.value
         
+        # 0. Constant Substitution
+        if word in self.constants:
+            const_value = self.constants[word]
+            # We only support integer constants in this target for now
+            if not isinstance(const_value, int):
+                raise Exception(f"SIMPL Target Error: Unsupported constant type for '{word}'. Only integers allowed.")
+            self.emit("PUSH")
+            self.emit(const_value)
+            return
+
         # 1. Variable Access
         if word in self.symbols:
             sym = self.symbols[word]
@@ -195,7 +205,14 @@ class SimplGenerator(BaseGenerator):
     def visit_UseNode(self, node):
         raise Exception("SIMPL Target Error: USE is not supported in Scalar Stacks.")
     def visit_ConstDeclarationNode(self, node):
-        raise Exception("SIMPL Target Error: CONSTS declaration is not supported in Scalar Stacks.")
+        # Extract the value from the value_node (NumberNode)
+        if isinstance(node.value_node, NumberNode):
+            val = node.value_node.value
+        else:
+             raise Exception(f"SIMPL Target Error: Constant '{node.const_name}' must be a number.")
+
+        # Store in the BaseGenerator's constants table
+        self.constants[node.const_name] = val
 
     def visit_AddressOfNode(self, node):
         raise Exception("SIMPL Target Error: Address-of operator '&' is not supported in Scalar Stacks.")
