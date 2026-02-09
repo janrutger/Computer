@@ -650,7 +650,7 @@ Key achievements:
 
 
 
-## append update: 12 feb 2026 (Part 2)
+## append update: 9 feb 2026 (Part 2)
 
 Project status is GREEN. The VVM instruction set is now complete with the implementation of `FETCH`.
 
@@ -668,7 +668,7 @@ The VVM is now fully equipped to handle bidirectional communication with the hos
 
 
 
-## update: 12 feb 2026
+## update: 9 feb 2026
 
 Project status is GREEN. Today marked the functional completion and philosophical hardening of Phase 3, the "Scalar Stacks" compiler target.
 
