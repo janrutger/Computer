@@ -444,8 +444,8 @@ Steps todo list:
     - [x] Add runtime collision detection: `if PC >= RSP` then `Error`.
 
 - [ ] **Complete Instruction Set**
-    - [ ] Implement `FETCH` (Opcode ~05): Read from `VVM_HOST_PTR` to TOS.
-    - [ ] Implement Syscalls: `PRINT_CHAR` (11) and `READ_CHAR` (20).
+    - [x] Implement `FETCH` (Opcode 04): Read from `VVM_HOST_PTR` to TOS.
+    - [ ] Implement Syscalls: `PRINT_CHAR` (11) and `READ_CHAR` (21).
 
 - [x] **Verification & Stress Testing**
     - [x] Write a test program using `CALL`/`RET` (e.g., a simple function).
@@ -565,13 +565,21 @@ Steps todo list:
     - [x] Implement Output Strategy: Generate a `.stacks` file with a `MACRO` that pushes SIMPL tokens to a deque.
 
 - [ ] **Phase 3: Scalar Stacks Implementation**
-    - [ ] **Register Allocator:** Map `VALUE/VAR` names to VVM Registers (0-25). Error if > 26.
-    - [ ] **Math & Logic:** Implement visitors for `+ - * / %` -> `ADD SUB MUL DIV MOD`.
-    - [ ] **Built-ins:** Implement `RND` -> `RND` opcode (requires adding `s_rnd` to `vvm_env_lib`).
-    - [ ] **Flow Control:** Implement visitors for `IF/WHILE` -> `BRZ/BRA/LABEL`.
-    - [ ] **Safety:** Automatically append `HALT` at the end of the generated program.
-    - [ ] **Subroutines:** Implement `Call` -> `CALL` opcode.
-    - [ ] **Constraints:** Throw explicit errors for `ASM {}`, Strings, Arrays, and Structs.
+    - [x] **Register Allocator:** Map `VALUE` names to VVM Registers (0-25). Error if > 26.
+    - [x] **Math & Logic:** Implement visitors for `+ - * / %` -> `ADD SUB MUL DIV MOD`.
+    - [x] **Built-ins:** Implement `RND` -> `RND` opcode (requires adding `s_rnd` to `vvm_env_lib`).
+        - [x] **PRINT**
+        - [x] **ABS**
+        - [x] **NEGATE**
+        - [x] **VAR** Not supported, trow an error, 
+                like: LIST, STRING, Stack Stings, USE, INCLUDE, CONSTS
+        - [x] **DEF** Should produce code at the end of the code block
+        - [x] **MACRO** should inline the code
+        - [x] **Comparison** ==, !=, < and > implemented
+    - [x] **Flow Control:** Implement visitors for `IF/WHILE` -> `BRZ/BRA/LABEL`.
+    - [x] **Safety:** Automatically append `HALT` at the end of the generated program.
+    - [x] **Function calls:** Implement `Call` -> `CALL` opcode.
+    - [x] **Constraints:** Throw explicit errors for `ASM {}`, Strings, Arrays, and Structs.
 
 - [x] **Phase 4: Build System & Verification**
     - [x] **Makefile Updates:**
@@ -642,22 +650,53 @@ Key achievements:
 
 
 
+## append update: 12 feb 2026 (Part 2)
+
+Project status is GREEN. The VVM instruction set is now complete with the implementation of `FETCH`.
+
+Key achievements:
+- **FETCH Instruction:** The `s_fetch` runtime handler was implemented in `vvm_env_lib.stacks`. This instruction allows the VVM to read a single value from the host communication deque and push it onto its data stack.
+- **I/O Architecture:** A key architectural decision was solidified regarding I/O operations that return data.
+    - The `FETCH` instruction will not be exposed directly to the high-level "Scalar Stacks" programmer.
+    - Instead, the `SimplGenerator` compiler is responsible for upholding the "syscall contract".
+    - For high-level commands that expect a return value (e.g., a future `READ_CHAR`), the compiler will automatically emit the full `... SYS, FETCH` sequence.
+    - This keeps the high-level language simple while correctly using the low-level VVM capabilities.
+- **Syscall Contract:** It was decided that any syscall returning data will place exactly one value on the host deque, to be retrieved by a single `FETCH`. This "one-to-one" contract simplifies the VVM core and the compiler logic.
+
+The VVM is now fully equipped to handle bidirectional communication with the host, paving the way for implementing interactive programs.
 
 
-#### Some notes
-## 14. Scalar Stacks (SIMPL Target)
-When compiling with `--target simpl`, the code runs on the Virtual-on-Virtual Machine (VVM). This target has specific constraints compared to the standard Stern-ATX target.
 
-### Constraints
-- **Variables**: Only `VALUE` and `VAR` are supported.
-- **Registers**: Maximum of 26 variables allowed (Mapped to VVM Registers A-Z).
-- **Data Types**: Integers only. No String literals or Stack Strings (`\"txt"`).
-- **Memory**: No `LIST` or `STRING` declarations (No heap access).
-- **Inline Assembly**: `ASM { ... }` blocks are **not** supported.
 
-### Supported Features
-- **Math**: `+`, `-`, `*`, `/`, `%`, `NEGATE`, `ABS`, `RND`.
-- **Stack**: `DUP`, `DROP`, `SWAP`, `OVER`.
-- **Flow Control**: `IF`, `WHILE`, `GOTO`, `DEF` (Functions).
-- **I/O**: `IO` commands are supported (via Syscalls).
+## update: 12 feb 2026
 
+Project status is GREEN. Today marked the functional completion and philosophical hardening of Phase 3, the "Scalar Stacks" compiler target.
+
+Key achievements:
+- **Compiler Correctness:** A major architectural flaw in `simplgen.py` was corrected. Function definitions (`DEF`) are now correctly buffered and emitted at the end of the program block, preceded by an automatic `HALT`. This ensures correct execution flow and prevents fall-through bugs.
+- **VVM Instruction Set Expansion:** The VVM's capabilities were significantly enhanced by adding a full suite of comparison operators (`EQ`, `NE`, `LT`, `GT`) and new built-in math functions (`ABS`, `RND`). The `simplgen.py` generator was updated to map the corresponding high-level Stacks words to these new opcodes.
+- **Robustness and Debugging:**
+    - A critical race condition causing "Invalid Syscall" errors was diagnosed and fixed. The issue stemmed from multiple VVMs sharing a single host communication deque; the fix involved providing dedicated deques for each VVM instance.
+    - The `s_abs` handler was made more robust by replacing multiplication by `-1` with subtraction from `0`, working around a known host compiler limitation with negative literals.
+    - The GCD test algorithm was corrected, demonstrating the successful use of the new comparison operators.
+- **Language Scoping & Hardening:**
+    - Key architectural decisions were made to strictly enforce the "Scalar Stacks" constraints.
+    - Pointer-like operators (`&`, `*`), dynamic execution (`EXEC`), and host assembly calls (backtick ` `) were explicitly deemed out-of-scope for this target.
+    - The `simplgen.py` compiler was updated to throw clear, descriptive errors when these unsupported features are used, guiding the developer and hardening the toolchain.
+- **Phase Completion:** A final review confirmed that all requirements for Phase 3 have been met. The `simplgen` target is now capable of compiling a significant subset of the Stacks language into executable VVM bytecode. The project is ready to move into a more intensive testing and verification phase.
+
+
+
+
+
+##### Some last notes
+When the SimplGenerator encounters the word READ_SENSOR, it would be responsible for emitting the entire sequence required to get the data:
+
+OUT (to send the sensor channel ID to the host)
+PUSH <syscall_id_for_read_sensor>
+OUT (to send the syscall ID)
+SYS (to trigger the host and wait)
+FETCH (to retrieve the sensor value the host placed on the deque)
+From the programmer's perspective, they just write READ_SENSOR, and a value magically appears on the top of the stack. They don't need to know that a FETCH was involved, just as they don't need to know that PRINT involves a SYS call. The compiler handles the implementation details.
+
+In summary: Keep it simple. A syscall that returns data puts one value on the host deque. A FETCH instruction retrieves that one value. This keeps the VVM core clean, the compiler's job easy, and the overall architecture robust and predictable.

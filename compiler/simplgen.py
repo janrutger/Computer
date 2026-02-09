@@ -13,6 +13,7 @@ class SimplGenerator(BaseGenerator):
         super().__init__()
         self.deque_name = "_sq_"
         self.simpl_code = ""
+        self.function_code = ""
         self.register_count = 0
         self.max_registers = 26
         
@@ -21,11 +22,14 @@ class SimplGenerator(BaseGenerator):
             '+': 'ADD', '-': 'SUB', '*': 'MUL', '/': 'DIV', '%': 'MOD',
             'DUP': 'DUP', 'DROP': 'DROP', 'SWAP': 'SWAP', 'OVER': 'OVER',
             'NEGATE': 'NEG',
+            'ABS': 'ABS',
+            '==': 'EQ', '!=': 'NE', '<': 'LT', '>': 'GT',
         }
 
     def generate(self, ast, macro_name="load_simpl_program"):
         self.reset_state()
         self.simpl_code = ""
+        self.function_code = ""
         self.register_count = 0
         
         # Pre-scan for function definitions
@@ -34,6 +38,9 @@ class SimplGenerator(BaseGenerator):
                 self.function_symbols.add(statement.name)
 
         self.visit(ast)
+        
+        self.emit("HALT")
+        self.simpl_code += self.function_code
         
         return f"USE std_deque\n\nMACRO {macro_name} {{\n    AS {self.deque_name}\n\n{self.simpl_code}}}\n"
 
@@ -44,7 +51,7 @@ class SimplGenerator(BaseGenerator):
         else:
             val_str = str(val)
         
-        self.simpl_code += f'    {val_str:<12} {self.deque_name} DEQUE.append\n'
+        self.simpl_code += f'    {val_str:<14} {self.deque_name} DEQUE.append\n'
 
     def visit_ProgramNode(self, node):
         for stmt in node.statements:
@@ -61,8 +68,8 @@ class SimplGenerator(BaseGenerator):
         raise Exception("SIMPL Target Error: Stack Strings are not supported in Scalar Stacks.")
 
     def visit_VarDeclarationNode(self, node):
-        if node.decl_type != 'VALUE' and node.decl_type != 'VAR':
-             raise Exception(f"SIMPL Target Error: Unsupported variable type '{node.decl_type}'. Only VALUE/VAR allowed.")
+        if node.decl_type != 'VALUE':
+             raise Exception(f"SIMPL Target Error: Unsupported variable type '{node.decl_type}'. Only VALUE allowed.")
         
         if self.register_count >= self.max_registers:
             raise Exception(f"SIMPL Target Error: Register overflow. Max {self.max_registers} variables allowed.")
@@ -118,6 +125,15 @@ class SimplGenerator(BaseGenerator):
             self.emit(word.upper())
             return
 
+        # 5. High-level commands
+        if word.upper() == 'PRINT':
+            self.emit('OUT')   # Send to host
+            self.emit('PUSH')
+            self.emit(10)      # PRINT_NUM syscall ID
+            self.emit('OUT')   # Send ID to host
+            self.emit('SYS')   # Trigger syscall
+            return
+
         raise Exception(f"SIMPL Target Error: Unknown word '{word}'")
 
     def visit_IfNode(self, node):
@@ -159,14 +175,36 @@ class SimplGenerator(BaseGenerator):
         self.emit(end_label)
 
     def visit_FunctionDefinitionNode(self, node):
+        # Redirect output to function_code buffer
+        current_simpl_code = self.simpl_code
+        self.simpl_code = ""
+
         self.emit("LABEL")
         self.emit(node.name)
         self.visit(node.body)
         self.emit("RET")
 
+        self.function_code += self.simpl_code
+        self.simpl_code = current_simpl_code
+
     def visit_AsmNode(self, node):
         raise Exception("SIMPL Target Error: ASM blocks are not supported.")
     
-    def visit_IncludeNode(self, node): pass
-    def visit_UseNode(self, node): pass
-    def visit_ConstDeclarationNode(self, node): pass
+    def visit_IncludeNode(self, node):
+        raise Exception("SIMPL Target Error: INCLUDE is not supported in Scalar Stacks.")
+    def visit_UseNode(self, node):
+        raise Exception("SIMPL Target Error: USE is not supported in Scalar Stacks.")
+    def visit_ConstDeclarationNode(self, node):
+        raise Exception("SIMPL Target Error: CONSTS declaration is not supported in Scalar Stacks.")
+
+    def visit_AddressOfNode(self, node):
+        raise Exception("SIMPL Target Error: Address-of operator '&' is not supported in Scalar Stacks.")
+
+    def visit_DereferenceNode(self, node):
+        raise Exception("SIMPL Target Error: Dereference operator '*' is not supported in Scalar Stacks.")
+
+    def visit_BacktickNode(self, node):
+        raise Exception("SIMPL Target Error: Backtick/assembly calls '`' are not supported.")
+
+    def visit_ExecNode(self, node):
+        raise Exception("SIMPL Target Error: EXEC is not supported in Scalar Stacks.")

@@ -1,16 +1,42 @@
 # Test Script for SIMPL Target
 
-VALUE test 10
-VALUE b 20
+# Function creation and WHILE loop
+DEF gcd {
+    WHILE DUP 0 != DO
+        SWAP OVER %
+    DONE
+    DROP
+    
+}
 
-# 1. Test Math (Should emit PUSH, SET, GET, ADD)
-test b +
+MACRO sum {
+    test b gcd AS result
+}
 
-# 2. Test Flow Control (Should emit SUB, BRZ, LABEL)
-# Note: 'IF' consumes the value on the stack.
-# a - b will be non-zero (True) if a != b.
-test b - IF
-    100
+VALUE test 12
+VALUE b 30
+VALUE result 0
+
+## Not supported yet, 
+# VAR jr 10
+# LIST jr 3
+# STRING jr "JR"
+# \"JRK"
+# USE std_deque
+# INCLUDE std_deque
+# CONST jr 43
+# ASM {}
+
+# Calling an function/Subroutine
+
+sum result PRINT
+
+
+test b > IF
+    1 PRINT
 ELSE
-    200
+    2 PRINT
 END
+
+RND NEGATE DUP ABS PRINT PRINT
+

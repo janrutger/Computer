@@ -88,6 +88,12 @@ CONST _mul_         22
 CONST _div_         23
 CONST _mod_         24
 CONST _neg_         25
+CONST _eq_          26
+CONST _ne_          27
+CONST _lt_          28
+CONST _gt_          29
+CONST _abs_         30
+CONST _rnd_         31
 # 50 .. 99 one argument opcodes
 CONST _push_        50
 CONST _get_         51
@@ -187,6 +193,23 @@ DEF s_out {
 }
 
 DEF s_fetch {
+    AS _env_vvm_ptr
+
+    # 1. Get the host deque pointer from the VVM struct
+    VVM_HOST_ptr _env_vvm_ptr VVMpeek AS _env_host_dq
+
+    # 2. Fetch the value from the host deque.
+    #    This is a blocking operation if the deque is empty, waiting for the host.
+    _env_host_dq DEQUE.pop_tail AS _env_val
+
+    # 3. Get the VVM's current stack pointer (points to next free slot)
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+    # 4. Push the fetched value onto the VVM's data stack
+    _env_val AS *_env_sp_addr
+
+    # 5. Increment and update the VVM's stack pointer
+    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
 }
 
 # ( A B -- (a b b))
@@ -389,6 +412,121 @@ DEF s_neg {
 
 }
 
+# ( A B -- ( a == b))
+DEF s_eq {
+    AS _env_vvm_ptr
+
+    # Get SP
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+    # Pop B
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_b
+
+    # Pop A
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_a
+
+    # Push A == B
+    _math_a _math_b == AS *_env_sp_addr
+
+    # Update SP
+    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+}
+
+# ( A B -- ( a != b))
+DEF s_ne {
+    AS _env_vvm_ptr
+
+    # Get SP
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+    # Pop B
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_b
+
+    # Pop A
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_a
+
+    # Push A != B
+    _math_a _math_b != AS *_env_sp_addr
+
+    # Update SP
+    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+}
+
+# ( A B -- ( a < b))
+DEF s_lt {
+    AS _env_vvm_ptr
+
+    # Get SP
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+    # Pop B
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_b
+
+    # Pop A
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_a
+
+    # Push A < B
+    _math_a _math_b < AS *_env_sp_addr
+
+    # Update SP
+    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+}
+
+# ( A B -- ( a > b))
+DEF s_gt {
+    AS _env_vvm_ptr
+
+    # Get SP
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+    # Pop B
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_b
+
+    # Pop A
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _math_a
+
+    # Push A > B
+    _math_a _math_b > AS *_env_sp_addr
+
+    # Update SP
+    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+}
+
+# ( A -- |A| )
+DEF s_abs {
+    AS _env_vvm_ptr
+    
+    # Get SP (points to next free), decrement to get TOS
+    VVM_SP _env_vvm_ptr VVMpeek 1 - AS _env_sp_addr
+    
+    # Read value
+    *_env_sp_addr AS _math_a
+    
+    # Calculate ABS
+    _math_a 0 < IF
+        0 _math_a - AS _math_a
+    END
+    
+    # Write back
+    _math_a AS *_env_sp_addr
+}
+
+DEF s_rnd {
+    AS _env_vvm_ptr
+    RND AS _env_val
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+    _env_val AS *_env_sp_addr
+    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+}
+
 DEF s_push {
     AS _env_vvm_ptr
     AS _env_val
@@ -582,6 +720,18 @@ DEF VVM.init {
     &s_mod _mod_ opcode_runtimes LIST.put
     _neg_ \"NEG" opcode_table DICT.put
     &s_neg _neg_ opcode_runtimes LIST.put
+    _eq_ \"EQ" opcode_table DICT.put
+    &s_eq _eq_ opcode_runtimes LIST.put
+    _ne_ \"NE" opcode_table DICT.put
+    &s_ne _ne_ opcode_runtimes LIST.put
+    _lt_ \"LT" opcode_table DICT.put
+    &s_lt _lt_ opcode_runtimes LIST.put
+    _gt_ \"GT" opcode_table DICT.put
+    &s_gt _gt_ opcode_runtimes LIST.put
+    _abs_ \"ABS" opcode_table DICT.put
+    &s_abs _abs_ opcode_runtimes LIST.put
+    _rnd_ \"RND" opcode_table DICT.put
+    &s_rnd _rnd_ opcode_runtimes LIST.put
 
     # Data Transfer Opcodes
     _push_ \"PUSH" opcode_table DICT.put

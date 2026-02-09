@@ -146,7 +146,8 @@ DEF main {
     HEAP.free
     50 DEQUE.init_pool "Pool initialized (size 10).\n" PRTstring
 
-    DEQUE.new AS host_comm_deque_ptr   ; Get a pointer for the host communication deque
+    DEQUE.new AS host_comm_deque_ptr0   ; Get a pointer for the host communication deque
+    DEQUE.new AS host_comm_deque_ptr1   ; Get a pointer for the host communication deque
     DEQUE.new AS SIMPL_code     ; Get a pointer for the SIMPL code buffer
     
     # load_simple_test_code
@@ -165,12 +166,12 @@ DEF main {
     SIMPL_code load_simpl_test_simpl
     # load_factorial_test_code
     # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
-    &SIMPL_code 1024 &host_comm_deque_ptr &VVM0 VVM.create
+    &SIMPL_code 1024 &host_comm_deque_ptr0 &VVM0 VVM.create
     "VVM0 instance created \n" PRTstring
 
     load_simple_test_code
     # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
-    &SIMPL_code 1024 &host_comm_deque_ptr &VVM1 VVM.create
+    &SIMPL_code 1024 &host_comm_deque_ptr1 &VVM1 VVM.create
     "VVM1 instance created \n" PRTstring
 
 

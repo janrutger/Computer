@@ -1,8 +1,8 @@
 {
   "functions": [
-    "isqrt",
     "factorial",
-    "power"
+    "power",
+    "isqrt"
   ],
   "variables": [
     {
