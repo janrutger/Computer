@@ -1,46 +1,46 @@
 {
   "functions": [
-    "_DEQUE.grow_pool",
-    "NEW.array",
-    "NEW.matrix_populate",
-    "MATRIX.get",
-    "DEQUE.is_last",
-    "DEQUE.append",
-    "io_lib_init",
-    "DEQUE.prev",
-    "ARRAY.get",
-    "DEQUE.is_first",
-    "PRTcls",
-    "DEQUE.next",
-    "NEW.list",
-    "READline",
-    "DEQUE.tail",
-    "PRTnum",
-    "KEYchar",
-    "MATRIX.put",
-    "NEW.matrix",
-    "HALT",
-    "PRTchar",
-    "CURSORoff",
-    "_DEQUE.alloc_node",
-    "DEQUE.head",
-    "LIST.put",
-    "KEYpressed",
     "DEQUE.new",
-    "TOS.check",
-    "DEQUE.pop",
+    "HALT",
     "ARRAY.len",
-    "LIST.get",
-    "HEAP.init",
+    "CURSORoff",
     "DEQUE.pop_tail",
-    "ARRAY.size",
-    "DEQUE.value",
-    "DEQUE.is_empty",
-    "DEQUE.init_pool",
-    "ARRAY.put",
+    "ARRAY.append",
+    "DEQUE.next",
+    "DEQUE.is_first",
+    "DEQUE.append",
     "_DEQUE.free_node",
+    "MATRIX.get",
+    "DEQUE.head",
     "DEQUE.push",
-    "ARRAY.append"
+    "ARRAY.get",
+    "NEW.list",
+    "DEQUE.pop",
+    "io_lib_init",
+    "KEYchar",
+    "KEYpressed",
+    "PRTnum",
+    "LIST.get",
+    "ARRAY.size",
+    "PRTchar",
+    "ARRAY.put",
+    "_DEQUE.grow_pool",
+    "TOS.check",
+    "DEQUE.is_empty",
+    "_DEQUE.alloc_node",
+    "DEQUE.prev",
+    "PRTcls",
+    "NEW.matrix",
+    "NEW.array",
+    "READline",
+    "MATRIX.put",
+    "HEAP.init",
+    "NEW.matrix_populate",
+    "LIST.put",
+    "DEQUE.tail",
+    "DEQUE.value",
+    "DEQUE.init_pool",
+    "DEQUE.is_last"
   ],
   "variables": [
     {
@@ -260,67 +260,67 @@
     },
     {
       "name": "DEQUE_FREE_HEAD",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "DEQUE_POOL_PAGE_SIZE",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_dq_i",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_dq_ptr",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_dq_next_ptr",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_dq_node",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_dq_val",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_dq_list",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_dq_head",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_dq_tail",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_dq_prev",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_dq_next",
-      "type": "VALUE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
       "name": "_dq_err_empty",
-      "type": "STRING",
+      "type": "LIB_VAR",
       "size": 27
     }
   ],

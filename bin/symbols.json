@@ -672,8 +672,10 @@
             ":VVM.check_syscalls_if_else_18": 12213,
             ":VVM.check_syscalls_if_end_18": 12219,
             ":VVM.check_syscalls_if_end_17": 12225,
-            ":main_while_start_0": 12980,
-            ":main_while_end_0": 13012
+            ":main_while_start_0": 13076,
+            ":main_if_end_0": 13111,
+            ":main_if_end_1": 13127,
+            ":main_while_end_0": 13128
         }
     ]
 }

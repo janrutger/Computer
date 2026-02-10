@@ -571,8 +571,9 @@ Steps todo list:
         - [x] **PRINT**
         - [x] **ABS**
         - [x] **NEGATE**
-        - [x] **CONST**]
-        - [x] **VAR** Not supported, trow an error, 
+        - [x] **CONST**
+        - [x] **VAR** is creating an register label without initiazation. where VALUE set an deault value
+        - [x] **LIST** Not supported, trow an error, 
                 like: LIST, STRING, Stack Stings, USE, INCLUDE
         - [x] **DEF** Should produce code at the end of the code block
         - [x] **MACRO** should inline the code

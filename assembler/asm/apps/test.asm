@@ -3399,45 +3399,6 @@
     ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 6384411237
-    stack A $DATASTACK_PTR
-    ldm A $_sq_
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    stack Z $DATASTACK_PTR
-    ldm A $_sq_
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 193469745
-    stack A $DATASTACK_PTR
-    ldm A $_sq_
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 3
-    stack A $DATASTACK_PTR
-    ldm A $_sq_
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 6384411237
-    stack A $DATASTACK_PTR
-    ldm A $_sq_
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 60
-    stack A $DATASTACK_PTR
-    ldm A $_sq_
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 193469745
-    stack A $DATASTACK_PTR
-    ldm A $_sq_
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 3
-    stack A $DATASTACK_PTR
-    ldm A $_sq_
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
     ldi A 193456677
     stack A $DATASTACK_PTR
     ldm A $_sq_
@@ -3880,119 +3841,251 @@
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldi A 6384411237
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 3
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 193464287
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 210680089861
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 6385446751
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 193453934
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 193465917
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
+        ldm A $SIMPL_code
+    sto A $_sq_
     ldi A 6384411237
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 10
+    ldi A 42
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 193465917
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 193470404
+    ldi A 193469745
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 6384411237
+    ldi A 2
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193456677
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 1
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 193450094
+    ldi A 6383922049
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 193453934
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 193451667
+    ldi A 193491638
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 249887499311019352
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 193451642
+    ldi A 193465917
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 6385446751
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 210680089861
+    ldi A 6384411237
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
-    stack A $DATASTACK_PTR
-    call @DEQUE.append
-    ldi A 249887499311019352
-    stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 6383976602
+    ldi A 10
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193465917
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193470404
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193456677
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193465917
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6384411237
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193465917
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193470404
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A 6384101742
     stack A $DATASTACK_PTR
-    ldm A $SIMPL_code
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 210680089861
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193491638
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193453934
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6384411237
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 5862501
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193451667
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 210711392907
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193451642
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 229465800356332
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 210680089861
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 210711392907
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193453934
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6384411237
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193470255
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6383922049
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193491638
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6384520640
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6384411237
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193470255
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 6383922049
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193491638
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193450094
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 210680089861
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 229465800356332
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldi A 193468656
+    stack A $DATASTACK_PTR
+    ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
     ldi A $SIMPL_code
@@ -4020,7 +4113,10 @@
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-    stack Z $DATASTACK_PTR
+        ldi A 10
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
     ldi A $VVM1
     stack A $DATASTACK_PTR
     call @VVM.start
@@ -4060,18 +4156,40 @@
     add A B
     tst A 0
     jmpt :main_while_end_0
+    stack Z $DATASTACK_PTR
+    ldi A $VVM0
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ldi A 4
+    stack A $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :main_if_end_0
     ldi A $VVM0
     stack A $DATASTACK_PTR
     call @VVM.run
     ldi A $VVM0
     stack A $DATASTACK_PTR
     call @VVM.check_syscalls
+:main_if_end_0
+    stack Z $DATASTACK_PTR
+    ldi A $VVM1
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ldi A 4
+    stack A $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :main_if_end_1
     ldi A $VVM1
     stack A $DATASTACK_PTR
     call @VVM.run
     ldi A $VVM1
     stack A $DATASTACK_PTR
     call @VVM.check_syscalls
+:main_if_end_1
     jmp :main_while_start_0
 :main_while_end_0
     ldi A 1

@@ -590,12 +590,13 @@ class Parser:
 
         # Handle VAR name address
         elif decl_token.type == TokenType.KEYWORD_VAR:
-            if self.current_token.type != TokenType.NUMBER:
-                self.errors.append(f"Expected address (number) for VAR, but got {self.current_token.type}")
-                return None
-            address_token = self.current_token
-            # Using 'initial_value' to store the address for the node
-            return VarDeclarationNode(decl_type='VAR', var_name=var_name_token.value, initial_value=address_token.value)
+            initial_value = None
+            if self.current_token.type == TokenType.NUMBER:
+                initial_value = self.current_token.value
+            else:
+                # It's not a number, so push the token back to be processed as the next statement
+                self.token_queue.insert(0, self.current_token)
+            return VarDeclarationNode(decl_type='VAR', var_name=var_name_token.value, initial_value=initial_value)
 
         # Handle VALUE name initial_value
         elif decl_token.type == TokenType.KEYWORD_VALUE:

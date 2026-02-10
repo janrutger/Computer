@@ -15,14 +15,6 @@ MACRO load_simpl_test_simpl {
     0              _sq_ DEQUE.append
     \"SET"         _sq_ DEQUE.append
     2              _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    0              _sq_ DEQUE.append
-    \"SET"         _sq_ DEQUE.append
-    3              _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    60             _sq_ DEQUE.append
-    \"SET"         _sq_ DEQUE.append
-    3              _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append
     0              _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append

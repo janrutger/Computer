@@ -68,19 +68,25 @@ class SimplGenerator(BaseGenerator):
         raise Exception("SIMPL Target Error: Stack Strings are not supported in Scalar Stacks.")
 
     def visit_VarDeclarationNode(self, node):
-        if node.decl_type != 'VALUE':
-             raise Exception(f"SIMPL Target Error: Unsupported variable type '{node.decl_type}'. Only VALUE allowed.")
+        if node.decl_type not in ['VALUE', 'VAR']:
+             raise Exception(f"SIMPL Target Error: Unsupported variable type '{node.decl_type}'. Only VALUE and VAR are allowed for the SIMPL target.")
         
         if self.register_count >= self.max_registers:
             raise Exception(f"SIMPL Target Error: Register overflow. Max {self.max_registers} variables allowed.")
             
         reg_index = self.register_count
         self.register_count += 1
-        
+
         self.symbols[node.var_name] = {'type': 'REG', 'index': reg_index}
-        
-        # Initialization
-        if isinstance(node.initial_value, int):
+
+        if node.decl_type == 'VAR':
+            # For the SIMPL target, VAR is for uninitialized arguments. It must not have a value.
+            if node.initial_value is not None:
+                raise Exception(f"SIMPL Target Error: VAR '{node.var_name}' cannot be initialized.")
+        elif node.decl_type == 'VALUE':
+            # VALUE must be initialized.
+            if node.initial_value is None:
+                raise Exception(f"SIMPL Target Error: VALUE '{node.var_name}' must be initialized.")
             self.emit("PUSH")
             self.emit(node.initial_value)
             self.emit("SET")
@@ -213,6 +219,15 @@ class SimplGenerator(BaseGenerator):
 
         # Store in the BaseGenerator's constants table
         self.constants[node.const_name] = val
+
+    def visit_GotoNode(self, node):
+        self.emit("BRA")
+        self.emit(node.label_name)
+        
+
+    def visit_LabelNode(self, node):
+        self.emit("LABEL")
+        self.emit(node.label_name)
 
     def visit_AddressOfNode(self, node):
         raise Exception("SIMPL Target Error: Address-of operator '&' is not supported in Scalar Stacks.")

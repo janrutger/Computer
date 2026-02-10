@@ -14,129 +14,13 @@ INCLUDE vvm_env_lib
 INCLUDE vvm_core_lib
 
 INCLUDE simpl_test_simpl_lib
+INCLUDE simpl_fib_lib
 
 
 VALUE VVM0 15360                    ; The memory address for VVM0, stored in a variable.
 VALUE VVM1 16384
 
-MACRO load_simple_test_code {
-    # Test program to count from -3 up to 0 and then exit a loop.
-    # This verifies the functionality of BRZ (Branch if Zero).
 
-    \"PUSH"      SIMPL_code DEQUE.append
-    3            SIMPL_code DEQUE.append     # Start counter at 3 (Host compiler issue with -3)
-    \"NEG"       SIMPL_code DEQUE.append     # Negate the counter
-
-    \"LABEL"     SIMPL_code DEQUE.append
-    \"loop"      SIMPL_code DEQUE.append
-
-    \"DUP"       SIMPL_code DEQUE.append     # Duplicate counter for printing
-    \"OUT"       SIMPL_code DEQUE.append     # Send counter to host
-    \"PUSH"      SIMPL_code DEQUE.append
-    10           SIMPL_code DEQUE.append     # Syscall ID for PRINT_NUM
-    \"OUT"       SIMPL_code DEQUE.append
-    \"SYS"       SIMPL_code DEQUE.append
-
-    \"PUSH"      SIMPL_code DEQUE.append
-    1            SIMPL_code DEQUE.append
-    \"ADD"       SIMPL_code DEQUE.append     # Decrement the counter
-
-    \"DUP"       SIMPL_code DEQUE.append     # Duplicate counter for the branch check
-    \"BRZ"       SIMPL_code DEQUE.append     # If counter is zero, branch to exit
-    \"exit_loop" SIMPL_code DEQUE.append
-
-    \"BRA"       SIMPL_code DEQUE.append
-    \"loop"      SIMPL_code DEQUE.append
-
-    \"LABEL"     SIMPL_code DEQUE.append
-    \"exit_loop" SIMPL_code DEQUE.append
-
-    \"DROP"      SIMPL_code DEQUE.append     # Clean up the final 0 from the stack
-    \"HALT"      SIMPL_code DEQUE.append
-}
-
-MACRO load_call_ret_test_code {
-    # Test program for CALL and RET
-    # Main: Pushes 10, Calls 'add_five', Prints result (15)
-    
-    \"PUSH"      SIMPL_code DEQUE.append
-    10           SIMPL_code DEQUE.append
-    
-    \"CALL"      SIMPL_code DEQUE.append
-    \"add_five"  SIMPL_code DEQUE.append
-    
-    # Print Result
-    \"OUT"       SIMPL_code DEQUE.append
-    \"PUSH"      SIMPL_code DEQUE.append
-    10           SIMPL_code DEQUE.append
-    \"OUT"       SIMPL_code DEQUE.append
-    \"SYS"       SIMPL_code DEQUE.append
-    
-    \"HALT"      SIMPL_code DEQUE.append
-
-    # Subroutine
-    \"LABEL"     SIMPL_code DEQUE.append
-    \"add_five"  SIMPL_code DEQUE.append
-    
-    \"PUSH"      SIMPL_code DEQUE.append
-    5            SIMPL_code DEQUE.append
-    
-    \"ADD"       SIMPL_code DEQUE.append
-
-    \"RET"       SIMPL_code DEQUE.append
-}
-
-MACRO load_factorial_test_code {
-    # Test program for Recursion (Factorial)
-    # Main: Pushes 5, Calls 'factorial', Prints result (120)
-    
-    \"PUSH"      SIMPL_code DEQUE.append
-    5            SIMPL_code DEQUE.append
-    
-    \"CALL"      SIMPL_code DEQUE.append
-    \"factorial" SIMPL_code DEQUE.append
-    
-    # Print Result
-    \"OUT"       SIMPL_code DEQUE.append
-    \"PUSH"      SIMPL_code DEQUE.append
-    10           SIMPL_code DEQUE.append
-    \"OUT"       SIMPL_code DEQUE.append
-    \"SYS"       SIMPL_code DEQUE.append
-    
-    \"HALT"      SIMPL_code DEQUE.append
-
-    # Subroutine ( N -- N! )
-    \"LABEL"     SIMPL_code DEQUE.append
-    \"factorial" SIMPL_code DEQUE.append
-    
-    # Check Base Case (N < 2)
-    \"DUP"       SIMPL_code DEQUE.append
-    \"PUSH"      SIMPL_code DEQUE.append
-    2            SIMPL_code DEQUE.append
-    \"SUB"       SIMPL_code DEQUE.append
-    \"BRN"       SIMPL_code DEQUE.append
-    \"base_case" SIMPL_code DEQUE.append
-    
-    # Recursive Step: N * fact(N-1)
-    \"DUP"       SIMPL_code DEQUE.append
-    \"PUSH"      SIMPL_code DEQUE.append
-    1            SIMPL_code DEQUE.append
-    \"SUB"       SIMPL_code DEQUE.append
-    
-    \"CALL"      SIMPL_code DEQUE.append
-    \"factorial" SIMPL_code DEQUE.append
-    
-    \"MUL"       SIMPL_code DEQUE.append
-    \"RET"       SIMPL_code DEQUE.append
-    
-    # Base Case: Return 1
-    \"LABEL"     SIMPL_code DEQUE.append
-    \"base_case" SIMPL_code DEQUE.append
-    \"DROP"      SIMPL_code DEQUE.append # Drop N
-    \"PUSH"      SIMPL_code DEQUE.append
-    1            SIMPL_code DEQUE.append
-    \"RET"       SIMPL_code DEQUE.append
-}
 
 VALUE host_comm_deque_ptr 0
 VALUE SIMPL_code 0
@@ -155,21 +39,17 @@ DEF main {
     
 
     VVM.init                        ; init VVM environment
-    "VVM Environment Initialized.\n" PRTstring
-
-    "SIMPL_code pointer         : " PRTstring SIMPL_code PRINT # This is the variable holding the deque pointer
-    "host_comm_deque_ptr pointer: " PRTstring host_comm_deque_ptr PRINT # This is the variable holding the deque pointer
+    "VVM Environment Initialized:\n" PRTstring
     "VVM0 base address          : " PRTstring VVM0  PRINT
-    "Address of VVM0 variable   : " PRTstring &VVM0 PRINT
+    "VVM1 base address          : " PRTstring VVM1  PRINT
 
 
     SIMPL_code load_simpl_test_simpl
-    # load_factorial_test_code
     # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
     &SIMPL_code 1024 &host_comm_deque_ptr0 &VVM0 VVM.create
     "VVM0 instance created \n" PRTstring
 
-    load_simple_test_code
+    SIMPL_code load_simpl_fib
     # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
     &SIMPL_code 1024 &host_comm_deque_ptr1 &VVM1 VVM.create
     "VVM1 instance created \n" PRTstring
@@ -180,17 +60,21 @@ DEF main {
     0 &VVM0 VVM.start
     "VVM0 started \n" PRTstring
 
-    0 &VVM1 VVM.start
+    10 1 &VVM1 VVM.start
     "VVM1 started \n" PRTstring
 
     1 TIME.start
     WHILE VVM_status &VVM0 VVMpeek VVM_Halted != 
           VVM_status &VVM1 VVMpeek VVM_Halted != + DO
-        &VVM0 VVM.run
-        &VVM0 VVM.check_syscalls
+        VVM_status &VVM0 VVMpeek VVM_Halted != IF
+            &VVM0 VVM.run
+            &VVM0 VVM.check_syscalls
+        END
 
-        &VVM1 VVM.run
-        &VVM1 VVM.check_syscalls
+        VVM_status &VVM1 VVMpeek VVM_Halted != IF
+            &VVM1 VVM.run
+            &VVM1 VVM.check_syscalls
+        END
     DONE
     1 TIME.read TIME.as_string 
 
