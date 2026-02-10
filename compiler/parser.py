@@ -593,7 +593,7 @@ class Parser:
             initial_value = None
             if self.current_token.type == TokenType.NUMBER:
                 initial_value = self.current_token.value
-            else:
+            else: # SIMPLE generator case
                 # It's not a number, so push the token back to be processed as the next statement
                 self.token_queue.insert(0, self.current_token)
             return VarDeclarationNode(decl_type='VAR', var_name=var_name_token.value, initial_value=initial_value)

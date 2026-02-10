@@ -1,0 +1,87 @@
+# chaos3.stacks
+#
+# Generates a Chaos Game fractal (Sierpinski triangle).
+# This is a Scalar Stacks compatible version.
+
+# --- Variable Declarations ---
+VALUE A 10
+VALUE B 10
+
+
+VALUE C 630
+VALUE D 10
+#VALUE D 200
+
+VALUE E 320
+#VALUE E 520
+
+VALUE F 470
+
+VALUE X 10
+VALUE Y 10
+
+VALUE K 0
+VALUE L 0
+
+VALUE N 0
+VALUE R 0
+
+# --- Function Definitions ---
+
+# Initializes the LCD screen
+DEF screen {
+  IO 2 ONLINE
+  IO 2 NEW
+  1 IO 2 COLOR
+  2 IO 2 MODE   # Set to Pixel Mode, Double Buffering
+}
+
+# Sets the X coordinate for drawing
+DEF setX {
+  IO 2 X
+}
+
+
+# Sets the Y coordinate for drawing
+DEF setY {
+  IO 2 Y
+}
+
+# Selects one of the three vertices of the triangle
+DEF select1 { A AS K  B AS L }
+DEF select2 { C AS K  D AS L }
+DEF select3 { E AS K  F AS L }
+
+# Main drawing function
+DEF draw {
+  setY  # Consumes Y from stack
+  setX  # Consumes X from stack
+  RND 15 * 999 // 1 + # Calculate a random color
+  IO 2 DRAW
+}
+
+# --- Main Program ---
+screen
+
+WHILE 5000 N > DO
+  RND 3 * 999 // AS R
+
+  R 0 == IF select1 END
+  R 1 == IF select2 END
+  R 2 == IF select3 END
+
+  # find midway
+  X K + 2 // AS X
+  Y L + 2 // AS Y
+
+  X Y draw
+
+  N 1 + AS N
+  N 500 % 0 == IF
+    IO 2 FLIP  # Flip buffer to show new points
+  END
+
+DONE
+
+:end_of_chaos3
+# End of program

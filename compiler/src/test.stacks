@@ -15,6 +15,8 @@ INCLUDE vvm_core_lib
 
 INCLUDE simpl_test_simpl_lib
 INCLUDE simpl_fib_lib
+INCLUDE simpl_fly_lib
+INCLUDE simpl_chaos3_lib
 
 
 VALUE VVM0 15360                    ; The memory address for VVM0, stored in a variable.
@@ -44,12 +46,12 @@ DEF main {
     "VVM1 base address          : " PRTstring VVM1  PRINT
 
 
-    SIMPL_code load_simpl_test_simpl
+    SIMPL_code load_simpl_fly
     # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
     &SIMPL_code 1024 &host_comm_deque_ptr0 &VVM0 VVM.create
     "VVM0 instance created \n" PRTstring
 
-    SIMPL_code load_simpl_fib
+    SIMPL_code load_simpl_chaos3
     # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
     &SIMPL_code 1024 &host_comm_deque_ptr1 &VVM1 VVM.create
     "VVM1 instance created \n" PRTstring

@@ -119,6 +119,7 @@ CONST READ_NUM      20
 CONST READ_CHAR     21
 # SYSTEM
 # DEVICES
+CONST UDC_IO        50
 
 ### end of the syscalls
 
@@ -658,6 +659,34 @@ DEF s_print_num {
     
 }
 
+DEF s_UDC_IO {
+
+    AS _env_vvm_ptr
+    
+    # Get Host Deque
+    VVM_HOST_ptr _env_vvm_ptr VVMpeek AS _env_host_dq
+    
+    # 1. Pop Command (Tail)
+    _env_host_dq DEQUE.pop_tail AS _math_a
+    
+    # 2. Pop Channel
+    _env_host_dq DEQUE.pop_tail AS _math_b
+    
+    # 3. Pop Value
+    _env_host_dq DEQUE.pop_tail AS _env_val
+    
+    # 4. Execute IO ( Stack: Value Channel Command -- Result )
+    # We use backticks to call the runtime routine directly.
+    _env_val _math_b _math_a `rt_udc_control
+    
+    # 5. Result is on stack.
+    # Only append to deque if command is INIT (0) or GET (12)
+    _math_a 0 == _math_a 12 == + IF
+         AS _env_val
+         _env_val _env_host_dq DEQUE.append
+    END
+}
+
 DEF s_print_char {
 
 }
@@ -760,6 +789,7 @@ DEF VVM.init {
 
     # Syscalls
     &s_print_num  PRINT_NUM  syscall_table DICT.put
+    &s_UDC_IO     UDC_IO     syscall_table DICT.put
     &s_print_char PRINT_CHAR syscall_table DICT.put
     &s_read_num   READ_NUM   syscall_table DICT.put
     &s_read_char  READ_CHAR  syscall_table DICT.put

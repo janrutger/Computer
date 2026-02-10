@@ -19,11 +19,19 @@ class SimplGenerator(BaseGenerator):
         
         # Map Stacks operators to SIMPL opcodes
         self.op_map = {
-            '+': 'ADD', '-': 'SUB', '*': 'MUL', '/': 'DIV', '%': 'MOD',
+            '+': 'ADD', '-': 'SUB', '*': 'MUL', '//': 'DIV', '%': 'MOD',
             'DUP': 'DUP', 'DROP': 'DROP', 'SWAP': 'SWAP', 'OVER': 'OVER',
             'NEGATE': 'NEG',
             'ABS': 'ABS',
             '==': 'EQ', '!=': 'NE', '<': 'LT', '>': 'GT',
+        }
+        
+        self.udc_commands = {
+            # Generic Commands
+            'INIT': 0, 'ONLINE': 1, 'OFFLINE': 2, 'RESET': 3,
+            # Device-Specific Commands
+            'NEW': 10, 'SEND': 11, 'GET': 12, 'COLOR': 13, 'MODE': 14,
+            'X': 15, 'Y': 16, 'DRAW': 17, 'FLIP': 18,
         }
 
     def generate(self, ast, macro_name="load_simpl_program"):
@@ -240,3 +248,42 @@ class SimplGenerator(BaseGenerator):
 
     def visit_ExecNode(self, node):
         raise Exception("SIMPL Target Error: EXEC is not supported in Scalar Stacks.")
+
+    def visit_IONode(self, node):
+        command_upper = node.command.upper()
+        if command_upper not in self.udc_commands:
+            raise Exception(f"SIMPL Target Error: Unknown IO command '{node.command}'.")
+        
+        command_code = self.udc_commands[command_upper]
+        channel = node.channel
+
+        # 1. Handle Value (Payload)
+        # If the command does NOT require a value from the stack, we must provide a dummy one.
+        # This mimics the AsmGenerator behavior and satisfies the 3-argument syscall contract.
+        if command_upper in ['ONLINE', 'OFFLINE', 'RESET', 'NEW', 'GET', 'FLIP', 'INIT']:
+            self.emit("PUSH")
+            self.emit(0)
+        
+        # Move the value (either real or dummy) from Stack to Host Deque
+        self.emit("OUT")
+
+        # 2. Handle Channel
+        self.emit("PUSH")
+        self.emit(channel)
+        self.emit("OUT")
+
+        # 3. Handle Command Code
+        self.emit("PUSH")
+        self.emit(command_code)
+        self.emit("OUT")
+
+        # 4. Trigger Syscall 50 (UDC_CMD)
+        self.emit("PUSH")
+        self.emit(50) # Syscall ID for UDC
+        self.emit("OUT")
+        self.emit("SYS")
+
+        # 5. Handle Return Value
+        # If the command returns data (like GET or INIT), we must fetch it from the host.
+        if command_upper in ['GET', 'INIT']:
+            self.emit("FETCH")

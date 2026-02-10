@@ -1135,6 +1135,58 @@
     stack A $DATASTACK_PTR
     call @rt_print_tos
     ret
+@s_UDC_IO
+    ustack A $DATASTACK_PTR
+    sto A $_env_vvm_ptr
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ustack A $DATASTACK_PTR
+    sto A $_env_host_dq
+    stack A $DATASTACK_PTR
+    call @DEQUE.pop_tail
+    ustack A $DATASTACK_PTR
+    sto A $_math_a
+    ldm A $_env_host_dq
+    stack A $DATASTACK_PTR
+    call @DEQUE.pop_tail
+    ustack A $DATASTACK_PTR
+    sto A $_math_b
+    ldm A $_env_host_dq
+    stack A $DATASTACK_PTR
+    call @DEQUE.pop_tail
+    ustack A $DATASTACK_PTR
+    sto A $_env_val
+    stack A $DATASTACK_PTR
+    ldm A $_math_b
+    stack A $DATASTACK_PTR
+    ldm A $_math_a
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $_math_a
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ldm A $_math_a
+    stack A $DATASTACK_PTR
+    ldi A 12
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add A B
+    tst A 0
+    jmpt :s_UDC_IO_if_end_8
+    ustack A $DATASTACK_PTR
+    sto A $_env_val
+    stack A $DATASTACK_PTR
+    ldm A $_env_host_dq
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+:s_UDC_IO_if_end_8
+    ret
 @s_print_char
     ret
 @s_read_num
@@ -1604,6 +1656,13 @@
     ldi A @s_print_num
     stack A $DATASTACK_PTR
     ldi A 10
+    stack A $DATASTACK_PTR
+    ldm A $syscall_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_UDC_IO
+    stack A $DATASTACK_PTR
+    ldi A 50
     stack A $DATASTACK_PTR
     ldm A $syscall_table
     stack A $DATASTACK_PTR
