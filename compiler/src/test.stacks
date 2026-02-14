@@ -49,15 +49,17 @@ DEF main {
     "VVM1 base address          : " PRTstring VVM1  PRINT
 
 
-    SIMPL_code load_simpl_fly
+    #SIMPL_code load_simpl_fly
+    SIMPL_code "sbc_fly" VVM.loadcode 
     # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
     &SIMPL_code 1024 &host_comm_deque_ptr0 &VVM0 VVM.create
-    "VVM0 instance created \n" PRTstring
+    "VVM0 instance created \n\n" PRTstring
 
-    SIMPL_code load_simpl_chaos3
+    #SIMPL_code load_simpl_chaos3
+    SIMPL_code "sbc_chaos3" VVM.loadcode 
     # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
     &SIMPL_code 1024 &host_comm_deque_ptr1 &VVM1 VVM.create
-    "VVM1 instance created \n" PRTstring
+    "VVM1 instance created \n\n" PRTstring
 
 
     # Start the VVM

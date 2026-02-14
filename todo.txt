@@ -769,3 +769,46 @@ Benefits:
 - **Memory Efficiency:** Host program memory is not consumed by the SIMPL bytecode.
 - **Flexibility:** Games can be updated or swapped without recompiling the kernel/host.
 - **Scalability:** Allows for much larger SIMPL programs limited only by VVM memory size, not Host program memory.
+
+
+Implementation plan:
+
+The simplgen should has an helper to hash the strings.
+    hash_val = 5381
+    for val in vals:
+        hash_val = ((hash_val * 33) + val)
+
+And keepstrack of the binary output
+
+while code generation, it should generate an libray and a binary output format
+the binary output should contain integer, one per line
+where \"PUSH" stores the hash of "PUSH" to the binary output stream
+a value like 20, is just cast as 20 to the output stream
+
+At the end is should write the stacks library, like it does now.
+and the binary file <source>_sbc.bin in the bin/apps directory (the vdisk directory)
+
+the VVM core library shouldbe extended with an VVM.loader method
+with reads the binary an put the values on the deque
+
+SIMPL_code "filename_sbc" VVM.load
+
+###
+
+## update: 14 feb 2026
+
+Project status is GREEN. The VVM Disk Loader is fully implemented and verified.
+
+Key achievements:
+- **Compiler Support:**
+    - Updated `simplgen.py` to support a "Dual Output" strategy. It now generates the standard Stacks library (Macro) AND a raw binary file (`.bin`) in `bin/apps/`.
+    - Implemented `djb2_hash` in Python to pre-calculate opcode and label hashes, ensuring the binary file contains a pure stream of integers compatible with the VVM.
+    - Enforced the `sbc_<filename>.bin` naming convention for SIMPL Byte Code files.
+- **Runtime Loader:**
+    - Implemented `VVM.loadcode` in `vvm_core_lib.stacks`.
+    - This function reads the integer stream from the disk file and populates the target deque, effectively replicating the behavior of the static macros but at runtime.
+    - Reused low-level disk routines from `disk_utils` for efficient block reading.
+- **Verification:**
+    - Successfully converted the `fly` and `chaos3` demos to binary format.
+    - The host test program was refactored to use `VVM.loadcode`, reducing the host binary size to a mere ~750 words while driving two concurrent VVM instances.
+    - This confirms the architecture's scalability: the host kernel size is now decoupled from the size and complexity of the user applications.

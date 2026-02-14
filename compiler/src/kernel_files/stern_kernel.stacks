@@ -1,6 +1,7 @@
 # --- RPN  Kernel Command Line ---
 #
-INCLUDE disk_utils
+#INCLUDE disk_utils
+USE disk_utils
 INCLUDE parser_tools
 USE std_stern_io 
 USE std_string

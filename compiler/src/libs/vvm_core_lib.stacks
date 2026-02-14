@@ -4,6 +4,7 @@ USE std_stern_io
 USE std_dict
 USE std_deque
 
+USE disk_utils
 USE vvm_env_lib
 
 VALUE _temp_ptr 0
@@ -22,6 +23,7 @@ STRING error_invalid_reg    "VVM invalid register index. \n"
 STRING error_div_zero       "VVM division by zero error. \n"
 STRING error_vvm_overflow   "VVM memory overflow. \n"
 STRING msg_labels_found     " labels found\n"
+STRING msg_loading          "Loading VVM from disk \n"
 
 VALUE _run_pc 0
 VALUE _run_opcode 0
@@ -274,4 +276,114 @@ DEF VVM.check_syscalls {
         VVM_Idle VVM_status _VVMpointer VVMpoke
     END
     
+}
+
+VALUE _filename 0
+VALUE _code_queue 0
+
+# ( code-queue "filename" --)
+# Appending the lines from the file to the code queue
+DEF VVM.loadcode {
+    AS _filename
+    AS _code_queue
+
+    &msg_loading PRTstring
+
+    ASM {
+        # Open file
+        ldm A $_filename
+        ldi I ~SYS_F_OPEN_READ
+        int $INT_VECTORS
+        
+        ldm A $SYSCALL_RETURN_STATUS
+        tste A Z
+        jmpt :vvm_load_end_error
+
+        # Variables
+        . $vvm_val 1
+        . $vvm_neg 1
+        . $vvm_digit_seen 1
+
+        # Read first block
+        call @_read_disk_block
+        jmpt :vvm_close_and_end
+
+        :vvm_read_loop
+            sto Z $vvm_val
+            sto Z $vvm_neg
+            sto Z $vvm_digit_seen
+
+        :vvm_parse_loop
+            inc I $disk_io_buffer_ptr
+            ldx C $disk_io_buffer_base
+            tst C \null
+            jmpf :vvm_process_char
+                # End of block, read next
+                call @_check_last_block
+                jmpt :vvm_close_and_end
+                call @_read_disk_block
+                jmpt :vvm_close_and_end
+
+                # Reset ptr and reload C
+                # The _read_disk_block resets the internal pointer variable to 0.
+                # The top of the loop increments before reading, which would skip the
+                # first character of the new block.
+                # We must manually load the first character here and jump past the loop's load.
+                inc I $disk_io_buffer_ptr
+                ldx C $disk_io_buffer_base
+                jmp :vvm_process_char
+
+            :vvm_process_char
+            tst C \Return
+            jmpt :vvm_check_push
+            tst C \Newline
+            jmpt :vvm_check_push
+            tst C \space
+            jmpt :vvm_check_push
+            
+            tst C \-
+            jmpf :vvm_check_digit
+                ldi A 1
+                sto A $vvm_neg
+                jmp :vvm_parse_loop
+
+            :vvm_check_digit
+            ldi A 1
+            sto A $vvm_digit_seen
+            ldm A $vvm_val
+            muli A 10
+            subi C 48
+            add A C
+            sto A $vvm_val
+            jmp :vvm_parse_loop
+
+            :vvm_check_push
+            ldm A $vvm_digit_seen
+            tste A Z
+            jmpt :vvm_parse_loop
+            
+            ldm A $vvm_neg
+            tste A Z
+            jmpf :vvm_negate
+            jmp :vvm_push
+            :vvm_negate
+            ldm B $vvm_val
+            ldi A 0
+            sub A B
+            sto A $vvm_val
+            
+            :vvm_push
+            ldm A $vvm_val
+            stack A $DATASTACK_PTR
+            ldm A $_code_queue
+            stack A $DATASTACK_PTR
+            call @DEQUE.append
+            jmp :vvm_read_loop
+
+        :vvm_close_and_end
+            ldi I ~SYS_F_CLOSE
+            int $INT_VECTORS
+            
+        :vvm_load_end_error
+    }
 }

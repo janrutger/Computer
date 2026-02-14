@@ -34,11 +34,19 @@ class SimplGenerator(BaseGenerator):
             'X': 15, 'Y': 16, 'DRAW': 17, 'FLIP': 18,
         }
 
+    def djb2_hash(self, s):
+        hash_val = 5381
+        for char in s:
+            hash_val = ((hash_val * 33) + ord(char))
+        return hash_val
+
     def generate(self, ast, macro_name="load_simpl_program"):
         self.reset_state()
         self.simpl_code = ""
         self.function_code = ""
         self.register_count = 0
+        self.binary_code = []
+        self.function_binary_code = []
         
         # Pre-scan for function definitions
         for statement in ast.statements:
@@ -49,10 +57,28 @@ class SimplGenerator(BaseGenerator):
         
         self.emit("HALT")
         self.simpl_code += self.function_code
+        self.binary_code.extend(self.function_binary_code)
+
+        # Write binary file
+        if macro_name.startswith("load_simpl_"):
+            base_name = macro_name[11:]
+        else:
+            base_name = "program"
+        
+        bin_path = os.path.join("bin", "apps", f"sbc_{base_name}.bin") # Simple Byte Code
+        os.makedirs(os.path.dirname(bin_path), exist_ok=True)
+        with open(bin_path, "w") as f:
+            for val in self.binary_code:
+                f.write(f"{val}\n")
         
         return f"USE std_deque\n\nMACRO {macro_name} {{\n    AS {self.deque_name}\n\n{self.simpl_code}}}\n"
 
     def emit(self, val):
+        if isinstance(val, int):
+            self.binary_code.append(val)
+        elif isinstance(val, str):
+            self.binary_code.append(self.djb2_hash(val))
+
         if isinstance(val, str):
             # Escape quotes for Stacks string literal
             val_str = f'\\"{val}"'
@@ -202,6 +228,9 @@ class SimplGenerator(BaseGenerator):
         # Redirect output to function_code buffer
         current_simpl_code = self.simpl_code
         self.simpl_code = ""
+        
+        current_binary_code = self.binary_code
+        self.binary_code = []
 
         self.emit("LABEL")
         self.emit(node.name)
@@ -209,7 +238,10 @@ class SimplGenerator(BaseGenerator):
         self.emit("RET")
 
         self.function_code += self.simpl_code
+        self.function_binary_code.extend(self.binary_code)
+
         self.simpl_code = current_simpl_code
+        self.binary_code = current_binary_code
 
     def visit_AsmNode(self, node):
         raise Exception("SIMPL Target Error: ASM blocks are not supported.")

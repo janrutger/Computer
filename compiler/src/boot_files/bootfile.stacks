@@ -32,6 +32,8 @@ INCLUDE std_string
 INCLUDE std_heap 24576 6144 HEAP.init   # 6k of heapspace
 
 # to free program memory, more libraries are included by default
+INCLUDE disk_utils
+
 INCLUDE std_dict
 INCLUDE std_deque
 

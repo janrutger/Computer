@@ -123,6 +123,7 @@
 . $error_div_zero 30
 . $error_vvm_overflow 23
 . $msg_labels_found 15
+. $msg_loading 24
 . $_run_pc 1
 . $_run_opcode 1
 . $_run_handler 1
@@ -138,6 +139,8 @@
 . $_vvm_needed_size 1
 . $_vvm_code_start 1
 . $_vvm_write_ptr 1
+. $_filename 1
+. $_code_queue 1
 
 # .CODE
 
@@ -1488,6 +1491,169 @@
     stack A $DATASTACK_PTR
     ret
 
+
+@_read_disk_block
+
+        ldi I ~SYS_F_READ_BLOCK
+        int $INT_VECTORS
+        # After read block 12 (or less) bytes from the file are loaded in $disk_io_buffer
+        # \null terminated
+
+        # reset Disk_io_buffer_prt
+        sto Z $disk_io_buffer_ptr
+
+        # Check for error
+        ldm A $SYSCALL_RETURN_STATUS
+        tste A Z
+        ret
+@_check_last_block
+
+        ldm A $SYSCALL_RETURN_VALUE ; check if it was the last block
+        tst A 1
+        ret
+@_read_next_block
+
+        call @_check_last_block
+        jmpt :close_and_end
+        call @_read_disk_block
+        jmpt :close_and_end
+
+        ret
+        ret
+@load_bin_file
+
+        # Pointer to File_name_string on the stack (kernel_stacks.asm)
+        ustack A $DATASTACK_PTR     ; Pop filename pointer into A
+        
+        ##
+        ldi I ~SYS_F_OPEN_READ      ; Open the file for read
+        int $INT_VECTORS
+
+        ldm A $SYSCALL_RETURN_STATUS
+        tste A Z               ; Status is 1 at success
+        jmpt :cmd_load_end     ; do nothing when file error, mesage is already printed
+
+        . $mem_adres 1
+        . $mem_val 1
+        . $is_negative 1
+        . $is_first_digit 1
+
+        # read the first disk block
+        call @_read_disk_block
+        jmpt :close_and_end ; if error, close file and end
+
+        :read_disk_loop
+            # 1 find the adres from the input buffer
+            #   an number seperated by an space (32)
+            #   2 blocks can be needed
+
+            # reset adres and value
+            sto Z $mem_adres
+            sto Z $mem_val
+
+        :adres_lookup_loop
+            inc I $disk_io_buffer_ptr
+            ldx C $disk_io_buffer_base
+            tst C \null
+            jmpf :skip_next0                     ; End of input buffer
+                call @_read_next_block
+                inc I $disk_io_buffer_ptr
+                ldx C $disk_io_buffer_base
+
+            :skip_next0
+
+            tst C \space                    ; check for adres delimiter
+            jmpt :value_lookup_start         ; $mem_adres containts the adres
+
+            ldm A $mem_adres
+            muli A 10                       ; shift result by 10
+            subi C 48                       ; Substract ascci offset
+            add A C 
+            sto A $mem_adres
+
+            jmp :adres_lookup_loop
+            
+        # 2 Find the value of that adres from the input buffer
+        #   an number seperated by Return (13)
+        #   2 block van be needed
+        :value_lookup_start
+            sto Z $is_negative
+            ldi B 1
+            sto B $is_first_digit
+            ;sto Z $is_first_digit
+
+        :value_lookup_loop  
+            inc I $disk_io_buffer_ptr
+            ldx C $disk_io_buffer_base
+            tst C \null                     ; End of input buffer
+            jmpf :skip_next1 
+                call @_read_next_block
+                inc I $disk_io_buffer_ptr
+                ldx C $disk_io_buffer_base
+
+            :skip_next1
+
+            tst C \Return                   ; check for value delimiter
+            jmpt :apply_val_sign
+
+            ldm A $is_first_digit
+            tste A Z
+            jmpt :not_first_digit_val
+
+                ; It is the first char, so we check for sign and spaces
+                sto Z $is_first_digit
+                tst C \-
+                jmpf :not_a_sign_val
+                    ldi B 1
+                    sto B $is_negative
+                    jmp :value_lookup_loop ; read next char
+                :not_a_sign_val
+
+                # tst C ' '
+                # jmpt :value_lookup_loop
+
+            :not_first_digit_val
+            ldm A $mem_val
+            muli A 10                       ; shift result by 10
+            subi C 48                       ; Substract ascci offset
+            add A C 
+            sto A $mem_val
+
+            jmp :value_lookup_loop
+
+        :apply_val_sign
+            ldm A $is_negative
+            tste A Z
+            jmpf :negate_val
+            jmp :store_adres_value_pair
+        :negate_val
+            # ldm A $mem_val
+            # negi A
+            # sto A $mem_val
+            ldm B $mem_val
+            ldi A 0
+            sub A B 
+            sto A $mem_val
+            jmp :store_adres_value_pair
+
+        # 3 Write found value on found adres
+        :store_adres_value_pair
+            ldm I $mem_adres
+            ldm A $mem_val
+
+            stx A $_start_memory_
+
+        # 4 Repeat till last block found
+        jmp :read_disk_loop
+
+
+        :close_and_end
+            ldi I ~SYS_F_CLOSE
+            int $INT_VECTORS
+            pop K               ; Drop return adres, due to jump outside the routine
+            
+        :cmd_load_end
+        ret
 
 @DICT.new
     ustack A $DATASTACK_PTR
@@ -4697,6 +4863,114 @@
     call @VVMpoke
 :VVM.check_syscalls_if_end_17
     ret
+@VVM.loadcode
+    ustack A $DATASTACK_PTR
+    sto A $_filename
+    ustack A $DATASTACK_PTR
+    sto A $_code_queue
+    ldi A $msg_loading
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+    
+        # Open file
+        ldm A $_filename
+        ldi I ~SYS_F_OPEN_READ
+        int $INT_VECTORS
+        
+        ldm A $SYSCALL_RETURN_STATUS
+        tste A Z
+        jmpt :vvm_load_end_error
+
+        # Variables
+        . $vvm_val 1
+        . $vvm_neg 1
+        . $vvm_digit_seen 1
+
+        # Read first block
+        call @_read_disk_block
+        jmpt :vvm_close_and_end
+
+        :vvm_read_loop
+            sto Z $vvm_val
+            sto Z $vvm_neg
+            sto Z $vvm_digit_seen
+
+        :vvm_parse_loop
+            inc I $disk_io_buffer_ptr
+            ldx C $disk_io_buffer_base
+            tst C \null
+            jmpf :vvm_process_char
+                # End of block, read next
+                call @_check_last_block
+                jmpt :vvm_close_and_end
+                call @_read_disk_block
+                jmpt :vvm_close_and_end
+
+                # Reset ptr and reload C
+                # The _read_disk_block resets the internal pointer variable to 0.
+                # The top of the loop increments before reading, which would skip the
+                # first character of the new block.
+                # We must manually load the first character here and jump past the loop's load.
+                inc I $disk_io_buffer_ptr
+                ldx C $disk_io_buffer_base
+                jmp :vvm_process_char
+
+            :vvm_process_char
+            tst C \Return
+            jmpt :vvm_check_push
+            tst C \Newline
+            jmpt :vvm_check_push
+            tst C \space
+            jmpt :vvm_check_push
+            
+            tst C \-
+            jmpf :vvm_check_digit
+                ldi A 1
+                sto A $vvm_neg
+                jmp :vvm_parse_loop
+
+            :vvm_check_digit
+            ldi A 1
+            sto A $vvm_digit_seen
+            ldm A $vvm_val
+            muli A 10
+            subi C 48
+            add A C
+            sto A $vvm_val
+            jmp :vvm_parse_loop
+
+            :vvm_check_push
+            ldm A $vvm_digit_seen
+            tste A Z
+            jmpt :vvm_parse_loop
+            
+            ldm A $vvm_neg
+            tste A Z
+            jmpf :vvm_negate
+            jmp :vvm_push
+            :vvm_negate
+            ldm B $vvm_val
+            ldi A 0
+            sub A B
+            sto A $vvm_val
+            
+            :vvm_push
+            ldm A $vvm_val
+            stack A $DATASTACK_PTR
+            ldm A $_code_queue
+            stack A $DATASTACK_PTR
+            call @DEQUE.append
+            jmp :vvm_read_loop
+
+        :vvm_close_and_end
+            ldi I ~SYS_F_CLOSE
+            int $INT_VECTORS
+            
+        :vvm_load_end_error
+        ret
 
 
 # .DATA
@@ -4830,6 +5104,7 @@
 % $error_div_zero \V \V \M \space \d \i \v \i \s \i \o \n \space \b \y \space \z \e \r \o \space \e \r \r \o \r \. \space \Return \null
 % $error_vvm_overflow \V \V \M \space \m \e \m \o \r \y \space \o \v \e \r \f \l \o \w \. \space \Return \null
 % $msg_labels_found \space \l \a \b \e \l \s \space \f \o \u \n \d \Return \null
+% $msg_loading \L \o \a \d \i \n \g \space \V \V \M \space \f \r \o \m \space \d \i \s \k \space \Return \null
 % $_run_pc 0
 % $_run_opcode 0
 % $_run_handler 0
@@ -4845,3 +5120,5 @@
 % $_vvm_needed_size 0
 % $_vvm_code_start 0
 % $_vvm_write_ptr 0
+% $_filename 0
+% $_code_queue 0
