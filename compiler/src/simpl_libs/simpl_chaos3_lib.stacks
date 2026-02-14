@@ -56,7 +56,7 @@ MACRO load_simpl_chaos3 {
     \"LABEL"       _sq_ DEQUE.append
     \"while_0"     _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
-    5000           _sq_ DEQUE.append
+    1500           _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append
     10             _sq_ DEQUE.append
     \"GT"          _sq_ DEQUE.append
@@ -78,8 +78,14 @@ MACRO load_simpl_chaos3 {
     \"EQ"          _sq_ DEQUE.append
     \"BRZ"         _sq_ DEQUE.append
     \"end_0"       _sq_ DEQUE.append
-    \"CALL"        _sq_ DEQUE.append
-    \"select1"     _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    8              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    9              _sq_ DEQUE.append
     \"LABEL"       _sq_ DEQUE.append
     \"end_0"       _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append
@@ -89,8 +95,14 @@ MACRO load_simpl_chaos3 {
     \"EQ"          _sq_ DEQUE.append
     \"BRZ"         _sq_ DEQUE.append
     \"end_1"       _sq_ DEQUE.append
-    \"CALL"        _sq_ DEQUE.append
-    \"select2"     _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    8              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    3              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    9              _sq_ DEQUE.append
     \"LABEL"       _sq_ DEQUE.append
     \"end_1"       _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append
@@ -100,8 +112,14 @@ MACRO load_simpl_chaos3 {
     \"EQ"          _sq_ DEQUE.append
     \"BRZ"         _sq_ DEQUE.append
     \"end_2"       _sq_ DEQUE.append
-    \"CALL"        _sq_ DEQUE.append
-    \"select3"     _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    4              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    8              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    5              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    9              _sq_ DEQUE.append
     \"LABEL"       _sq_ DEQUE.append
     \"end_2"       _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append
@@ -128,8 +146,49 @@ MACRO load_simpl_chaos3 {
     6              _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append
     7              _sq_ DEQUE.append
-    \"CALL"        _sq_ DEQUE.append
-    \"draw"        _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    16             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    50             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    15             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    50             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"RND"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    15             _sq_ DEQUE.append
+    \"MUL"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    999            _sq_ DEQUE.append
+    \"DIV"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"ADD"         _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    17             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    50             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append
     10             _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
@@ -140,7 +199,7 @@ MACRO load_simpl_chaos3 {
     \"GET"         _sq_ DEQUE.append
     10             _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
-    500            _sq_ DEQUE.append
+    50             _sq_ DEQUE.append
     \"MOD"         _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     0              _sq_ DEQUE.append
@@ -218,95 +277,6 @@ MACRO load_simpl_chaos3 {
     \"OUT"         _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     14             _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    50             _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"SYS"         _sq_ DEQUE.append
-    \"RET"         _sq_ DEQUE.append
-    \"LABEL"       _sq_ DEQUE.append
-    \"setX"        _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    2              _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    15             _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    50             _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"SYS"         _sq_ DEQUE.append
-    \"RET"         _sq_ DEQUE.append
-    \"LABEL"       _sq_ DEQUE.append
-    \"setY"        _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    2              _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    16             _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    50             _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"SYS"         _sq_ DEQUE.append
-    \"RET"         _sq_ DEQUE.append
-    \"LABEL"       _sq_ DEQUE.append
-    \"select1"     _sq_ DEQUE.append
-    \"GET"         _sq_ DEQUE.append
-    0              _sq_ DEQUE.append
-    \"SET"         _sq_ DEQUE.append
-    8              _sq_ DEQUE.append
-    \"GET"         _sq_ DEQUE.append
-    1              _sq_ DEQUE.append
-    \"SET"         _sq_ DEQUE.append
-    9              _sq_ DEQUE.append
-    \"RET"         _sq_ DEQUE.append
-    \"LABEL"       _sq_ DEQUE.append
-    \"select2"     _sq_ DEQUE.append
-    \"GET"         _sq_ DEQUE.append
-    2              _sq_ DEQUE.append
-    \"SET"         _sq_ DEQUE.append
-    8              _sq_ DEQUE.append
-    \"GET"         _sq_ DEQUE.append
-    3              _sq_ DEQUE.append
-    \"SET"         _sq_ DEQUE.append
-    9              _sq_ DEQUE.append
-    \"RET"         _sq_ DEQUE.append
-    \"LABEL"       _sq_ DEQUE.append
-    \"select3"     _sq_ DEQUE.append
-    \"GET"         _sq_ DEQUE.append
-    4              _sq_ DEQUE.append
-    \"SET"         _sq_ DEQUE.append
-    8              _sq_ DEQUE.append
-    \"GET"         _sq_ DEQUE.append
-    5              _sq_ DEQUE.append
-    \"SET"         _sq_ DEQUE.append
-    9              _sq_ DEQUE.append
-    \"RET"         _sq_ DEQUE.append
-    \"LABEL"       _sq_ DEQUE.append
-    \"draw"        _sq_ DEQUE.append
-    \"CALL"        _sq_ DEQUE.append
-    \"setY"        _sq_ DEQUE.append
-    \"CALL"        _sq_ DEQUE.append
-    \"setX"        _sq_ DEQUE.append
-    \"RND"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    15             _sq_ DEQUE.append
-    \"MUL"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    999            _sq_ DEQUE.append
-    \"DIV"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    1              _sq_ DEQUE.append
-    \"ADD"         _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    2              _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    17             _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     50             _sq_ DEQUE.append

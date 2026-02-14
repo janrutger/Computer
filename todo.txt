@@ -702,3 +702,70 @@ FETCH (to retrieve the sensor value the host placed on the deque)
 From the programmer's perspective, they just write READ_SENSOR, and a value magically appears on the top of the stack. They don't need to know that a FETCH was involved, just as they don't need to know that PRINT involves a SYS call. The compiler handles the implementation details.
 
 In summary: Keep it simple. A syscall that returns data puts one value on the host deque. A FETCH instruction retrieves that one value. This keeps the VVM core clean, the compiler's job easy, and the overall architecture robust and predictable.
+
+
+## update: 13 feb 2026
+
+Project status is GREEN. The "Scalar Stacks" compiler target and VVM runtime are fully operational and verified.
+
+Key achievements:
+- **IO Implementation:**
+    - Implemented `visit_IONode` in `simplgen.py` to translate high-level `IO` commands into the VVM syscall protocol (`OUT` args -> `OUT` command -> `SYS` -> `FETCH` result).
+    - Implemented `s_UDC_IO` (Syscall 50) in `vvm_env_lib.stacks`. It correctly pops arguments from the host deque, calls the host runtime (`rt_udc_control`), and pushes return values back if required.
+- **Verification:**
+    - Successfully compiled and ran `fly.stacks` (Plotter demo) and `chaos3.stacks` (Fractal demo) on the VVM.
+    - Verified multi-tasking: The host correctly schedules two concurrent VVM instances driving different devices (Plotter and Screen).
+- **Performance Analysis:**
+    - Confirmed that I/O context switching is the primary bottleneck. Pure math performance is high, but frequent syscalls (like drawing individual pixels) incur a cost due to the VVM -> Host -> Kernel -> Python round-trip.
+
+### Start 13 feb 2026
+### Next project description: Custom Syscalls & "Escape the Box"
+
+## ##
+To enable high-performance gaming and scripting, we will extend the VVM with a Foreign Function Interface (FFI).
+This allows the VVM to call custom host functions for heavy lifting (physics, rendering), effectively turning the VVM into a scripting engine.
+## ##
+
+Architectural Decision: "Rich EXEC"
+- We will repurpose the `EXEC` instruction in Scalar Stacks to act as a synchronous bridge.
+- **Signature:** `Arg1 ... ArgN argc retc Syscall_ID EXEC`
+- **Mechanism:** The `s_exec` handler will:
+    1. Pop `Syscall_ID`, `retc`, and `argc`.
+    2. Pop `argc` items from VVM Stack and push to Host Deque.
+    3. Push `Syscall_ID` to Host Deque.
+    4. Execute the Host Dispatcher (synchronously).
+    5. Pop `retc` items from Host Deque and push to VVM Stack.
+- This atomic operation handles the entire call/return cycle, eliminating the need for manual `FETCH` or `RESULT` keywords in high-level code.
+
+Steps todo list:
+- [ ] **Host Side (FFI)**
+    - [ ] Implement `VVM.register_syscall` in `vvm_env_lib` to allow dynamic registration of handlers.
+    - [ ] Implement a Host Dispatcher to route custom syscall IDs to their functions.
+- [ ] **VVM Side (Runtime)**
+    - [ ] Implement `s_exec` handler with the "Rich EXEC" logic (Stack shuffling).
+- [ ] **Compiler Side**
+    - [ ] Update `simplgen.py` to support `EXEC` node (currently raises error).
+- [ ] **Game Project: "Escape the Box"**
+    - [ ] Create `escape.stacks` (Host Engine) and `script.stacks` (VVM Game Logic).
+    - [ ] Implement game loop and rendering on Host.
+    - [ ] Implement game logic (movement, state) on VVM.
+
+### Future Idea: VVM Disk Loader
+
+## ##
+To further decouple applications from the OS kernel and reduce memory usage, we can implement a dynamic loader that reads SIMPL bytecode directly from the Virtual Disk.
+This eliminates the need to embed SIMPL code as static data or `DEQUE.append` calls in the host binary.
+## ##
+
+Architecture:
+- **Compiler Flag:** Add `--target simpl-bin` to `simplgen.py`.
+    - Output: A text-based binary file (e.g., `.vm`) containing raw integer bytecode (one instruction per line).
+    - Pre-hashing: String tokens (opcodes, labels) are hashed to integers at compile time.
+- **Loader Library:** Create `vvm_loader_lib.stacks` (based on `disk_utils.stacks`).
+    - Function: `load_simpl_from_disk ( filename_ptr deque_ptr -- )`
+    - Logic: Open file, read line-by-line, parse integer, push to deque.
+
+Benefits:
+- **Memory Efficiency:** Host program memory is not consumed by the SIMPL bytecode.
+- **Flexibility:** Games can be updated or swapped without recompiling the kernel/host.
+- **Scalability:** Allows for much larger SIMPL programs limited only by VVM memory size, not Host program memory.

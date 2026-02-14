@@ -1187,12 +1187,6 @@
     call @DEQUE.append
 :s_UDC_IO_if_end_8
     ret
-@s_print_char
-    ret
-@s_read_num
-    ret
-@s_read_char
-    ret
 @VVM.init
     ldi A 100
     stack A $DATASTACK_PTR
@@ -1663,27 +1657,6 @@
     ldi A @s_UDC_IO
     stack A $DATASTACK_PTR
     ldi A 50
-    stack A $DATASTACK_PTR
-    ldm A $syscall_table
-    stack A $DATASTACK_PTR
-    call @DICT.put
-    ldi A @s_print_char
-    stack A $DATASTACK_PTR
-    ldi A 11
-    stack A $DATASTACK_PTR
-    ldm A $syscall_table
-    stack A $DATASTACK_PTR
-    call @DICT.put
-    ldi A @s_read_num
-    stack A $DATASTACK_PTR
-    ldi A 20
-    stack A $DATASTACK_PTR
-    ldm A $syscall_table
-    stack A $DATASTACK_PTR
-    call @DICT.put
-    ldi A @s_read_char
-    stack A $DATASTACK_PTR
-    ldi A 21
     stack A $DATASTACK_PTR
     ldm A $syscall_table
     stack A $DATASTACK_PTR

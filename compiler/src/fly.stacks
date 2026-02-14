@@ -5,7 +5,7 @@ USE std_time
 IO 1 ONLINE    ; set plotter online
 IO 1 NEW       ; create new plot
 
-DEF plot {
+MACRO plot {
     IO 1 DRAW
     #IO 1 FLIP
 }

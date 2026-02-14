@@ -9,7 +9,7 @@
         "restore_symbols": false
       },
       {
-        "file": "asm/apps/test.asm",
+        "file": "asm/apps/main.asm",
         "base_address": 9216,
         "restore_symbols": true
       }

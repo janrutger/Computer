@@ -36,26 +36,26 @@ DEF screen {
   2 IO 2 MODE   # Set to Pixel Mode, Double Buffering
 }
 
-# Sets the X coordinate for drawing
-DEF setX {
-  IO 2 X
-}
+# # Sets the X coordinate for drawing
+# MACRO setX {
+#   IO 2 X
+# }
 
 
-# Sets the Y coordinate for drawing
-DEF setY {
-  IO 2 Y
-}
+# # Sets the Y coordinate for drawing
+# MACRO setY {
+#   IO 2 Y
+# }
 
 # Selects one of the three vertices of the triangle
-DEF select1 { A AS K  B AS L }
-DEF select2 { C AS K  D AS L }
-DEF select3 { E AS K  F AS L }
+MACRO select1 { A AS K  B AS L }
+MACRO select2 { C AS K  D AS L }
+MACRO select3 { E AS K  F AS L }
 
 # Main drawing function
-DEF draw {
-  setY  # Consumes Y from stack
-  setX  # Consumes X from stack
+MACRO draw {
+  IO 2 Y  # Consumes Y from stack
+  IO 2 X  # Consumes X from stack
   RND 15 * 999 // 1 + # Calculate a random color
   IO 2 DRAW
 }
@@ -63,7 +63,7 @@ DEF draw {
 # --- Main Program ---
 screen
 
-WHILE 5000 N > DO
+WHILE 1500 N > DO
   RND 3 * 999 // AS R
 
   R 0 == IF select1 END
@@ -77,7 +77,7 @@ WHILE 5000 N > DO
   X Y draw
 
   N 1 + AS N
-  N 500 % 0 == IF
+  N 50 % 0 == IF
     IO 2 FLIP  # Flip buffer to show new points
   END
 

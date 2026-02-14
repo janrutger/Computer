@@ -5,7 +5,7 @@ USE std_stacks_rt
 INCLUDE math_lib
 INCLUDE fixed_point_lib
 INCLUDE turtle_lib
-INCLUDE std_dict
+USE std_dict
 
 # Since we gonne make C-style structs we do not need std_struct
 

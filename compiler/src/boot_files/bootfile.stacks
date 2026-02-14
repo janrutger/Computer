@@ -27,8 +27,16 @@ ASM {
 INCLUDE std_time TIME.init
 INCLUDE std_stern_io &SYSCALL_RETURN_STATUS &SYSCALL_RETURN_VALUE io_lib_init
 INCLUDE std_string
-#INCLUDE std_heap 15360 2048 HEAP.init
-INCLUDE std_heap 24576 8192 HEAP.init
+# INCLUDE std_heap 15360 2048 HEAP.init
+# INCLUDE std_heap 24576 8192 HEAP.init
+INCLUDE std_heap 24576 6144 HEAP.init   # 6k of heapspace
+
+# to free program memory, more libraries are included by default
+INCLUDE std_dict
+INCLUDE std_deque
+
+INCLUDE vvm_env_lib
+INCLUDE vvm_core_lib
 
 
 

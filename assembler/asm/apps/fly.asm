@@ -28,10 +28,18 @@
     call @rt_udc_control
     ldi A 1
     stack A $DATASTACK_PTR
-    call @plot
     ldi A 1
     stack A $DATASTACK_PTR
-    call @plot
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
 :_main_while_start_0
     ldm A $N
     stack A $DATASTACK_PTR
@@ -88,7 +96,11 @@
 :_main_if_end_0
     ldm A $R
     stack A $DATASTACK_PTR
-    call @plot
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
     ldm A $R
     sto A $P
     ldm B $N
@@ -214,13 +226,6 @@
     stack A $DATASTACK_PTR
     ret
 
-@plot
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldi A 17
-    stack A $DATASTACK_PTR
-    call @rt_udc_control
-    ret
 
 # .DATA
 

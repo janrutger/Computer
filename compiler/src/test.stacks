@@ -7,11 +7,13 @@ USE std_stern_io
 
 # its not allowed to use INCLUDE in an Library
 # So all libs should be included in the main file
-INCLUDE std_dict
-INCLUDE std_deque
+# INCLUDE std_dict
+# INCLUDE std_deque
 
-INCLUDE vvm_env_lib
-INCLUDE vvm_core_lib
+# INCLUDE vvm_env_lib
+# INCLUDE vvm_core_lib
+USE vvm_env_lib
+USE vvm_core_lib
 
 INCLUDE simpl_test_simpl_lib
 INCLUDE simpl_fib_lib
@@ -19,8 +21,12 @@ INCLUDE simpl_fly_lib
 INCLUDE simpl_chaos3_lib
 
 
-VALUE VVM0 15360                    ; The memory address for VVM0, stored in a variable.
-VALUE VVM1 16384
+# VALUE VVM0 15360                    ; The memory address for VVM0, stored in a variable.
+# VALUE VVM1 16384
+# Move the VVM instanes to the top of Extended memory
+VALUE VVM0 30720        ; The memory address for VVM0, stored in a variable.
+VALUE VVM1 31744        ; The memory address for VVM1, stored in a variable.
+
 
 
 
@@ -30,14 +36,11 @@ VALUE SIMPL_code 0
 # The main program
 DEF main {
     HEAP.free
-    50 DEQUE.init_pool "Pool initialized (size 10).\n" PRTstring
+    50 DEQUE.init_pool "Pool initialized (size 50).\n" PRTstring
 
     DEQUE.new AS host_comm_deque_ptr0   ; Get a pointer for the host communication deque
     DEQUE.new AS host_comm_deque_ptr1   ; Get a pointer for the host communication deque
-    DEQUE.new AS SIMPL_code     ; Get a pointer for the SIMPL code buffer
-    
-    # load_simple_test_code
-    # load_call_ret_test_code
+    DEQUE.new AS SIMPL_code             ; Get a pointer for the SIMPL code buffer
     
 
     VVM.init                        ; init VVM environment
@@ -62,7 +65,7 @@ DEF main {
     0 &VVM0 VVM.start
     "VVM0 started \n" PRTstring
 
-    10 1 &VVM1 VVM.start
+    0 &VVM1 VVM.start
     "VVM1 started \n" PRTstring
 
     1 TIME.start
