@@ -23,7 +23,7 @@ STRING error_invalid_reg    "VVM invalid register index. \n"
 STRING error_div_zero       "VVM division by zero error. \n"
 STRING error_vvm_overflow   "VVM memory overflow. \n"
 STRING msg_labels_found     " labels found\n"
-STRING msg_loading          "Loading VVM from disk \n"
+STRING msg_loading          "Loading Image from disk \n"
 
 VALUE _run_pc 0
 VALUE _run_opcode 0
@@ -301,7 +301,6 @@ DEF VVM.loadcode {
 
         # Variables
         . $vvm_val 1
-        . $vvm_neg 1
         . $vvm_digit_seen 1
 
         # Read first block
@@ -310,7 +309,6 @@ DEF VVM.loadcode {
 
         :vvm_read_loop
             sto Z $vvm_val
-            sto Z $vvm_neg
             sto Z $vvm_digit_seen
 
         :vvm_parse_loop
@@ -336,16 +334,11 @@ DEF VVM.loadcode {
             :vvm_process_char
             tst C \Return
             jmpt :vvm_check_push
-            tst C \Newline
-            jmpt :vvm_check_push
-            tst C \space
-            jmpt :vvm_check_push
+            # tst C \Newline
+            # jmpt :vvm_check_push
+            # tst C \space
+            # jmpt :vvm_check_push
             
-            tst C \-
-            jmpf :vvm_check_digit
-                ldi A 1
-                sto A $vvm_neg
-                jmp :vvm_parse_loop
 
             :vvm_check_digit
             ldi A 1
@@ -361,16 +354,6 @@ DEF VVM.loadcode {
             ldm A $vvm_digit_seen
             tste A Z
             jmpt :vvm_parse_loop
-            
-            ldm A $vvm_neg
-            tste A Z
-            jmpf :vvm_negate
-            jmp :vvm_push
-            :vvm_negate
-            ldm B $vvm_val
-            ldi A 0
-            sub A B
-            sto A $vvm_val
             
             :vvm_push
             ldm A $vvm_val

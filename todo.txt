@@ -750,6 +750,11 @@ Steps todo list:
     - [ ] Implement game loop and rendering on Host.
     - [ ] Implement game logic (movement, state) on VVM.
 
+
+
+
+
+
 ### Future Idea: VVM Disk Loader
 
 ## ##
@@ -812,3 +817,41 @@ Key achievements:
     - Successfully converted the `fly` and `chaos3` demos to binary format.
     - The host test program was refactored to use `VVM.loadcode`, reducing the host binary size to a mere ~750 words while driving two concurrent VVM instances.
     - This confirms the architecture's scalability: the host kernel size is now decoupled from the size and complexity of the user applications.
+- **Optimization:**
+    - Simplified `VVM.loadcode` by removing negative number parsing. The compiler handles negative literals by emitting `PUSH <abs_val>` and `NEGATE`, so the binary stream is strictly positive integers. This reduces loader complexity and overhead.
+
+
+
+
+
+########### 
+## Update 16 feb 2026
+
+### Let go back in time and work on the Rich EXEC / FFI API
+before starting code i like to make sure i realy did understand what i read on this page
+
+
+To initialize/regsister an host side routine inside the VVM i need an register method
+eg:  &pointer_to_function <syscall-id> VVM.register_syscall
+
+where the pointer points to the function and syscall_id must be an free syscall-id
+The ID must be in the custom range [100 .. 200] and managed by the programmer
+
+The VVM.register_syscall lives in the VVM_core_lib
+And add the syscall_id and function pointers to the syscall_table dictionary
+
+on the side of the compiler.
+the simpl target simply emits the EXEC opcode.
+
+`Arg1 ... ArgN argc retc Syscall_ID EXEC`
+
+on the side of the VVM Runtime (s_exec handler):
+This handler performs the "Rich" logic synchronously using Direct Stack Marshaling:
+(This avoids the overhead of the Host Deque entirely)
+
+1) Pop Syscall_ID, retc, argc from VVM Stack.
+2) Transfer argc items from VVM Stack directly to Host Data Stack.
+   (Careful with order! VVM Stack Top -> Host Stack Top might reverse args)
+3) Look up Syscall_ID in syscall_table.
+4) EXEC the handler immediately (Synchronous call).
+5) Transfer retc items from Host Data Stack directly to VVM Stack.

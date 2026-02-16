@@ -14,7 +14,7 @@
 . $error_div_zero 30
 . $error_vvm_overflow 23
 . $msg_labels_found 15
-. $msg_loading 24
+. $msg_loading 26
 . $_run_pc 1
 . $_run_opcode 1
 . $_run_handler 1
@@ -673,7 +673,6 @@
 
         # Variables
         . $vvm_val 1
-        . $vvm_neg 1
         . $vvm_digit_seen 1
 
         # Read first block
@@ -682,7 +681,6 @@
 
         :vvm_read_loop
             sto Z $vvm_val
-            sto Z $vvm_neg
             sto Z $vvm_digit_seen
 
         :vvm_parse_loop
@@ -708,16 +706,11 @@
             :vvm_process_char
             tst C \Return
             jmpt :vvm_check_push
-            tst C \Newline
-            jmpt :vvm_check_push
-            tst C \space
-            jmpt :vvm_check_push
+            # tst C \Newline
+            # jmpt :vvm_check_push
+            # tst C \space
+            # jmpt :vvm_check_push
             
-            tst C \-
-            jmpf :vvm_check_digit
-                ldi A 1
-                sto A $vvm_neg
-                jmp :vvm_parse_loop
 
             :vvm_check_digit
             ldi A 1
@@ -733,16 +726,6 @@
             ldm A $vvm_digit_seen
             tste A Z
             jmpt :vvm_parse_loop
-            
-            ldm A $vvm_neg
-            tste A Z
-            jmpf :vvm_negate
-            jmp :vvm_push
-            :vvm_negate
-            ldm B $vvm_val
-            ldi A 0
-            sub A B
-            sto A $vvm_val
             
             :vvm_push
             ldm A $vvm_val
@@ -775,7 +758,7 @@
 % $error_div_zero \V \V \M \space \d \i \v \i \s \i \o \n \space \b \y \space \z \e \r \o \space \e \r \r \o \r \. \space \Return \null
 % $error_vvm_overflow \V \V \M \space \m \e \m \o \r \y \space \o \v \e \r \f \l \o \w \. \space \Return \null
 % $msg_labels_found \space \l \a \b \e \l \s \space \f \o \u \n \d \Return \null
-% $msg_loading \L \o \a \d \i \n \g \space \V \V \M \space \f \r \o \m \space \d \i \s \k \space \Return \null
+% $msg_loading \L \o \a \d \i \n \g \space \I \m \a \g \e \space \f \r \o \m \space \d \i \s \k \space \Return \null
 % $_run_pc 0
 % $_run_opcode 0
 % $_run_handler 0

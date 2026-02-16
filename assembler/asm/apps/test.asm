@@ -172,6 +172,12 @@
     call @VVM.run
     ldi A $VVM0
     stack A $DATASTACK_PTR
+    call @VVM.run
+    ldi A $VVM0
+    stack A $DATASTACK_PTR
+    call @VVM.run
+    ldi A $VVM0
+    stack A $DATASTACK_PTR
     call @VVM.check_syscalls
 :main_if_end_0
     stack Z $DATASTACK_PTR
@@ -184,6 +190,12 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :main_if_end_1
+    ldi A $VVM1
+    stack A $DATASTACK_PTR
+    call @VVM.run
+    ldi A $VVM1
+    stack A $DATASTACK_PTR
+    call @VVM.run
     ldi A $VVM1
     stack A $DATASTACK_PTR
     call @VVM.run
