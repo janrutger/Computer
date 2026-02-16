@@ -21,6 +21,12 @@
     ret
 
 # .FUNCTIONS
+@host_function
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ret
 @main
     ldm A $HEAP_START
     sto A $HEAP_FREE
@@ -67,6 +73,11 @@
         ldm A $VVM1
     stack A $DATASTACK_PTR
     call @rt_print_tos
+    ldi A @host_function
+    stack A $DATASTACK_PTR
+    ldi A 100
+    stack A $DATASTACK_PTR
+    call @VVM.bind
     ldm A $SIMPL_code
     stack A $DATASTACK_PTR
     ldi A $main_str_4

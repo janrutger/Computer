@@ -75,7 +75,7 @@ CONST _sys_         2
 CONST _out_         3
 CONST _fetch_       4
 CONST _ret_         6
-
+CONST _exec_        7
 
 CONST _dup_         10
 CONST _drop_        11
@@ -639,11 +639,95 @@ DEF s_brn {
         _math_a VVM_PC _env_vvm_ptr VVMpoke
     END
 }
+
+
+# is already used VALUE _syscall_id 0
+# is already used VALUE _syscall_handler 0
+VALUE _argc 0
+VALUE _argr 0
+# ( VVMpointer -- )
+DEF s_exec {
+    AS _env_vvm_ptr
+
+    # from here read from the VVM stack
+    # (Arg1 ... ArgN argc argr Syscall_ID -- [return values])
+
+    ## STEP 1
+    # Read the first 3 items from the VVM stack
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+    # Pop Syscall_ID
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _syscall_id
+
+    # Pop argr (stored in _argr)
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _argr
+
+    # Pop argc (stored in _argc)
+    _env_sp_addr 1 - AS _env_sp_addr
+    *_env_sp_addr AS _argc
+
+    # Update SP
+    _env_sp_addr VVM_SP _env_vvm_ptr VVMpoke
+
+    ## STEP 2
+    # pop the argc numbers of arguments from the VVM stack and push to the datastack
+    # We iterate backwards (SP-argc to SP-1) to preserve argument order on the Host Stack.
+    
+    _argc AS _env_idx
+    WHILE _env_idx 0 > DO
+        # Calculate address: SP - index
+        _env_sp_addr _env_idx - AS _env_ptr
+        
+        # Read value from VVM Stack and leave it on Host Stack
+        *_env_ptr
+        
+        # Decrement index
+        _env_idx 1 - AS _env_idx
+    DONE
+
+    # Update VVM SP to remove arguments
+    _env_sp_addr _argc - VVM_SP _env_vvm_ptr VVMpoke
+
+    ## Step 3 
+    # Look up handler and execute
+    _syscall_id syscall_table DICT.has_key IF
+        _syscall_id syscall_table DICT.get AS _syscall_handler
+        _syscall_handler EXEC
+    ELSE
+        &error_no_syscall PRTstring HALT
+    END
+
+    ## Step 4
+    # stores the host stack values to the vmm stack
+    
+    # Re-read SP (points to next free slot)
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+    
+    0 AS _env_idx
+    WHILE _env_idx _argr < DO
+        # Pop from Host Stack
+        AS _env_val
+        
+        # Calculate Target: SP + retc - 1 - idx
+        # We fill from top down to preserve order
+        _env_sp_addr _argr + 1 - _env_idx - AS _env_ptr
+        
+        # Store to VVM Stack
+        _env_val AS *_env_ptr
+        
+        _env_idx 1 + AS _env_idx
+    DONE
+    
+    # Update SP
+    _env_sp_addr _argr + VVM_SP _env_vvm_ptr VVMpoke
+}
 # End of instruction handlers
 
 
 
-# Setup SYSCALL handlers
+# Setup built-in SYSCALL handlers
 DEF s_print_num {
     AS _env_vvm_ptr
     
@@ -725,6 +809,9 @@ DEF VVM.init {
     &s_fetch _fetch_ opcode_runtimes LIST.put
     _ret_ \"RET" opcode_table DICT.put
     &s_ret _ret_ opcode_runtimes LIST.put
+
+    _exec_ \"EXEC" opcode_table DICT.put
+    &s_exec _exec_ opcode_runtimes LIST.put
 
     # Stack Logic Opcodes
     _dup_ \"DUP" opcode_table DICT.put

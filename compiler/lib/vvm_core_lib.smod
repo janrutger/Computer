@@ -15,6 +15,7 @@
 . $error_vvm_overflow 23
 . $msg_labels_found 15
 . $msg_loading 26
+. $error_invalid_syscall 34
 . $_run_pc 1
 . $_run_opcode 1
 . $_run_handler 1
@@ -32,6 +33,8 @@
 . $_vvm_write_ptr 1
 . $_filename 1
 . $_code_queue 1
+. $_custom_id 1
+. $_function_ptr 1
 # .FUNCTIONS
 @VVM.create
     ustack A $DATASTACK_PTR
@@ -741,6 +744,37 @@
             
         :vvm_load_end_error
         ret
+@VVM.bind
+    ustack A $DATASTACK_PTR
+    sto A $_custom_id
+    ustack A $DATASTACK_PTR
+    sto A $_function_ptr
+    ldm A $_custom_id
+    stack A $DATASTACK_PTR
+    ldi A 100
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.bind_if_else_19
+    ldi A $error_invalid_syscall
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
+    jmp :VVM.bind_if_end_19
+:VVM.bind_if_else_19
+    ldm A $_function_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_custom_id
+    stack A $DATASTACK_PTR
+    ldm A $syscall_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+:VVM.bind_if_end_19
+    ret
 
 # .DATA
 % $_temp_ptr 0
@@ -759,6 +793,7 @@
 % $error_vvm_overflow \V \V \M \space \m \e \m \o \r \y \space \o \v \e \r \f \l \o \w \. \space \Return \null
 % $msg_labels_found \space \l \a \b \e \l \s \space \f \o \u \n \d \Return \null
 % $msg_loading \L \o \a \d \i \n \g \space \I \m \a \g \e \space \f \r \o \m \space \d \i \s \k \space \Return \null
+% $error_invalid_syscall \V \V \M \space \I \l \l \i \g \a \l \space \S \Y \S \C \A \L \L \space \I \D \space \i \s \space \u \s \e \d \. \space \Return \null
 % $_run_pc 0
 % $_run_opcode 0
 % $_run_handler 0
@@ -776,3 +811,5 @@
 % $_vvm_write_ptr 0
 % $_filename 0
 % $_code_queue 0
+% $_custom_id 0
+% $_function_ptr 0

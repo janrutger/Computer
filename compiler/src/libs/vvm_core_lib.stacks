@@ -24,6 +24,8 @@ STRING error_div_zero       "VVM division by zero error. \n"
 STRING error_vvm_overflow   "VVM memory overflow. \n"
 STRING msg_labels_found     " labels found\n"
 STRING msg_loading          "Loading Image from disk \n"
+STRING error_invalid_syscall "VVM Illigal SYSCALL ID is used. \n"
+
 
 VALUE _run_pc 0
 VALUE _run_opcode 0
@@ -369,4 +371,20 @@ DEF VVM.loadcode {
             
         :vvm_load_end_error
     }
+}
+
+VALUE _custom_id 0
+VALUE _function_ptr 0
+# ( &function-ptr custum-syscall-id --)
+# Binds an host side function to the VVM custom syscall
+# custom range 100 ....
+DEF VVM.bind {
+    AS _custom_id
+    AS _function_ptr
+
+    _custom_id 100 < IF
+        &error_invalid_syscall PRTstring HALT
+    ELSE
+        _function_ptr  _custom_id  syscall_table DICT.put
+    END
 }

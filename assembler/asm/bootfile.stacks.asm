@@ -108,6 +108,8 @@
 . $_math_a 1
 . $_math_b 1
 . $error_stack_collision 33
+. $_argc 1
+. $_argr 1
 . $_temp_ptr 1
 . $_temp_idx 1
 . $_temp_val 1
@@ -124,6 +126,7 @@
 . $error_vvm_overflow 23
 . $msg_labels_found 15
 . $msg_loading 26
+. $error_invalid_syscall 34
 . $_run_pc 1
 . $_run_opcode 1
 . $_run_handler 1
@@ -141,6 +144,8 @@
 . $_vvm_write_ptr 1
 . $_filename 1
 . $_code_queue 1
+. $_custom_id 1
+. $_function_ptr 1
 
 # .CODE
 
@@ -3700,6 +3705,157 @@
     call @VVMpoke
 :s_brn_if_end_7
     ret
+@s_exec
+    ustack A $DATASTACK_PTR
+    sto A $_env_vvm_ptr
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ustack A $DATASTACK_PTR
+    sto A $_env_sp_addr
+    ld B A
+    ldi A 1
+    sub B A
+    ld A B
+    sto A $_env_sp_addr
+    ldm I $_env_sp_addr
+    ldx A $_start_memory_
+    sto A $_syscall_id
+    ldm B $_env_sp_addr
+    ldi A 1
+    sub B A
+    ld A B
+    sto A $_env_sp_addr
+    ldm I $_env_sp_addr
+    ldx A $_start_memory_
+    sto A $_argr
+    ldm B $_env_sp_addr
+    ldi A 1
+    sub B A
+    ld A B
+    sto A $_env_sp_addr
+    ldm I $_env_sp_addr
+    ldx A $_start_memory_
+    sto A $_argc
+    ldm A $_env_sp_addr
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ldm A $_argc
+    sto A $_env_idx
+:s_exec_while_start_0
+    ldm A $_env_idx
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :s_exec_while_end_0
+    ldm B $_env_sp_addr
+    ldm A $_env_idx
+    sub B A
+    ld A B
+    sto A $_env_ptr
+    ldm I $_env_ptr
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldm B $_env_idx
+    ldi A 1
+    sub B A
+    ld A B
+    sto A $_env_idx
+    jmp :s_exec_while_start_0
+:s_exec_while_end_0
+    ldm B $_env_sp_addr
+    ldm A $_argc
+    sub B A
+    stack B $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ldm A $_syscall_id
+    stack A $DATASTACK_PTR
+    ldm A $syscall_table
+    stack A $DATASTACK_PTR
+    call @DICT.has_key
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :s_exec_if_else_8
+    ldm A $_syscall_id
+    stack A $DATASTACK_PTR
+    ldm A $syscall_table
+    stack A $DATASTACK_PTR
+    call @DICT.get
+    ustack A $DATASTACK_PTR
+    sto A $_syscall_handler
+    stack A $DATASTACK_PTR
+    calls $DATASTACK_PTR
+    jmp :s_exec_if_end_8
+:s_exec_if_else_8
+    ldi A $error_no_syscall
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
+:s_exec_if_end_8
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ustack A $DATASTACK_PTR
+    sto A $_env_sp_addr
+    ld A Z
+    sto A $_env_idx
+:s_exec_while_start_1
+    ldm A $_env_idx
+    stack A $DATASTACK_PTR
+    ldm A $_argr
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :s_exec_while_end_1
+    ustack A $DATASTACK_PTR
+    sto A $_env_val
+    ldm B $_env_sp_addr
+    ldm A $_argr
+    add B A
+    ldi A 1
+    sub B A
+    ldm A $_env_idx
+    sub B A
+    ld A B
+    sto A $_env_ptr
+    ldm A $_env_val
+    ld B A
+    ldm I $_env_ptr
+    stx B $_start_memory_
+    ldm B $_env_idx
+    ldi A 1
+    add A B
+    sto A $_env_idx
+    jmp :s_exec_while_start_1
+:s_exec_while_end_1
+    ldm B $_env_sp_addr
+    ldm A $_argr
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ret
 @s_print_num
     ustack A $DATASTACK_PTR
     sto A $_env_vvm_ptr
@@ -3760,14 +3916,14 @@
     ustack B $DATASTACK_PTR
     add A B
     tst A 0
-    jmpt :s_UDC_IO_if_end_8
+    jmpt :s_UDC_IO_if_end_9
     ustack A $DATASTACK_PTR
     sto A $_env_val
     stack A $DATASTACK_PTR
     ldm A $_env_host_dq
     stack A $DATASTACK_PTR
     call @DEQUE.append
-:s_UDC_IO_if_end_8
+:s_UDC_IO_if_end_9
     ret
 @VVM.init
     ldi A 100
@@ -3868,6 +4024,20 @@
     ldi A @s_ret
     stack A $DATASTACK_PTR
     ldi A 6
+    stack A $DATASTACK_PTR
+    ldm A $opcode_runtimes
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 7
+    stack A $DATASTACK_PTR
+    ldi A 6384018730
+    stack A $DATASTACK_PTR
+    ldm A $opcode_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_exec
+    stack A $DATASTACK_PTR
+    ldi A 7
     stack A $DATASTACK_PTR
     ldm A $opcode_runtimes
     stack A $DATASTACK_PTR
@@ -4954,6 +5124,37 @@
             
         :vvm_load_end_error
         ret
+@VVM.bind
+    ustack A $DATASTACK_PTR
+    sto A $_custom_id
+    ustack A $DATASTACK_PTR
+    sto A $_function_ptr
+    ldm A $_custom_id
+    stack A $DATASTACK_PTR
+    ldi A 100
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.bind_if_else_19
+    ldi A $error_invalid_syscall
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
+    jmp :VVM.bind_if_end_19
+:VVM.bind_if_else_19
+    ldm A $_function_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_custom_id
+    stack A $DATASTACK_PTR
+    ldm A $syscall_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+:VVM.bind_if_end_19
+    ret
 
 
 # .DATA
@@ -5071,6 +5272,8 @@
 % $_math_a 0
 % $_math_b 0
 % $error_stack_collision \V \V \M \space \S \t \a \c \k \space \C \o \l \l \i \s \i \o \n \space \( \P \C \> \= \R \S \P \) \. \space \Return \null
+% $_argc 0
+% $_argr 0
 
 % $_temp_ptr 0
 % $_temp_idx 0
@@ -5088,6 +5291,7 @@
 % $error_vvm_overflow \V \V \M \space \m \e \m \o \r \y \space \o \v \e \r \f \l \o \w \. \space \Return \null
 % $msg_labels_found \space \l \a \b \e \l \s \space \f \o \u \n \d \Return \null
 % $msg_loading \L \o \a \d \i \n \g \space \I \m \a \g \e \space \f \r \o \m \space \d \i \s \k \space \Return \null
+% $error_invalid_syscall \V \V \M \space \I \l \l \i \g \a \l \space \S \Y \S \C \A \L \L \space \I \D \space \i \s \space \u \s \e \d \. \space \Return \null
 % $_run_pc 0
 % $_run_opcode 0
 % $_run_handler 0
@@ -5105,3 +5309,5 @@
 % $_vvm_write_ptr 0
 % $_filename 0
 % $_code_queue 0
+% $_custom_id 0
+% $_function_ptr 0

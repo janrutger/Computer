@@ -279,7 +279,8 @@ class SimplGenerator(BaseGenerator):
         raise Exception("SIMPL Target Error: Backtick/assembly calls '`' are not supported.")
 
     def visit_ExecNode(self, node):
-        raise Exception("SIMPL Target Error: EXEC is not supported in Scalar Stacks.")
+        #raise Exception("SIMPL Target Error: EXEC is not supported in Scalar Stacks.")
+        self.emit("EXEC")
 
     def visit_IONode(self, node):
         command_upper = node.command.upper()

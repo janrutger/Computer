@@ -832,7 +832,7 @@ before starting code i like to make sure i realy did understand what i read on t
 
 
 To initialize/regsister an host side routine inside the VVM i need an register method
-eg:  &pointer_to_function <syscall-id> VVM.register_syscall
+eg:  &pointer_to_function <syscall-id> VVM.bind
 
 where the pointer points to the function and syscall_id must be an free syscall-id
 The ID must be in the custom range [100 .. 200] and managed by the programmer
@@ -855,3 +855,27 @@ This handler performs the "Rich" logic synchronously using Direct Stack Marshali
 3) Look up Syscall_ID in syscall_table.
 4) EXEC the handler immediately (Synchronous call).
 5) Transfer retc items from Host Data Stack directly to VVM Stack.
+
+
+Log: 
+
+- Build an VVM.bind in vvm_core_lib to register an function as an VVM custom syscall
+- Inluded EXEC in simplgen target and vvm_env_lib
+
+## update: 16 feb 2026 (FFI Completion)
+
+Project status is GREEN. The "Rich EXEC" FFI architecture is fully implemented and verified.
+
+Key achievements:
+- **Host-Side Registration:**
+    - Implemented `VVM.bind` in `vvm_core_lib`. It allows dynamic binding of host function pointers to custom syscall IDs (>= 100).
+    - Enforced safety checks to prevent overwriting system syscalls.
+- **Compiler Support:**
+    - Enabled the `EXEC` instruction in `simplgen.py`. The compiler now emits the correct opcode, allowing high-level scripts to trigger the FFI.
+- **Runtime Bridge (`s_exec`):**
+    - Implemented the complex `s_exec` handler in `vvm_env_lib`.
+    - **Direct Stack Marshaling:** Successfully implemented the logic to transfer arguments from the VVM stack to the Host stack and return values back, bypassing the overhead of intermediate deques.
+    - **Order Preservation:** Crucially, the handler preserves argument order during the transfer (VVM Stack -> Host Stack) and return value order (Host Stack -> VVM Stack).
+    - **Synchronous Execution:** The handler executes the host function immediately within the VVM's time slice, enabling atomic operations.
+- **Verification:**
+    - Validated the entire pipeline with a "42 Circle" test: A VVM script successfully called a host addition function via `EXEC`, passed arguments, and received the correct result.

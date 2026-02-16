@@ -27,7 +27,9 @@ INCLUDE simpl_chaos3_lib
 VALUE VVM0 30720        ; The memory address for VVM0, stored in a variable.
 VALUE VVM1 31744        ; The memory address for VVM1, stored in a variable.
 
-
+DEF host_function {     ; a simple host function 
+    +
+}
 
 
 VALUE host_comm_deque_ptr 0
@@ -48,6 +50,7 @@ DEF main {
     "VVM0 base address          : " PRTstring VVM0  PRINT
     "VVM1 base address          : " PRTstring VVM1  PRINT
 
+    &host_function 100 VVM.bind
 
     #SIMPL_code load_simpl_fly          ; to load static
     SIMPL_code "sbc_fly" VVM.loadcode   ; toload dynamic 
