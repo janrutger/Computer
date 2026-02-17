@@ -31,6 +31,13 @@ DEF host_function {     ; a simple host function
     +
 }
 
+DEF host_gcd {
+    WHILE DUP 0 != DO
+        SWAP OVER %
+    DONE
+    DROP
+}
+
 
 VALUE host_comm_deque_ptr 0
 VALUE SIMPL_code 0
@@ -51,6 +58,8 @@ DEF main {
     "VVM1 base address          : " PRTstring VVM1  PRINT
 
     &host_function 100 VVM.bind
+    &host_gcd      101 VVM.bind
+
 
     #SIMPL_code load_simpl_fly          ; to load static
     SIMPL_code "sbc_fly" VVM.loadcode   ; toload dynamic 

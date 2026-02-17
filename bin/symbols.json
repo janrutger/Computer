@@ -409,7 +409,8 @@
         "$main_str_8": 20169,
         "$main_str_9": 20184,
         "@host_function": 9218,
-        "@main": 9223
+        "@host_gcd": 9223,
+        "@main": 9238
     },
     "labels": [
         {
@@ -700,10 +701,12 @@
             ":VVM.bind_if_end_19": 5596
         },
         {
-            ":main_while_start_0": 9335,
-            ":main_if_end_0": 9376,
-            ":main_if_end_1": 9398,
-            ":main_while_end_0": 9399
+            ":host_gcd_while_start_0": 9223,
+            ":host_gcd_while_end_0": 9236,
+            ":main_while_start_1": 9355,
+            ":main_if_end_0": 9396,
+            ":main_if_end_1": 9418,
+            ":main_while_end_1": 9419
         }
     ]
 }

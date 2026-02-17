@@ -31,7 +31,9 @@ VALUE R 0
 
 
 WHILE N 700 < DO
-    P N gcd AS C 
+    # P N gcd AS C 
+    P N 2 1 101 EXEC AS C 
+
     C 1 == IF
         P N 1 + + AS R 
     ELSE 

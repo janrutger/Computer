@@ -27,6 +27,24 @@
     add B A
     stack B $DATASTACK_PTR
     ret
+@host_gcd
+:host_gcd_while_start_0
+    call @rt_dup
+    stack Z $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :host_gcd_while_end_0
+    call @rt_swap
+    call @rt_over
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
+    jmp :host_gcd_while_start_0
+:host_gcd_while_end_0
+    call @rt_drop
+    ret
 @main
     ldm A $HEAP_START
     sto A $HEAP_FREE
@@ -76,6 +94,11 @@
     ldi A @host_function
     stack A $DATASTACK_PTR
     ldi A 100
+    stack A $DATASTACK_PTR
+    call @VVM.bind
+    ldi A @host_gcd
+    stack A $DATASTACK_PTR
+    ldi A 101
     stack A $DATASTACK_PTR
     call @VVM.bind
     ldm A $SIMPL_code
@@ -148,7 +171,7 @@
     ld B A
     ldm I $current_watch
     stx B $_start_memory_
-:main_while_start_0
+:main_while_start_1
     stack Z $DATASTACK_PTR
     ldi A $VVM0
     stack A $DATASTACK_PTR
@@ -167,7 +190,7 @@
     ustack B $DATASTACK_PTR
     add A B
     tst A 0
-    jmpt :main_while_end_0
+    jmpt :main_while_end_1
     stack Z $DATASTACK_PTR
     ldi A $VVM0
     stack A $DATASTACK_PTR
@@ -214,8 +237,8 @@
     stack A $DATASTACK_PTR
     call @VVM.check_syscalls
 :main_if_end_1
-    jmp :main_while_start_0
-:main_while_end_0
+    jmp :main_while_start_1
+:main_while_end_1
     ldi A 1
     ld B A
     ldm A $p_watch_list

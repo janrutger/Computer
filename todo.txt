@@ -738,17 +738,17 @@ Architectural Decision: "Rich EXEC"
 - This atomic operation handles the entire call/return cycle, eliminating the need for manual `FETCH` or `RESULT` keywords in high-level code.
 
 Steps todo list:
-- [ ] **Host Side (FFI)**
-    - [ ] Implement `VVM.register_syscall` in `vvm_env_lib` to allow dynamic registration of handlers.
-    - [ ] Implement a Host Dispatcher to route custom syscall IDs to their functions.
+- [x] **Host Side (FFI)**
+    - [x] Implement `VVM.register_syscall` in `vvm_env_lib` to allow dynamic registration of handlers.
+    - [x] Implement a Host Dispatcher to route custom syscall IDs to their functions.
 - [ ] **VVM Side (Runtime)**
-    - [ ] Implement `s_exec` handler with the "Rich EXEC" logic (Stack shuffling).
+    - [x] Implement `s_exec` handler with the "Rich EXEC" logic (Stack shuffling).
 - [ ] **Compiler Side**
-    - [ ] Update `simplgen.py` to support `EXEC` node (currently raises error).
+    - [x] Update `simplgen.py` to support `EXEC` node (currently raises error).
 - [ ] **Game Project: "Escape the Box"**
-    - [ ] Create `escape.stacks` (Host Engine) and `script.stacks` (VVM Game Logic).
-    - [ ] Implement game loop and rendering on Host.
-    - [ ] Implement game logic (movement, state) on VVM.
+    - [-] Create `escape.stacks` (Host Engine) and `script.stacks` (VVM Game Logic).
+    - [-] Implement game loop and rendering on Host.
+    - [-] Implement game logic (movement, state) on VVM.
 
 
 
@@ -879,3 +879,196 @@ Key achievements:
     - **Synchronous Execution:** The handler executes the host function immediately within the VVM's time slice, enabling atomic operations.
 - **Verification:**
     - Validated the entire pipeline with a "42 Circle" test: A VVM script successfully called a host addition function via `EXEC`, passed arguments, and received the correct result.
+
+
+
+
+
+
+
+### ML Hunting Project: Implementation Checklist
+
+- [ ] **Phase 1: Host-Side Setup (The "Brain")**
+    - [ ] **Main Program (`ml_hunter_host.stacks`):**
+        - [ ] Include all required libraries (`vvm_core`, `vvm_env`, `mlnn_gpu3_optimized`, `fixed_point`, `turtle`).
+        - [ ] Define constants for FFI syscall IDs (`PREDICT_ID`, `TRAIN_ID`, `PLOT_ID`).
+        - [ ] Create the Neural Network instance using `mlnn_lib`.
+        - [ ] Initialize `turtle_lib` and set up the playground (screen size, target marker).
+        - [ ] Define and initialize the static target position (`target_x`, `target_y`).
+        - [ ] Create two VVM pointers and their dedicated host deques.
+        - [ ] Implement the main loop:
+            - [ ] `VVM.run` for VVM 0.
+            - [ ] `VVM.check_syscalls` for VVM 0.
+            - [ ] `VVM.run` for VVM 1.
+            - [ ] `VVM.check_syscalls` for VVM 1.
+            - [ ] `turtle.flip()` to update the display.
+    - [ ] **FFI Handlers (in `ml_hunter_host.stacks`):**
+        - [ ] **`s_predict` function:**
+            - [ ] Pop `dx`, `dy` (integers) from the host stack.
+            - [ ] Convert `dx`, `dy` to normalized fixed-point values (e.g., divide by screen width).
+            - [ ] Call `NN.predict` with the fixed-point inputs.
+            - [ ] Get the fixed-point `vx_fp`, `vy_fp` from the result.
+            - [ ] Convert `vx_fp`, `vy_fp` to integer steps (`-1`, `0`, `1`) using the `0.3` threshold logic.
+            - [ ] Push integer `vx`, `vy` back to the host stack.
+        - [ ] **`s_train` function:**
+            - [ ] Pop `dx`, `dy`, `vx`, `vy`, `reward` (all integers) from the host stack.
+            - [ ] Convert all inputs to fixed-point.
+            - [ ] Implement the training target logic: `tx = vx_fp * reward_fp`.
+            - [ ] Implement the "Kickstart" exception for when the agent is stuck (`vx,vy` are 0, `reward` is -1).
+            - [ ] Call `NN.train` with the fixed-point inputs and targets.
+        - [ ] **`s_plot` function:**
+            - [ ] Pop `agent_id`, `x`, `y` from the host stack.
+            - [ ] Maintain an array to store previous positions for each agent.
+            - [ ] Erase the old circle for the given `agent_id`.
+            - [ ] Draw a new circle at the new `x`, `y` and store the position.
+    - [ ] **FFI Binding (in `ml_hunter_host.stacks` `main`):**
+        - [ ] Use `VVM.bind` to register `&s_predict`, `&s_train`, and `&s_plot` with their respective syscall IDs.
+
+- [ ] **Phase 2: VVM Agent Script (The "Body")**
+    - [ ] **`hunter_agent.stacks` (to be compiled with `--target simpl`):**
+        - [ ] Define variables for `hunter_x`, `hunter_y`, `target_x`, `target_y`, `agent_id`, `old_dist_sq`. (Use squared distance to avoid `sqrt`).
+        - [ ] **Initialization:**
+            - [ ] Get arguments (`target_x`, `target_y`, `agent_id`) from registers `B`, `C`, `D`.
+            - [ ] Generate random starting `hunter_x`, `hunter_y` within screen bounds.
+            - [ ] Calculate initial `old_dist_sq`.
+        - [ ] **Main Loop (`LOOP ... END`):**
+            - [ ] Calculate `dx = target_x - hunter_x` and `dy = target_y - hunter_y`.
+            - [ ] Call the `PREDICT` FFI function: `dx dy 2 2 PREDICT_ID EXEC`.
+            - [ ] Store returned `vx`, `vy`.
+            - [ ] Calculate `new_x = hunter_x + vx` and `new_y = hunter_y + vy`.
+            - [ ] **Boundary Checks:**
+                - [ ] Check if `new_x` or `new_y` are out of bounds. Set a `hit_wall` flag.
+                - [ ] Clamp `new_x`, `new_y` to screen limits.
+            - [ ] **Reward Calculation:**
+                - [ ] `IF hit_wall == 1 THEN -1 AS reward`.
+                - [ ] `ELSE` calculate `new_dist_sq`.
+                - [ ] `IF new_dist_sq < old_dist_sq THEN 1 AS reward ELSE -1 AS reward END`.
+                - [ ] `new_dist_sq AS old_dist_sq`.
+                - [ ] `END`.
+            - [ ] Update `hunter_x = new_x`, `hunter_y = new_y`.
+            - [ ] Call the `TRAIN` FFI function: `dx dy vx vy reward 5 0 TRAIN_ID EXEC`.
+            - [ ] Call the `PLOT` FFI function: `agent_id hunter_x hunter_y 3 0 PLOT_ID EXEC`.
+            - [ ] `BRA LOOP`.
+
+- [ ] **Phase 3: Build & Integration**
+    - [ ] **`Makefile.mk`:**
+        - [ ] Add `src/vvm/hunter_agent.stacks` to the `VVM_SOURCES` list.
+    - [ ] **Host Program (`ml_hunter_host.stacks`):**
+        - [ ] Use `VVM.loadcode` to load the compiled `sbc_hunter_agent.bin` into the deque for VVM 0.
+        - [ ] Use `VVM.loadcode` to load the same binary into the deque for VVM 1.
+        - [ ] Use `VVM.create` to instantiate the two VVMs, each with its own pointer and deque.
+        - [ ] Use `VVM.start` to pass `target_x, target_y, 0` to VVM 0.
+        - [ ] Use `VVM.start` to pass `target_x, target_y, 1` to VVM 1.
+        - [ ] Run the main loop.
+
+
+## update: 17 feb 2026
+
+# The start of Machine Learing Hunting Project
+
+#### Since i can run 2 VVM on the host, and i enable FFI for hostside function
+#### i like to write an system using this technology.
+#### I gonne try to make an Neural Network applications
+
+- general Idea
+    Two hunters (each running in an VVM) hunting an target.
+
+    Where the VVM running the same hunter script, the network is living on the host.
+    And the train, predict and plot functions are hostside FFI function, so the can be called from the VVM
+
+    The system should use real-time Reinforcement Learning to train
+    hereby should each step of an agent also be used as trainings data
+
+    NOTE: 
+    - in the first version the target is an static target, and does not move
+    - on the host side i do have 8k free programmemory to implement the hostside logic
+    - on the VVM side i do have 1k-50(header) free space
+
+
+- hereby the hunter
+    The hunter (VVM) knows the scene, his own position, and targets position
+    The hunter calculate the distance to the target, delta-X delta-Y (dx,dy)
+    The hunter sends dx,dy to the PREDICTOR and get velocity back vx, vy
+    The hunter calculate his new position
+    The hunter is calculation the reward:
+        if closer to the target,            reward is +1
+        if hitting screen bounderies/walls, reward is -1
+        if not closer to the target,        reward is -1
+    The hunter sends dx, dy, vx, vy, reward to the TRAINER
+    The hunter print the new position, by sending the new x, y to the screen-routine
+
+- hereby the TRAINER
+    The trainer gets dx, dy, vx, vy and reward from the hunter
+    the trainer calculates the ERROR using vx, vy and reward
+        The trainings data as input values dx, dy
+        Where the target is tx=vx*reward, ty=vy*reward (where reward is 1 or -1)
+        EXCEPTION: If vx,vy are 0 and reward is -1 (Stuck), use dx,dy to calculate target (Kickstart).
+                   tx = sign(dx) * max_speed, ty = sign(dy) * max_speed.
+    The trainer trains the network, by using dx, dy as inputs and tx, ty as target values.
+
+
+- About the precision of all the numbers
+    Since the Stern-ATX platform only supports an fixpoint math library we had to decide on the precision
+    I think the ml_hunter.stacks program proves an scale of 10000 will do the job
+
+    The coordinates like hunter(x,y) and target(x,y) are integers
+    All calculations as distance, and velocity is done in Fixedpoint math
+    Hostside functions, like PREDICT and TRAIN. called by the FFI, should be aware of this needed conversion
+
+
+- On the host side:
+    - Host side function: Predict, FFI called by the hunter VVM
+    - Host side function: Train, FFI called by the hunter VVM
+    - Host side function: Plot, FFI called by the hunter VVM
+    - Host side main:
+        - Creates an Neural network
+        - setup playground, init the target(x,y)
+        - Start the hunter VVMs, give the target(x,y), and hunter id (0,1) as argument
+        - VVM dispatcher, make sure every VVM gets his time
+        - make sure beable restart the hunt on the in the prvious run traint network
+
+- On the VVM (hunter) side:
+    - VVM must be-able: create an random hunter(x,y) (start posistion)
+    - VVM must be-able: calc the distance dx, dy
+    - VVM must be-able: call the predict function on the host (vx, vy in return)
+    - VVM must be-able: calc the reward (1 for closer tothe target, otherwise -1)
+    - VVM must be-able: call the train function on the host
+    - VVM must be-able: calc the new hunter(x,y)
+    - VVM must be-able: calling plot function to plot the hunter(x,y) position
+
+- Data Type and Conversion Strategy
+    The system uses a "Brain vs. Body" model for data types to optimize performance and simplify logic.
+
+    - The VVM (Body):
+        - Operates exclusively with INTEGERS for its world coordinates (x, y) and velocity steps (vx, vy).
+        - This keeps the VVM's physics loop (`x = x + vx`) simple and fast.
+
+    - The Host (Brain):
+        - The Neural Network and all its internal calculations (prediction, training) use FIXED-POINT math for precision.
+
+    - The FFI Bridge (The Translator):
+        - The Host-side FFI handlers (`s_predict`, `s_train`) are responsible for all data type conversions.
+        - `s_predict` receives INTEGER `dx, dy`, converts them to normalized Fixed-Point for the NN, gets a Fixed-Point velocity from the NN, and MUST convert this back to an INTEGER step (-1, 0, or 1) before returning it to the VVM.
+        - `s_train` receives INTEGER state/action data and converts it to Fixed-Point to calculate the training targets.
+
+        Host side translator is using this kind of conversion logic:
+            If val > 3000 (0.3) -> Return 1.
+            If val < -3000 (-0.3) -> Return -1.
+            Else -> Return 0.
+
+- Plotting and rendering (like the ml_hunter is doing it)
+    For rendering an Plotting the Target and the Hunters an host side function is taking care of
+    - the function should use the Turtle lib for drawing
+    - the function knows the hostside generated target(x,y)
+    - the function gets the new hunter(x,y) and its agent_id (0 or 1) from the VVM
+    - the function remembers the previous hunter(x,y) for deleting the prevois posistion
+    - the function is using TURTLE.circle methos to draw a small circle at the hunter(x,y)
+    - the turltle is running in double buffer pixel mode
+    
+
+- Host side needed libraries
+    - standaard:    vvm_env_lib, vvm_core_lib, std_heap, std_stern_io
+    - Non standard: math_lib, fixed_point_lib, gpu3_lib, mlnn_gpu3_optimized_lib, turtle_lib
+                    ( non standard librariesare loaded in program memory 8K at start)
+
+    - to compare, the current ml_hunter scripts is using 3313 (3k) words of programmemory
