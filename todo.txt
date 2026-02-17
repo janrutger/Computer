@@ -886,85 +886,12 @@ Key achievements:
 
 
 
-### ML Hunting Project: Implementation Checklist
 
-- [ ] **Phase 1: Host-Side Setup (The "Brain")**
-    - [ ] **Main Program (`ml_hunter_host.stacks`):**
-        - [ ] Include all required libraries (`vvm_core`, `vvm_env`, `mlnn_gpu3_optimized`, `fixed_point`, `turtle`).
-        - [ ] Define constants for FFI syscall IDs (`PREDICT_ID`, `TRAIN_ID`, `PLOT_ID`).
-        - [ ] Create the Neural Network instance using `mlnn_lib`.
-        - [ ] Initialize `turtle_lib` and set up the playground (screen size, target marker).
-        - [ ] Define and initialize the static target position (`target_x`, `target_y`).
-        - [ ] Create two VVM pointers and their dedicated host deques.
-        - [ ] Implement the main loop:
-            - [ ] `VVM.run` for VVM 0.
-            - [ ] `VVM.check_syscalls` for VVM 0.
-            - [ ] `VVM.run` for VVM 1.
-            - [ ] `VVM.check_syscalls` for VVM 1.
-            - [ ] `turtle.flip()` to update the display.
-    - [ ] **FFI Handlers (in `ml_hunter_host.stacks`):**
-        - [ ] **`s_predict` function:**
-            - [ ] Pop `dx`, `dy` (integers) from the host stack.
-            - [ ] Convert `dx`, `dy` to normalized fixed-point values (e.g., divide by screen width).
-            - [ ] Call `NN.predict` with the fixed-point inputs.
-            - [ ] Get the fixed-point `vx_fp`, `vy_fp` from the result.
-            - [ ] Convert `vx_fp`, `vy_fp` to integer steps (`-1`, `0`, `1`) using the `0.3` threshold logic.
-            - [ ] Push integer `vx`, `vy` back to the host stack.
-        - [ ] **`s_train` function:**
-            - [ ] Pop `dx`, `dy`, `vx`, `vy`, `reward` (all integers) from the host stack.
-            - [ ] Convert all inputs to fixed-point.
-            - [ ] Implement the training target logic: `tx = vx_fp * reward_fp`.
-            - [ ] Implement the "Kickstart" exception for when the agent is stuck (`vx,vy` are 0, `reward` is -1).
-            - [ ] Call `NN.train` with the fixed-point inputs and targets.
-        - [ ] **`s_plot` function:**
-            - [ ] Pop `agent_id`, `x`, `y` from the host stack.
-            - [ ] Maintain an array to store previous positions for each agent.
-            - [ ] Erase the old circle for the given `agent_id`.
-            - [ ] Draw a new circle at the new `x`, `y` and store the position.
-    - [ ] **FFI Binding (in `ml_hunter_host.stacks` `main`):**
-        - [ ] Use `VVM.bind` to register `&s_predict`, `&s_train`, and `&s_plot` with their respective syscall IDs.
-
-- [ ] **Phase 2: VVM Agent Script (The "Body")**
-    - [ ] **`hunter_agent.stacks` (to be compiled with `--target simpl`):**
-        - [ ] Define variables for `hunter_x`, `hunter_y`, `target_x`, `target_y`, `agent_id`, `old_dist_sq`. (Use squared distance to avoid `sqrt`).
-        - [ ] **Initialization:**
-            - [ ] Get arguments (`target_x`, `target_y`, `agent_id`) from registers `B`, `C`, `D`.
-            - [ ] Generate random starting `hunter_x`, `hunter_y` within screen bounds.
-            - [ ] Calculate initial `old_dist_sq`.
-        - [ ] **Main Loop (`LOOP ... END`):**
-            - [ ] Calculate `dx = target_x - hunter_x` and `dy = target_y - hunter_y`.
-            - [ ] Call the `PREDICT` FFI function: `dx dy 2 2 PREDICT_ID EXEC`.
-            - [ ] Store returned `vx`, `vy`.
-            - [ ] Calculate `new_x = hunter_x + vx` and `new_y = hunter_y + vy`.
-            - [ ] **Boundary Checks:**
-                - [ ] Check if `new_x` or `new_y` are out of bounds. Set a `hit_wall` flag.
-                - [ ] Clamp `new_x`, `new_y` to screen limits.
-            - [ ] **Reward Calculation:**
-                - [ ] `IF hit_wall == 1 THEN -1 AS reward`.
-                - [ ] `ELSE` calculate `new_dist_sq`.
-                - [ ] `IF new_dist_sq < old_dist_sq THEN 1 AS reward ELSE -1 AS reward END`.
-                - [ ] `new_dist_sq AS old_dist_sq`.
-                - [ ] `END`.
-            - [ ] Update `hunter_x = new_x`, `hunter_y = new_y`.
-            - [ ] Call the `TRAIN` FFI function: `dx dy vx vy reward 5 0 TRAIN_ID EXEC`.
-            - [ ] Call the `PLOT` FFI function: `agent_id hunter_x hunter_y 3 0 PLOT_ID EXEC`.
-            - [ ] `BRA LOOP`.
-
-- [ ] **Phase 3: Build & Integration**
-    - [ ] **`Makefile.mk`:**
-        - [ ] Add `src/vvm/hunter_agent.stacks` to the `VVM_SOURCES` list.
-    - [ ] **Host Program (`ml_hunter_host.stacks`):**
-        - [ ] Use `VVM.loadcode` to load the compiled `sbc_hunter_agent.bin` into the deque for VVM 0.
-        - [ ] Use `VVM.loadcode` to load the same binary into the deque for VVM 1.
-        - [ ] Use `VVM.create` to instantiate the two VVMs, each with its own pointer and deque.
-        - [ ] Use `VVM.start` to pass `target_x, target_y, 0` to VVM 0.
-        - [ ] Use `VVM.start` to pass `target_x, target_y, 1` to VVM 1.
-        - [ ] Run the main loop.
 
 
 ## update: 17 feb 2026
 
-# The start of Machine Learing Hunting Project
+# The start of Reinforcement Machine Learing Hunting Project
 
 #### Since i can run 2 VVM on the host, and i enable FFI for hostside function
 #### i like to write an system using this technology.
@@ -1052,9 +979,24 @@ Key achievements:
         - `s_train` receives INTEGER state/action data and converts it to Fixed-Point to calculate the training targets.
 
         Host side translator is using this kind of conversion logic:
-            If val > 3000 (0.3) -> Return 1.
+            If val >  3000 (0.3) -> Return 1.
             If val < -3000 (-0.3) -> Return -1.
-            Else -> Return 0.
+            Else                 -> Return 0.
+
+- Playground & Environment
+    - Screen: 640x480 resolution, managed by `turtle_lib` in double-buffered pixel mode.
+    - Play Area: A 440x440 logical area, centered on the screen.
+        - X-bounds: [100, 540]
+        - Y-bounds: [20, 460]
+    - Boundary Handling:
+        - The VVM agent is responsible for checking if its `new_x, new_y` position goes outside these bounds.
+        - If a boundary is hit, the agent's position is clamped to the boundary, and a negative reward (-1) is generated.
+    - Visual Representation:
+        - Target: Green circle, radius 2.
+        - Hunters: Red circles, radius 2.
+    - Initialization:
+        - The host `main` function will draw the boundary box of the play area for visual reference.
+        - The VVM agent's random starting position must be generated *within* the 440x440 play area.
 
 - Plotting and rendering (like the ml_hunter is doing it)
     For rendering an Plotting the Target and the Hunters an host side function is taking care of
@@ -1062,13 +1004,93 @@ Key achievements:
     - the function knows the hostside generated target(x,y)
     - the function gets the new hunter(x,y) and its agent_id (0 or 1) from the VVM
     - the function remembers the previous hunter(x,y) for deleting the prevois posistion
-    - the function is using TURTLE.circle methos to draw a small circle at the hunter(x,y)
+    - the function is using TURTLE.circle method to draw a small circle (radius 2) at the hunter(x,y), with color based on agent type.
     - the turltle is running in double buffer pixel mode
     
 
 - Host side needed libraries
     - standaard:    vvm_env_lib, vvm_core_lib, std_heap, std_stern_io
     - Non standard: math_lib, fixed_point_lib, gpu3_lib, mlnn_gpu3_optimized_lib, turtle_lib
-                    ( non standard librariesare loaded in program memory 8K at start)
+                    (non standard libraries are loaded in program memory 8K at start)
 
     - to compare, the current ml_hunter scripts is using 3313 (3k) words of programmemory
+
+
+
+### ML Hunting Project: Implementation Checklist
+
+- [ ] **Phase 1: Host-Side Setup (The "Brain")**
+    - [ ] **Main Program (`ml_hunter_host.stacks`):**
+        - [ ] Include all required libraries (`vvm_core`, `vvm_env`, `mlnn_gpu3_optimized`, `fixed_point`, `turtle`).
+        - [ ] Define constants for FFI syscall IDs (`PREDICT_ID`, `TRAIN_ID`, `PLOT_ID`).
+        - [ ] Create the Neural Network instance using `mlnn_gpu3_optimized_lib`. (2-4-2)
+        - [ ] Initialize `turtle_lib` and set up the playground (screen size, target marker).
+        - [ ] Define and initialize the static target position (`target_x`, `target_y`).
+        - [ ] Create two VVM pointers and their dedicated host deques.
+        - [ ] Implement the main loop:
+            - [ ] `VVM.run` for VVM 0.
+            - [ ] `VVM.check_syscalls` for VVM 0.
+            - [ ] `VVM.run` for VVM 1.
+            - [ ] `VVM.check_syscalls` for VVM 1.
+            - [ ] `turtle.flip()` to update the display.
+            - [ ] Implement a periodic keep-alive signal (e.g., print a "." every N loops).
+    - [ ] **FFI Handlers (in `ml_hunter_host.stacks`):**
+        - [ ] **`s_predict` function:**
+            - [ ] Pop `dx`, `dy` (integers) from the host stack.
+            - [ ] Convert `dx`, `dy` to normalized fixed-point values (e.g., divide by screen width).
+            - [ ] Call `NN.predict` with the fixed-point inputs.
+            - [ ] Get the fixed-point `vx_fp`, `vy_fp` from the result.
+            - [ ] Convert `vx_fp`, `vy_fp` to integer steps (`-1`, `0`, `1`) using the `0.3` threshold logic.
+            - [ ] Push integer `vx`, `vy` back to the host stack.
+        - [ ] **`s_train` function:**
+            - [ ] Pop `dx`, `dy`, `vx`, `vy`, `reward` (all integers) from the host stack.
+            - [ ] Convert scalar inputs to fixed-point.
+            - [ ] **Prepare Input Array:** Write the fixed-point `dx, dy` into a pre-allocated 2-element host array (`_host_input_arr`).
+            - [ ] **Calculate Targets:** Implement the training target logic: `tx = vx_fp * reward_fp`.
+            - [ ] Implement the "Kickstart" exception for when the agent is stuck (`vx,vy` are 0, `reward` is -1).
+            - [ ] **Prepare Target Array:** Write the calculated fixed-point `tx, ty` into a pre-allocated 2-element host array (`_host_target_arr`).
+            - [ ] **Call `NN.train`:** Call the library function with pointers to the prepared host arrays.
+        - [ ] **`s_plot` function:**
+            - [ ] Pop `agent_id`, `x`, `y` from the host stack.
+            - [ ] Maintain an array to store previous positions for each agent.
+            - [ ] Erase the old circle for the given `agent_id` (draw with background color).
+            - [ ] Draw a new circle at the new `x`, `y` and store the position.
+    - [ ] **FFI Binding (in `ml_hunter_host.stacks` `main`):**
+        - [ ] Use `VVM.bind` to register `&s_predict`, `&s_train`, and `&s_plot` with their respective syscall IDs.
+
+- [ ] **Phase 2: VVM Agent Script (The "Body")**
+    - [ ] **`hunter_agent.stacks` (to be compiled with `--target simpl`):**
+        - [ ] Define variables for `hunter_x`, `hunter_y`, `target_x`, `target_y`, `agent_id`, `old_dist_sq`. (Use squared distance to avoid `sqrt`).
+        - [ ] **Initialization:**
+            - [ ] Get arguments (`target_x`, `target_y`, `agent_id`) from registers `B`, `C`, `D`.
+            - [ ] Generate random starting `hunter_x`, `hunter_y` within the play area bounds.
+            - [ ] Calculate initial `old_dist_sq`.
+        - [ ] **Main Loop (`LOOP ... END`):**
+            - [ ] Calculate `dx = target_x - hunter_x` and `dy = target_y - hunter_y`.
+            - [ ] Call the `PREDICT` FFI function: `dx dy 2 2 PREDICT_ID EXEC`.
+            - [ ] Store returned `vx`, `vy`.
+            - [ ] Calculate `new_x = hunter_x + vx` and `new_y = hunter_y + vy`.
+            - [ ] **Boundary Checks:**
+                - [ ] Check if `new_x` or `new_y` are outside the play area bounds [100,540], [20,460]. Set a `hit_wall` flag.
+                - [ ] Clamp `new_x`, `new_y` to screen limits.
+            - [ ] **Reward Calculation:**
+                - [ ] `IF hit_wall == 1 THEN -1 AS reward`.
+                - [ ] `ELSE` calculate `new_dist_sq`.
+                - [ ] `IF new_dist_sq < old_dist_sq THEN 1 AS reward ELSE -1 AS reward END`.
+                - [ ] `new_dist_sq AS old_dist_sq`.
+                - [ ] `END`.
+            - [ ] Update `hunter_x = new_x`, `hunter_y = new_y`.
+            - [ ] Call the `TRAIN` FFI function: `dx dy vx vy reward 5 0 TRAIN_ID EXEC`.
+            - [ ] Call the `PLOT` FFI function: `agent_id hunter_x hunter_y 3 0 PLOT_ID EXEC`.
+            - [ ] `BRA LOOP`.
+
+- [ ] **Phase 3: Build & Integration**
+    - [ ] **`Makefile.mk`:**
+        - [ ] Add `src/vvm/hunter_agent.stacks` to the `VVM_SOURCES` list.
+    - [ ] **Host Program (`ml_hunter_host.stacks`):**
+        - [ ] Use `VVM.loadcode` to load the compiled `sbc_hunter_agent.bin` into the deque for VVM 0.
+        - [ ] Use `VVM.loadcode` to load the same binary into the deque for VVM 1.
+        - [ ] Use `VVM.create` to instantiate the two VVMs, each with its own pointer and deque.
+        - [ ] Use `VVM.start` to pass `target_x, target_y, 0` to VVM 0.
+        - [ ] Use `VVM.start` to pass `target_x, target_y, 1` to VVM 1.
+        - [ ] Run the main loop.

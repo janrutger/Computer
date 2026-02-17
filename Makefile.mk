@@ -38,7 +38,7 @@ ASSEMBLER := python3 assembler/assembler.py
 MICROCODE_ASSEMBLER := python3 $(MICROCODE_DIR)/assembler.py
 
 # --- Main Programs ---
-MAIN_PROGRAMS := main fly maze chaos3 chaos3a chaos3b turtle koch fib conway barnsly taylor pi bubble test etb keypress perceptron ml_xor ml_hunter test_dq veins
+MAIN_PROGRAMS := main fly maze chaos3 chaos3a chaos3b turtle koch fib conway barnsly taylor pi bubble test etb keypress perceptron ml_xor ml_hunter test_dq veins vvmware
 DEFAULT_PROGRAM := $(firstword $(MAIN_PROGRAMS))
 
 # --- Target Calculation ---

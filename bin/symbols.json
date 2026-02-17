@@ -392,25 +392,8 @@
         "$vvm_val": 19973,
         "$vvm_digit_seen": 19974,
         "@VVM.bind": 5570,
-        "$VVM0": 19975,
-        "$VVM1": 19976,
-        "$host_comm_deque_ptr": 19977,
-        "$SIMPL_code": 19978,
-        "$main_str_0": 19979,
-        "$host_comm_deque_ptr0": 20008,
-        "$host_comm_deque_ptr1": 20009,
-        "$main_str_1": 20010,
-        "$main_str_2": 20040,
-        "$main_str_3": 20070,
-        "$main_str_4": 20100,
-        "$main_str_5": 20108,
-        "$main_str_6": 20133,
-        "$main_str_7": 20144,
-        "$main_str_8": 20169,
-        "$main_str_9": 20184,
-        "@host_function": 9218,
-        "@host_gcd": 9223,
-        "@main": 9238
+        "$hello_msg": 19975,
+        "@hello_from_asm": 9218
     },
     "labels": [
         {
@@ -700,13 +683,6 @@
             ":VVM.bind_if_else_19": 5589,
             ":VVM.bind_if_end_19": 5596
         },
-        {
-            ":host_gcd_while_start_0": 9223,
-            ":host_gcd_while_end_0": 9236,
-            ":main_while_start_1": 9355,
-            ":main_if_end_0": 9396,
-            ":main_if_end_1": 9418,
-            ":main_while_end_1": 9419
-        }
+        {}
     ]
 }

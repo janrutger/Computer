@@ -1,0 +1,108 @@
+# Test program to run the VVM/SIMPL Sandbox
+####
+
+USE std_heap
+USE std_time
+USE std_stern_io
+
+# its not allowed to use INCLUDE in an Library
+# So depandancys should be included in the main file
+
+##
+
+USE vvm_env_lib
+USE vvm_core_lib
+
+
+INCLUDE simpl_test_simpl_lib
+INCLUDE simpl_fib_lib
+INCLUDE simpl_fly_lib
+INCLUDE simpl_chaos3_lib
+
+
+# VALUE VVM0 15360      ; The memory address for VVM0, stored in a variable.
+# VALUE VVM1 16384
+# Move the VVM instanes to the top of Extended memory
+VALUE VVM0 30720        ; The memory address for VVM0, stored in a variable.
+VALUE VVM1 31744        ; The memory address for VVM1, stored in a variable.
+
+DEF host_function {     ; a simple host function 
+    +
+}
+
+DEF host_gcd {
+    WHILE DUP 0 != DO
+        SWAP OVER %
+    DONE
+    DROP
+}
+
+
+VALUE host_comm_deque_ptr 0
+VALUE SIMPL_code 0
+
+# The main program
+DEF main {
+    HEAP.free
+    50 DEQUE.init_pool "Pool initialized (size 50).\n" PRTstring
+
+    DEQUE.new AS host_comm_deque_ptr0   ; Get a pointer for the host communication deque
+    DEQUE.new AS host_comm_deque_ptr1   ; Get a pointer for the host communication deque
+    DEQUE.new AS SIMPL_code             ; Get a pointer for the SIMPL code buffer
+    
+
+    VVM.init                        ; init VVM environment
+    "VVM Environment Initialized:\n" PRTstring
+    "VVM0 base address          : " PRTstring VVM0  PRINT
+    "VVM1 base address          : " PRTstring VVM1  PRINT
+
+    &host_function 100 VVM.bind
+    &host_gcd      101 VVM.bind
+
+
+    #SIMPL_code load_simpl_fly          ; to load static
+    SIMPL_code "sbc_fly" VVM.loadcode   ; toload dynamic 
+
+    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
+    &SIMPL_code 1024 &host_comm_deque_ptr0 &VVM0 VVM.create
+    "VVM0 instance created \n\n" PRTstring
+
+    #SIMPL_code load_simpl_chaos3
+    SIMPL_code "sbc_chaos3" VVM.loadcode 
+
+    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
+    &SIMPL_code 1024 &host_comm_deque_ptr1 &VVM1 VVM.create
+    "VVM1 instance created \n\n" PRTstring
+
+
+    # Start the VVM
+    # ( arg1 ... argn argc &VVM-pointer -- )
+    0 &VVM0 VVM.start
+    "VVM0 started \n" PRTstring
+
+    0 &VVM1 VVM.start
+    "VVM1 started \n" PRTstring
+
+    1 TIME.start
+    WHILE VVM_status &VVM0 VVMpeek VVM_Halted != 
+          VVM_status &VVM1 VVMpeek VVM_Halted != + DO
+        VVM_status &VVM0 VVMpeek VVM_Halted != IF
+            &VVM0 VVM.run
+            &VVM0 VVM.run
+            &VVM0 VVM.run
+            &VVM0 VVM.check_syscalls
+        END
+
+        VVM_status &VVM1 VVMpeek VVM_Halted != IF
+            &VVM1 VVM.run
+            &VVM1 VVM.run
+            &VVM1 VVM.run
+            &VVM1 VVM.check_syscalls
+        END
+    DONE
+    1 TIME.read TIME.as_string 
+}
+
+
+# Running main by calling main
+main

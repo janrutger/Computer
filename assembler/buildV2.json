@@ -9,7 +9,7 @@
         "restore_symbols": false
       },
       {
-        "file": "asm/apps/test.asm",
+        "file": "asm/apps/main.asm",
         "base_address": 9216,
         "restore_symbols": true
       }
@@ -98,6 +98,10 @@
       {
         "file": "asm/apps/veins.asm",
         "output": "../bin/apps/veins.bin"
+      },
+      {
+        "file": "asm/apps/vvmware.asm",
+        "output": "../bin/apps/vvmware.bin"
       }
     ]
   }
