@@ -903,6 +903,7 @@ Key achievements:
     Where the VVM running the same hunter script, the network is living on the host.
     And the train, predict and plot functions are hostside FFI function, so the can be called from the VVM
 
+
     The system should use real-time Reinforcement Learning to train
     hereby should each step of an agent also be used as trainings data
 
@@ -1021,19 +1022,19 @@ Key achievements:
 
 - [ ] **Phase 1: Host-Side Setup (The "Brain")**
     - [ ] **Main Program (`ml_hunter_host.stacks`):**
-        - [ ] Include all required libraries (`vvm_core`, `vvm_env`, `mlnn_gpu3_optimized`, `fixed_point`, `turtle`).
-        - [ ] Define constants for FFI syscall IDs (`PREDICT_ID`, `TRAIN_ID`, `PLOT_ID`).
+        - [x] Include all required libraries (`vvm_core`, `vvm_env`, `mlnn_gpu3_optimized`, `fixed_point`, `turtle`).
+        - [x] Define constants for FFI syscall IDs (`PREDICT_ID`, `TRAIN_ID`, `PLOT_ID`).
         - [ ] Create the Neural Network instance using `mlnn_gpu3_optimized_lib`. (2-4-2)
         - [ ] Initialize `turtle_lib` and set up the playground (screen size, target marker).
         - [ ] Define and initialize the static target position (`target_x`, `target_y`).
-        - [ ] Create two VVM pointers and their dedicated host deques.
+        - [x] Create two VVM pointers and their dedicated host deques.
         - [ ] Implement the main loop:
-            - [ ] `VVM.run` for VVM 0.
-            - [ ] `VVM.check_syscalls` for VVM 0.
-            - [ ] `VVM.run` for VVM 1.
-            - [ ] `VVM.check_syscalls` for VVM 1.
+            - [x] `VVM.run` for VVM 0.
+            - [x] `VVM.check_syscalls` for VVM 0.
+            - [x] `VVM.run` for VVM 1.
+            - [x] `VVM.check_syscalls` for VVM 1.
             - [ ] `turtle.flip()` to update the display.
-            - [ ] Implement a periodic keep-alive signal (e.g., print a "." every N loops).
+            - [x] Implement a periodic keep-alive signal (e.g., print a "." every N loops).
     - [ ] **FFI Handlers (in `ml_hunter_host.stacks`):**
         - [ ] **`s_predict` function:**
             - [ ] Pop `dx`, `dy` (integers) from the host stack.
@@ -1056,13 +1057,13 @@ Key achievements:
             - [ ] Erase the old circle for the given `agent_id` (draw with background color).
             - [ ] Draw a new circle at the new `x`, `y` and store the position.
     - [ ] **FFI Binding (in `ml_hunter_host.stacks` `main`):**
-        - [ ] Use `VVM.bind` to register `&s_predict`, `&s_train`, and `&s_plot` with their respective syscall IDs.
+        - [x] Use `VVM.bind` to register `&s_predict`, `&s_train`, and `&s_plot` with their respective syscall IDs.
 
 - [ ] **Phase 2: VVM Agent Script (The "Body")**
     - [ ] **`hunter_agent.stacks` (to be compiled with `--target simpl`):**
-        - [ ] Define variables for `hunter_x`, `hunter_y`, `target_x`, `target_y`, `agent_id`, `old_dist_sq`. (Use squared distance to avoid `sqrt`).
+        - [/] Define variables for `hunter_x`, `hunter_y`, `target_x`, `target_y`, `agent_id`, `old_dist_sq`. (Use squared distance to avoid `sqrt`).
         - [ ] **Initialization:**
-            - [ ] Get arguments (`target_x`, `target_y`, `agent_id`) from registers `B`, `C`, `D`.
+            - [x] Get arguments (`target_x`, `target_y`, `agent_id`) from registers `B`, `C`, `D`.
             - [ ] Generate random starting `hunter_x`, `hunter_y` within the play area bounds.
             - [ ] Calculate initial `old_dist_sq`.
         - [ ] **Main Loop (`LOOP ... END`):**
@@ -1084,13 +1085,41 @@ Key achievements:
             - [ ] Call the `PLOT` FFI function: `agent_id hunter_x hunter_y 3 0 PLOT_ID EXEC`.
             - [ ] `BRA LOOP`.
 
-- [ ] **Phase 3: Build & Integration**
-    - [ ] **`Makefile.mk`:**
-        - [ ] Add `src/vvm/hunter_agent.stacks` to the `VVM_SOURCES` list.
-    - [ ] **Host Program (`ml_hunter_host.stacks`):**
-        - [ ] Use `VVM.loadcode` to load the compiled `sbc_hunter_agent.bin` into the deque for VVM 0.
-        - [ ] Use `VVM.loadcode` to load the same binary into the deque for VVM 1.
-        - [ ] Use `VVM.create` to instantiate the two VVMs, each with its own pointer and deque.
-        - [ ] Use `VVM.start` to pass `target_x, target_y, 0` to VVM 0.
-        - [ ] Use `VVM.start` to pass `target_x, target_y, 1` to VVM 1.
-        - [ ] Run the main loop.
+- [x] **Phase 3: Build & Integration**
+    - [x] **`Makefile.mk`:**
+        - [x] Add `src/vvm/hunter_agent.stacks` to the `VVM_SOURCES` list.
+    - [x] **Host Program (`ml_hunter_host.stacks`):**
+        - [x] Use `VVM.loadcode` to load the compiled `sbc_hunter_agent.bin` into the deque for VVM 0.
+        - [x] Use `VVM.loadcode` to load the same binary into the deque for VVM 1.
+        - [x] Use `VVM.create` to instantiate the two VVMs, each with its own pointer and deque.
+        - [x] Use `VVM.start` to pass `target_x, target_y, 0` to VVM 0.
+        - [x] Use `VVM.start` to pass `target_x, target_y, 1` to VVM 1.
+        - [x] Run the main loop.
+
+## update: 18 feb 2026
+
+Project status is GREEN. Today, the foundational framework for the ML Hunter
+project was successfully created and verified. This involved setting up the
+host application and a test agent, ensuring the entire end-to-end pipeline
+is operational before implementing the core logic.
+
+Key achievements for today:
+
+-   **Host Application Skeleton:** Created `ml_hunterhost.stacks`, which
+    serves as the main engine for the project.
+-   **FFI Setup:** Defined the custom syscall IDs (`HOST.predict`,
+    `HOST.train`, `HOST.plot`) and bound them to empty placeholder functions,
+    preparing the interface for the ML logic.
+-   **Dual VVM Instantiation:** Implemented the logic to create two
+    independent VVM instances. A critical bug was fixed by ensuring the
+    agent's source code is reloaded from disk for the second VVM.
+-   **Main Loop Implementation:** A robust, time-sliced main loop was created
+    to run both VVMs concurrently. A stall bug was identified and fixed by
+    correctly resetting the timeslice counter each frame.
+-   **Agent Stub Verification:** A minimal "hello world" agent was created
+    and successfully compiled. Running the host application correctly loaded
+    and executed this agent on both VVMs, confirming the integrity of the
+    entire toolchain from compiler to runtime.
+
+The system is now solid and ready for the implementation of the actual
+machine learning and game logic.

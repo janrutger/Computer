@@ -1,0 +1,15 @@
+VAR argc
+VAR target_x
+VAR target_y
+VAR target_id
+
+# Define host side functions as syscalls-is's for the FFI interface
+CONST HOST.predict  100 ; Syscall ID for the predict function
+CONST HOST.train    101 ; Syscall ID for the train function
+CONST HOST.plot     102 ; Syscall ID for the plot function
+
+
+VALUE JRK 42
+
+JRK PRINT
+target_id PRINT 

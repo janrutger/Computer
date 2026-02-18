@@ -9,7 +9,7 @@
         "restore_symbols": false
       },
       {
-        "file": "asm/apps/main.asm",
+        "file": "asm/apps/ml_hunterhost.asm",
         "base_address": 9216,
         "restore_symbols": true
       }
@@ -102,6 +102,10 @@
       {
         "file": "asm/apps/vvmware.asm",
         "output": "../bin/apps/vvmware.bin"
+      },
+      {
+        "file": "asm/apps/ml_hunterhost.asm",
+        "output": "../bin/apps/ml_hunterhost.bin"
       }
     ]
   }

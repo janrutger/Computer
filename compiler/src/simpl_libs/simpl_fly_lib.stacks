@@ -4,9 +4,9 @@ MACRO load_simpl_fly {
     AS _sq_
 
     \"PUSH"        _sq_ DEQUE.append
-    12             _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
     30             _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    12             _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     2              _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append

@@ -27,7 +27,7 @@ VALUE VVM0 30720        ; The memory address for VVM0, stored in a variable.
 VALUE VVM1 31744        ; The memory address for VVM1, stored in a variable.
 
 DEF host_function {     ; a simple host function 
-    +
+    //
 }
 
 DEF host_gcd {

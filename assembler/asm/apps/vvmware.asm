@@ -24,7 +24,7 @@
 @host_function
     ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
-    add B A
+    dmod B A
     stack B $DATASTACK_PTR
     ret
 @host_gcd

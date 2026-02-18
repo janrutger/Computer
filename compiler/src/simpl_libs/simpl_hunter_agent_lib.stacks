@@ -1,0 +1,25 @@
+USE std_deque
+
+MACRO load_simpl_hunter_agent {
+    AS _sq_
+
+    \"PUSH"        _sq_ DEQUE.append
+    42             _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    4              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    4              _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    10             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    3              _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    10             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"HALT"        _sq_ DEQUE.append
+}

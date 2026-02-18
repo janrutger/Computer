@@ -1,33 +1,46 @@
 {
   "functions": [
-    "MATRIX.put",
-    "HEAP.init",
-    "STRUCT.get",
-    "LIST.put",
-    "ARRAY.append",
-    "PRTcls",
-    "ARRAY.put",
-    "NEW.list",
-    "ARRAY.size",
-    "TOS.check",
-    "PRTnum",
-    "MATRIX.get",
+    "ARRAY.len",
+    "DEQUE.is_empty",
+    "DEQUE.prev",
+    "DEQUE.new",
     "READline",
     "LIST.get",
     "NEW.matrix_populate",
-    "ARRAY.len",
-    "STRUCT.new_type",
-    "HALT",
-    "CURSORoff",
+    "MATRIX.get",
+    "DEQUE.append",
     "NEW.array",
     "KEYchar",
-    "STRUCT.new",
-    "io_lib_init",
-    "NEW.matrix",
-    "PRTchar",
-    "STRUCT.put",
+    "DEQUE.init_pool",
+    "DEQUE.pop",
+    "DEQUE.push",
+    "_DEQUE.grow_pool",
     "ARRAY.get",
-    "KEYpressed"
+    "ARRAY.put",
+    "_DEQUE.free_node",
+    "ARRAY.size",
+    "MATRIX.put",
+    "NEW.list",
+    "LIST.put",
+    "DEQUE.is_last",
+    "PRTchar",
+    "TOS.check",
+    "DEQUE.pop_tail",
+    "DEQUE.head",
+    "KEYpressed",
+    "HALT",
+    "DEQUE.next",
+    "PRTnum",
+    "DEQUE.tail",
+    "_DEQUE.alloc_node",
+    "HEAP.init",
+    "io_lib_init",
+    "DEQUE.value",
+    "CURSORoff",
+    "ARRAY.append",
+    "NEW.matrix",
+    "DEQUE.is_first",
+    "PRTcls"
   ],
   "variables": [
     {
@@ -246,114 +259,69 @@
       "size": 1
     },
     {
-      "name": "_snt_n",
-      "type": "VALUE",
+      "name": "DEQUE_FREE_HEAD",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
-      "name": "_snt_ptr",
-      "type": "VALUE",
+      "name": "DEQUE_POOL_PAGE_SIZE",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
-      "name": "_snt_i",
-      "type": "VALUE",
+      "name": "_dq_i",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
-      "name": "error_mesg9",
-      "type": "STRING",
-      "size": 29
-    },
-    {
-      "name": "error_mesg10",
-      "type": "STRING",
-      "size": 29
-    },
-    {
-      "name": "_sn_type_ptr",
-      "type": "VALUE",
+      "name": "_dq_ptr",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
-      "name": "_sn_n",
-      "type": "VALUE",
+      "name": "_dq_next_ptr",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
-      "name": "_sn_inst_ptr",
-      "type": "VALUE",
+      "name": "_dq_node",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
-      "name": "_sn_i",
-      "type": "VALUE",
+      "name": "_dq_val",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
-      "name": "_sp_inst_ptr",
-      "type": "VALUE",
+      "name": "_dq_list",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
-      "name": "_sp_hash",
-      "type": "VALUE",
+      "name": "_dq_head",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
-      "name": "_sp_val",
-      "type": "VALUE",
+      "name": "_dq_tail",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
-      "name": "_sp_type_ptr",
-      "type": "VALUE",
+      "name": "_dq_prev",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
-      "name": "_sp_n",
-      "type": "VALUE",
+      "name": "_dq_next",
+      "type": "LIB_VAR",
       "size": 1
     },
     {
-      "name": "_sp_i",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_sp_found",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_sg_inst_ptr",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_sg_hash",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_sg_type_ptr",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_sg_n",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_sg_i",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_sg_found",
-      "type": "VALUE",
-      "size": 1
+      "name": "_dq_err_empty",
+      "type": "LIB_VAR",
+      "size": 27
     }
   ],
   "constants": {
@@ -361,6 +329,12 @@
     "backspace": 8,
     "return": 13,
     "newline": 10,
-    "null": 0
+    "null": 0,
+    "DEQUE_NODE_SIZE": 3,
+    "DEQUE_OFF_VAL": 0,
+    "DEQUE_OFF_NEXT": 1,
+    "DEQUE_OFF_PREV": 2,
+    "DEQUE_CTRL_HEAD": 0,
+    "DEQUE_CTRL_TAIL": 1
   }
 }
