@@ -144,42 +144,37 @@
 . $VVM1 1
 . $vvm_timeslice 1
 . $loop_counter 1
+. $network_ptr 1
+. $target_x 1
+. $target_y 1
+. $input_arr 1
+. $output_ptr 1
+. $dx_fp 1
+. $dy_fp 1
+. $vx_fp 1
+. $vy_fp 1
 . $VVM0_host_dq 1
 . $VVM1_host_dq 1
 . $AGENT_code 1
-. $network_ptr 1
-. $_init_main_str_0 29
-. $_init_main_str_1 30
-. $_init_main_str_2 17
-. $_init_main_str_3 25
+. $create_neural_network_str_0 18
+. $_init_main_str_1 29
+. $_init_main_str_2 30
+. $_init_main_str_3 17
 . $_init_main_str_4 25
-. $_main_str_5 29
+. $_init_main_str_5 25
 . $_main_str_6 15
-. $_main_str_7 15
-. $_main_str_8 2
+. $_main_str_7 2
 
 # .CODE
     call @_init_main
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 4
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    call @NN.new_network
+    call @create_neural_network
     ustack A $DATASTACK_PTR
     sto A $network_ptr
-    ldi A $_main_str_5
+    call @init_playground
+    ldm A $target_x
     stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldm A $network_ptr
+    ldm A $target_y
     stack A $DATASTACK_PTR
-    call @rt_print_tos
-    stack Z $DATASTACK_PTR
-    stack Z $DATASTACK_PTR
     stack Z $DATASTACK_PTR
     ldi A 3
     stack A $DATASTACK_PTR
@@ -187,21 +182,6 @@
     stack A $DATASTACK_PTR
     call @VVM.start
     ldi A $_main_str_6
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-    stack Z $DATASTACK_PTR
-    stack Z $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldi A 3
-    stack A $DATASTACK_PTR
-    ldi A $VVM1
-    stack A $DATASTACK_PTR
-    call @VVM.start
-    ldi A $_main_str_7
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
@@ -242,11 +222,11 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_0
+    jmpt :_main_if_end_4
     ldi A $VVM0
     stack A $DATASTACK_PTR
     call @VVM.run
-:_main_if_end_0
+:_main_if_end_4
     stack Z $DATASTACK_PTR
     ldi A $VVM1
     stack A $DATASTACK_PTR
@@ -256,11 +236,11 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_1
+    jmpt :_main_if_end_5
     ldi A $VVM1
     stack A $DATASTACK_PTR
     call @VVM.run
-:_main_if_end_1
+:_main_if_end_5
     ldm B $loop_counter
     ldi A 1
     sub B A
@@ -274,7 +254,7 @@
     ldi A $VVM1
     stack A $DATASTACK_PTR
     call @VVM.check_syscalls
-    ldi A $_main_str_8
+    ldi A $_main_str_7
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
@@ -2595,7 +2575,203 @@
     call @_plot_circle_points
     ret
 
+@create_neural_network
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @NEW.array
+    ustack A $DATASTACK_PTR
+    sto A $input_arr
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @NN.new_network
+    call @rt_dup
+    call @PRTnum
+    ldi A $create_neural_network_str_0
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ret
+@random_xy
+    call @rt_rnd
+    ldi A 440
+    ustack B $DATASTACK_PTR
+    mul B A
+    ldi A 999
+    dmod B A
+    stack B $DATASTACK_PTR
+    call @rt_rnd
+    ldi A 440
+    ustack B $DATASTACK_PTR
+    mul B A
+    ldi A 999
+    dmod B A
+    stack B $DATASTACK_PTR
+    ret
+@init_playground
+    call @TURTLE.start
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @TURTLE.mode
+    stack Z $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    call @random_xy
+    ustack A $DATASTACK_PTR
+    sto A $target_y
+    ustack A $DATASTACK_PTR
+    sto A $target_x
+    ldi A 5
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldm B $target_x
+    ldi A 100
+    add B A
+    stack B $DATASTACK_PTR
+    ldm B $target_y
+    ldi A 20
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @TURTLE.circle
+    call @TURTLE.flip
+    ret
 @_HOST.predict
+    ldm B $input_arr
+    ldi A 1
+    add A B
+    sto A $_ARR_TEMP_PTR
+    ld B Z
+    ldm I $_ARR_TEMP_PTR
+    stx B $_start_memory_
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    ldi A 440
+    ld B A
+    ldi A 10
+    dmod B A
+    ldm A $SCALE_FACTOR
+    mul B A
+    stack B $DATASTACK_PTR
+    call @FP.div
+    ustack A $DATASTACK_PTR
+    sto A $dy_fp
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    ldi A 440
+    ld B A
+    ldi A 10
+    dmod B A
+    ldm A $SCALE_FACTOR
+    mul B A
+    stack B $DATASTACK_PTR
+    call @FP.div
+    ustack A $DATASTACK_PTR
+    sto A $dx_fp
+    stack A $DATASTACK_PTR
+    ldm A $input_arr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $dy_fp
+    stack A $DATASTACK_PTR
+    ldm A $input_arr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $network_ptr
+    stack A $DATASTACK_PTR
+    ldm A $input_arr
+    stack A $DATASTACK_PTR
+    call @NN.predict
+    ustack A $DATASTACK_PTR
+    sto A $output_ptr
+    stack Z $DATASTACK_PTR
+    ldm A $output_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $vx_fp
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $output_ptr
+    stack A $DATASTACK_PTR
+    call @ARRAY.get
+    ustack A $DATASTACK_PTR
+    sto A $vy_fp
+    ldm A $vx_fp
+    stack A $DATASTACK_PTR
+    ldi A 3000
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_HOST.predict_if_else_0
+    ldi A 1
+    stack A $DATASTACK_PTR
+    jmp :_HOST.predict_if_end_0
+:_HOST.predict_if_else_0
+    ldm A $vx_fp
+    stack A $DATASTACK_PTR
+    ldi A 3000
+    ldi B 0
+    sub B A
+    stack B $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_HOST.predict_if_else_1
+    ldi A 1
+    ldi B 0
+    sub B A
+    stack B $DATASTACK_PTR
+    jmp :_HOST.predict_if_end_1
+:_HOST.predict_if_else_1
+    stack Z $DATASTACK_PTR
+:_HOST.predict_if_end_1
+:_HOST.predict_if_end_0
+    ldm A $vy_fp
+    stack A $DATASTACK_PTR
+    ldi A 3000
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_HOST.predict_if_else_2
+    ldi A 1
+    stack A $DATASTACK_PTR
+    jmp :_HOST.predict_if_end_2
+:_HOST.predict_if_else_2
+    ldm A $vy_fp
+    stack A $DATASTACK_PTR
+    ldi A 3000
+    ldi B 0
+    sub B A
+    stack B $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_HOST.predict_if_else_3
+    ldi A 1
+    ldi B 0
+    sub B A
+    stack B $DATASTACK_PTR
+    jmp :_HOST.predict_if_end_3
+:_HOST.predict_if_else_3
+    stack Z $DATASTACK_PTR
+:_HOST.predict_if_end_3
+:_HOST.predict_if_end_2
     ret
 @_HOST.train
     ret
@@ -2607,13 +2783,18 @@
     ldi A 50
     stack A $DATASTACK_PTR
     call @DEQUE.init_pool
-    ldi A $_init_main_str_0
+    ldi A $_init_main_str_1
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-        call @DEQUE.new
+        ldi A 10000
+    sto A $SCALE_FACTOR
+    ldi A 10000
+    stack A $DATASTACK_PTR
+    call @NN.set_scale
+    call @DEQUE.new
     ustack A $DATASTACK_PTR
     sto A $VVM0_host_dq
     call @DEQUE.new
@@ -2623,7 +2804,7 @@
     ustack A $DATASTACK_PTR
     sto A $AGENT_code
     call @VVM.init
-    ldi A $_init_main_str_1
+    ldi A $_init_main_str_2
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
@@ -2646,7 +2827,7 @@
     call @VVM.bind
     ldm A $AGENT_code
     stack A $DATASTACK_PTR
-    ldi A $_init_main_str_2
+    ldi A $_init_main_str_3
     stack A $DATASTACK_PTR
     call @VVM.loadcode
     ldi A $AGENT_code
@@ -2658,7 +2839,7 @@
     ldi A $VVM0
     stack A $DATASTACK_PTR
     call @VVM.create
-    ldi A $_init_main_str_3
+    ldi A $_init_main_str_4
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
@@ -2666,7 +2847,7 @@
         int $INT_VECTORS         ; Interrupt to trigger the syscall
         ldm A $AGENT_code
     stack A $DATASTACK_PTR
-    ldi A $_init_main_str_2
+    ldi A $_init_main_str_3
     stack A $DATASTACK_PTR
     call @VVM.loadcode
     ldi A $AGENT_code
@@ -2678,7 +2859,7 @@
     ldi A $VVM1
     stack A $DATASTACK_PTR
     call @VVM.create
-    ldi A $_init_main_str_4
+    ldi A $_init_main_str_5
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
@@ -2835,16 +3016,23 @@
 % $VVM1 31744
 % $vvm_timeslice 50
 % $loop_counter 0
+% $network_ptr 0
+% $target_x 0
+% $target_y 0
+% $input_arr 0
+% $output_ptr 0
+% $dx_fp 0
+% $dy_fp 0
+% $vx_fp 0
+% $vy_fp 0
 % $VVM0_host_dq 0
 % $VVM1_host_dq 0
 % $AGENT_code 0
-% $network_ptr 0
-% $_init_main_str_0 \P \o \o \l \space \i \n \i \t \i \a \l \i \z \e \d \space \( \s \i \z \e \space \5 \0 \) \. \Return \null
-% $_init_main_str_1 \V \V \M \space \E \n \v \i \r \o \n \m \e \n \t \space \I \n \i \t \i \a \l \i \z \e \d \: \Return \null
-% $_init_main_str_2 \s \b \c \_ \h \u \n \t \e \r \_ \a \g \e \n \t \null
-% $_init_main_str_3 \V \V \M \0 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \Return \null
-% $_init_main_str_4 \V \V \M \1 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \Return \null
-% $_main_str_5 \N \e \t \w \o \r \k \space \c \r \e \a \t \e \d \space \a \t \space \a \d \d \r \e \s \s \: \space \null
+% $create_neural_network_str_0 \space \N \e \t \w \o \r \k \space \a \d \d \r \e \s \s \Return \null
+% $_init_main_str_1 \P \o \o \l \space \i \n \i \t \i \a \l \i \z \e \d \space \( \s \i \z \e \space \5 \0 \) \. \Return \null
+% $_init_main_str_2 \V \V \M \space \E \n \v \i \r \o \n \m \e \n \t \space \I \n \i \t \i \a \l \i \z \e \d \: \Return \null
+% $_init_main_str_3 \s \b \c \_ \h \u \n \t \e \r \_ \a \g \e \n \t \null
+% $_init_main_str_4 \V \V \M \0 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \Return \null
+% $_init_main_str_5 \V \V \M \1 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \Return \null
 % $_main_str_6 \V \V \M \0 \space \s \t \a \r \t \e \d \space \Return \null
-% $_main_str_7 \V \V \M \1 \space \s \t \a \r \t \e \d \space \Return \null
-% $_main_str_8 \. \null
+% $_main_str_7 \. \null

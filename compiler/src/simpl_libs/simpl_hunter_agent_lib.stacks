@@ -4,18 +4,58 @@ MACRO load_simpl_hunter_agent {
     AS _sq_
 
     \"PUSH"        _sq_ DEQUE.append
-    42             _sq_ DEQUE.append
+    50             _sq_ DEQUE.append
     \"SET"         _sq_ DEQUE.append
     4              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    50             _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    5              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append
     4              _sq_ DEQUE.append
+    \"SUB"         _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    6              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    5              _sq_ DEQUE.append
+    \"SUB"         _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    7              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    6              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    7              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    100            _sq_ DEQUE.append
+    \"EXEC"        _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    9              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    8              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    3              _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     10             _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append
     \"SYS"         _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append
-    3              _sq_ DEQUE.append
+    8              _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    10             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    9              _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     10             _sq_ DEQUE.append

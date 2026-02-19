@@ -673,8 +673,7 @@ DEF s_exec {
 
     ## STEP 2
     # pop the argc numbers of arguments from the VVM stack and push to the datastack
-    # We iterate backwards (SP-argc to SP-1) to preserve argument order on the Host Stack.
-    
+    # We iterate backwards (SP-argc to SP-1) to preserve argument order on the Host Stack.  
     _argc AS _env_idx
     WHILE _env_idx 0 > DO
         # Calculate address: SP - index

@@ -1,15 +1,39 @@
 VAR argc
 VAR target_x
 VAR target_y
-VAR target_id
+VAR agent_id
+
+VAR hunter_x
+VAR hunter_y
+VAR dx
+VAR dy
+VAR vx
+VAR vy
 
 # Define host side functions as syscalls-is's for the FFI interface
 CONST HOST.predict  100 ; Syscall ID for the predict function
 CONST HOST.train    101 ; Syscall ID for the train function
 CONST HOST.plot     102 ; Syscall ID for the plot function
 
+# --- Initialization ---
+# For now, let's just set a fixed starting position for the hunter.
+50 AS hunter_x
+50 AS hunter_y
 
-VALUE JRK 42
+# --- Main Loop (single step for testing) ---
 
-JRK PRINT
-target_id PRINT 
+# 1. Calculate deltas
+target_x hunter_x - AS dx
+target_y hunter_y - AS dy
+
+# # 2. Call the predict function on the host
+# #    Stack: dx dy argc retc syscall_id
+dx dy 2 2 HOST.predict EXEC
+
+# # 3. Store and print the results (vx, vy)
+AS vy
+AS vx
+
+agent_id PRINT
+vx PRINT
+vy PRINT

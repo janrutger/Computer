@@ -1024,9 +1024,9 @@ Key achievements:
     - [ ] **Main Program (`ml_hunter_host.stacks`):**
         - [x] Include all required libraries (`vvm_core`, `vvm_env`, `mlnn_gpu3_optimized`, `fixed_point`, `turtle`).
         - [x] Define constants for FFI syscall IDs (`PREDICT_ID`, `TRAIN_ID`, `PLOT_ID`).
-        - [ ] Create the Neural Network instance using `mlnn_gpu3_optimized_lib`. (2-4-2)
-        - [ ] Initialize `turtle_lib` and set up the playground (screen size, target marker).
-        - [ ] Define and initialize the static target position (`target_x`, `target_y`).
+        - [x] Create the Neural Network instance using `mlnn_gpu3_optimized_lib`. (2-4-2)
+        - [x] Initialize `turtle_lib` and set up the playground (screen size, target marker).
+        - [x] Define and initialize the static target position (`target_x`, `target_y`).
         - [x] Create two VVM pointers and their dedicated host deques.
         - [ ] Implement the main loop:
             - [x] `VVM.run` for VVM 0.
@@ -1036,13 +1036,13 @@ Key achievements:
             - [ ] `turtle.flip()` to update the display.
             - [x] Implement a periodic keep-alive signal (e.g., print a "." every N loops).
     - [ ] **FFI Handlers (in `ml_hunter_host.stacks`):**
-        - [ ] **`s_predict` function:**
-            - [ ] Pop `dx`, `dy` (integers) from the host stack.
-            - [ ] Convert `dx`, `dy` to normalized fixed-point values (e.g., divide by screen width).
-            - [ ] Call `NN.predict` with the fixed-point inputs.
-            - [ ] Get the fixed-point `vx_fp`, `vy_fp` from the result.
-            - [ ] Convert `vx_fp`, `vy_fp` to integer steps (`-1`, `0`, `1`) using the `0.3` threshold logic.
-            - [ ] Push integer `vx`, `vy` back to the host stack.
+        - [x] **`s_predict` function:**
+            - [x] Pop `dx`, `dy` (integers) from the host stack.
+            - [x] Convert `dx`, `dy` to normalized fixed-point values (e.g., divide by screen width).
+            - [x] Call `NN.predict` with the fixed-point inputs.
+            - [x] Get the fixed-point `vx_fp`, `vy_fp` from the result.
+            - [x] Convert `vx_fp`, `vy_fp` to integer steps (`-1`, `0`, `1`) using the `0.3` threshold logic.
+            - [x] Push integer `vx`, `vy` back to the host stack.
         - [ ] **`s_train` function:**
             - [ ] Pop `dx`, `dy`, `vx`, `vy`, `reward` (all integers) from the host stack.
             - [ ] Convert scalar inputs to fixed-point.

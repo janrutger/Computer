@@ -16,22 +16,105 @@ VALUE VVM0 30720        ; The memory address for VVM0, stored in a variable.
 VALUE VVM1 31744        ; The memory address for VVM1, stored in a variable.
 
 VALUE vvm_timeslice 50  ; Max instructions per VVM per frame to prevent infinite loops.
-VALUE loop_counter 0    ; A temporary counter for the run loop.
+VALUE loop_counter  0   ; A temporary counter for the run loop.
 
 
+VALUE network_ptr   0
 CONST HOST.predict  100 ; Syscall ID for the predict function
 CONST HOST.train    101 ; Syscall ID for the train function
 CONST HOST.plot     102 ; Syscall ID for the plot function
 
+VALUE target_x 0
+VALUE target_y 0
+
+VALUE input_arr  0       ; 0 is X, 1 is Y
+VALUE output_ptr 0
+VALUE dx_fp 0
+VALUE dy_fp 0
+VALUE vx_fp 0
+VALUE vy_fp 0
+; VALUE _temp_ptr 0      ; Already defined
+
+
+CONST Xoffset 100
+CONST Yoffset 20
+CONST radius   2
+CONST screensize 440
+
+# Fixedpoint scale
+CONST SCALE 10000
+
+# VVM Deque pointers and agent ID
+VALUE VVM0_host_dq 0
+VALUE VVM1_host_dq 0
+VALUE AGENT_code   0
+
+
 
 # create an NN-network and return its pointer
-MACRO create_neural_network {
+DEF create_neural_network {
+    2 NEW.array AS input_arr
+
     2 4 2 NN.new_network
+    DUP PRTnum " Network address\n" PRTstring
+}
+
+DEF random_xy {   # returns an random XY values
+    RND screensize * 999 //        # Push X
+    RND screensize * 999 //        # Push Y
+}
+
+DEF init_playground {
+    TURTLE.start        # Start the turtle graphics
+    2 TURTLE.mode       # Double Buffer Pixel mode
+    IO 2 NEW            # Start with a blank screen
+
+
+    # Playground size 440x440
+    # X-bounds: [100, 540]
+    # Y-bounds: [20, 460]
+
+    # gray TURTLE.color
+    # 100  20 540  20 TURTLE.line
+    # 100 460 540 460 TURTLE.line
+    # 100  20 100 460 TURTLE.line
+    # 540  20 540 460 TURTLE.line
+    # TURTLE.flip
+
+    
+    random_xy AS target_y AS target_x
+
+    # Draw the target 
+    green TURTLE.color
+    target_x Xoffset +
+    target_y Yoffset +
+    radius TURTLE.circle
+    TURTLE.flip
 }
 
 
-DEF _HOST.predict {
-    }
+DEF _HOST.predict { 
+    input_arr ARRAY.clear           ; an heap-lib function
+
+    # expects dx dy on the host datastack
+    FP.from_int screensize 10 // FP.from_int FP.div AS dy_fp
+    FP.from_int screensize 10 // FP.from_int FP.div AS dx_fp
+
+    dx_fp input_arr ARRAY.append
+    dy_fp input_arr ARRAY.append
+
+    network_ptr input_arr NN.predict AS output_ptr
+ 
+    # Get the fixed-point `vx_fp`, `vy_fp` from the result.
+    0 output_ptr ARRAY.get AS vx_fp
+    1 output_ptr ARRAY.get AS vy_fp
+
+    # Convert `vx_fp`, `vy_fp` to integer steps (`-1`, `0`, `1`) using the `0.3` threshold logic.
+    vx_fp 3000 > IF 1 ELSE vx_fp 3000 NEGATE < IF 1 NEGATE ELSE 0 END END
+    vy_fp 3000 > IF 1 ELSE vy_fp 3000 NEGATE < IF 1 NEGATE ELSE 0 END END
+
+    # The FFI interface is responceble to move from host-stack to VVM-stack
+}
 
 
 
@@ -43,15 +126,15 @@ DEF _HOST.plot {
     }
 
 
-VALUE VVM0_host_dq 0
-VALUE VVM1_host_dq 0
-VALUE AGENT_code   0
-VALUE network_ptr  0
+
+
 
 
 DEF _init_main {
     HEAP.free
     50 DEQUE.init_pool "Pool initialized (size 50).\n" PRTstring
+    SCALE FP.set_scale      # Set the fixed point scale factor
+    SCALE NN.set_scale
 
     DEQUE.new AS VVM0_host_dq       # Get a pointer for the host communication deque
     DEQUE.new AS VVM1_host_dq       # Get a pointer for the host communication deque
@@ -88,19 +171,23 @@ _init_main
 
 # initialize the neural network
 create_neural_network AS network_ptr
-"Network created at address: " PRTstring network_ptr PRINT
+
 
 # initialize the playground start posistion
+init_playground     # this will set 
+                    # the target_x target_y values
+                    # Draws the target circle
+
 
 
 # Starting both VVMs.
 # ADVICE: These arguments are placeholders. They should be replaced with
 # target_x, target_y, and agent_id (0 or 1) from your project plan.
 # ( arg1 ... argn argc &VVM-pointer -- )
-0 0 0 3 &VVM0 VVM.start
+target_x target_y 0 3 &VVM0 VVM.start
 "VVM0 started \n" PRTstring
 
-0 0 1 3 &VVM1 VVM.start
+target_x target_y 1 3 &VVM1 VVM.start
 "VVM1 started \n" PRTstring
 
 # # Run/Crank the VVMs
