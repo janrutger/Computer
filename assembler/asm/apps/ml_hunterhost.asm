@@ -248,11 +248,11 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_8
+    jmpt :_main_if_end_10
     ldi A $VVM0
     stack A $DATASTACK_PTR
     call @VVM.run
-:_main_if_end_8
+:_main_if_end_10
     stack Z $DATASTACK_PTR
     ldi A $VVM1
     stack A $DATASTACK_PTR
@@ -262,11 +262,11 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_9
+    jmpt :_main_if_end_11
     ldi A $VVM1
     stack A $DATASTACK_PTR
     call @VVM.run
-:_main_if_end_9
+:_main_if_end_11
     ldm B $loop_counter
     ldi A 1
     sub B A
@@ -2655,6 +2655,46 @@
     ldi A 10
     stack A $DATASTACK_PTR
     call @rt_udc_control
+    ldi A 12
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldi A 100
+    stack A $DATASTACK_PTR
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldi A 540
+    stack A $DATASTACK_PTR
+    ldi A 20
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    ldi A 100
+    stack A $DATASTACK_PTR
+    ldi A 460
+    stack A $DATASTACK_PTR
+    ldi A 540
+    stack A $DATASTACK_PTR
+    ldi A 460
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    ldi A 100
+    stack A $DATASTACK_PTR
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldi A 100
+    stack A $DATASTACK_PTR
+    ldi A 460
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    ldi A 540
+    stack A $DATASTACK_PTR
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldi A 540
+    stack A $DATASTACK_PTR
+    ldi A 460
+    stack A $DATASTACK_PTR
+    call @TURTLE.line
+    call @TURTLE.flip
     call @random_xy
     ustack A $DATASTACK_PTR
     sto A $target_y
@@ -2741,37 +2781,66 @@
     call @ARRAY.get
     ustack A $DATASTACK_PTR
     sto A $vy_fp
-    ldm A $vx_fp
+    call @rt_rnd
+    ldi A 100
+    ustack B $DATASTACK_PTR
+    dmod B A
     stack A $DATASTACK_PTR
-    ldi A 3000
+    ldi A 10
     stack A $DATASTACK_PTR
-    call @rt_gt
+    call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :_HOST.predict_if_else_0
+    call @rt_rnd
+    ldi A 3
+    ustack B $DATASTACK_PTR
+    dmod B A
+    ld B A
     ldi A 1
-    stack A $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    call @rt_rnd
+    ldi A 3
+    ustack B $DATASTACK_PTR
+    dmod B A
+    ld B A
+    ldi A 1
+    sub B A
+    stack B $DATASTACK_PTR
     jmp :_HOST.predict_if_end_0
 :_HOST.predict_if_else_0
     ldm A $vx_fp
     stack A $DATASTACK_PTR
     ldi A 3000
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_HOST.predict_if_else_1
+    ldi A 1
+    stack A $DATASTACK_PTR
+    jmp :_HOST.predict_if_end_1
+:_HOST.predict_if_else_1
+    ldm A $vx_fp
+    stack A $DATASTACK_PTR
+    ldi A 3000
     ldi B 0
     sub B A
     stack B $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_HOST.predict_if_else_1
+    jmpt :_HOST.predict_if_else_2
     ldi A 1
     ldi B 0
     sub B A
     stack B $DATASTACK_PTR
-    jmp :_HOST.predict_if_end_1
-:_HOST.predict_if_else_1
+    jmp :_HOST.predict_if_end_2
+:_HOST.predict_if_else_2
     stack Z $DATASTACK_PTR
+:_HOST.predict_if_end_2
 :_HOST.predict_if_end_1
-:_HOST.predict_if_end_0
     ldm A $vy_fp
     stack A $DATASTACK_PTR
     ldi A 3000
@@ -2779,11 +2848,11 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_HOST.predict_if_else_2
+    jmpt :_HOST.predict_if_else_3
     ldi A 1
     stack A $DATASTACK_PTR
-    jmp :_HOST.predict_if_end_2
-:_HOST.predict_if_else_2
+    jmp :_HOST.predict_if_end_3
+:_HOST.predict_if_else_3
     ldm A $vy_fp
     stack A $DATASTACK_PTR
     ldi A 3000
@@ -2793,29 +2862,24 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_HOST.predict_if_else_3
+    jmpt :_HOST.predict_if_else_4
     ldi A 1
     ldi B 0
     sub B A
     stack B $DATASTACK_PTR
-    jmp :_HOST.predict_if_end_3
-:_HOST.predict_if_else_3
+    jmp :_HOST.predict_if_end_4
+:_HOST.predict_if_else_4
     stack Z $DATASTACK_PTR
+:_HOST.predict_if_end_4
 :_HOST.predict_if_end_3
-:_HOST.predict_if_end_2
+:_HOST.predict_if_end_0
     ret
 @_HOST.train
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    mul A B
+    ustack A $DATASTACK_PTR
     sto A $reward_fp
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    mul A B
+    ustack A $DATASTACK_PTR
     sto A $vy_fp
-    ldm A $SCALE_FACTOR
-    ustack B $DATASTACK_PTR
-    mul A B
+    ustack A $DATASTACK_PTR
     sto A $vx_fp
     ldm A $SCALE_FACTOR
     ustack B $DATASTACK_PTR
@@ -2862,60 +2926,26 @@
     ldm A $input_arr
     stack A $DATASTACK_PTR
     call @ARRAY.append
-    ldm A $vx_fp
-    stack A $DATASTACK_PTR
+    ldm B $vx_fp
     ldm A $reward_fp
-    stack A $DATASTACK_PTR
-    call @FP.mul
-    ustack A $DATASTACK_PTR
+    mul B A
+    ldm A $SCALE_FACTOR
+    mul A B
     sto A $tx_fp
-    ldm A $vy_fp
-    stack A $DATASTACK_PTR
+    ldm B $vy_fp
     ldm A $reward_fp
-    stack A $DATASTACK_PTR
-    call @FP.mul
-    ustack A $DATASTACK_PTR
+    mul B A
+    ldm A $SCALE_FACTOR
+    mul A B
     sto A $ty_fp
     ldm A $vx_fp
     stack A $DATASTACK_PTR
     stack Z $DATASTACK_PTR
     call @rt_eq
-    ldm A $vy_fp
-    stack A $DATASTACK_PTR
-    stack Z $DATASTACK_PTR
-    call @rt_eq
     ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    mul B A
-    stack B $DATASTACK_PTR
-    ldm A $reward_fp
-    stack A $DATASTACK_PTR
-    stack Z $DATASTACK_PTR
-    call @rt_lt
-    ustack A $DATASTACK_PTR
-    ustack B $DATASTACK_PTR
-    mul A B
     tst A 0
-    jmpt :_HOST.train_if_end_4
+    jmpt :_HOST.train_if_end_5
     ldm A $dx_fp
-    stack A $DATASTACK_PTR
-    stack Z $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_HOST.train_if_else_5
-    ldi A 10000
-    stack A $DATASTACK_PTR
-    jmp :_HOST.train_if_end_5
-:_HOST.train_if_else_5
-    ldi A 10000
-    ldi B 0
-    sub B A
-    stack B $DATASTACK_PTR
-:_HOST.train_if_end_5
-    ustack A $DATASTACK_PTR
-    sto A $tx_fp
-    ldm A $dy_fp
     stack A $DATASTACK_PTR
     stack Z $DATASTACK_PTR
     call @rt_gt
@@ -2932,8 +2962,34 @@
     stack B $DATASTACK_PTR
 :_HOST.train_if_end_6
     ustack A $DATASTACK_PTR
+    sto A $tx_fp
+:_HOST.train_if_end_5
+    ldm A $vy_fp
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_HOST.train_if_end_7
+    ldm A $dy_fp
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_HOST.train_if_else_8
+    ldi A 10000
+    stack A $DATASTACK_PTR
+    jmp :_HOST.train_if_end_8
+:_HOST.train_if_else_8
+    ldi A 10000
+    ldi B 0
+    sub B A
+    stack B $DATASTACK_PTR
+:_HOST.train_if_end_8
+    ustack A $DATASTACK_PTR
     sto A $ty_fp
-:_HOST.train_if_end_4
+:_HOST.train_if_end_7
     ldm B $target_arr
     ldi A 1
     add A B
@@ -2973,8 +3029,8 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_HOST.plot_if_else_7
-    ldi A 15
+    jmpt :_HOST.plot_if_else_9
+    ldi A 11
     stack A $DATASTACK_PTR
     call @TURTLE.color
     ldm B $old_x0
@@ -3006,9 +3062,9 @@
     ldi A 2
     stack A $DATASTACK_PTR
     call @TURTLE.circle
-    jmp :_HOST.plot_if_end_7
-:_HOST.plot_if_else_7
-    ldi A 15
+    jmp :_HOST.plot_if_end_9
+:_HOST.plot_if_else_9
+    ldi A 11
     stack A $DATASTACK_PTR
     call @TURTLE.color
     ldm B $old_x1
@@ -3040,7 +3096,7 @@
     ldi A 2
     stack A $DATASTACK_PTR
     call @TURTLE.circle
-:_HOST.plot_if_end_7
+:_HOST.plot_if_end_9
     call @TURTLE.flip
     ret
 @_init_main
@@ -3060,6 +3116,10 @@
     ldi A 10000
     stack A $DATASTACK_PTR
     call @NN.set_scale
+    call @rt_rnd
+    call @rt_drop
+    call @rt_rnd
+    call @rt_drop
     call @DEQUE.new
     ustack A $DATASTACK_PTR
     sto A $VVM0_host_dq

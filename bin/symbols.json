@@ -600,10 +600,10 @@
         "@create_neural_network": 11502,
         "@random_xy": 11527,
         "@init_playground": 11542,
-        "@_HOST.predict": 11573,
-        "@_HOST.train": 11692,
-        "@_HOST.plot": 11843,
-        "@_init_main": 11922
+        "@_HOST.predict": 11613,
+        "@_HOST.train": 11760,
+        "@_HOST.plot": 11896,
+        "@_init_main": 11975
     },
     "labels": [
         {
@@ -896,8 +896,8 @@
         {
             ":_main_while_start_0": 9252,
             ":_main_while_start_1": 9273,
-            ":_main_if_end_8": 9289,
-            ":_main_if_end_9": 9302,
+            ":_main_if_end_10": 9289,
+            ":_main_if_end_11": 9302,
             ":_main_while_end_1": 9308,
             ":_main_while_end_0": 9320,
             ":loop_POWER": 9327,
@@ -978,21 +978,24 @@
             ":TURTLE.circle_if_else_18": 11466,
             ":TURTLE.circle_if_end_18": 11487,
             ":TURTLE.circle_if_end_19": 11496,
-            ":_HOST.predict_if_else_0": 11648,
-            ":_HOST.predict_if_else_1": 11663,
-            ":_HOST.predict_if_end_1": 11664,
-            ":_HOST.predict_if_end_0": 11664,
-            ":_HOST.predict_if_else_2": 11675,
-            ":_HOST.predict_if_else_3": 11690,
-            ":_HOST.predict_if_end_3": 11691,
-            ":_HOST.predict_if_end_2": 11691,
-            ":_HOST.train_if_else_5": 11794,
-            ":_HOST.train_if_end_5": 11798,
-            ":_HOST.train_if_else_6": 11810,
-            ":_HOST.train_if_end_6": 11814,
-            ":_HOST.train_if_end_4": 11816,
-            ":_HOST.plot_if_else_7": 11888,
-            ":_HOST.plot_if_end_7": 11920
+            ":_HOST.predict_if_else_0": 11705,
+            ":_HOST.predict_if_else_1": 11716,
+            ":_HOST.predict_if_else_2": 11731,
+            ":_HOST.predict_if_end_2": 11732,
+            ":_HOST.predict_if_end_1": 11732,
+            ":_HOST.predict_if_else_3": 11743,
+            ":_HOST.predict_if_else_4": 11758,
+            ":_HOST.predict_if_end_4": 11759,
+            ":_HOST.predict_if_end_3": 11759,
+            ":_HOST.predict_if_end_0": 11759,
+            ":_HOST.train_if_else_6": 11840,
+            ":_HOST.train_if_end_6": 11844,
+            ":_HOST.train_if_end_5": 11846,
+            ":_HOST.train_if_else_8": 11863,
+            ":_HOST.train_if_end_8": 11867,
+            ":_HOST.train_if_end_7": 11869,
+            ":_HOST.plot_if_else_9": 11941,
+            ":_HOST.plot_if_end_9": 11973
         }
     ]
 }

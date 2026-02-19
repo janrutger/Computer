@@ -85,12 +85,12 @@ DEF init_playground {
     # X-bounds: [100, 540]
     # Y-bounds: [20, 460]
 
-    # gray TURTLE.color
-    # 100  20 540  20 TURTLE.line
-    # 100 460 540 460 TURTLE.line
-    # 100  20 100 460 TURTLE.line
-    # 540  20 540 460 TURTLE.line
-    # TURTLE.flip
+    gray TURTLE.color
+    100  20 540  20 TURTLE.line
+    100 460 540 460 TURTLE.line
+    100  20 100 460 TURTLE.line
+    540  20 540 460 TURTLE.line
+    TURTLE.flip
 
     
     random_xy AS target_y AS target_x
@@ -120,9 +120,17 @@ DEF _HOST.predict {
     0 output_ptr ARRAY.get AS vx_fp
     1 output_ptr ARRAY.get AS vy_fp
 
-    # Convert `vx_fp`, `vy_fp` to integer steps (`-1`, `0`, `1`) using the `0.3` threshold logic.
-    vx_fp 3000 > IF 1 ELSE vx_fp 3000 NEGATE < IF 1 NEGATE ELSE 0 END END
-    vy_fp 3000 > IF 1 ELSE vy_fp 3000 NEGATE < IF 1 NEGATE ELSE 0 END END
+    # Epsilon-Greedy Exploration: 10% chance to move randomly
+    # This forces the agent to try directions it hasn't learned yet (like North/West)
+    RND 100 % 10 < IF
+        # Random move -1, 0, or 1
+        RND 3 % 1 -
+        RND 3 % 1 -
+    ELSE
+        # Convert `vx_fp`, `vy_fp` to integer steps (`-1`, `0`, `1`) using the `0.3` threshold logic.
+        vx_fp 3000 > IF 1 ELSE vx_fp 3000 NEGATE < IF 1 NEGATE ELSE 0 END END
+        vy_fp 3000 > IF 1 ELSE vy_fp 3000 NEGATE < IF 1 NEGATE ELSE 0 END END
+    END
 
     # The FFI interface is responceble to move from host-stack to VVM-stack
 }
@@ -131,9 +139,9 @@ DEF _HOST.predict {
 
 DEF _HOST.train {
     # Pop `dx`, `dy`, `vx`, `vy`, `reward` (all integers) from the host stack.
-    FP.from_int AS reward_fp
-    FP.from_int AS vy_fp
-    FP.from_int AS vx_fp
+    AS reward_fp   # Re-using var for integer reward
+    AS vy_fp       # Re-using var for integer vy
+    AS vx_fp       # Re-using var for integer vx
     
     # Convert dx, dy to normalized fixed-point
     FP.from_int screensize 10 // FP.from_int FP.div AS dy_fp
@@ -144,16 +152,20 @@ DEF _HOST.train {
     dx_fp input_arr ARRAY.append
     dy_fp input_arr ARRAY.append
 
-    # Calculate Targets: tx = vx * reward, ty = vy * reward
-    vx_fp reward_fp FP.mul AS tx_fp
-    vy_fp reward_fp FP.mul AS ty_fp
+    # --- Bounded Target Calculation ---
+    # The training target should be the "ideal" velocity, which is in the range [-1, 1].
+    # We calculate the integer target first, then convert to fixed point.
+    # This prevents the massive target values that were destabilizing the network.
+    vx_fp reward_fp * FP.from_int AS tx_fp
+    vy_fp reward_fp * FP.from_int AS ty_fp
 
-    # Kickstart logic: If vx,vy are 0 and reward is -1 (Stuck), use dx,dy to calculate target.
-    vx_fp 0 == vy_fp 0 == * reward_fp 0 < * IF
-        # Move towards target (simple sign logic)
-        dx_fp 0 > IF SCALE ELSE SCALE NEGATE END AS tx_fp
-        dy_fp 0 > IF SCALE ELSE SCALE NEGATE END AS ty_fp
-    END
+    # Improved Training Logic:
+    # If an axis was idle (0), we shouldn't train it to be 0.
+    # Instead, we should nudge it towards the target.
+    # If vx was 0, set target tx to the sign of dx (move towards target).
+    # If vy was 0, set target ty to the sign of dy.
+    vx_fp 0 == IF dx_fp 0 > IF SCALE ELSE SCALE NEGATE END AS tx_fp END
+    vy_fp 0 == IF dy_fp 0 > IF SCALE ELSE SCALE NEGATE END AS ty_fp END
 
     # Prepare Target Array
     target_arr ARRAY.clear
@@ -173,14 +185,14 @@ DEF _HOST.plot {
 
     vx_fp 0 == IF
         # Agent 0
-        lightGray TURTLE.color      # lightGray leave an trace on the screen, otherwise black
+        darkGray TURTLE.color      # lightGray leave an trace on the screen, otherwise black
         old_x0 Xoffset + old_y0 Yoffset + radius TURTLE.circle
         dx_fp AS old_x0 dy_fp AS old_y0
         red TURTLE.color
         old_x0 Xoffset + old_y0 Yoffset + radius TURTLE.circle
     ELSE
         # Agent 1
-        lightGray TURTLE.color
+        darkGray TURTLE.color
         old_x1 Xoffset + old_y1 Yoffset + radius TURTLE.circle
         dx_fp AS old_x1 dy_fp AS old_y1
         blue TURTLE.color
@@ -197,6 +209,9 @@ DEF _init_main {
     50 DEQUE.init_pool "Pool initialized (size 50).\n" PRTstring
     SCALE FP.set_scale      # Set the fixed point scale factor
     SCALE NN.set_scale
+
+    RND DROP                # set some sort of seed for the random number generator
+    RND DROP
 
     DEQUE.new AS VVM0_host_dq       # Get a pointer for the host communication deque
     DEQUE.new AS VVM1_host_dq       # Get a pointer for the host communication deque

@@ -9,6 +9,14 @@ VAR dx
 VAR dy
 VAR vx
 VAR vy
+VAR new_x
+VAR new_y
+VAR old_dist_sq
+VAR new_dist_sq
+VAR reward
+VAR hit_wall
+
+CONST max_coord 439
 
 # Define host side functions as syscalls-is's for the FFI interface
 CONST HOST.predict  100 ; Syscall ID for the predict function
@@ -16,38 +24,61 @@ CONST HOST.train    101 ; Syscall ID for the train function
 CONST HOST.plot     102 ; Syscall ID for the plot function
 
 # --- Initialization ---
-# For now, let's just set a fixed starting position for the hunter.
-50 AS hunter_x
-50 AS hunter_y
 
-# --- Main Loop (Verification Mode) ---
+
+# Generate a random starting position within the 440x440 play area
+RND max_coord % AS hunter_x
+RND max_coord % AS hunter_y
+
+# Calculate initial squared distance to avoid using sqrt
+target_x hunter_x - AS dx
+target_y hunter_y - AS dy
+dx dx * dy dy * + AS old_dist_sq
+
+
+# --- Main Reinforcement Learning Loop ---
 :LOOP
-    # 1. Calculate deltas (Real calculation)
+    # 1. Calculate deltas to target (State)
     target_x hunter_x - AS dx
     target_y hunter_y - AS dy
 
-    # 2. Call PREDICT (Test FFI)
+    # 2. Call PREDICT to get an action from the NN
     dx dy 2 2 HOST.predict EXEC
     AS vy
     AS vx
 
-    # 3. Simulate Movement (Ignore NN output for now, just move +1, +1)
-    hunter_x 1 + AS hunter_x
-    hunter_y 1 + AS hunter_y
+    # 3. Calculate potential new position
+    hunter_x vx + AS new_x
+    hunter_y vy + AS new_y
 
-    # 4. Call TRAIN (Test FFI with dummy positive reward)
-    # Stack: dx dy vx vy reward argc retc syscall_id
-    dx dy 1 1 1 5 0 HOST.train EXEC
+    # 4. Boundary Checks and Position Clamping
+    0 AS hit_wall
+    new_x 0 < IF 0 AS new_x 1 AS hit_wall END
+    new_x max_coord > IF max_coord AS new_x 1 AS hit_wall END
+    new_y 0 < IF 0 AS new_y 1 AS hit_wall END
+    new_y max_coord > IF max_coord AS new_y 1 AS hit_wall END
 
-    # 5. Call PLOT (Test FFI)
-    # Stack: agent_id x y argc retc syscall_id
+    # 5. Reward Calculation
+    hit_wall 1 == IF
+        1 NEGATE AS reward
+    ELSE
+        # Calculate new distance squared and compare to old
+        target_x new_x - DUP * target_y new_y - DUP * + AS new_dist_sq
+        new_dist_sq old_dist_sq < IF 1 AS reward ELSE 1 NEGATE AS reward END
+        new_dist_sq AS old_dist_sq
+    END
+    # If we hit a wall, the new distance is the distance from the clamped position.
+    # We must still calculate and update it to have a correct 'old_dist_sq' for the next step.
+    hit_wall 1 == IF target_x new_x - DUP * target_y new_y - DUP * + AS old_dist_sq END
+
+    # 6. Update hunter's actual position
+    new_x AS hunter_x
+    new_y AS hunter_y
+
+    # 7. Call TRAIN to learn from this step
+    dx dy vx vy reward 5 0 HOST.train EXEC
+
+    # 8. Call PLOT to visualize the new position
     agent_id hunter_x hunter_y 3 0 HOST.plot EXEC
 
-    # Reset position if too far (Simple animation loop)
-    hunter_x 100 > IF 50 AS hunter_x 50 AS hunter_y END
-
     GOTO LOOP
-
-agent_id PRINT
-vx PRINT
-vy PRINT
