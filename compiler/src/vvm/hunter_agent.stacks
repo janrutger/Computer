@@ -20,19 +20,33 @@ CONST HOST.plot     102 ; Syscall ID for the plot function
 50 AS hunter_x
 50 AS hunter_y
 
-# --- Main Loop (single step for testing) ---
+# --- Main Loop (Verification Mode) ---
+:LOOP
+    # 1. Calculate deltas (Real calculation)
+    target_x hunter_x - AS dx
+    target_y hunter_y - AS dy
 
-# 1. Calculate deltas
-target_x hunter_x - AS dx
-target_y hunter_y - AS dy
+    # 2. Call PREDICT (Test FFI)
+    dx dy 2 2 HOST.predict EXEC
+    AS vy
+    AS vx
 
-# # 2. Call the predict function on the host
-# #    Stack: dx dy argc retc syscall_id
-dx dy 2 2 HOST.predict EXEC
+    # 3. Simulate Movement (Ignore NN output for now, just move +1, +1)
+    hunter_x 1 + AS hunter_x
+    hunter_y 1 + AS hunter_y
 
-# # 3. Store and print the results (vx, vy)
-AS vy
-AS vx
+    # 4. Call TRAIN (Test FFI with dummy positive reward)
+    # Stack: dx dy vx vy reward argc retc syscall_id
+    dx dy 1 1 1 5 0 HOST.train EXEC
+
+    # 5. Call PLOT (Test FFI)
+    # Stack: agent_id x y argc retc syscall_id
+    agent_id hunter_x hunter_y 3 0 HOST.plot EXEC
+
+    # Reset position if too far (Simple animation loop)
+    hunter_x 100 > IF 50 AS hunter_x 50 AS hunter_y END
+
+    GOTO LOOP
 
 agent_id PRINT
 vx PRINT

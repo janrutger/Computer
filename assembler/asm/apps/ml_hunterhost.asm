@@ -153,9 +153,17 @@
 . $dy_fp 1
 . $vx_fp 1
 . $vy_fp 1
+. $reward_fp 1
+. $tx_fp 1
+. $ty_fp 1
+. $target_arr 1
 . $VVM0_host_dq 1
 . $VVM1_host_dq 1
 . $AGENT_code 1
+. $old_x0 1
+. $old_y0 1
+. $old_x1 1
+. $old_y1 1
 . $create_neural_network_str_0 18
 . $_init_main_str_1 29
 . $_init_main_str_2 30
@@ -163,7 +171,8 @@
 . $_init_main_str_4 25
 . $_init_main_str_5 25
 . $_main_str_6 15
-. $_main_str_7 2
+. $_main_str_7 15
+. $_main_str_8 2
 
 # .CODE
     call @_init_main
@@ -182,6 +191,23 @@
     stack A $DATASTACK_PTR
     call @VVM.start
     ldi A $_main_str_6
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $target_x
+    stack A $DATASTACK_PTR
+    ldm A $target_y
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A $VVM1
+    stack A $DATASTACK_PTR
+    call @VVM.start
+    ldi A $_main_str_7
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
@@ -222,11 +248,11 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_4
+    jmpt :_main_if_end_8
     ldi A $VVM0
     stack A $DATASTACK_PTR
     call @VVM.run
-:_main_if_end_4
+:_main_if_end_8
     stack Z $DATASTACK_PTR
     ldi A $VVM1
     stack A $DATASTACK_PTR
@@ -236,11 +262,11 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_5
+    jmpt :_main_if_end_9
     ldi A $VVM1
     stack A $DATASTACK_PTR
     call @VVM.run
-:_main_if_end_5
+:_main_if_end_9
     ldm B $loop_counter
     ldi A 1
     sub B A
@@ -254,7 +280,7 @@
     ldi A $VVM1
     stack A $DATASTACK_PTR
     call @VVM.check_syscalls
-    ldi A $_main_str_7
+    ldi A $_main_str_8
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
@@ -2583,6 +2609,11 @@
     sto A $input_arr
     ldi A 2
     stack A $DATASTACK_PTR
+    call @NEW.array
+    ustack A $DATASTACK_PTR
+    sto A $target_arr
+    ldi A 2
+    stack A $DATASTACK_PTR
     ldi A 4
     stack A $DATASTACK_PTR
     ldi A 2
@@ -2774,8 +2805,243 @@
 :_HOST.predict_if_end_2
     ret
 @_HOST.train
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul A B
+    sto A $reward_fp
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul A B
+    sto A $vy_fp
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul A B
+    sto A $vx_fp
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    ldi A 440
+    ld B A
+    ldi A 10
+    dmod B A
+    ldm A $SCALE_FACTOR
+    mul B A
+    stack B $DATASTACK_PTR
+    call @FP.div
+    ustack A $DATASTACK_PTR
+    sto A $dy_fp
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    ldi A 440
+    ld B A
+    ldi A 10
+    dmod B A
+    ldm A $SCALE_FACTOR
+    mul B A
+    stack B $DATASTACK_PTR
+    call @FP.div
+    ustack A $DATASTACK_PTR
+    sto A $dx_fp
+    ldm B $input_arr
+    ldi A 1
+    add A B
+    sto A $_ARR_TEMP_PTR
+    ld B Z
+    ldm I $_ARR_TEMP_PTR
+    stx B $_start_memory_
+    ldm A $dx_fp
+    stack A $DATASTACK_PTR
+    ldm A $input_arr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $dy_fp
+    stack A $DATASTACK_PTR
+    ldm A $input_arr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $vx_fp
+    stack A $DATASTACK_PTR
+    ldm A $reward_fp
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    ustack A $DATASTACK_PTR
+    sto A $tx_fp
+    ldm A $vy_fp
+    stack A $DATASTACK_PTR
+    ldm A $reward_fp
+    stack A $DATASTACK_PTR
+    call @FP.mul
+    ustack A $DATASTACK_PTR
+    sto A $ty_fp
+    ldm A $vx_fp
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ldm A $vy_fp
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    ldm A $reward_fp
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    mul A B
+    tst A 0
+    jmpt :_HOST.train_if_end_4
+    ldm A $dx_fp
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_HOST.train_if_else_5
+    ldi A 10000
+    stack A $DATASTACK_PTR
+    jmp :_HOST.train_if_end_5
+:_HOST.train_if_else_5
+    ldi A 10000
+    ldi B 0
+    sub B A
+    stack B $DATASTACK_PTR
+:_HOST.train_if_end_5
+    ustack A $DATASTACK_PTR
+    sto A $tx_fp
+    ldm A $dy_fp
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_HOST.train_if_else_6
+    ldi A 10000
+    stack A $DATASTACK_PTR
+    jmp :_HOST.train_if_end_6
+:_HOST.train_if_else_6
+    ldi A 10000
+    ldi B 0
+    sub B A
+    stack B $DATASTACK_PTR
+:_HOST.train_if_end_6
+    ustack A $DATASTACK_PTR
+    sto A $ty_fp
+:_HOST.train_if_end_4
+    ldm B $target_arr
+    ldi A 1
+    add A B
+    sto A $_ARR_TEMP_PTR
+    ld B Z
+    ldm I $_ARR_TEMP_PTR
+    stx B $_start_memory_
+    ldm A $tx_fp
+    stack A $DATASTACK_PTR
+    ldm A $target_arr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $ty_fp
+    stack A $DATASTACK_PTR
+    ldm A $target_arr
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $network_ptr
+    stack A $DATASTACK_PTR
+    ldm A $input_arr
+    stack A $DATASTACK_PTR
+    ldm A $target_arr
+    stack A $DATASTACK_PTR
+    ldi A 1000
+    stack A $DATASTACK_PTR
+    call @NN.train
     ret
 @_HOST.plot
+    ustack A $DATASTACK_PTR
+    sto A $dy_fp
+    ustack A $DATASTACK_PTR
+    sto A $dx_fp
+    ustack A $DATASTACK_PTR
+    sto A $vx_fp
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_HOST.plot_if_else_7
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldm B $old_x0
+    ldi A 100
+    add B A
+    stack B $DATASTACK_PTR
+    ldm B $old_y0
+    ldi A 20
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @TURTLE.circle
+    ldm A $dx_fp
+    sto A $old_x0
+    ldm A $dy_fp
+    sto A $old_y0
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldm B $old_x0
+    ldi A 100
+    add B A
+    stack B $DATASTACK_PTR
+    ldm B $old_y0
+    ldi A 20
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @TURTLE.circle
+    jmp :_HOST.plot_if_end_7
+:_HOST.plot_if_else_7
+    ldi A 15
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldm B $old_x1
+    ldi A 100
+    add B A
+    stack B $DATASTACK_PTR
+    ldm B $old_y1
+    ldi A 20
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @TURTLE.circle
+    ldm A $dx_fp
+    sto A $old_x1
+    ldm A $dy_fp
+    sto A $old_y1
+    ldi A 6
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldm B $old_x1
+    ldi A 100
+    add B A
+    stack B $DATASTACK_PTR
+    ldm B $old_y1
+    ldi A 20
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @TURTLE.circle
+:_HOST.plot_if_end_7
+    call @TURTLE.flip
     ret
 @_init_main
     ldm A $HEAP_START
@@ -3025,9 +3291,17 @@
 % $dy_fp 0
 % $vx_fp 0
 % $vy_fp 0
+% $reward_fp 0
+% $tx_fp 0
+% $ty_fp 0
+% $target_arr 0
 % $VVM0_host_dq 0
 % $VVM1_host_dq 0
 % $AGENT_code 0
+% $old_x0 0
+% $old_y0 0
+% $old_x1 0
+% $old_y1 0
 % $create_neural_network_str_0 \space \N \e \t \w \o \r \k \space \a \d \d \r \e \s \s \Return \null
 % $_init_main_str_1 \P \o \o \l \space \i \n \i \t \i \a \l \i \z \e \d \space \( \s \i \z \e \space \5 \0 \) \. \Return \null
 % $_init_main_str_2 \V \V \M \space \E \n \v \i \r \o \n \m \e \n \t \space \I \n \i \t \i \a \l \i \z \e \d \: \Return \null
@@ -3035,4 +3309,5 @@
 % $_init_main_str_4 \V \V \M \0 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \Return \null
 % $_init_main_str_5 \V \V \M \1 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \Return \null
 % $_main_str_6 \V \V \M \0 \space \s \t \a \r \t \e \d \space \Return \null
-% $_main_str_7 \. \null
+% $_main_str_7 \V \V \M \1 \space \s \t \a \r \t \e \d \space \Return \null
+% $_main_str_8 \. \null

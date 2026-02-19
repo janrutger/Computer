@@ -33,6 +33,10 @@ VALUE dx_fp 0
 VALUE dy_fp 0
 VALUE vx_fp 0
 VALUE vy_fp 0
+VALUE reward_fp 0
+VALUE tx_fp 0
+VALUE ty_fp 0
+VALUE target_arr 0
 ; VALUE _temp_ptr 0      ; Already defined
 
 
@@ -49,11 +53,18 @@ VALUE VVM0_host_dq 0
 VALUE VVM1_host_dq 0
 VALUE AGENT_code   0
 
+# Storage for previous positions to clear them (x, y for agent 0 and 1)
+VALUE old_x0 0
+VALUE old_y0 0
+VALUE old_x1 0
+VALUE old_y1 0
+
 
 
 # create an NN-network and return its pointer
 DEF create_neural_network {
     2 NEW.array AS input_arr
+    2 NEW.array AS target_arr
 
     2 4 2 NN.new_network
     DUP PRTnum " Network address\n" PRTstring
@@ -119,13 +130,64 @@ DEF _HOST.predict {
 
 
 DEF _HOST.train {
-    }
+    # Pop `dx`, `dy`, `vx`, `vy`, `reward` (all integers) from the host stack.
+    FP.from_int AS reward_fp
+    FP.from_int AS vy_fp
+    FP.from_int AS vx_fp
+    
+    # Convert dx, dy to normalized fixed-point
+    FP.from_int screensize 10 // FP.from_int FP.div AS dy_fp
+    FP.from_int screensize 10 // FP.from_int FP.div AS dx_fp
+
+    # Prepare Input Array
+    input_arr ARRAY.clear
+    dx_fp input_arr ARRAY.append
+    dy_fp input_arr ARRAY.append
+
+    # Calculate Targets: tx = vx * reward, ty = vy * reward
+    vx_fp reward_fp FP.mul AS tx_fp
+    vy_fp reward_fp FP.mul AS ty_fp
+
+    # Kickstart logic: If vx,vy are 0 and reward is -1 (Stuck), use dx,dy to calculate target.
+    vx_fp 0 == vy_fp 0 == * reward_fp 0 < * IF
+        # Move towards target (simple sign logic)
+        dx_fp 0 > IF SCALE ELSE SCALE NEGATE END AS tx_fp
+        dy_fp 0 > IF SCALE ELSE SCALE NEGATE END AS ty_fp
+    END
+
+    # Prepare Target Array
+    target_arr ARRAY.clear
+    tx_fp target_arr ARRAY.append
+    ty_fp target_arr ARRAY.append
+
+    # Call NN.train (learning rate 0.1 = 1000)
+    network_ptr input_arr target_arr 1000 NN.train
+}
 
 
 DEF _HOST.plot {
-    }
+    # Pop `agent_id`, `x`, `y` from the host stack.
+    AS dy_fp    # reusing var for y
+    AS dx_fp    # reusing var for x
+    AS vx_fp    # reusing var for agent_id
 
-
+    vx_fp 0 == IF
+        # Agent 0
+        lightGray TURTLE.color      # lightGray leave an trace on the screen, otherwise black
+        old_x0 Xoffset + old_y0 Yoffset + radius TURTLE.circle
+        dx_fp AS old_x0 dy_fp AS old_y0
+        red TURTLE.color
+        old_x0 Xoffset + old_y0 Yoffset + radius TURTLE.circle
+    ELSE
+        # Agent 1
+        lightGray TURTLE.color
+        old_x1 Xoffset + old_y1 Yoffset + radius TURTLE.circle
+        dx_fp AS old_x1 dy_fp AS old_y1
+        blue TURTLE.color
+        old_x1 Xoffset + old_y1 Yoffset + radius TURTLE.circle
+    END
+    TURTLE.flip
+}
 
 
 
