@@ -71,8 +71,8 @@ DEF create_neural_network {
 }
 
 DEF random_xy {   # returns an random XY values
-    RND screensize * 999 //        # Push X
-    RND screensize * 999 //        # Push Y
+    RND screensize 1 - * 999 //       # Push X
+    RND screensize 1 - * 999 //       # Push Y
 }
 
 DEF init_playground {
@@ -93,7 +93,11 @@ DEF init_playground {
     TURTLE.flip
 
     
-    random_xy AS target_y AS target_x
+    # random_xy AS target_y AS target_x
+    # for debugging the target is in the middle of the playground
+    120 AS target_x
+    320 AS target_y
+
 
     # Draw the target 
     green TURTLE.color
@@ -108,8 +112,11 @@ DEF _HOST.predict {
     input_arr ARRAY.clear           ; an heap-lib function
 
     # expects dx dy on the host datastack
-    FP.from_int screensize 10 // FP.from_int FP.div AS dy_fp
-    FP.from_int screensize 10 // FP.from_int FP.div AS dx_fp
+    # Normalize inputs to approx [-2, 2] range (screensize / 2 = 220)
+    # FP.from_int screensize 2 // FP.from_int FP.div AS dy_fp
+    # FP.from_int screensize 2 // FP.from_int FP.div AS dx_fp
+    FP.from_int screensize 2 // // AS dy_fp
+    FP.from_int screensize 2 // // AS dx_fp
 
     dx_fp input_arr ARRAY.append
     dy_fp input_arr ARRAY.append
@@ -117,8 +124,9 @@ DEF _HOST.predict {
     network_ptr input_arr NN.predict AS output_ptr
  
     # Get the fixed-point `vx_fp`, `vy_fp` from the result.
-    0 output_ptr ARRAY.get AS vx_fp
-    1 output_ptr ARRAY.get AS vy_fp
+    # Rescale from Sigmoid [0, 1] to Tanh [-1, 1] range: (val * 2) - SCALE
+    0 output_ptr ARRAY.get 2 * SCALE - AS vx_fp
+    1 output_ptr ARRAY.get 2 * SCALE - AS vy_fp
 
     # Epsilon-Greedy Exploration: 10% chance to move randomly
     # This forces the agent to try directions it hasn't learned yet (like North/West)
@@ -144,8 +152,8 @@ DEF _HOST.train {
     AS vx_fp       # Re-using var for integer vx
     
     # Convert dx, dy to normalized fixed-point
-    FP.from_int screensize 10 // FP.from_int FP.div AS dy_fp
-    FP.from_int screensize 10 // FP.from_int FP.div AS dx_fp
+    FP.from_int screensize 2 // // AS dy_fp
+    FP.from_int screensize 2 // // AS dx_fp
 
     # Prepare Input Array
     input_arr ARRAY.clear
@@ -159,13 +167,20 @@ DEF _HOST.train {
     vx_fp reward_fp * FP.from_int AS tx_fp
     vy_fp reward_fp * FP.from_int AS ty_fp
 
-    # Improved Training Logic:
-    # If an axis was idle (0), we shouldn't train it to be 0.
-    # Instead, we should nudge it towards the target.
-    # If vx was 0, set target tx to the sign of dx (move towards target).
-    # If vy was 0, set target ty to the sign of dy.
-    vx_fp 0 == IF dx_fp 0 > IF SCALE ELSE SCALE NEGATE END AS tx_fp END
-    vy_fp 0 == IF dy_fp 0 > IF SCALE ELSE SCALE NEGATE END AS ty_fp END
+    # # Smart Correction (Teacher Forcing):
+    # # If we are far from the target (abs(d) > 200), ensure the training target
+    # # points towards the target. This prevents "Cross-talk" where a bad move
+    # # on one axis causes the network to unlearn the correct move on the other.
+    
+    # dx_fp 200 > IF SCALE AS tx_fp END
+    # dx_fp 200 NEGATE < IF SCALE NEGATE AS tx_fp END
+    
+    # dy_fp 200 > IF SCALE AS ty_fp END
+    # dy_fp 200 NEGATE < IF SCALE NEGATE AS ty_fp END
+
+    # Rescale targets from [-1, 1] to [0, 1] for Sigmoid activation: (val + SCALE) / 2
+    tx_fp SCALE + 2 // AS tx_fp
+    ty_fp SCALE + 2 // AS ty_fp
 
     # Prepare Target Array
     target_arr ARRAY.clear
@@ -173,7 +188,7 @@ DEF _HOST.train {
     ty_fp target_arr ARRAY.append
 
     # Call NN.train (learning rate 0.1 = 1000)
-    network_ptr input_arr target_arr 1000 NN.train
+    network_ptr input_arr target_arr 2000 NN.train
 }
 
 
@@ -195,7 +210,7 @@ DEF _HOST.plot {
         darkGray TURTLE.color
         old_x1 Xoffset + old_y1 Yoffset + radius TURTLE.circle
         dx_fp AS old_x1 dy_fp AS old_y1
-        blue TURTLE.color
+        yellow TURTLE.color
         old_x1 Xoffset + old_y1 Yoffset + radius TURTLE.circle
     END
     TURTLE.flip
@@ -210,8 +225,11 @@ DEF _init_main {
     SCALE FP.set_scale      # Set the fixed point scale factor
     SCALE NN.set_scale
 
-    RND DROP                # set some sort of seed for the random number generator
-    RND DROP
+    # RND DROP                # set some sort of seed for the random number generator
+    # RND DROP
+    # RND DROP
+    # RND DROP
+
 
     DEQUE.new AS VVM0_host_dq       # Get a pointer for the host communication deque
     DEQUE.new AS VVM1_host_dq       # Get a pointer for the host communication deque
@@ -293,6 +311,12 @@ WHILE   VVM_status &VVM0 VVMpeek VVM_Halted !=
     # ADVICE: For better performance, consider a "run-until-block" loop for each VVM.
     # Example: WHILE VVM_status &VVM0 VVMpeek VVM_Running == DO &VVM0 VVM.run DONE
 
-    "." PRTstring                 # Print heartbeat
+    # Redraw the target for visability
+    green TURTLE.color
+    target_x Xoffset +
+    target_y Yoffset +
+    radius TURTLE.circle
+
+    # "." PRTstring                 # Print heartbeat
 DONE
 # 1 TIME.read TIME.as_string

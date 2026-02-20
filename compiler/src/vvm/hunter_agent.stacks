@@ -81,4 +81,12 @@ dx dx * dy dy * + AS old_dist_sq
     # 8. Call PLOT to visualize the new position
     agent_id hunter_x hunter_y 3 0 HOST.plot EXEC
 
+    # 9. Respawn if target reached (distance < 5 pixels -> dist_sq < 25)
+    old_dist_sq 25 < IF
+        RND max_coord % AS hunter_x
+        RND max_coord % AS hunter_y
+        # Reset old_dist_sq for the new position
+        target_x hunter_x - DUP * target_y hunter_y - DUP * + AS old_dist_sq
+    END
+
     GOTO LOOP

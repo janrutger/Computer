@@ -172,7 +172,6 @@
 . $_init_main_str_5 25
 . $_main_str_6 15
 . $_main_str_7 15
-. $_main_str_8 2
 
 # .CODE
     call @_init_main
@@ -248,11 +247,11 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_10
+    jmpt :_main_if_end_6
     ldi A $VVM0
     stack A $DATASTACK_PTR
     call @VVM.run
-:_main_if_end_10
+:_main_if_end_6
     stack Z $DATASTACK_PTR
     ldi A $VVM1
     stack A $DATASTACK_PTR
@@ -262,11 +261,11 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_11
+    jmpt :_main_if_end_7
     ldi A $VVM1
     stack A $DATASTACK_PTR
     call @VVM.run
-:_main_if_end_11
+:_main_if_end_7
     ldm B $loop_counter
     ldi A 1
     sub B A
@@ -280,13 +279,21 @@
     ldi A $VVM1
     stack A $DATASTACK_PTR
     call @VVM.check_syscalls
-    ldi A $_main_str_8
+    ldi A 5
     stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        jmp :_main_while_start_0
+    call @TURTLE.color
+    ldm B $target_x
+    ldi A 100
+    add B A
+    stack B $DATASTACK_PTR
+    ldm B $target_y
+    ldi A 20
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @TURTLE.circle
+    jmp :_main_while_start_0
 :_main_while_end_0
     ret
 
@@ -2631,6 +2638,10 @@
 @random_xy
     call @rt_rnd
     ldi A 440
+    ld B A
+    ldi A 1
+    sub B A
+    ld A B
     ustack B $DATASTACK_PTR
     mul B A
     ldi A 999
@@ -2638,6 +2649,10 @@
     stack B $DATASTACK_PTR
     call @rt_rnd
     ldi A 440
+    ld B A
+    ldi A 1
+    sub B A
+    ld A B
     ustack B $DATASTACK_PTR
     mul B A
     ldi A 999
@@ -2695,11 +2710,10 @@
     stack A $DATASTACK_PTR
     call @TURTLE.line
     call @TURTLE.flip
-    call @random_xy
-    ustack A $DATASTACK_PTR
-    sto A $target_y
-    ustack A $DATASTACK_PTR
+    ldi A 120
     sto A $target_x
+    ldi A 320
+    sto A $target_y
     ldi A 5
     stack A $DATASTACK_PTR
     call @TURTLE.color
@@ -2730,13 +2744,12 @@
     stack B $DATASTACK_PTR
     ldi A 440
     ld B A
-    ldi A 10
+    ldi A 2
     dmod B A
-    ldm A $SCALE_FACTOR
-    mul B A
-    stack B $DATASTACK_PTR
-    call @FP.div
-    ustack A $DATASTACK_PTR
+    ld A B
+    ustack B $DATASTACK_PTR
+    dmod B A
+    ld A B
     sto A $dy_fp
     ldm A $SCALE_FACTOR
     ustack B $DATASTACK_PTR
@@ -2744,13 +2757,12 @@
     stack B $DATASTACK_PTR
     ldi A 440
     ld B A
-    ldi A 10
+    ldi A 2
     dmod B A
-    ldm A $SCALE_FACTOR
-    mul B A
-    stack B $DATASTACK_PTR
-    call @FP.div
-    ustack A $DATASTACK_PTR
+    ld A B
+    ustack B $DATASTACK_PTR
+    dmod B A
+    ld A B
     sto A $dx_fp
     stack A $DATASTACK_PTR
     ldm A $input_arr
@@ -2772,14 +2784,24 @@
     ldm A $output_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
-    ustack A $DATASTACK_PTR
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    mul B A
+    ldi A 10000
+    sub B A
+    ld A B
     sto A $vx_fp
     ldi A 1
     stack A $DATASTACK_PTR
     ldm A $output_ptr
     stack A $DATASTACK_PTR
     call @ARRAY.get
-    ustack A $DATASTACK_PTR
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    mul B A
+    ldi A 10000
+    sub B A
+    ld A B
     sto A $vy_fp
     call @rt_rnd
     ldi A 100
@@ -2887,13 +2909,12 @@
     stack B $DATASTACK_PTR
     ldi A 440
     ld B A
-    ldi A 10
+    ldi A 2
     dmod B A
-    ldm A $SCALE_FACTOR
-    mul B A
-    stack B $DATASTACK_PTR
-    call @FP.div
-    ustack A $DATASTACK_PTR
+    ld A B
+    ustack B $DATASTACK_PTR
+    dmod B A
+    ld A B
     sto A $dy_fp
     ldm A $SCALE_FACTOR
     ustack B $DATASTACK_PTR
@@ -2901,13 +2922,12 @@
     stack B $DATASTACK_PTR
     ldi A 440
     ld B A
-    ldi A 10
+    ldi A 2
     dmod B A
-    ldm A $SCALE_FACTOR
-    mul B A
-    stack B $DATASTACK_PTR
-    call @FP.div
-    ustack A $DATASTACK_PTR
+    ld A B
+    ustack B $DATASTACK_PTR
+    dmod B A
+    ld A B
     sto A $dx_fp
     ldm B $input_arr
     ldi A 1
@@ -2938,58 +2958,20 @@
     ldm A $SCALE_FACTOR
     mul A B
     sto A $ty_fp
-    ldm A $vx_fp
-    stack A $DATASTACK_PTR
-    stack Z $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_HOST.train_if_end_5
-    ldm A $dx_fp
-    stack A $DATASTACK_PTR
-    stack Z $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_HOST.train_if_else_6
+    ldm B $tx_fp
     ldi A 10000
-    stack A $DATASTACK_PTR
-    jmp :_HOST.train_if_end_6
-:_HOST.train_if_else_6
-    ldi A 10000
-    ldi B 0
-    sub B A
-    stack B $DATASTACK_PTR
-:_HOST.train_if_end_6
-    ustack A $DATASTACK_PTR
+    add B A
+    ldi A 2
+    dmod B A
+    ld A B
     sto A $tx_fp
-:_HOST.train_if_end_5
-    ldm A $vy_fp
-    stack A $DATASTACK_PTR
-    stack Z $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_HOST.train_if_end_7
-    ldm A $dy_fp
-    stack A $DATASTACK_PTR
-    stack Z $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :_HOST.train_if_else_8
+    ldm B $ty_fp
     ldi A 10000
-    stack A $DATASTACK_PTR
-    jmp :_HOST.train_if_end_8
-:_HOST.train_if_else_8
-    ldi A 10000
-    ldi B 0
-    sub B A
-    stack B $DATASTACK_PTR
-:_HOST.train_if_end_8
-    ustack A $DATASTACK_PTR
+    add B A
+    ldi A 2
+    dmod B A
+    ld A B
     sto A $ty_fp
-:_HOST.train_if_end_7
     ldm B $target_arr
     ldi A 1
     add A B
@@ -3013,7 +2995,7 @@
     stack A $DATASTACK_PTR
     ldm A $target_arr
     stack A $DATASTACK_PTR
-    ldi A 1000
+    ldi A 2000
     stack A $DATASTACK_PTR
     call @NN.train
     ret
@@ -3029,7 +3011,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_HOST.plot_if_else_9
+    jmpt :_HOST.plot_if_else_5
     ldi A 11
     stack A $DATASTACK_PTR
     call @TURTLE.color
@@ -3062,8 +3044,8 @@
     ldi A 2
     stack A $DATASTACK_PTR
     call @TURTLE.circle
-    jmp :_HOST.plot_if_end_9
-:_HOST.plot_if_else_9
+    jmp :_HOST.plot_if_end_5
+:_HOST.plot_if_else_5
     ldi A 11
     stack A $DATASTACK_PTR
     call @TURTLE.color
@@ -3082,7 +3064,7 @@
     sto A $old_x1
     ldm A $dy_fp
     sto A $old_y1
-    ldi A 6
+    ldi A 7
     stack A $DATASTACK_PTR
     call @TURTLE.color
     ldm B $old_x1
@@ -3096,7 +3078,7 @@
     ldi A 2
     stack A $DATASTACK_PTR
     call @TURTLE.circle
-:_HOST.plot_if_end_9
+:_HOST.plot_if_end_5
     call @TURTLE.flip
     ret
 @_init_main
@@ -3116,10 +3098,6 @@
     ldi A 10000
     stack A $DATASTACK_PTR
     call @NN.set_scale
-    call @rt_rnd
-    call @rt_drop
-    call @rt_rnd
-    call @rt_drop
     call @DEQUE.new
     ustack A $DATASTACK_PTR
     sto A $VVM0_host_dq
@@ -3370,4 +3348,3 @@
 % $_init_main_str_5 \V \V \M \1 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \Return \null
 % $_main_str_6 \V \V \M \0 \space \s \t \a \r \t \e \d \space \Return \null
 % $_main_str_7 \V \V \M \1 \space \s \t \a \r \t \e \d \space \Return \null
-% $_main_str_8 \. \null
