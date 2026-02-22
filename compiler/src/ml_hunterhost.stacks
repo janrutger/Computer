@@ -15,11 +15,15 @@ USE vvm_core_lib
 VALUE VVM0 30720        ; The memory address for VVM0, stored in a variable.
 VALUE VVM1 31744        ; The memory address for VVM1, stored in a variable.
 
-VALUE vvm_timeslice 50  ; Max instructions per VVM per frame to prevent infinite loops.
+VALUE vvm_timeslice 75  ; Max instructions per VVM per frame to prevent infinite loops.
 VALUE loop_counter  0   ; A temporary counter for the run loop.
+VALUE sim_running   1   ; 1 = true, simulation is running
+VALUE train_running 1   ; 1 = true, training is running
+
 
 
 VALUE network_ptr   0
+VALUE train_count   0
 CONST HOST.predict  100 ; Syscall ID for the predict function
 CONST HOST.train    101 ; Syscall ID for the train function
 CONST HOST.plot     102 ; Syscall ID for the plot function
@@ -37,7 +41,6 @@ VALUE reward_fp 0
 VALUE tx_fp 0
 VALUE ty_fp 0
 VALUE target_arr 0
-; VALUE _temp_ptr 0      ; Already defined
 
 
 CONST Xoffset 100
@@ -68,6 +71,8 @@ DEF create_neural_network {
 
     2 4 2 NN.new_network
     DUP PRTnum " Network address\n" PRTstring
+
+    0 AS train_count
 }
 
 DEF random_xy {   # returns an random XY values
@@ -95,8 +100,8 @@ DEF init_playground {
     
     # random_xy AS target_y AS target_x
     # for debugging the target is in the middle of the playground
-    120 AS target_x
-    320 AS target_y
+    220 AS target_x
+    220 AS target_y
 
 
     # Draw the target 
@@ -130,7 +135,9 @@ DEF _HOST.predict {
 
     # Epsilon-Greedy Exploration: 10% chance to move randomly
     # This forces the agent to try directions it hasn't learned yet (like North/West)
-    RND 100 % 10 < IF
+    # Only apply randomness if training is running!
+    train_running IF RND 100 % 10 < ELSE 0 END
+    IF
         # Random move -1, 0, or 1
         RND 3 % 1 -
         RND 3 % 1 -
@@ -150,6 +157,7 @@ DEF _HOST.train {
     AS reward_fp   # Re-using var for integer reward
     AS vy_fp       # Re-using var for integer vy
     AS vx_fp       # Re-using var for integer vx
+    VALUE current_lr 0
     
     # Convert dx, dy to normalized fixed-point
     FP.from_int screensize 2 // // AS dy_fp
@@ -171,7 +179,7 @@ DEF _HOST.train {
     # # If we are far from the target (abs(d) > 200), ensure the training target
     # # points towards the target. This prevents "Cross-talk" where a bad move
     # # on one axis causes the network to unlearn the correct move on the other.
-    
+
     # dx_fp 200 > IF SCALE AS tx_fp END
     # dx_fp 200 NEGATE < IF SCALE NEGATE AS tx_fp END
     
@@ -187,8 +195,20 @@ DEF _HOST.train {
     tx_fp target_arr ARRAY.append
     ty_fp target_arr ARRAY.append
 
-    # Call NN.train (learning rate 0.1 = 1000)
-    network_ptr input_arr target_arr 2000 NN.train
+    # Learning Rate Decay
+    # Start fast (0.2), then slow down (0.02) after 5k iterations to prevent saturation.
+    train_count 5000 < IF
+        2000 AS current_lr
+    ELSE train_count 10000 < IF
+        1000 AS current_lr
+    ELSE 
+        500 AS current_lr
+    END END
+
+    train_running IF
+        network_ptr input_arr target_arr current_lr NN.train
+        train_count 1 + AS train_count
+    END
 }
 
 
@@ -219,7 +239,7 @@ DEF _HOST.plot {
 
 
 
-DEF _init_main {
+DEF init_main {
     HEAP.free
     50 DEQUE.init_pool "Pool initialized (size 50).\n" PRTstring
     SCALE FP.set_scale      # Set the fixed point scale factor
@@ -227,6 +247,10 @@ DEF _init_main {
 
     # RND DROP                # set some sort of seed for the random number generator
     # RND DROP
+    # RND DROP
+    # RND DROP
+    # RND DROP
+    # #RND DROP
     # RND DROP
     # RND DROP
 
@@ -262,7 +286,7 @@ DEF _init_main {
 
 
 ##### Main code from here
-_init_main
+init_main
 
 # initialize the neural network
 create_neural_network AS network_ptr
@@ -286,10 +310,10 @@ target_x target_y 1 3 &VVM1 VVM.start
 "VVM1 started \n" PRTstring
 
 # # Run/Crank the VVMs
-# 1 TIME.start
-WHILE   VVM_status &VVM0 VVMpeek VVM_Halted != 
-        VVM_status &VVM1 VVMpeek VVM_Halted != + DO
-
+1 TIME.start
+# WHILE   VVM_status &VVM0 VVMpeek VVM_Halted != 
+#         VVM_status &VVM1 VVMpeek VVM_Halted != + DO
+WHILE sim_running DO
     # The loop_counter must be reset each frame to avoid a stall.
     vvm_timeslice AS loop_counter
     WHILE loop_counter DO
@@ -304,6 +328,7 @@ WHILE   VVM_status &VVM0 VVMpeek VVM_Halted !=
         loop_counter 1 - AS loop_counter
     DONE
 
+
     # Check for any pending syscalls from either VVM
     &VVM0 VVM.check_syscalls
     &VVM1 VVM.check_syscalls
@@ -317,6 +342,26 @@ WHILE   VVM_status &VVM0 VVMpeek VVM_Halted !=
     target_y Yoffset +
     radius TURTLE.circle
 
-    # "." PRTstring                 # Print heartbeat
+
+    train_count 10 % 0 == IF
+        "." PRTstring                 # Print heartbeat
+    END
+
+    KEYpressed IF
+        DUP
+        27 == IF                      # 27 is <esc>
+            0 AS sim_running          # 0 is False
+            DROP
+        ELSE 116 == IF                   # 116 t(oggle)
+            train_running IF
+                0 AS train_running      # 0 is False
+            ELSE
+                1 AS train_running      # 1 is True
+            END
+            "\nToggel training mode!! " PRTstring
+        END END
+    
+    train_count PRINT
+    END
 DONE
-# 1 TIME.read TIME.as_string
+1 TIME.read TIME.as_string
