@@ -1,9 +1,9 @@
 {
   "functions": [
     "STRcopy",
-    "STRatoi",
-    "STRlen",
     "STRhash",
+    "STRlen",
+    "STRatoi",
     "STRcmp",
     "STRfind"
   ],

@@ -101,7 +101,7 @@ DEF init_playground {
     # random_xy AS target_y AS target_x
     # for debugging the target is in the middle of the playground
     220 AS target_x
-    220 AS target_y
+    120 AS target_y
 
 
     # Draw the target 
@@ -175,16 +175,27 @@ DEF _HOST.train {
     vx_fp reward_fp * FP.from_int AS tx_fp
     vy_fp reward_fp * FP.from_int AS ty_fp
 
+    # Kickstart Logic:
+    # If the agent is stuck (vx=0, vy=0) and getting penalized (reward=-1),
+    # the network is learning to stand still. We must force it to move.
+        # vx_fp 0 == vy_fp 0 == + reward_fp 1 NEGATE == + 3 == IF
+        #     # Override target: Move towards the goal at full speed
+        #     dx_fp 0 > IF SCALE ELSE SCALE NEGATE END AS tx_fp
+        #     dy_fp 0 > IF SCALE ELSE SCALE NEGATE END AS ty_fp
+        # END
+
     # # Smart Correction (Teacher Forcing):
     # # If we are far from the target (abs(d) > 200), ensure the training target
     # # points towards the target. This prevents "Cross-talk" where a bad move
     # # on one axis causes the network to unlearn the correct move on the other.
 
-    # dx_fp 200 > IF SCALE AS tx_fp END
-    # dx_fp 200 NEGATE < IF SCALE NEGATE AS tx_fp END
-    
-    # dy_fp 200 > IF SCALE AS ty_fp END
-    # dy_fp 200 NEGATE < IF SCALE NEGATE AS ty_fp END
+        dx_fp 2000 > IF SCALE AS tx_fp END
+        dx_fp 2000 NEGATE < IF SCALE NEGATE AS tx_fp END
+        
+        dy_fp 2000 > IF SCALE AS ty_fp END
+        dy_fp 2000 NEGATE < IF SCALE NEGATE AS ty_fp END
+
+
 
     # Rescale targets from [-1, 1] to [0, 1] for Sigmoid activation: (val + SCALE) / 2
     tx_fp SCALE + 2 // AS tx_fp
@@ -198,11 +209,11 @@ DEF _HOST.train {
     # Learning Rate Decay
     # Start fast (0.2), then slow down (0.02) after 5k iterations to prevent saturation.
     train_count 5000 < IF
-        2000 AS current_lr
+        2500 AS current_lr
     ELSE train_count 10000 < IF
-        1000 AS current_lr
+        1250 AS current_lr
     ELSE 
-        500 AS current_lr
+        750 AS current_lr
     END END
 
     train_running IF
@@ -245,11 +256,11 @@ DEF init_main {
     SCALE FP.set_scale      # Set the fixed point scale factor
     SCALE NN.set_scale
 
-    # RND DROP                # set some sort of seed for the random number generator
-    # RND DROP
-    # RND DROP
-    # RND DROP
-    # RND DROP
+    RND DROP                # set some sort of seed for the random number generator
+    RND DROP
+    RND DROP
+    RND DROP
+    RND DROP
     # #RND DROP
     # RND DROP
     # RND DROP

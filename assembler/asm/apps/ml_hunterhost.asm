@@ -247,11 +247,11 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_10
+    jmpt :_main_if_end_14
     ldi A $VVM0
     stack A $DATASTACK_PTR
     call @VVM.run
-:_main_if_end_10
+:_main_if_end_14
     stack Z $DATASTACK_PTR
     ldi A $VVM1
     stack A $DATASTACK_PTR
@@ -261,11 +261,11 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_11
+    jmpt :_main_if_end_15
     ldi A $VVM1
     stack A $DATASTACK_PTR
     call @VVM.run
-:_main_if_end_11
+:_main_if_end_15
     ldm B $loop_counter
     ldi A 1
     sub B A
@@ -301,58 +301,58 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_12
+    jmpt :_main_if_end_16
     ldi A $_main_str_8
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-    :_main_if_end_12
+    :_main_if_end_16
     call @KEYpressed
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_13
+    jmpt :_main_if_end_17
     call @rt_dup
     ldi A 27
     stack A $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_else_14
+    jmpt :_main_if_else_18
     ld A Z
     sto A $sim_running
     call @rt_drop
-    jmp :_main_if_end_14
-:_main_if_else_14
+    jmp :_main_if_end_18
+:_main_if_else_18
     ldi A 116
     stack A $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_15
+    jmpt :_main_if_end_19
     ldm A $train_running
     tst A 0
-    jmpt :_main_if_else_16
+    jmpt :_main_if_else_20
     ld A Z
     sto A $train_running
-    jmp :_main_if_end_16
-:_main_if_else_16
+    jmp :_main_if_end_20
+:_main_if_else_20
     ldi A 1
     sto A $train_running
-:_main_if_end_16
+:_main_if_end_20
     ldi A $_main_str_9
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-    :_main_if_end_15
-:_main_if_end_14
+    :_main_if_end_19
+:_main_if_end_18
     ldm A $train_count
     stack A $DATASTACK_PTR
     call @rt_print_tos
-:_main_if_end_13
+:_main_if_end_17
     jmp :_main_while_start_0
 :_main_while_end_0
     ldi A 1
@@ -2788,7 +2788,7 @@
     call @TURTLE.flip
     ldi A 220
     sto A $target_x
-    ldi A 220
+    ldi A 120
     sto A $target_y
     ldi A 5
     stack A $DATASTACK_PTR
@@ -3041,6 +3041,60 @@
     ldm A $SCALE_FACTOR
     mul A B
     sto A $ty_fp
+    ldm A $dx_fp
+    stack A $DATASTACK_PTR
+    ldi A 2000
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_HOST.train_if_end_6
+    ldi A 10000
+    sto A $tx_fp
+:_HOST.train_if_end_6
+    ldm A $dx_fp
+    stack A $DATASTACK_PTR
+    ldi A 2000
+    ldi B 0
+    sub B A
+    stack B $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_HOST.train_if_end_7
+    ldi A 10000
+    ldi B 0
+    sub B A
+    ld A B
+    sto A $tx_fp
+:_HOST.train_if_end_7
+    ldm A $dy_fp
+    stack A $DATASTACK_PTR
+    ldi A 2000
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_HOST.train_if_end_8
+    ldi A 10000
+    sto A $ty_fp
+:_HOST.train_if_end_8
+    ldm A $dy_fp
+    stack A $DATASTACK_PTR
+    ldi A 2000
+    ldi B 0
+    sub B A
+    stack B $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_HOST.train_if_end_9
+    ldi A 10000
+    ldi B 0
+    sub B A
+    ld A B
+    sto A $ty_fp
+:_HOST.train_if_end_9
     ldm B $tx_fp
     ldi A 10000
     add B A
@@ -3079,11 +3133,11 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_HOST.train_if_else_6
-    ldi A 2000
+    jmpt :_HOST.train_if_else_10
+    ldi A 2500
     sto A $current_lr
-    jmp :_HOST.train_if_end_6
-:_HOST.train_if_else_6
+    jmp :_HOST.train_if_end_10
+:_HOST.train_if_else_10
     ldm A $train_count
     stack A $DATASTACK_PTR
     ldi A 10000
@@ -3091,18 +3145,18 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_HOST.train_if_else_7
-    ldi A 1000
+    jmpt :_HOST.train_if_else_11
+    ldi A 1250
     sto A $current_lr
-    jmp :_HOST.train_if_end_7
-:_HOST.train_if_else_7
-    ldi A 500
+    jmp :_HOST.train_if_end_11
+:_HOST.train_if_else_11
+    ldi A 750
     sto A $current_lr
-:_HOST.train_if_end_7
-:_HOST.train_if_end_6
+:_HOST.train_if_end_11
+:_HOST.train_if_end_10
     ldm A $train_running
     tst A 0
-    jmpt :_HOST.train_if_end_8
+    jmpt :_HOST.train_if_end_12
     ldm A $network_ptr
     stack A $DATASTACK_PTR
     ldm A $input_arr
@@ -3116,7 +3170,7 @@
     ldi A 1
     add A B
     sto A $train_count
-:_HOST.train_if_end_8
+:_HOST.train_if_end_12
     ret
 @_HOST.plot
     ustack A $DATASTACK_PTR
@@ -3130,7 +3184,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_HOST.plot_if_else_9
+    jmpt :_HOST.plot_if_else_13
     ldi A 11
     stack A $DATASTACK_PTR
     call @TURTLE.color
@@ -3163,8 +3217,8 @@
     ldi A 2
     stack A $DATASTACK_PTR
     call @TURTLE.circle
-    jmp :_HOST.plot_if_end_9
-:_HOST.plot_if_else_9
+    jmp :_HOST.plot_if_end_13
+:_HOST.plot_if_else_13
     ldi A 11
     stack A $DATASTACK_PTR
     call @TURTLE.color
@@ -3197,7 +3251,7 @@
     ldi A 2
     stack A $DATASTACK_PTR
     call @TURTLE.circle
-:_HOST.plot_if_end_9
+:_HOST.plot_if_end_13
     call @TURTLE.flip
     ret
 @init_main
@@ -3217,6 +3271,16 @@
     ldi A 10000
     stack A $DATASTACK_PTR
     call @NN.set_scale
+    call @rt_rnd
+    call @rt_drop
+    call @rt_rnd
+    call @rt_drop
+    call @rt_rnd
+    call @rt_drop
+    call @rt_rnd
+    call @rt_drop
+    call @rt_rnd
+    call @rt_drop
     call @DEQUE.new
     ustack A $DATASTACK_PTR
     sto A $VVM0_host_dq

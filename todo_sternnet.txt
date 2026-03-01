@@ -1,0 +1,43 @@
+### Project: Sternnet (Network Stack)
+### Start Date: Feb 2026
+
+## Phase 0: Architecture & Design
+- [x] **Design Specification**
+    - [x] Create initial draft (Sternnet_Design_Spec.md).
+    - [x] Review and finalize memory map and interrupt vectors.
+    - [x] Define Protocol (SDP/SRP) and Frame Structure.
+    - [x] Define Driver and User Library responsibilities (ADR-001).
+    - [x] Create Use Cases and Diagrams.
+
+## Phase 1: Infrastructure (Python Host)
+- [ ] **Virtual Switch (`stern_switch.py`)**
+    - [ ] **Core:** UDP Server listening on port 8888.
+    - [ ] **Logic:** Switching Table & Learning (Last-Seen-Wins).
+    - [ ] **Forwarding:** Unicast, Broadcast, and Drop logic.
+    - [ ] **Diagnostics:** Console logging for events.
+- [ ] **Virtual NIC Device (`devices/virtual_nic.py`)**
+    - [ ] **Skeleton:** Class structure and Register Map.
+    - [ ] **DMA Engine:** RX/TX Ring Buffer logic (1-byte-per-word packing).
+    - [ ] **I/O:** Non-blocking UDP socket handling & Send HELLO on startup.
+- [ ] **System Integration (`stern-ATX.py`)**
+    - [ ] **Memory Map:** Map vNIC to `0x47C7`.
+    - [ ] **Interrupts:** Register Vector 2.
+    - [ ] **Runtime:** Add `nic.tick()` to main loop.
+
+## Phase 2: System Software (Stacks)
+- [ ] **Kernel Driver (`net_driver.stacks`)**
+    - [ ] **Init:** `NET.init` (Setup hardware registers).
+    - [ ] **ISR:** Interrupt Service Routine (Demultiplexing to Deques).
+    - [ ] **API:** `NET.bind` (Port registration).
+    - [ ] **API:** `NET.send_datagram` (Big-Endian Byte-Squeeze Serialization).
+- [ ] **User Library (`net_lib.stacks`)**
+    - [ ] **State:** Connection Handle structure (Init `active_msg_id = -1`).
+    - [ ] **API:** `NET_LIB.listen` (Server setup & State Reset).
+    - [ ] **API:** `NET_LIB.send` (SRP Stop-and-Wait with Pumping Loop & NOP Yield).
+    - [ ] **API:** `NET_LIB.read` (SRP State Machine & ACK generation).
+
+## Phase 3: Verification & Applications
+- [ ] **Connectivity Test (`net_test.stacks`)**
+    - [ ] Simple "Hello World" broadcast.
+- [ ] **Chat Application (`chat.stacks`)**
+    - [ ] Two-way reliable messaging demo.
