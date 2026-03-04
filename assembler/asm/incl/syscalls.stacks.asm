@@ -14,6 +14,10 @@
     EQU ~SYS_F_READ_BLOCK 29
     EQU ~SYS_F_CLOSE 30
     EQU ~SYS_UDC_CONTROL 33
+    EQU ~SYS_NET_BIND 60
+    EQU ~SYS_NET_SEND 61
+    EQU ~SYS_NET_RECV 62
+    EQU ~SYS_NET_GET_ADDR 63
 
 
     . $SYSCALL_RETURN_STATUS 1
@@ -124,6 +128,25 @@
         sto A $SYSCALL_RETURN_STATUS
         rti
 
+    @sys_net_bind           ; Syscall 60
+        call @NET.bind
+        rti
+
+    @sys_net_send           ; Syscall 61
+        call @NET.send
+        rti
+
+    @sys_net_recv           ; Syscall 62
+        call @NET.recv
+        ustack A $DATASTACK_PTR
+        sto A $SYSCALL_RETURN_VALUE
+        rti
+
+    @sys_net_get_addr       ; Syscall 63
+        ldi A $nic_addr
+        sto A $SYSCALL_RETURN_VALUE
+        rti
+
 # .FUNCTIONS
 @init_kernel_syscalls
 
@@ -186,5 +209,25 @@
         ldi I ~SYS_UDC_CONTROL    ; syscall 33 @sys_udc_control
         ldi M @sys_udc_control    ; Start of the ISR
         stx M $INT_VECTORS        ; Store ISR
+
+        # EQU ~SYS_NET_BIND 60
+        ldi I ~SYS_NET_BIND
+        ldi M @sys_net_bind
+        stx M $INT_VECTORS
+
+        # EQU ~SYS_NET_SEND 61
+        ldi I ~SYS_NET_SEND
+        ldi M @sys_net_send
+        stx M $INT_VECTORS
+
+        # EQU ~SYS_NET_RECV 62
+        ldi I ~SYS_NET_RECV
+        ldi M @sys_net_recv
+        stx M $INT_VECTORS
+
+        # EQU ~SYS_NET_GET_ADDR 63
+        ldi I ~SYS_NET_GET_ADDR
+        ldi M @sys_net_get_addr
+        stx M $INT_VECTORS
 
         ret

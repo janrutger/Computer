@@ -3,7 +3,7 @@
 ## 1. Overview
 Sternnet is a custom packet-switched network designed for the Stern-ATX ecosystem. It follows a simplified layered model inspired by the OSI model and early Ethernet.
 
-**Design Philosophy:** "Simple, Explicit, Interrupt-Driven."
+**Design Philosophy:** "Simple, Explicit, Polling-Based."
 
 ## 2. System Components
 
@@ -35,7 +35,7 @@ The detailed design of each component is specified in separate documents:
 
 2.  **Phase 2: The Driver**
     *   Write the Stacks kernel driver (`net_driver.stacks`) to manage the vNIC's ring buffers.
-    *   Implement the Interrupt Service Routine (Stateless Demultiplexer).
+    *   Implement the polling-based receive function (`NET.recv`) for packet demultiplexing.
 
 3.  **Phase 3: The Application**
     *   Implement `net_lib.stacks` (Reliable Protocol Logic).

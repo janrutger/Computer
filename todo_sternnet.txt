@@ -11,22 +11,22 @@
 
 ## Phase 1: Infrastructure (Python Host)
 - [ ] **Virtual Switch (`stern_switch.py`)**
-    - [ ] **Core:** UDP Server listening on port 8888.
-    - [ ] **Logic:** Switching Table & Learning (Last-Seen-Wins).
-    - [ ] **Forwarding:** Unicast, Broadcast, and Drop logic.
-    - [ ] **Diagnostics:** Console logging for events.
+    - [x] **Core:** UDP Server listening on port 8888.
+    - [x] **Logic:** Switching Table & Learning (Last-Seen-Wins).
+    - [x] **Forwarding:** Unicast, Broadcast, and Drop logic.
+    - [x] **Diagnostics:** Console logging for events.
 - [ ] **Virtual NIC Device (`devices/virtual_nic.py`)**
-    - [ ] **Skeleton:** Class structure and Register Map.
-    - [ ] **DMA Engine:** RX/TX Ring Buffer logic (1-byte-per-word packing).
-    - [ ] **I/O:** Non-blocking UDP socket handling & Send HELLO on startup.
+    - [x] **Skeleton:** Class structure and Register Map.
+    - [x] **DMA Engine:** RX/TX Ring Buffer logic (1-byte-per-word packing).
+    - [x] **I/O:** Non-blocking UDP socket handling & Send HELLO on startup.
 - [ ] **System Integration (`stern-ATX.py`)**
-    - [ ] **Memory Map:** Map vNIC to `0x47C7`.
-    - [ ] **Interrupts:** Register Vector 2.
-    - [ ] **Runtime:** Add `nic.tick()` to main loop.
+    - [x] **Memory Map:** Map vNIC to `0x47C7`.
+    - [x] **Interrupts:** Register Vector 2.
+    - [x] **Runtime:** Add `nic.tick()` to main loop.
 
 ## Phase 2: System Software (Stacks)
 - [ ] **Kernel Driver (`net_driver.stacks`)**
-    - [ ] **Init:** `NET.init` (Setup hardware registers).
+    - [x] **Init:** `NET.init` (Setup hardware registers).
     - [ ] **ISR:** Interrupt Service Routine (Demultiplexing to Deques).
     - [ ] **API:** `NET.bind` (Port registration).
     - [ ] **API:** `NET.send_datagram` (Big-Endian Byte-Squeeze Serialization).

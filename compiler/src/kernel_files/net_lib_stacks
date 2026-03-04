@@ -1,0 +1,134 @@
+# Sternnet User Library
+# Provides high-level networking functions and packet formatting.
+
+USE std_heap
+
+# --- Constants ---
+CONST NET_HEADER_SIZE 16
+
+# --- Packet Types (Control Word Byte 12) ---
+CONST NET_TYPE_SDP  0  # Unreliable Datagram
+CONST NET_TYPE_SYN  1  # Start Connection
+CONST NET_TYPE_ACK  2  # Acknowledge
+CONST NET_TYPE_FIN  3  # End Connection
+CONST NET_TYPE_DATA 4  # Reliable Data Chunk
+
+# --- Static TX Buffer ---
+# We use a single static buffer for sending to avoid heap fragmentation.
+# This means NET.send_packet is NOT re-entrant (not thread-safe),
+# but for the Stern-ATX cooperative multitasking, this is fine.
+VALUE net_tx_buffer 0
+VALUE nic_addr_ptr 18377
+
+# --- Init ---
+DEF NET_LIB.init {
+    # Allocate TX buffer (256 words capacity)
+    # We use an Array so we can use ARRAY.put for easy access
+    256 NEW.array AS net_tx_buffer
+}
+
+# --- Helper: Write 32-bit Integer to Buffer ---
+# Stack: ( value buffer_ptr index -- )
+# Writes value as 4 bytes (Big Endian) starting at buffer[index]
+DEF _net_write_32 {
+    ASM {
+        ustack C $DATASTACK_PTR ; Index
+        ustack B $DATASTACK_PTR ; Buffer Ptr (Array Struct)
+        ustack A $DATASTACK_PTR ; Value
+        
+        # Calculate Base Address: Ptr + 2 (Data Start) + Index
+        addi B 2
+        add B C 
+        
+        # Use repeated division by 256 to extract bytes (Big Endian)
+        # K = Value, M = 256
+        ld K A
+        ldi M 256
+        
+        # Setup I to point to the last byte (Base + 3)
+        ld I B
+        addi I 3
+        
+        # Byte 3 (LSB): Value % 256
+        ld A M          ; A = 256
+        dmod K A        ; K = K / 256, A = K % 256
+        stx A $_start_memory_
+        subi I 1
+        
+        # Byte 2: (Value >> 8) % 256
+        ld A M
+        dmod K A
+        stx A $_start_memory_
+        subi I 1
+        
+        # Byte 1: (Value >> 16) % 256
+        ld A M
+        dmod K A
+        stx A $_start_memory_
+        subi I 1
+        
+        # Byte 0 (MSB): (Value >> 24)
+        stx K $_start_memory_
+    }
+}
+
+# NET.bind_service ( port_id deque_ptr -- )
+# Binds a local port to a deque for receiving packets.
+DEF NET.bind_service {
+    `NET.bind
+}
+
+# NET.send_packet ( dest_addr port_id payload_ptr payload_len -- success )
+# Constructs a packet and sends it via the driver.
+DEF NET.send_packet {
+    AS _ns_len
+    AS _ns_payload
+    AS _ns_port
+    AS _ns_dest
+    
+    # 1. Check if payload fits (256 - 1 - 16 = 239 max payload)
+    _ns_len 239 > IF
+        0 # Error: Too large
+    ELSE
+        # 2. Write Length at index 0
+        # Length = 16 (Header) + PayloadLen
+        _ns_len 16 + AS _ns_total_len
+        _ns_total_len net_tx_buffer 0 ARRAY.put
+        
+        # 3. Write Header
+        # Dest (Index 1)
+        _ns_dest net_tx_buffer 1 _net_write_32
+        
+        # Src (Index 5) - Read from NIC MMIO ($nic_addr = 18377)
+        *nic_addr_ptr AS _ns_src
+        _ns_src net_tx_buffer 5 _net_write_32
+        
+        # Port (Index 9)
+        _ns_port net_tx_buffer 9 _net_write_32
+        
+        # Control Word (Index 13)
+        # Layout: [TYPE (1B)] [PKT_ID (1B)] [MSG_ID (2B)]
+        # For SDP, we send Type=0, Pkt=0, Msg=0 -> Value 0
+        NET_TYPE_SDP net_tx_buffer 13 _net_write_32
+        
+        # 4. Copy Payload (Index 17)
+        0 AS _ns_i
+        WHILE _ns_i _ns_len < DO
+            # Read from payload source
+            _ns_payload _ns_i ARRAY.get
+            # Write to tx buffer (offset 17)
+            net_tx_buffer _ns_i 17 + ARRAY.put
+            _ns_i 1 + AS _ns_i
+        DONE
+        
+        # 5. Call Driver
+        # Pass pointer to the Length byte (ArrayPtr + 2)
+        net_tx_buffer 2 + `NET.send
+    END
+}
+
+# NET.poll ( -- count )
+# Polls the hardware for new packets.
+DEF NET.poll {
+    `NET.recv
+}

@@ -6,6 +6,7 @@ import sys
 import os
 import cProfile
 import pstats
+import random
 
 from devices.cpu_m1a import CPU_M1
 from devices.cpuR3 import CPU_R3
@@ -20,6 +21,7 @@ from devices.sensor import Sensor
 from devices.plotter import Plotter
 from devices.lcd_screen import VirtualLCD
 from devices.rtc import RTC
+from devices.virtual_nic import VirtualNIC
 
 
 # --- Constants ---
@@ -52,6 +54,7 @@ MEM_KEYBOARD_DATA = MEM_KBD_I0_BASE  + 0    # Keyboard data register at the top 
 MEM_VDSK_I0_BASE  = MEM_KBD_I0_BASE  - 8    # Virtual Disk registers start here (max 8 registers)
 MEM_UDC_I0_BASE   = MEM_VDSK_I0_BASE - 24   # UDC virtual controler starts here (max 24 registers)
 MEM_RTC_IO_ADRES  = MEM_UDC_I0_BASE  - 1    # RTC memory IO adres (just one register)
+MEM_NIC_IO_BASE   = MEM_RTC_IO_ADRES - 16   # NIC maps to 0x47C7 (18375)
 
 
 # --- Main Application ---
@@ -142,6 +145,10 @@ def main():
     keyboard = Keyboard(interrupt_controller, vector=KEYBOARD_INTERRUPT_VECTOR)
     rtc = RTC(interrupt_controller, vector=RTC_INTERRUPT_VECTOR)
 
+    # Initialize vNIC
+    nic_address = random.randint(0, 0xFFFFFFFF)
+    nic = VirtualNIC(ram, interrupt_controller, MEM_NIC_IO_BASE, nic_address)
+
     vdisk = VirtualDisk(ram, MEM_VDSK_I0_BASE, "bin/apps")
     udc = UDC(ram, MEM_UDC_I0_BASE)
     debugger = Debugger(cpu, ram)
@@ -217,6 +224,8 @@ def main():
         io_start = time.time()
         if not debugger.in_debug_mode:
              rtc.tick()
+             if nic.is_connected:
+                 nic.tick()
              vdisk.access()
              udc.tick()
              sensor1.tick()

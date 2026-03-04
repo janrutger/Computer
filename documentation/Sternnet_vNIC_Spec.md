@@ -13,7 +13,7 @@ The vNIC is a memory-mapped device that uses DMA (Direct Memory Access) via ring
 ### 2.1 Registers
 | Offset | Name | R/W | Description |
 | :--- | :--- | :--- | :--- |
-| 0 | `NIC_STATUS` | R | **Bitmask:** Bit 0 (1): `LINK_UP`, Bit 1 (2): `RX_RDY` (data available), Bit 2 (4): `TX_RDY` (ready to send), Bit 7 (128): `ERROR`. |
+| 0 | `NIC_STATUS` | R | **Bitmask:** Bit 0 (1): `LINK_UP`. Set if the NIC has a connection to the vSwitch. |
 | 1 | `NIC_CMD` | W | 1=RESET, 2=ENABLE (Start DMA monitoring). |
 | 2 | `NIC_ADDR` | R/W | The 32-bit Node ID. Typically `hash(hostname)`. 0=Unset, -1 (or 0xFFFFFFFF)=Broadcast. |
 | 3 | `NIC_RX_BASE`| R/W | **Pointer** to start of RX Ring Buffer in RAM. |
@@ -25,7 +25,7 @@ The vNIC is a memory-mapped device that uses DMA (Direct Memory Access) via ring
 | 9 | `NIC_RING_SZ`| R/W | Size of the rings in words (e.g., 64, 128, 256). Must be a power of 2 for efficient index wrapping. |
 
 ## 3. Interrupts
-*   **Vector:** The vNIC shall trigger **Interrupt Vector 2** when a packet is successfully placed in the RX Ring Buffer.
+The vNIC does **not** generate an interrupt upon packet reception. The guest OS is responsible for polling the `NIC_RX_HEAD` and `NIC_RX_TAIL` registers to detect new packets.
 
 ## 4. Internal Logic
 
@@ -48,7 +48,6 @@ To prevent the vNIC from reading invalid memory on boot, it starts in a **DISABL
     3.  Check if space exists in RX Ring. If Full: **Drop Packet Silently**.
     4.  Write `[LENGTH]` then `[PACKET_BYTES...]` to `RAM[RX_BASE + RX_HEAD]`.
     5.  Update `RX_HEAD` pointer in the register map.
-    6.  Trigger Interrupt Vector 2.
 *   **TX Task (RAM -> Socket):**
     1.  Check if `TX_HEAD != TX_TAIL` (i.e., if the Kernel has written a packet).
     2.  Read `LENGTH` from `RAM[TX_BASE + TX_TAIL]`.

@@ -1,8 +1,8 @@
 {
   "functions": [
-    "_check_last_block",
-    "load_bin_file",
     "_read_next_block",
+    "load_bin_file",
+    "_check_last_block",
     "_read_disk_block"
   ],
   "variables": [],

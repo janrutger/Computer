@@ -1,46 +1,35 @@
 {
   "functions": [
-    "DEQUE.prev",
+    "HALT",
+    "READline",
+    "LIST.put",
+    "NEW.matrix_populate",
+    "_net_write_word",
+    "io_lib_init",
+    "ARRAY.append",
+    "NET.poll",
+    "NET.bind_service",
+    "HEAP.init",
+    "MATRIX.get",
+    "NET.send_packet",
+    "ARRAY.size",
     "KEYchar",
-    "DEQUE.new",
-    "_DEQUE.free_node",
+    "LIST.get",
+    "PRTcls",
+    "_net_write_32",
+    "ARRAY.put",
+    "ARRAY.len",
+    "PRTnum",
     "NEW.array",
     "TOS.check",
-    "ARRAY.get",
-    "DEQUE.value",
-    "DEQUE.is_last",
     "NEW.matrix",
-    "CURSORoff",
-    "DEQUE.append",
-    "io_lib_init",
-    "DEQUE.pop",
-    "ARRAY.append",
-    "READline",
-    "ARRAY.len",
-    "DEQUE.head",
-    "DEQUE.is_empty",
-    "DEQUE.init_pool",
-    "LIST.get",
-    "ARRAY.size",
-    "DEQUE.tail",
-    "DEQUE.is_first",
-    "LIST.put",
-    "PRTnum",
-    "DEQUE.next",
-    "_DEQUE.grow_pool",
-    "DEQUE.push",
-    "MATRIX.get",
-    "HEAP.init",
-    "DEQUE.pop_tail",
-    "PRTchar",
-    "ARRAY.put",
-    "_DEQUE.alloc_node",
-    "HALT",
     "KEYpressed",
-    "NEW.list",
-    "PRTcls",
+    "CURSORoff",
     "MATRIX.put",
-    "NEW.matrix_populate"
+    "NET_LIB.init",
+    "PRTchar",
+    "ARRAY.get",
+    "NEW.list"
   ],
   "variables": [
     {
@@ -259,69 +248,49 @@
       "size": 1
     },
     {
-      "name": "DEQUE_FREE_HEAD",
-      "type": "LIB_VAR",
+      "name": "net_tx_buffer",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "name": "DEQUE_POOL_PAGE_SIZE",
-      "type": "LIB_VAR",
+      "name": "nic_addr_ptr",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_dq_i",
-      "type": "LIB_VAR",
+      "name": "_ns_len",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_dq_ptr",
-      "type": "LIB_VAR",
+      "name": "_ns_payload",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_dq_next_ptr",
-      "type": "LIB_VAR",
+      "name": "_ns_port",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_dq_node",
-      "type": "LIB_VAR",
+      "name": "_ns_dest",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_dq_val",
-      "type": "LIB_VAR",
+      "name": "_ns_total_len",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_dq_list",
-      "type": "LIB_VAR",
+      "name": "_ns_src",
+      "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_dq_head",
-      "type": "LIB_VAR",
+      "name": "_ns_i",
+      "type": "VALUE",
       "size": 1
-    },
-    {
-      "name": "_dq_tail",
-      "type": "LIB_VAR",
-      "size": 1
-    },
-    {
-      "name": "_dq_prev",
-      "type": "LIB_VAR",
-      "size": 1
-    },
-    {
-      "name": "_dq_next",
-      "type": "LIB_VAR",
-      "size": 1
-    },
-    {
-      "name": "_dq_err_empty",
-      "type": "LIB_VAR",
-      "size": 27
     }
   ],
   "constants": {
@@ -330,11 +299,15 @@
     "return": 13,
     "newline": 10,
     "null": 0,
-    "DEQUE_NODE_SIZE": 3,
-    "DEQUE_OFF_VAL": 0,
-    "DEQUE_OFF_NEXT": 1,
-    "DEQUE_OFF_PREV": 2,
-    "DEQUE_CTRL_HEAD": 0,
-    "DEQUE_CTRL_TAIL": 1
+    "NET_HEADER_SIZE": 16,
+    "SYS_NET_BIND": 60,
+    "SYS_NET_SEND": 61,
+    "SYS_NET_RECV": 62,
+    "SYS_NET_GET_ADDR": 63,
+    "NET_TYPE_SDP": 0,
+    "NET_TYPE_SYN": 1,
+    "NET_TYPE_ACK": 2,
+    "NET_TYPE_FIN": 3,
+    "NET_TYPE_DATA": 4
   }
 }

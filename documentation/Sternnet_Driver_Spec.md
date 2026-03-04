@@ -20,12 +20,12 @@ Because the vNIC maps 1 Memory Word to 1 Network Byte, the Driver is responsible
 *   **Reading Headers:** In the ISR, the Driver must read 4 consecutive slots to reconstruct the 32-bit `DEST_ADDR` or 2 slots for `MSG_ID`.
 *   **Payloads:** Application payloads are assumed to be byte-aligned (ASCII or pre-serialized).
 
-### 2.2 Interrupt Service Routine (ISR) Logic
-The ISR for Vector 2 is the critical "Demultiplexer" of the system. It must run quickly to avoid blocking the CPU.
+### 2.2 Packet Polling and Demultiplexing
+The `NET.recv_poll` function is the critical "Demultiplexer" of the system. It is called by the application or kernel main loop to check for new packets.
 
 **Workflow:**
-*   **Context Save:** (Handled automatically by CPU microcode for `INT`/ISR entry).
-*   **Loop:** While `NIC_RX_TAIL != NIC_RX_HEAD` (Data exists in Ring):
+*   **Check for Data:** The function first checks if `NIC_RX_TAIL != NIC_RX_HEAD`. If they are equal, it returns immediately.
+*   **Process Packet:** If data exists:
     *   **Read Packet Info:** Read the packet's `LENGTH` and `SRV` (Port) ID from the ring buffer.
     *   **Lookup Port:** Find the application Deque bound to this `SRV` ID.
     *   **Check Application Buffer:** Check if the target Deque has space.
@@ -37,7 +37,6 @@ The ISR for Vector 2 is the critical "Demultiplexer" of the system. It must run 
             *   **Drop Packet:** Do not copy the data. The application is overwhelmed, so we shed load here to keep the hardware ring open.
     *   **Advance Hardware Tail:** Update `NIC_RX_TAIL` to point to the next packet in the ring buffer.
     *   **Update Hardware Register:** Write the new `NIC_RX_TAIL` value to the MMIO register to signal to the vNIC that space has been freed.
-*   **Return:** Execute `RTI`.
 
 ## 3. Transport Protocols
 
