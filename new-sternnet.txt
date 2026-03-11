@@ -1,0 +1,207 @@
+lately we implemented Sternnet V0.1 Beta and this is working as expected
+It uses a UDP like protocol SDP (Stacks Datagram Protocol) to send/recv Data
+An proof of concept, net_test.stacks proofs the Stern-atx can send and receive an message
+
+Review of the code shows the software stack is messy, using depencies
+and this stops furture inprovements of the network capabilities.
+
+So ik like to refactor the current Network stack so its save to make new features
+This document is ment to design the new network stack
+
+For this change i trust the current virtual hardware, the Switch an NIC
+But, altought the hardware is ready for using interrupts, we do use an polling mechanisme
+
+
+** The current software stack is:
+- net_driver.stacks
+    -- An Kernel compiled module.
+    -- The current version is using the HEAP for array, dict, and queues
+
+- net_lib.stacks
+    -- An Library compiled module
+    -- Programmers API
+
+- net_test.stacks
+    -- Application compiled test Program
+
+
+** The new situation expects:
+- net_hal, kernel module
+    -- The hardware abstraction layer
+    -- Knows the NIC hardware and the tx/rx ringbuffers
+    -- Has low-level (raw) send and receive methods to handle the hardware
+    -- Does not use/need the HEAP
+    -- API Contract:
+        -- HAL.init ( -- link_status )
+        -- HAL.configure ( host_id -- )
+        -- HAL.send_raw ( data_ptr length -- )
+        -- HAL.rx_available ( -- bool )
+        -- HAL.rx_peek_len ( -- length )
+        -- HAL.rx_copy_and_advance ( dest_ptr -- )
+        -- HAL.rx_skip_and_advance ( -- )
+
+- net_core, Kernel module
+    -- The "brains" of the stack. Sits between the HAL and user applications.
+    -- Static Resources:
+        -- `_tx_scratchpad`: A linear LIST (size=256) for constructing raw hardware frames.
+    -- Responsibilities:
+        -- Uses the `net_hal` for all hardware interaction.
+        -- Manages all HEAP-allocated resources (e.g., `net_packet_pool`, `net_port_map`).
+    -- Implements the HANDLERS for all network syscalls:
+        -- `SYS_NET_CONFIG` (65)
+        -- `SYS_NET_BIND` (60)
+        -- `SYS_NET_SEND` (61)
+        -- `SYS_NET_RECV` (62)
+        -- `SYS_NET_FREE` (64)
+        -- `SYS_NET_GET_ADDR` (63)
+
+- socket_lib, Library module
+    -- The user-facing API.
+    -- Connects the Application to the `net_core` by executing syscall `INT` instructions.
+    -- Holds the programmers API methods, like:
+        -- SOCKET.init ( host_id rx_pool_size -- success )
+            -- host_id: Unique Node ID. Use \"hostname" for compile-time hashing.
+            -- rx_pool_size: Number of packet buffers (0 = default).
+            -- Allocates a static internal `_send_buffer` (256 words) to avoid heap fragmentation.
+                -- Buffer Layout: [DestID, DestPort, SrcPort, Length, Payload...]
+                -- Max Payload Size: 240 words. This is enforced by the underlying protocol frame size
+                -- and ensures any packet created by the library is valid for transmission.
+                
+        -- SOCKET.snd_text ( dest_id dest_port src_port str_ptr -- success )
+            -- Copies string to the internal `_send_buffer` and sends it.
+        -- SOCKET.snd_num ( dest_id dest_port src_port num -- success )
+            -- Converts integer to string (itoa) into `_send_buffer` and sends as text.
+            
+        -- SOCKET.rcv_text
+        -- SOCKET.bind
+
+### Syscall API Contract (net_core <-> socket_lib)
+This defines the stable interface between user-space and the kernel.
+
+*   **SYS_NET_CONFIG (65):** `( host_id rx_buffer_size -- success_flag )`
+    -   One-time setup of the stack. Called by `SOCKET.init`.
+*   **SYS_NET_BIND (60):** `( port_id deque_ptr -- )`
+    -   Binds a port to a user-space deque. Called by `SOCKET.bind`.
+*   **SYS_NET_SEND (61):** `( packet_ptr -- success_flag )`
+    -   Sends a pre-formatted packet from a user buffer. Called by `socket_lib` send helpers.
+*   **SYS_NET_RECV (62):** `( -- packet_ptr | 0 )`
+    -   Polls for a packet, returns a pointer to a kernel buffer. Called by `socket_lib` receive helpers.
+*   **SYS_NET_FREE (64):** `( buffer_ptr -- )`
+    -   Returns a kernel buffer to the free pool. Called by `socket_lib` receive helpers.
+*   **SYS_NET_GET_ADDR (63):** `( -- host_id )`
+    -   Gets the configured local host ID.
+
+
+
+** Implementation plan
+- Create the (new) sourcefiles, not trying updting the existing once
+- Create stub methods for all files an function
+- Fill in the code
+
+** make sure the compiler does compile the sourcefiles
+
+### Data Flow Example: Sending a Packet
+This section clarifies the flow of data and responsibility through the layers during a send operation.
+
+1.  **`socket_lib` (User Space - The "Shipping Manifest"):**
+    *   A user calls `SOCKET.snd_text`.
+    *   The library populates its static `_send_buffer` with the high-level 
+        packet structure: `[DestID, DestPort, SrcPort, Length, Payload...]`.
+    *   It passes a pointer to this user-space buffer to the kernel via the `SYS_NET_SEND` syscall.
+
+2.  **`net_core` (Kernel - The "Translator"):**
+    *   The `handle_sys_net_send` function receives the pointer to the `_send_buffer`.
+    *   It reads the destination, port, and payload information from this buffer.
+    *   It uses a local **linear scratchpad buffer** to construct the raw hardware frame.
+    *   It formats the SDP header (using the address/port info) and copies the payload into this scratchpad.
+    *   This ensures the Core does not need to know about the HAL's circular ring buffer logic.
+
+3.  **`net_hal` (Kernel - The "Dumb" Hardware Interface):**
+    *   The `net_core` calls `HAL.send_raw`.
+    *   It passes `HAL.send_raw` a pointer to the **scratchpad buffer** and the total length.
+    *   The HAL knows nothing about protocols. It simply takes the given pointer and length and instructs the NIC hardware to transmit those raw bytes.
+
+This layered approach ensures that protocol-specific logic stays in the `net_core`, while the `net_hal` remains a generic, reusable hardware interface.
+
+### SDP (Stacks Datagram Protocol) Raw Hardware Frame Format
+The `net_core` constructs this frame in the `_tx_scratchpad` before calling `HAL.send_raw`.
+Total Header Size: 16 Bytes.
+
+| Offset | Field       | Size    | Description                                      |
+| :---   | :---        | :---    | :---                                             |
+| 0      | Dest ID     | 4 Bytes | Destination Node ID (32-bit)                     |
+| 4      | Src ID      | 4 Bytes | Source Node ID (32-bit)                          |
+| 8      | Dest Port   | 2 Bytes | Destination Port (16-bit)                        |
+| 10     | Src Port    | 2 Bytes | Source Port (16-bit)                             |
+| 12     | Pkt Type    | 4 Bytes | Packet Type / Control Word (e.g., NET_TYPE_SDP)  |
+| 16+    | Payload     | N Bytes | The actual data payload                          |
+
+
+### RX Buffer Envelope Structure (Ingress Path)
+When `net_core` processes an incoming packet, it parses the raw hardware header and constructs a structured "Envelope" in the heap buffer before pushing it to the application's deque.
+
+| Offset | Field       | Description                                      |
+| :---   | :---        | :---                                             |
+| 0      | Source ID   | The 32-bit ID of the sender.                     |
+| 1      | Dest Port   | The local port that received the packet.         |
+| 2      | Src Port    | The remote port on the sender's machine.         |
+| 3      | Payload Len | The length of the actual data payload.           |
+| 4+     | Payload     | The actual data bytes.                           |
+
+### RX API Strategy: User-Provided Buffer
+To ensure memory safety and prevent kernel resource leaks, the RX path uses a "Copy & Release" strategy managed by the library.
+
+*   **API:** `SOCKET.read ( array_ptr -- success_flag )`
+*   **Mechanism:**
+    1.  The application provides a pointer to its own buffer (array).
+    2.  The library calls `SYS_NET_RECV` to poll for a kernel buffer.
+    3.  If a packet exists:
+        *   The library copies the Envelope (Metadata + Payload) into the user's array.
+        *   The library performs bounds checking against the user array size.
+        *   The library **immediately** calls `SYS_NET_FREE` to return the kernel buffer to the pool.
+        *   Returns `1` (Success).
+    4.  If no packet exists, returns `0`.
+
+This ensures the application never "owns" a kernel buffer, eliminating the risk of exhausting the `_packet_pool` due to forgotten free calls.
+
+
+### Implementation Roadmap: v0.2 (Polling) and v0.3 (Interrupts)
+
+To ensure a stable and incremental development process, the receive path will be implemented in two major versions.
+
+---
+
+#### **Sternnet v0.2: The Polling Model (Current Task)**
+
+**Goal:** Create a robust, reliable, and memory-safe network stack based on the clean, layered architecture. We will use a polling mechanism, as originally specified, to minimize risk and complexity.
+
+**Implementation Steps:**
+
+1.  **`net_core`: Implement `_net_free` Helper**
+    *   This is the foundational bookkeeping function for recycling packet buffers. The handler for `SYS_NET_BIND` (`_net_bind`) is already implicitly functional (proven by the working transmit path). The next step is to implement the handler for `SYS_NET_FREE` (`_net_free`).
+
+2.  2.  **`net_core`: Implement Polling Helper (`_net_poll`)**
+    *   This internal function is the heart of the v0.2 receive path. It will be called by the `SYS_NET_RECV` syscall.
+    *   *   **Logic:** It calls `HAL.rx_available`. If a packet is present, it processes it into a structured "Envelope", looks up the destination port in the `_port_map`, and pushes the envelope pointer onto the correct application-bound deque. It then calls `HAL.rx_skip_and_advance`.
+
+3.  **`net_core`: Implement `_net_recv` Handler**
+    *   This is the internal handler for the `SYS_NET_RECV` syscall. Its only job is to invoke the `_net_poll` helper to process one packet from the hardware ring if available. It does not return a value, as packets are delivered asynchronously.
+
+4.  **`socket_lib`: Implement `SOCKET.read`**
+    *   `SOCKET.read` first calls `SYS_NET_RECV` to trigger a kernel poll. It then checks the application's own deque for a packet pointer. If one is found, it copies the data and calls `SYS_NET_FREE` to release the kernel buffer.
+
+---
+
+#### **Sternnet v0.3: The Interrupt-Driven Model (Future Work)**
+
+**Goal:** Evolve the stable v0.2 stack to a high-performance, interrupt-driven model. This will significantly reduce CPU usage for applications that are idle while waiting for network traffic.
+
+**Architectural Changes:**
+
+1.  **Hardware/OS Modification:** Update the virtual NIC and Stern-ATX kernel to support and dispatch a new hardware interrupt for "Packet Received."
+
+2.  **`net_core`: Create an Interrupt Service Routine (`_net_rx_isr`)**
+    *   This ISR will contain the exact same logic as the v0.2 `_net_poll` helper. It will be triggered directly by the hardware instead of by a syscall.
+
+3.  **`net_core`: Refactor `handle_sys_net_recv`**
+    *   The `SYS_NET_RECV` syscall will no longer trigger a poll. Instead, its purpose will be to simply check the application's deque for a packet that was placed there asynchronously by the ISR. This decouples the application's receive call from the hardware receive event.

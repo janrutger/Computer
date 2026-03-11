@@ -1,99 +1,50 @@
-# Sternnet Connectivity Test
-# Verifies NET.bind, NET.send, and NET.recv
+# Sternnet v0.2 Initialization Test
+# Verifies the new socket_lib and the SYS_NET_CONFIG syscall.
 
-INCLUDE net_lib
+INCLUDE socket_lib
 
 USE std_heap
 USE std_deque
-
 USE std_stern_io
 
 VALUE my_inbox 0
-VALUE my_payload 0
-
-# Local variables for main
-VALUE _loops 0
-VALUE _pkt 0
-VALUE _len 0 
-VALUE _i 0
-VALUE _success 0
-
-DEF _NET.free_buffer {
-    `NET.free_buffer
-}
 
 DEF main {
-    # The Deque library uses a slab allocator for its nodes.
-    # This pool must be initialized once at startup.
+    # 1. Prepare the runtime environment
     HEAP.free
     32 DEQUE.init_pool
 
-    "Starting Network Test...\n" PRTstring
-    # 1. Init Libraries
-    NET_LIB.init
-    
-    # 2. Create Inbox and Bind Port 100
-    DEQUE.new AS my_inbox
-    100 my_inbox NET.bind_service
-    "Bound Port 100 to Inbox.\n" PRTstring
-    
-    # 3. Prepare Payload "HELLO"
-    10 NEW.array AS my_payload
-    72 my_payload ARRAY.append # H
-    69 my_payload ARRAY.append # E
-    76 my_payload ARRAY.append # L
-    76 my_payload ARRAY.append # L
-    79 my_payload ARRAY.append # O
-    32 my_payload ARRAY.append # space 
-    78 my_payload ARRAY.append # N
-    105 my_payload ARRAY.append # i
-    99 my_payload ARRAY.append # c
-    107 my_payload ARRAY.append # k
- 
-    # 4. Send Packet to Self (Broadcast 0xFFFFFFFF)
-    # Dest: -1 (Broadcast), Port: 100, Payload, Len: 5
-    1 NEGATE 100 my_payload 10 NET.send_packet
-    DROP # Consume the success/fail return value
-    
-    "Packet Sent. Polling...\n" PRTstring
+    "Starting Network Initialization Test...\n" PRTstring
 
-    # 5. Poll Loop
-    0 AS _loops
-    WHILE _loops 50 < DO
-        # Poll Hardware
-        NET.poll
-        DROP # Consume the 'count' return value from NET.poll       
-        # Check Inbox
-        my_inbox DEQUE.is_empty 0 == IF
-            "Packet Received!\n" PRTstring
-           
-            # Pop Packet (Array Ptr)
-            my_inbox DEQUE.pop AS _pkt
-            
-            # Get the packet's length from its metadata
-            _pkt ARRAY.len AS _len
-            
-            # Print Payload (Starts at Index 16)
-            "Payload: " PRTstring
-            0 AS _i
-            WHILE _i _len 16 - < DO
-                _i 16 + _pkt ARRAY.get PRTchar
-                _i 1 + AS _i
-            DONE
-            "\n" PRTstring
-            
-            # Return buffer to pool
-            _pkt _NET.free_buffer
-            1 AS _success
-            150 AS _loops # Set to loop limit to exit
+    # 2. Call the new SOCKET.init function
+    # Pass a host_id (hashed string) and a buffer size (e.g., 128 words)
+    \"stern-test" 128 SOCKET.init
+
+    # 3. Check the result from the syscall
+    IF
+        "SUCCESS: SYS_NET_CONFIG returned 1. Network stack is configured.\n" PRTstring
+
+        # 4. Test SYS_NET_BIND
+        DEQUE.new AS my_inbox
+        100 my_inbox SOCKET.bind
+        "INFO: Called SOCKET.bind for port 100.\n" PRTstring
+        "INFO: Use debugger to inspect _port_map in net_core.\n" PRTstring
+
+        # 5. Test SYS_NET_SEND
+        # ( dest_id dest_port src_port str_ptr -- success )
+        STRING testmessage "hello world"
+        \"stern-test" 100 100 &testmessage SOCKET.snd_text
+
+        IF
+            "INFO: Message is send by host succesfull\n" PRTstring
+        ELSE
+            "INFO: Message is send by host failed\n" PRTstring
         END
-        
-        _loops 1 + AS _loops
-    DONE
-    
-    _success 0 == IF
-        "Timeout: No packet received.\n" PRTstring
+
+    ELSE
+        "FAILURE: SYS_NET_CONFIG returned 0. Check kernel logs.\n" PRTstring
     END
 }
 
 main
+:break

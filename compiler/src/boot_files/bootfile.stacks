@@ -45,7 +45,7 @@ INCLUDE vvm_core_lib
 
 # The network library is using the heap, dict and deque also
 # so the heap must be defind before use
-`NET.init
+# `NET.init
 
 `start_kernel
 
@@ -67,5 +67,7 @@ ASM {
     INCLUDE syscalls.stacks
     INCLUDE stern_kernel.stacks
     INCLUDE vdisk_routines.stacks
-    INCLUDE net_driver.stacks
+    # INCLUDE net_driver.stacks
+    INCLUDE net_hal.stacks
+    INCLUDE net_core.stacks
 }

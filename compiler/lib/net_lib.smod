@@ -9,7 +9,7 @@
 . $_ns_src 1
 . $_ns_i 1
 # .FUNCTIONS
-@NET_LIB.init
+@SOCKET.init
     ldi A 256
     stack A $DATASTACK_PTR
     call @NEW.array
@@ -74,12 +74,12 @@
         # Byte 0 (MSB): (Value >> 24)
         stx K $_start_memory_
         ret
-@NET.bind_service
+@SOCKET.bind_service
 
         ldi I ~SYS_NET_BIND
         int $INT_VECTORS
         ret
-@NET.send_packet
+@SOCKET.send_packet
     ustack A $DATASTACK_PTR
     sto A $_ns_len
     ustack A $DATASTACK_PTR
@@ -95,10 +95,10 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :NET.send_packet_if_else_0
+    jmpt :SOCKET.send_packet_if_else_0
     stack Z $DATASTACK_PTR
-    jmp :NET.send_packet_if_end_0
-:NET.send_packet_if_else_0
+    jmp :SOCKET.send_packet_if_end_0
+:SOCKET.send_packet_if_else_0
     ldm B $_ns_len
     ldi A 16
     add A B
@@ -138,7 +138,7 @@
     call @_net_write_32
     ld A Z
     sto A $_ns_i
-:NET.send_packet_while_start_0
+:SOCKET.send_packet_while_start_0
     ldm A $_ns_i
     stack A $DATASTACK_PTR
     ldm A $_ns_len
@@ -146,7 +146,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :NET.send_packet_while_end_0
+    jmpt :SOCKET.send_packet_while_end_0
     ldm A $_ns_i
     stack A $DATASTACK_PTR
     ldm A $_ns_payload
@@ -163,8 +163,8 @@
     ldi A 1
     add A B
     sto A $_ns_i
-    jmp :NET.send_packet_while_start_0
-:NET.send_packet_while_end_0
+    jmp :SOCKET.send_packet_while_start_0
+:SOCKET.send_packet_while_end_0
     ldm B $net_tx_buffer
     ldi A 2
     add B A
@@ -172,9 +172,9 @@
 
             ldi I ~SYS_NET_SEND
             int $INT_VECTORS
-        :NET.send_packet_if_end_0
+        :SOCKET.send_packet_if_end_0
     ret
-@NET.poll
+@SOCKET.poll
 
         ldi I ~SYS_NET_RECV
         int $INT_VECTORS

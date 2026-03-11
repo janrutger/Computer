@@ -4,9 +4,9 @@
 . $net_port_map 1
 . $net_packet_pool 1
 . $_rx_dest_deque 1
-. $NET.init_str_0 33
-. $NET.init_str_1 18
-. $NET.init_str_2 36
+. $NET.init_str_0 22
+. $NET.init_str_1 20
+. $NET.init_str_2 38
 
 # .CODE
 
@@ -21,6 +21,11 @@
     MALLOC $nic_tx_tail     18383 ; R: TX Tail (Written by NIC)
     MALLOC $nic_ring_sz     18384 ; R/W: Ring Size
     EQU ~RING_MASK          255   ; Mask for Ring Buffer wrapping
+    EQU ~RING_SIZE          256   ; Ring Buffer Size
+    
+    . $net_is_configured    1   ; Size 1
+    % $net_is_configured    0   ; Value 0 (Not Configured)
+
 
 # .FUNCTIONS
 @NET.init
@@ -50,16 +55,22 @@
             sto A $nic_rx_base  ; Write to MMIO
             ldi A $tx_ring      ; Load address of tx_ring
             sto A $nic_tx_base  ; Write to MMIO
-            ldi A 256           ; RING_SIZE
+            ldi A ~RING_SIZE    ; RING_SIZE
             sto A $nic_ring_sz  ; Write to MMIO
             ldi A 2             ; Enable CMD
             sto A $nic_cmd      ; Write to MMIO
+
+            ldi A 1
+            sto A $net_is_configured ; Network is found
             jmp :NET.init_if_end_0
 :NET.init_if_else_0
     ldi A $NET.init_str_2
     stack A $DATASTACK_PTR
     call @PRINTSTRING
-:NET.init_if_end_0
+
+            ldi A 0
+            sto A $net_is_configured ; Network is not found
+        :NET.init_if_end_0
     ret
 @PRINTSTRING
 
@@ -344,6 +355,6 @@
 % $net_port_map 0
 % $net_packet_pool 0
 % $_rx_dest_deque 0
-% $NET.init_str_0 \I \n \i \t \i \a \l \i \z \i \n \g \space \S \t \e \r \n \n \e \t \space \D \r \i \v \e \r \. \. \. \Return \null
-% $NET.init_str_1 \L \i \n \k \space \S \t \a \t \u \s \: \space \U \P \Return \Return \null
-% $NET.init_str_2 \L \i \n \k \space \S \t \a \t \u \s \: \space \D \O \W \N \space \( \C \h \e \c \k \space \v \S \w \i \t \c \h \) \Return \Return \null
+% $NET.init_str_0 \I \n \i \t \i \a \l \i \z \i \n \g \space \S \t \e \r \n \n \e \t \null
+% $NET.init_str_1 \, \space \L \i \n \k \space \S \t \a \t \u \s \: \space \U \P \Return \Return \null
+% $NET.init_str_2 \, \space \L \i \n \k \space \S \t \a \t \u \s \: \space \D \O \W \N \space \( \C \h \e \c \k \space \v \S \w \i \t \c \h \) \Return \Return \null

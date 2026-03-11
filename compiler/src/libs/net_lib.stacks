@@ -36,7 +36,8 @@ VALUE _ns_src 0
 VALUE _ns_i 0
 
 # --- Init ---
-DEF NET_LIB.init {
+# 
+DEF SOCKET.init {
     # Allocate TX buffer (256 words capacity)
     256 NEW.array AS net_tx_buffer
     
@@ -111,8 +112,8 @@ DEF _net_write_32 {
     }
 }
 
-# NET.bind_service ( port_id deque_ptr -- )
-DEF NET.bind_service {
+# SOCKET.bind_service ( port_id deque_ptr -- )
+DEF SOCKET.bind_service {
     # Stack: port_id, deque_ptr
     # Syscall expects arguments on stack.
     # We just trigger the interrupt.
@@ -122,8 +123,8 @@ DEF NET.bind_service {
     }
 }
 
-# NET.send_packet ( dest_addr port_id payload_ptr payload_len -- success )
-DEF NET.send_packet {
+# SOCKET.send_packet ( dest_addr port_id payload_ptr payload_len -- success )
+DEF SOCKET.send_packet {
     AS _ns_len
     AS _ns_payload
     AS _ns_port
@@ -162,8 +163,8 @@ DEF NET.send_packet {
     END
 }
 
-# NET.poll ( -- count )
-DEF NET.poll {
+# SOCKET.poll ( -- result )
+DEF SOCKET.poll {
     ASM {
         ldi I ~SYS_NET_RECV
         int $INT_VECTORS

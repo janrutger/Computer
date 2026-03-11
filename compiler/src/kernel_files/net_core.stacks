@@ -1,0 +1,275 @@
+# - net_core, Kernel module
+#     -- The "brains" of the stack. Sits between the HAL and user applications.
+#     -- Static Resources:
+#         -- `_tx_scratchpad`: A linear LIST (size=256) for constructing raw hardware frames.
+#     -- Responsibilities:
+#         -- Uses the `net_hal` for all hardware interaction.
+#         -- Manages all HEAP-allocated resources (e.g., `net_packet_pool`, `net_port_map`).
+#     -- Implements the HANDLERS for all network syscalls:
+#         -- `SYS_NET_CONFIG` (65)
+#         -- `SYS_NET_BIND` (60)
+#         -- `SYS_NET_SEND` (61)
+#         -- `SYS_NET_RECV` (62)
+#         -- `SYS_NET_FREE` (64)
+#         -- `SYS_NET_GET_ADDR` (63)
+
+
+USE std_heap
+USE std_dict
+USE std_deque
+# USE net_hal # Import HAL function definitions for the compiler, does not work this way, it is not an libray
+
+# --- Constants ---
+CONST NET_HEADER_SIZE 16
+
+# --- Syscall IDs --- 
+# for reference only
+# CONST SYS_NET_BIND      60
+# CONST SYS_NET_SEND      61
+# CONST SYS_NET_RECV      62
+# CONST SYS_NET_GET_ADDR  63
+# CONST SYS_NET_FREE      64
+# CONST SYS_NET_CONFIG    65
+
+
+# --- Packet Types (Control Word Byte 12) ---
+CONST NET_TYPE_SDP  0  # Unreliable Datagram
+# CONST NET_TYPE_SYN  1  # Start Connection
+# CONST NET_TYPE_ACK  2  # Acknowledge
+# CONST NET_TYPE_FIN  3  # End Connection
+# CONST NET_TYPE_DATA 4  # Reliable Data Chunk
+
+# --- Static _tx_scratchpad Buffer ---
+LIST _tx_scratchpad 256
+
+
+# --- Global State (Pointers) ---
+# We do NOT allocate these here (e.g., NEW.dict).
+# We only define the pointers. The actual allocation happens in SYS_NET_CONFIG
+# to ensure the HEAP is ready and managed by the application lifecycle.
+VALUE _net_is_configured 0  # 0=uninitialized, 1=ready
+VALUE _port_map 0           # Pointer to the Port Dictionary
+VALUE _packet_pool 0        # Pointer to the RX Buffer Pool Deque
+VALUE _local_host_id 0      # The configured Host ID
+VALUE _rx_buffer_size 0     # The configured RX buffer size (MTU)
+
+
+# --- Syscall Handlers ---
+
+# ( host_id rx_buffer_size -- success )
+DEF sys_net_config {    # syscall 65
+    # Stack: host_id, rx_buffer_size
+
+    _net_is_configured 1 == IF
+        # 1. Guard: Prevent double initialization
+        DROP DROP
+        0 # Return failure
+    ELSE
+        # 2. Initialize hardware first to check for link status.
+        `HAL.init # ( -- link_status )
+        # Stack: host_id, rx_buffer_size, link_status
+
+        IF # Consumes link_status
+            # --- LINK IS UP: Proceed with configuration ---
+            # Stack: host_id, rx_buffer_size
+
+            # 3. Set Configured Flag
+            1 AS _net_is_configured
+
+            # 4. Handle Buffer Size Defaults
+            DUP 0 == IF
+                DROP 256  # Default to 256 words (Max) if 0 is passed
+            END
+            AS _rx_buffer_size
+            # Stack: host_id
+
+            # 5. Allocate Kernel Resources (Deferred Allocation)
+            8 DICT.new AS _port_map
+            DEQUE.new AS _packet_pool
+
+            # 6. Populate Packet Pool (Fixed 16 buffers)
+            VALUE _i 0
+            0 AS _i
+            WHILE _i 16 < DO
+                _rx_buffer_size NEW.list      # Allocate buffer of size _rx_buffer_size
+                _packet_pool DEQUE.append     # Add to pool
+                _i 1 + AS _i
+            DONE
+            # Stack: host_id
+
+            # 7. Configure Hardware Address
+            # 7. Sanitize and Configure Hardware Address
+            # Mask to 32 bits (0xFFFFFFFF) to ensure protocol compliance.
+            4294967296 %
+            AS _local_host_id                      # Save host_id to state
+            _local_host_id `HAL.configure           # Configure NIC with host_id
+
+            # 8. Return Success
+            1
+        ELSE
+            # --- LINK IS DOWN: Fail fast, do not configure ---
+            # Stack: host_id, rx_buffer_size
+            DROP DROP # Clean up arguments
+            0 # Return failure
+        END
+    END
+}
+
+# ( port_id deque_ptr -- )
+DEF sys_net_bind {
+    # Stack: port_id deque_ptr
+
+    _net_is_configured IF
+        # DICT.put ( val key dict -- )
+        SWAP        # Stack: deque_ptr port_id
+        _port_map DICT.put
+    ELSE
+        DROP DROP
+    END
+}
+
+# --- Helpers for Frame Construction ---
+
+# Helper: Write byte to absolute address
+DEF _net_write_byte {
+    # Stack: value address
+    ASM {
+        ustack A $DATASTACK_PTR ; Address
+        ustack C $DATASTACK_PTR ; Value
+        ld I A
+        stx C $_start_memory_
+    }
+}
+
+# Helper: Read byte from absolute address
+DEF _net_read_byte {
+    # Stack: address -- value
+    ASM {
+        ustack A $DATASTACK_PTR ; Address
+        ld I A
+        ldx C $_start_memory_
+        stack C $DATASTACK_PTR  ; Push value
+    }
+}
+
+# Helper: Write 16-bit value (Big Endian) to _tx_scratchpad offset
+DEF _net_write_16 {
+    # Stack: value offset
+    VALUE w16_off 0
+    AS w16_off
+
+    VALUE w16_val 0
+    AS w16_val
+
+    VALUE w16_base 0 
+    &_tx_scratchpad AS w16_base
+    
+    # Byte 1 (LSB) -> base + offset + 1
+    w16_val 256 %
+    w16_base w16_off + 1 + _net_write_byte
+    
+    # Byte 0 (MSB) -> base + offset
+    w16_val 256 //
+    w16_base w16_off + _net_write_byte
+}
+
+# Helper: Write 32-bit value (Big Endian) to _tx_scratchpad offset
+DEF _net_write_32 {
+    # Stack: value offset
+    VALUE w32_off 0 
+    AS w32_off
+
+    VALUE w32_val 0 
+    AS w32_val
+
+    VALUE w32_base 0 
+    &_tx_scratchpad AS w32_base
+    
+    # Byte 3 (LSB) -> base + offset + 3
+    w32_val 256 %
+    w32_base w32_off + 3 + _net_write_byte
+    
+    w32_val 256 // AS w32_val
+    
+    # Byte 2 -> base + offset + 2
+    w32_val 256 %
+    w32_base w32_off + 2 + _net_write_byte
+    
+    w32_val 256 // AS w32_val
+    
+    # Byte 1 -> base + offset + 1
+    w32_val 256 %
+    w32_base w32_off + 1 + _net_write_byte
+    
+    # Byte 0 (MSB) -> base + offset
+    w32_val 256 //
+    w32_base w32_off + _net_write_byte
+}
+
+# ( packet_ptr -- success )
+DEF sys_net_send {
+    _net_is_configured IF
+        # Stack: packet_ptr
+        VALUE usr_pkt_ptr 0
+        AS usr_pkt_ptr
+
+        VALUE usr_tmp_ptr 0
+
+        # 1. Read payload length and perform safety check
+        # User Layout: [DestID, DestPort, SrcPort, Length, Payload...]
+        VALUE payload_len 0 
+        usr_pkt_ptr 3 + AS usr_tmp_ptr
+        *usr_tmp_ptr AS payload_len
+
+        payload_len 240 > IF
+            # Fail if payload is larger than the scratchpad can handle (256 - 16).
+            0 # Return failure
+        ELSE
+            usr_pkt_ptr AS usr_tmp_ptr
+            # 2. Read remaining packet info from user buffer
+            VALUE dest_id 0 
+            *usr_tmp_ptr AS dest_id
+            usr_tmp_ptr 1 + AS usr_tmp_ptr
+
+            VALUE dest_port 0 
+            *usr_tmp_ptr AS dest_port
+            usr_tmp_ptr 1 + AS usr_tmp_ptr
+
+            VALUE src_port 0 
+            *usr_tmp_ptr AS src_port
+            usr_tmp_ptr 1 + AS usr_tmp_ptr
+
+            VALUE payload_ptr 0
+            # usr_tmp_ptr now points to Length (offset 3). Advance once more.
+            usr_tmp_ptr 1 + AS payload_ptr # payload_ptr is now the address at offset 4
+
+            # 3. Construct raw hardware frame in _tx_scratchpad
+            # This is the "Translator" step. We build the real frame here.
+            dest_id         0 _net_write_32
+            _local_host_id  4 _net_write_32
+            dest_port       8 _net_write_16
+            src_port        10 _net_write_16
+            NET_TYPE_SDP    12 _net_write_32
+
+            # 4. Copy payload from user buffer to scratchpad
+            VALUE __index 0 
+            0 AS __index
+            
+            WHILE __index payload_len < DO
+                payload_ptr __index + _net_read_byte  # Get byte from user payload
+                &_tx_scratchpad 16 + __index +        # Calculate dest address
+                _net_write_byte                 # Write byte
+                __index 1 + AS __index
+            DONE
+
+            # 5. Calculate total frame length and send to HAL
+            NET_HEADER_SIZE payload_len + &_tx_scratchpad SWAP `HAL.send_raw
+
+            # 6. Return success
+            1
+        END
+    ELSE
+        DROP # packet_ptr
+        0 # Return failure
+    END
+}

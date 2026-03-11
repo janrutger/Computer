@@ -169,7 +169,6 @@
     ldi A 6144
     stack A $DATASTACK_PTR
     call @HEAP.init
-    call @NET.init
     call @start_kernel
 
     :HALT    ; Breakpointg before halt
@@ -183,7 +182,9 @@
     INCLUDE syscalls.stacks
     INCLUDE stern_kernel.stacks
     INCLUDE vdisk_routines.stacks
-    INCLUDE net_driver.stacks
+    # INCLUDE net_driver.stacks
+    INCLUDE net_hal.stacks
+    INCLUDE net_core.stacks
     ret
 
 # .FUNCTIONS

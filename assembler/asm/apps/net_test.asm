@@ -1,210 +1,135 @@
 # .HEADER
-. $net_tx_buffer 1
-. $nic_addr_ptr 1
-. $_ns_len 1
-. $_ns_payload 1
-. $_ns_port 1
-. $_ns_dest 1
-. $_ns_total_len 1
-. $_ns_src 1
-. $_ns_i 1
+. $_send_buffer 256
+. $_str_ptr 1
+. $_src_port 1
+. $_dest_port 1
+. $_dest_id 1
+. $_tmp_ptr 1
+. $_char_ptr 1
+. $_payload_len 1
 . $my_inbox 1
-. $my_payload 1
-. $_loops 1
-. $_pkt 1
-. $_len 1
-. $_i 1
-. $_success 1
-. $main_str_0 26
-. $main_str_1 26
-. $main_str_2 25
-. $main_str_3 18
-. $main_str_4 10
-. $main_str_5 2
-. $main_str_6 30
+. $main_str_0 41
+. $main_str_1 66
+. $main_str_2 40
+. $main_str_3 54
+. $testmessage 12
+. $main_str_4 42
+. $main_str_5 38
+. $main_str_6 56
 
 # .CODE
     call @main
+:break
     ret
 
 # .FUNCTIONS
 
-@NET_LIB.init
-    ldi A 256
-    stack A $DATASTACK_PTR
-    call @NEW.array
-    ustack A $DATASTACK_PTR
-    sto A $net_tx_buffer
+@SOCKET.init
 
-        ldi I ~SYS_NET_GET_ADDR
-        int $INT_VECTORS
-        ldm A $SYSCALL_RETURN_VALUE
-        sto A $nic_addr_ptr
-        ret
-@_net_write_word
-
-        ustack C $DATASTACK_PTR ; Index
-        ustack B $DATASTACK_PTR ; Buffer Ptr (Array Struct)
-        ustack A $DATASTACK_PTR ; Value
-        
-        # Calculate Base Address: Ptr + 2 (Data Start) + Index
-        addi B 2
-        add B C 
-        
-        ld I B
-        stx A $_start_memory_
-        ret
-@_net_write_32
-
-        ustack C $DATASTACK_PTR ; Index
-        ustack B $DATASTACK_PTR ; Buffer Ptr (Array Struct)
-        ustack A $DATASTACK_PTR ; Value
-        
-        # Calculate Base Address: Ptr + 2 (Data Start) + Index
-        addi B 2
-        add B C 
-        
-        # Use repeated division by 256 to extract bytes (Big Endian)
-        # K = Value, M = 256
-        ld K A
-        ldi M 256
-        
-        # Setup I to point to the last byte (Base + 3)
-        ld I B
-        addi I 3
-        
-        # Byte 3 (LSB): Value % 256
-        ld A M          ; A = 256
-        dmod K A        ; K = K / 256, A = K % 256
-        stx A $_start_memory_
-        subi I 1
-        
-        # Byte 2: (Value >> 8) % 256
-        ld A M
-        dmod K A
-        stx A $_start_memory_
-        subi I 1
-        
-        # Byte 1: (Value >> 16) % 256
-        ld A M
-        dmod K A
-        stx A $_start_memory_
-        subi I 1
-        
-        # Byte 0 (MSB): (Value >> 24)
-        stx K $_start_memory_
-        ret
-@NET.bind_service
-
-        ldi I ~SYS_NET_BIND
+        ldi I ~SYS_NET_CONFIG ; syscall 65
         int $INT_VECTORS
         ret
-@NET.send_packet
+@SOCKET.snd_text
     ustack A $DATASTACK_PTR
-    sto A $_ns_len
+    sto A $_str_ptr
     ustack A $DATASTACK_PTR
-    sto A $_ns_payload
+    sto A $_src_port
     ustack A $DATASTACK_PTR
-    sto A $_ns_port
+    sto A $_dest_port
     ustack A $DATASTACK_PTR
-    sto A $_ns_dest
-    ldm A $_ns_len
+    sto A $_dest_id
+    ldm A $_str_ptr
     stack A $DATASTACK_PTR
-    ldi A 239
+    call @STRlen
+    ustack A $DATASTACK_PTR
+    sto A $_payload_len
+    stack A $DATASTACK_PTR
+    ldi A 240
     stack A $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :NET.send_packet_if_else_0
+    jmpt :SOCKET.snd_text_if_else_0
     stack Z $DATASTACK_PTR
-    jmp :NET.send_packet_if_end_0
-:NET.send_packet_if_else_0
-    ldm B $_ns_len
-    ldi A 16
-    add A B
-    sto A $_ns_total_len
-    stack A $DATASTACK_PTR
-    ldm A $net_tx_buffer
-    stack A $DATASTACK_PTR
-    stack Z $DATASTACK_PTR
-    call @_net_write_word
-    ldm A $_ns_dest
-    stack A $DATASTACK_PTR
-    ldm A $net_tx_buffer
-    stack A $DATASTACK_PTR
+    jmp :SOCKET.snd_text_if_end_0
+:SOCKET.snd_text_if_else_0
+    ldi A $_send_buffer
+    sto A $_tmp_ptr
+    ldm A $_dest_id
+    ld B A
+    ldm I $_tmp_ptr
+    stx B $_start_memory_
+    ldm B $_tmp_ptr
     ldi A 1
-    stack A $DATASTACK_PTR
-    call @_net_write_32
-    ldm I $nic_addr_ptr
-    ldx A $_start_memory_
-    stack A $DATASTACK_PTR
-    ldm A $net_tx_buffer
-    stack A $DATASTACK_PTR
-    ldi A 5
-    stack A $DATASTACK_PTR
-    call @_net_write_32
-    ldm A $_ns_port
-    stack A $DATASTACK_PTR
-    ldm A $net_tx_buffer
-    stack A $DATASTACK_PTR
-    ldi A 9
-    stack A $DATASTACK_PTR
-    call @_net_write_32
-    stack Z $DATASTACK_PTR
-    ldm A $net_tx_buffer
-    stack A $DATASTACK_PTR
-    ldi A 13
-    stack A $DATASTACK_PTR
-    call @_net_write_32
+    add A B
+    sto A $_tmp_ptr
+    ldm A $_dest_port
+    ld B A
+    ldm I $_tmp_ptr
+    stx B $_start_memory_
+    ldm B $_tmp_ptr
+    ldi A 1
+    add A B
+    sto A $_tmp_ptr
+    ldm A $_src_port
+    ld B A
+    ldm I $_tmp_ptr
+    stx B $_start_memory_
+    ldm B $_tmp_ptr
+    ldi A 1
+    add A B
+    sto A $_tmp_ptr
+    ldm A $_payload_len
+    ld B A
+    ldm I $_tmp_ptr
+    stx B $_start_memory_
+    ldm B $_tmp_ptr
+    ldi A 1
+    add A B
+    sto A $_tmp_ptr
     ld A Z
-    sto A $_ns_i
-:NET.send_packet_while_start_0
-    ldm A $_ns_i
+    sto A $_i
+:SOCKET.snd_text_while_start_0
+    ldm A $_i
     stack A $DATASTACK_PTR
-    ldm A $_ns_len
+    ldm A $_payload_len
     stack A $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :NET.send_packet_while_end_0
-    ldm A $_ns_i
-    stack A $DATASTACK_PTR
-    ldm A $_ns_payload
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    ldm A $net_tx_buffer
-    stack A $DATASTACK_PTR
-    ldm B $_ns_i
-    ldi A 17
-    add B A
-    stack B $DATASTACK_PTR
-    call @_net_write_word
-    ldm B $_ns_i
+    jmpt :SOCKET.snd_text_while_end_0
+    ldm B $_str_ptr
+    ldm A $_i
+    add A B
+    sto A $_char_ptr
+    ldm I $_char_ptr
+    ldx A $_start_memory_
+    ld B A
+    ldm I $_tmp_ptr
+    stx B $_start_memory_
+    ldm B $_tmp_ptr
     ldi A 1
     add A B
-    sto A $_ns_i
-    jmp :NET.send_packet_while_start_0
-:NET.send_packet_while_end_0
-    ldm B $net_tx_buffer
-    ldi A 2
-    add B A
-    stack B $DATASTACK_PTR
+    sto A $_tmp_ptr
+    ldm B $_i
+    ldi A 1
+    add A B
+    sto A $_i
+    jmp :SOCKET.snd_text_while_start_0
+:SOCKET.snd_text_while_end_0
+    ldi A $_send_buffer
+    stack A $DATASTACK_PTR
 
             ldi I ~SYS_NET_SEND
             int $INT_VECTORS
-        :NET.send_packet_if_end_0
+        :SOCKET.snd_text_if_end_0
     ret
-@NET.poll
+@SOCKET.bind
 
-        ldi I ~SYS_NET_RECV
+        ldi I ~SYS_NET_BIND ; syscall 60
         int $INT_VECTORS
-        ldm A $SYSCALL_RETURN_VALUE
-        stack A $DATASTACK_PTR
         ret
 
-@_NET.free_buffer
-    call @NET.free_buffer
-    ret
 @main
     ldm A $HEAP_START
     sto A $HEAP_FREE
@@ -217,221 +142,93 @@
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-        call @NET_LIB.init
-    call @DEQUE.new
+        ldi A 8246931439866572030
+    stack A $DATASTACK_PTR
+    ldi A 128
+    stack A $DATASTACK_PTR
+    call @SOCKET.init
     ustack A $DATASTACK_PTR
-    sto A $my_inbox
-    ldi A 100
-    stack A $DATASTACK_PTR
-    ldm A $my_inbox
-    stack A $DATASTACK_PTR
-    call @NET.bind_service
+    tst A 0
+    jmpt :main_if_else_0
     ldi A $main_str_1
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldi A 10
-    stack A $DATASTACK_PTR
-    call @NEW.array
+        call @DEQUE.new
     ustack A $DATASTACK_PTR
-    sto A $my_payload
-    ldi A 72
-    stack A $DATASTACK_PTR
-    ldm A $my_payload
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 69
-    stack A $DATASTACK_PTR
-    ldm A $my_payload
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 76
-    stack A $DATASTACK_PTR
-    ldm A $my_payload
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 76
-    stack A $DATASTACK_PTR
-    ldm A $my_payload
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 79
-    stack A $DATASTACK_PTR
-    ldm A $my_payload
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 32
-    stack A $DATASTACK_PTR
-    ldm A $my_payload
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 78
-    stack A $DATASTACK_PTR
-    ldm A $my_payload
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 105
-    stack A $DATASTACK_PTR
-    ldm A $my_payload
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 99
-    stack A $DATASTACK_PTR
-    ldm A $my_payload
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 107
-    stack A $DATASTACK_PTR
-    ldm A $my_payload
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 1
-    ldi B 0
-    sub B A
-    stack B $DATASTACK_PTR
+    sto A $my_inbox
     ldi A 100
     stack A $DATASTACK_PTR
-    ldm A $my_payload
+    ldm A $my_inbox
     stack A $DATASTACK_PTR
-    ldi A 10
-    stack A $DATASTACK_PTR
-    call @NET.send_packet
-    call @rt_drop
+    call @SOCKET.bind
     ldi A $main_str_2
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-    ld A Z
-    sto A $_loops
-:main_while_start_0
-    ldm A $_loops
-    stack A $DATASTACK_PTR
-    ldi A 50
-    stack A $DATASTACK_PTR
-    call @rt_lt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :main_while_end_0
-    call @NET.poll
-    call @rt_drop
-    ldm A $my_inbox
-    stack A $DATASTACK_PTR
-    call @DEQUE.is_empty
-    stack Z $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :main_if_end_0
-    ldi A $main_str_3
+        ldi A $main_str_3
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldm A $my_inbox
+        ldi A 8246931439866572030
     stack A $DATASTACK_PTR
-    call @DEQUE.pop
-    ustack A $DATASTACK_PTR
-    sto A $_pkt
+    ldi A 100
     stack A $DATASTACK_PTR
-    call @ARRAY.len
+    ldi A 100
+    stack A $DATASTACK_PTR
+    ldi A $testmessage
+    stack A $DATASTACK_PTR
+    call @SOCKET.snd_text
     ustack A $DATASTACK_PTR
-    sto A $_len
+    tst A 0
+    jmpt :main_if_else_1
     ldi A $main_str_4
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-    ld A Z
-    sto A $_i
-:main_while_start_1
-    ldm A $_i
-    stack A $DATASTACK_PTR
-    ldm B $_len
-    ldi A 16
-    sub B A
-    stack B $DATASTACK_PTR
-    call @rt_lt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :main_while_end_1
-    ldm B $_i
-    ldi A 16
-    add B A
-    stack B $DATASTACK_PTR
-    ldm A $_pkt
-    stack A $DATASTACK_PTR
-    call @ARRAY.get
-    call @PRTchar
-    ldm B $_i
-    ldi A 1
-    add A B
-    sto A $_i
-    jmp :main_while_start_1
-:main_while_end_1
+        jmp :main_if_end_1
+:main_if_else_1
     ldi A $main_str_5
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldm A $_pkt
-    stack A $DATASTACK_PTR
-    call @_NET.free_buffer
-    ldi A 1
-    sto A $_success
-    ldi A 150
-    sto A $_loops
-:main_if_end_0
-    ldm B $_loops
-    ldi A 1
-    add A B
-    sto A $_loops
-    jmp :main_while_start_0
-:main_while_end_0
-    ldm A $_success
-    stack A $DATASTACK_PTR
-    stack Z $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :main_if_end_1
+    :main_if_end_1
+    jmp :main_if_end_0
+:main_if_else_0
     ldi A $main_str_6
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-    :main_if_end_1
+    :main_if_end_0
     ret
 
 # .DATA
 
-% $net_tx_buffer 0
-% $nic_addr_ptr 0
-% $_ns_len 0
-% $_ns_payload 0
-% $_ns_port 0
-% $_ns_dest 0
-% $_ns_total_len 0
-% $_ns_src 0
-% $_ns_i 0
+% $_str_ptr 0
+% $_src_port 0
+% $_dest_port 0
+% $_dest_id 0
+% $_tmp_ptr 0
+% $_char_ptr 0
+% $_payload_len 0
 % $my_inbox 0
-% $my_payload 0
-% $_loops 0
-% $_pkt 0
-% $_len 0
-% $_i 0
-% $_success 0
-% $main_str_0 \S \t \a \r \t \i \n \g \space \N \e \t \w \o \r \k \space \T \e \s \t \. \. \. \Return \null
-% $main_str_1 \B \o \u \n \d \space \P \o \r \t \space \1 \0 \0 \space \t \o \space \I \n \b \o \x \. \Return \null
-% $main_str_2 \P \a \c \k \e \t \space \S \e \n \t \. \space \P \o \l \l \i \n \g \. \. \. \Return \null
-% $main_str_3 \P \a \c \k \e \t \space \R \e \c \e \i \v \e \d \! \Return \null
-% $main_str_4 \P \a \y \l \o \a \d \: \space \null
-% $main_str_5 \Return \null
-% $main_str_6 \T \i \m \e \o \u \t \: \space \N \o \space \p \a \c \k \e \t \space \r \e \c \e \i \v \e \d \. \Return \null
+% $main_str_0 \S \t \a \r \t \i \n \g \space \N \e \t \w \o \r \k \space \I \n \i \t \i \a \l \i \z \a \t \i \o \n \space \T \e \s \t \. \. \. \Return \null
+% $main_str_1 \S \U \C \C \E \S \S \: \space \S \Y \S \_ \N \E \T \_ \C \O \N \F \I \G \space \r \e \t \u \r \n \e \d \space \1 \. \space \N \e \t \w \o \r \k \space \s \t \a \c \k \space \i \s \space \c \o \n \f \i \g \u \r \e \d \. \Return \null
+% $main_str_2 \I \N \F \O \: \space \C \a \l \l \e \d \space \S \O \C \K \E \T \. \b \i \n \d \space \f \o \r \space \p \o \r \t \space \1 \0 \0 \. \Return \null
+% $main_str_3 \I \N \F \O \: \space \U \s \e \space \d \e \b \u \g \g \e \r \space \t \o \space \i \n \s \p \e \c \t \space \_ \p \o \r \t \_ \m \a \p \space \i \n \space \n \e \t \_ \c \o \r \e \. \Return \null
+% $testmessage \h \e \l \l \o \space \w \o \r \l \d \null
+% $main_str_4 \I \N \F \O \: \space \M \e \s \s \a \g \e \space \i \s \space \s \e \n \d \space \b \y \space \h \o \s \t \space \s \u \c \c \e \s \f \u \l \l \Return \null
+% $main_str_5 \I \N \F \O \: \space \M \e \s \s \a \g \e \space \i \s \space \s \e \n \d \space \b \y \space \h \o \s \t \space \f \a \i \l \e \d \Return \null
+% $main_str_6 \F \A \I \L \U \R \E \: \space \S \Y \S \_ \N \E \T \_ \C \O \N \F \I \G \space \r \e \t \u \r \n \e \d \space \0 \. \space \C \h \e \c \k \space \k \e \r \n \e \l \space \l \o \g \s \. \Return \null

@@ -1,0 +1,125 @@
+# .HEADER
+. $_send_buffer 256
+. $_str_ptr 1
+. $_src_port 1
+. $_dest_port 1
+. $_dest_id 1
+. $_tmp_ptr 1
+. $_char_ptr 1
+. $_payload_len 1
+. $_i 1
+# .FUNCTIONS
+@SOCKET.init
+
+        ldi I ~SYS_NET_CONFIG ; syscall 65
+        int $INT_VECTORS
+        ret
+@SOCKET.snd_text
+    ustack A $DATASTACK_PTR
+    sto A $_str_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_src_port
+    ustack A $DATASTACK_PTR
+    sto A $_dest_port
+    ustack A $DATASTACK_PTR
+    sto A $_dest_id
+    ldm A $_str_ptr
+    stack A $DATASTACK_PTR
+    call @STRlen
+    ustack A $DATASTACK_PTR
+    sto A $_payload_len
+    stack A $DATASTACK_PTR
+    ldi A 240
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :SOCKET.snd_text_if_else_0
+    stack Z $DATASTACK_PTR
+    jmp :SOCKET.snd_text_if_end_0
+:SOCKET.snd_text_if_else_0
+    ldi A $_send_buffer
+    sto A $_tmp_ptr
+    ldm A $_dest_id
+    ld B A
+    ldm I $_tmp_ptr
+    stx B $_start_memory_
+    ldm B $_tmp_ptr
+    ldi A 1
+    add A B
+    sto A $_tmp_ptr
+    ldm A $_dest_port
+    ld B A
+    ldm I $_tmp_ptr
+    stx B $_start_memory_
+    ldm B $_tmp_ptr
+    ldi A 1
+    add A B
+    sto A $_tmp_ptr
+    ldm A $_src_port
+    ld B A
+    ldm I $_tmp_ptr
+    stx B $_start_memory_
+    ldm B $_tmp_ptr
+    ldi A 1
+    add A B
+    sto A $_tmp_ptr
+    ldm A $_payload_len
+    ld B A
+    ldm I $_tmp_ptr
+    stx B $_start_memory_
+    ldm B $_tmp_ptr
+    ldi A 1
+    add A B
+    sto A $_tmp_ptr
+    ld A Z
+    sto A $_i
+:SOCKET.snd_text_while_start_0
+    ldm A $_i
+    stack A $DATASTACK_PTR
+    ldm A $_payload_len
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :SOCKET.snd_text_while_end_0
+    ldm B $_str_ptr
+    ldm A $_i
+    add A B
+    sto A $_char_ptr
+    ldm I $_char_ptr
+    ldx A $_start_memory_
+    ld B A
+    ldm I $_tmp_ptr
+    stx B $_start_memory_
+    ldm B $_tmp_ptr
+    ldi A 1
+    add A B
+    sto A $_tmp_ptr
+    ldm B $_i
+    ldi A 1
+    add A B
+    sto A $_i
+    jmp :SOCKET.snd_text_while_start_0
+:SOCKET.snd_text_while_end_0
+    ldi A $_send_buffer
+    stack A $DATASTACK_PTR
+
+            ldi I ~SYS_NET_SEND
+            int $INT_VECTORS
+        :SOCKET.snd_text_if_end_0
+    ret
+@SOCKET.bind
+
+        ldi I ~SYS_NET_BIND ; syscall 60
+        int $INT_VECTORS
+        ret
+
+# .DATA
+% $_str_ptr 0
+% $_src_port 0
+% $_dest_port 0
+% $_dest_id 0
+% $_tmp_ptr 0
+% $_char_ptr 0
+% $_payload_len 0

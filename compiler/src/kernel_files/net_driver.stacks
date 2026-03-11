@@ -14,10 +14,15 @@ ASM {
     MALLOC $nic_tx_tail     18383 ; R: TX Tail (Written by NIC)
     MALLOC $nic_ring_sz     18384 ; R/W: Ring Size
     EQU ~RING_MASK          255   ; Mask for Ring Buffer wrapping
+    EQU ~RING_SIZE          256   ; Ring Buffer Size
+    
+    . $net_is_configured    1   ; Size 1
+    % $net_is_configured    0   ; Value 0 (Not Configured)
+
 }
 
 # --- Constants ---
-CONST RING_SIZE 256
+# CONST RING_SIZE 256
 
 # --- Static Buffers ---
 # We allocate these statically to ensure they are always available.
@@ -26,12 +31,15 @@ LIST tx_ring 256
 VALUE net_port_map 0  ; Pointer to the Port->Deque dictionary
 VALUE net_packet_pool 0 ; Pointer to the Packet Pool Deque
 
+# VALUE net_is_configured 0 ; 0=Not Configured, 1= Link found 2= Enabled
+
+
 # --- RX Context Variables ---
 # Used to safely store state across volatile library calls.
 VALUE _rx_dest_deque 0
 
 DEF NET.init {
-    "Initializing Sternnet Driver...\n" PRINTSTRING
+    "Initializing Sternnet" PRINTSTRING
 
     # 0. Safety First: Reset NIC and Zero Pointers immediately
     ASM {
@@ -51,7 +59,7 @@ DEF NET.init {
         stack A $DATASTACK_PTR    ; Push result back to stack
     } 
     IF
-        "Link Status: UP\n\n" PRINTSTRING
+        ", Link Status: UP\n\n" PRINTSTRING
 
         # 2. Configure Ring Buffers
         # Tell the hardware where our lists live in memory
@@ -60,13 +68,20 @@ DEF NET.init {
             sto A $nic_rx_base  ; Write to MMIO
             ldi A $tx_ring      ; Load address of tx_ring
             sto A $nic_tx_base  ; Write to MMIO
-            ldi A 256           ; RING_SIZE
+            ldi A ~RING_SIZE    ; RING_SIZE
             sto A $nic_ring_sz  ; Write to MMIO
             ldi A 2             ; Enable CMD
             sto A $nic_cmd      ; Write to MMIO
+
+            ldi A 1
+            sto A $net_is_configured ; Network is found
         }
     ELSE
-        "Link Status: DOWN (Check vSwitch)\n\n" PRINTSTRING
+        ", Link Status: DOWN (Check vSwitch)\n\n" PRINTSTRING
+        ASM {
+            ldi A 0
+            sto A $net_is_configured ; Network is not found
+        }
     END
 }
 

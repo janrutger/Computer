@@ -16,8 +16,9 @@
     EQU ~SYS_UDC_CONTROL 33
     EQU ~SYS_NET_BIND 60
     EQU ~SYS_NET_SEND 61
-    EQU ~SYS_NET_RECV 62
-    EQU ~SYS_NET_GET_ADDR 63
+    # EQU ~SYS_NET_RECV 62
+    # EQU ~SYS_NET_GET_ADDR 63
+    EQU ~SYS_NET_CONFIG 65
 
 
     . $SYSCALL_RETURN_STATUS 1
@@ -128,23 +129,16 @@
         sto A $SYSCALL_RETURN_STATUS
         rti
 
-    @sys_net_bind           ; Syscall 60
-        call @NET.bind
+    @sys_net_config_isr
+        call @sys_net_config
         rti
 
-    @sys_net_send           ; Syscall 61
-        call @NET.send
+    @sys_net_bind_isr
+        call @sys_net_bind
         rti
 
-    @sys_net_recv           ; Syscall 62
-        call @NET.recv
-        ustack A $DATASTACK_PTR
-        sto A $SYSCALL_RETURN_VALUE
-        rti
-
-    @sys_net_get_addr       ; Syscall 63
-        ldi A $nic_addr
-        sto A $SYSCALL_RETURN_VALUE
+    @sys_net_send_isr
+        call @sys_net_send
         rti
 
 # .FUNCTIONS
@@ -210,24 +204,29 @@
         ldi M @sys_udc_control    ; Start of the ISR
         stx M $INT_VECTORS        ; Store ISR
 
+        # EQU ~SYS_NET_CONFIG 65
+        ldi I ~SYS_NET_CONFIG
+        ldi M @sys_net_config_isr
+        stx M $INT_VECTORS
+
         # EQU ~SYS_NET_BIND 60
         ldi I ~SYS_NET_BIND
-        ldi M @sys_net_bind
+        ldi M @sys_net_bind_isr
         stx M $INT_VECTORS
 
         # EQU ~SYS_NET_SEND 61
         ldi I ~SYS_NET_SEND
-        ldi M @sys_net_send
+        ldi M @sys_net_send_isr
         stx M $INT_VECTORS
 
-        # EQU ~SYS_NET_RECV 62
-        ldi I ~SYS_NET_RECV
-        ldi M @sys_net_recv
-        stx M $INT_VECTORS
+        # # EQU ~SYS_NET_RECV 62
+        # ldi I ~SYS_NET_RECV
+        # ldi M @sys_net_recv
+        # stx M $INT_VECTORS
 
-        # EQU ~SYS_NET_GET_ADDR 63
-        ldi I ~SYS_NET_GET_ADDR
-        ldi M @sys_net_get_addr
-        stx M $INT_VECTORS
+        # # EQU ~SYS_NET_GET_ADDR 63
+        # ldi I ~SYS_NET_GET_ADDR
+        # ldi M @sys_net_get_addr
+        # stx M $INT_VECTORS
 
         ret

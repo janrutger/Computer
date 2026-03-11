@@ -1,0 +1,98 @@
+# socket_lib - User-space API for Sternnet
+# This library provides a high-level, safe interface for applications
+# to interact with the kernel's network stack.
+
+USE std_string
+
+# --- Static TX Buffer ---
+# We use a single static buffer for sending to avoid heap fragmentation.
+LIST _send_buffer 256
+
+# --- Syscall IDs ---
+# CONST SYS_NET_CONFIG 65   #We do not need thhes CONST, are already ASM symbols
+# CONST SYS_NET_BIND 60
+# CONST SYS_NET_CONFIG 65
+# CONST INT_VECTORS 10
+# CONST SYS_NET_BIND 60
+# CONST SYS_NET_SEND 61
+# CONST SYS_NET_CONFIG 65
+# CONST INT_VECTORS 10
+
+
+# --- Library Functions ---
+
+# ( host_id rx_buffer_size -- success )
+DEF SOCKET.init {
+    ASM {
+        ldi I ~SYS_NET_CONFIG ; syscall 65
+        int $INT_VECTORS
+    }
+}
+
+# ( dest_id dest_port src_port str_ptr -- success )
+DEF SOCKET.snd_text {
+    VALUE _str_ptr 0; 
+    AS _str_ptr
+
+    VALUE _src_port 0; 
+    AS _src_port
+
+    VALUE _dest_port 0; 
+    AS _dest_port
+
+    VALUE _dest_id 0; 
+    AS _dest_id
+    
+    VALUE _tmp_ptr 0
+    VALUE _char_ptr 0
+
+    # 1. Calculate Payload Length
+    VALUE _payload_len 0
+    _str_ptr STRlen AS _payload_len
+
+    # 2. Safety Check (Max Payload = 240 words)
+    _payload_len 240 > IF
+        0 # Return Failure (Too large)
+    ELSE
+        # 3. Populate the static _send_buffer
+        # Layout: [DestID, DestPort, SrcPort, Length, Payload...]
+        &_send_buffer AS _tmp_ptr
+        
+        _dest_id     AS *_tmp_ptr
+        _tmp_ptr 1 + AS _tmp_ptr
+        _dest_port   AS *_tmp_ptr
+        _tmp_ptr 1 + AS _tmp_ptr
+        _src_port    AS *_tmp_ptr
+        _tmp_ptr 1 + AS _tmp_ptr
+        _payload_len AS *_tmp_ptr
+        _tmp_ptr 1 + AS _tmp_ptr
+
+        # 4. Copy Payload
+        # VALUE _i 0;       # We reuse _i here, is a (smal risk)
+        0 AS _i
+        WHILE _i _payload_len < DO
+            # Calculate source address and get char
+            _str_ptr _i + AS _char_ptr
+            *_char_ptr
+            # Store in buffer (Offset 4)
+            AS *_tmp_ptr
+            _tmp_ptr 1 + AS _tmp_ptr
+            _i 1 + AS _i
+        DONE
+
+        # 5. Call Syscall with pointer to buffer
+        &_send_buffer
+        ASM {
+            ldi I ~SYS_NET_SEND
+            int $INT_VECTORS
+        }
+    END
+}
+
+# ( port_id deque_ptr -- )
+DEF SOCKET.bind {
+    ASM {
+        ldi I ~SYS_NET_BIND ; syscall 60
+        int $INT_VECTORS
+    }
+}
