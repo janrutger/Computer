@@ -3,6 +3,7 @@
 # to interact with the kernel's network stack.
 
 USE std_string
+USE std_deque
 
 # --- Static TX Buffer ---
 # We use a single static buffer for sending to avoid heap fragmentation.
@@ -29,25 +30,100 @@ DEF SOCKET.init {
     }
 }
 
+# ( array_ptr deque_ptr -- success_flag )
+# NOTE: The array_ptr is expected to be a dynamic array from std_heap.
+# The function will overwrite the array's content and update its count.
+DEF SOCKET.read {
+    VALUE _read_deque 0
+    AS _read_deque
+    VALUE _user_buf 0
+    AS _user_buf
+
+    # 1. Get user buffer capacity from its header
+    VALUE _user_buf_len 0
+    *_user_buf AS _user_buf_len # Read capacity from array[0]
+
+    # 1. Trigger Kernel Poll (Syscall 62)
+    # This moves packets from HAL to Deques if available
+    ASM {
+        ldi I ~SYS_NET_RECV
+        int $INT_VECTORS
+    }
+    
+    # 2. Check application mailbox
+    _read_deque DEQUE.is_empty IF
+        0 # Return Failure (No Data)
+    ELSE
+        # 3. Retrieve Kernel Buffer
+        VALUE _kern_pkt 0
+        _read_deque DEQUE.pop AS _kern_pkt
+
+        # 4. Calculate Copy Size
+        # Envelope: [SrcID(1), DestPort(1), SrcPort(1), PayLen(1), Payload...]
+        # We want to copy the whole envelope (Header 4 + Payload)
+        VALUE _payload_len 0
+        VALUE _tmp_ptr 0
+        _kern_pkt 3 + AS _tmp_ptr # Offset 3 has length
+        *_tmp_ptr AS _payload_len
+        
+        VALUE _total_len 0
+        _payload_len 4 + AS _total_len
+
+        VALUE _copy_len 0
+        _total_len AS _copy_len
+        _copy_len _user_buf_len > IF
+            _user_buf_len AS _copy_len
+        END
+
+        # 5. Copy Loop (Kernel -> User's Array Data Section)
+        # The data section of a dynamic array starts at offset 2.
+        VALUE _user_buf_data_ptr 0
+        _user_buf 2 + AS _user_buf_data_ptr
+
+        VALUE _ri 0
+        0 AS _ri
+        VALUE _src 0
+        VALUE _dst 0
+
+        WHILE _ri _copy_len < DO
+            _kern_pkt _ri + AS _src
+            _user_buf_data_ptr _ri + AS _dst
+            *_src AS *_dst
+            _ri 1 + AS _ri
+        DONE
+
+        # 6. Release Kernel Resource (Syscall 64)
+        _kern_pkt ASM { 
+            ldi I ~SYS_NET_FREE 
+            int $INT_VECTORS 
+        }
+
+        # 7. Update the user array's count field
+        VALUE _user_buf_count_ptr 0
+        _user_buf 1 + AS _user_buf_count_ptr
+        _copy_len AS *_user_buf_count_ptr
+
+        1 # Return Success
+    END
+}
+
 # ( dest_id dest_port src_port str_ptr -- success )
 DEF SOCKET.snd_text {
-    VALUE _str_ptr 0; 
+    VALUE _str_ptr 0
     AS _str_ptr
 
-    VALUE _src_port 0; 
+    VALUE _src_port 0
     AS _src_port
 
-    VALUE _dest_port 0; 
+    VALUE _dest_port 0
     AS _dest_port
 
-    VALUE _dest_id 0; 
+    VALUE _dest_id 0
     AS _dest_id
     
-    VALUE _tmp_ptr 0
     VALUE _char_ptr 0
 
     # 1. Calculate Payload Length
-    VALUE _payload_len 0
     _str_ptr STRlen AS _payload_len
 
     # 2. Safety Check (Max Payload = 240 words)

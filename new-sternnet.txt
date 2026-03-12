@@ -184,11 +184,20 @@ To ensure a stable and incremental development process, the receive path will be
     *   This internal function is the heart of the v0.2 receive path. It will be called by the `SYS_NET_RECV` syscall.
     *   *   **Logic:** It calls `HAL.rx_available`. If a packet is present, it processes it into a structured "Envelope", looks up the destination port in the `_port_map`, and pushes the envelope pointer onto the correct application-bound deque. It then calls `HAL.rx_skip_and_advance`.
 
+
+## at this point 1 and 2 are implemented and passed the visual review and the code compiles with no error
+## i like to discusse the design for 3 and 4 before we gonne build this.
 3.  **`net_core`: Implement `_net_recv` Handler**
-    *   This is the internal handler for the `SYS_NET_RECV` syscall. Its only job is to invoke the `_net_poll` helper to process one packet from the hardware ring if available. It does not return a value, as packets are delivered asynchronously.
+    *   **Responsibility:** This is the handler for the `SYS_NET_RECV` syscall. Its **only** job is to invoke the `_net_poll` helper.
+    *   **Behavior:** This gives the kernel an opportunity to process one packet from the hardware ring and place it on the appropriate application deque. It is a non-blocking trigger and does not return any data on the stack.
 
 4.  **`socket_lib`: Implement `SOCKET.read`**
-    *   `SOCKET.read` first calls `SYS_NET_RECV` to trigger a kernel poll. It then checks the application's own deque for a packet pointer. If one is found, it copies the data and calls `SYS_NET_FREE` to release the kernel buffer.
+    *   **Responsibility:** This is the user-facing library function that implements the "Copy & Release" strategy.
+    *   **Mechanism:**
+        1.  The application calls `SOCKET.read` with a pointer to its own buffer and the deque it bound earlier.
+        2.  The library first calls `SYS_NET_RECV` to trigger the kernel poll.
+        3.  It then checks the application's deque. If a packet pointer is found, it pops the pointer, copies the data from the kernel envelope into the user's buffer, and **immediately** calls `SYS_NET_FREE` with the kernel pointer. It then returns `1` (success).
+        4.  If the application's deque is empty after the poll, it returns `0` (failure).
 
 ---
 

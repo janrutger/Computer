@@ -20,6 +20,21 @@
 . $src_port 1
 . $payload_ptr 1
 . $__index 1
+. $r16_addr 1
+. $_r16_val 1
+. $r32_addr 1
+. $_r32_val 1
+. $rx_buf_ptr 1
+. $raw_len 1
+. $pkt_dest_id 1
+. $pkt_src_id 1
+. $pkt_dest_port 1
+. $pkt_src_port 1
+. $_poll_payload_len 1
+. $dest_deque_ptr 1
+. $_poll_i 1
+. $byte_val 1
+. $_poll_tmp_ptr 1
 
 # .CODE
 
@@ -340,6 +355,264 @@
     stack Z $DATASTACK_PTR
 :sys_net_send_if_end_4
     ret
+@_net_read_16_be
+    ustack A $DATASTACK_PTR
+    sto A $r16_addr
+    stack A $DATASTACK_PTR
+    call @_net_read_byte
+    ldi A 256
+    ustack B $DATASTACK_PTR
+    mul A B
+    sto A $_r16_val
+    ldm B $r16_addr
+    ldi A 1
+    add B A
+    stack B $DATASTACK_PTR
+    call @_net_read_byte
+    ldm A $_r16_val
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ret
+@_net_read_32_be
+    ustack A $DATASTACK_PTR
+    sto A $r32_addr
+    stack A $DATASTACK_PTR
+    call @_net_read_byte
+    ldi A 256
+    ustack B $DATASTACK_PTR
+    mul B A
+    ldi A 256
+    mul B A
+    ldi A 256
+    mul A B
+    sto A $_r32_val
+    ldm B $r32_addr
+    ldi A 1
+    add B A
+    stack B $DATASTACK_PTR
+    call @_net_read_byte
+    ldi A 256
+    ustack B $DATASTACK_PTR
+    mul B A
+    ldi A 256
+    mul B A
+    ldm A $_r32_val
+    add A B
+    sto A $_r32_val
+    ldm B $r32_addr
+    ldi A 2
+    add B A
+    stack B $DATASTACK_PTR
+    call @_net_read_byte
+    ldi A 256
+    ustack B $DATASTACK_PTR
+    mul B A
+    ldm A $_r32_val
+    add A B
+    sto A $_r32_val
+    ldm B $r32_addr
+    ldi A 3
+    add B A
+    stack B $DATASTACK_PTR
+    call @_net_read_byte
+    ldm A $_r32_val
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ret
+@_net_poll
+    ldm A $_net_is_configured
+    tst A 0
+    jmpt :_net_poll_if_end_6
+    call @HAL.rx_available
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_net_poll_if_end_7
+    ldm A $_packet_pool
+    stack A $DATASTACK_PTR
+    call @DEQUE.is_empty
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_net_poll_if_else_8
+    ld A Z
+    sto A $rx_buf_ptr
+    jmp :_net_poll_if_end_8
+:_net_poll_if_else_8
+    ldm A $_packet_pool
+    stack A $DATASTACK_PTR
+    call @DEQUE.pop
+    ustack A $DATASTACK_PTR
+    sto A $rx_buf_ptr
+:_net_poll_if_end_8
+:jrk
+    ldm A $rx_buf_ptr
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_net_poll_if_else_9
+    call @HAL.rx_peek_len
+    ustack A $DATASTACK_PTR
+    sto A $raw_len
+    ldm A $rx_buf_ptr
+    stack A $DATASTACK_PTR
+    call @HAL.rx_copy_and_advance
+    ldm A $rx_buf_ptr
+    stack A $DATASTACK_PTR
+    call @_net_read_32_be
+    ustack A $DATASTACK_PTR
+    sto A $pkt_dest_id
+    stack A $DATASTACK_PTR
+    ldm A $_local_host_id
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_net_poll_if_else_10
+    ldm B $rx_buf_ptr
+    ldi A 4
+    add B A
+    stack B $DATASTACK_PTR
+    call @_net_read_32_be
+    ustack A $DATASTACK_PTR
+    sto A $pkt_src_id
+    ldm B $rx_buf_ptr
+    ldi A 8
+    add B A
+    stack B $DATASTACK_PTR
+    call @_net_read_16_be
+    ustack A $DATASTACK_PTR
+    sto A $pkt_dest_port
+    ldm B $rx_buf_ptr
+    ldi A 10
+    add B A
+    stack B $DATASTACK_PTR
+    call @_net_read_16_be
+    ustack A $DATASTACK_PTR
+    sto A $pkt_src_port
+    ldm B $raw_len
+    ldi A 16
+    sub B A
+    ld A B
+    sto A $_poll_payload_len
+    ld A Z
+    sto A $_poll_i
+:_net_poll_while_start_2
+    ldm A $_poll_i
+    stack A $DATASTACK_PTR
+    ldm A $_poll_payload_len
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_net_poll_while_end_2
+    ldm B $rx_buf_ptr
+    ldi A 16
+    add B A
+    ldm A $_poll_i
+    add B A
+    stack B $DATASTACK_PTR
+    call @_net_read_byte
+    ustack A $DATASTACK_PTR
+    sto A $byte_val
+    stack A $DATASTACK_PTR
+    ldm B $rx_buf_ptr
+    ldi A 4
+    add B A
+    ldm A $_poll_i
+    add B A
+    stack B $DATASTACK_PTR
+    call @_net_write_byte
+    ldm B $_poll_i
+    ldi A 1
+    add A B
+    sto A $_poll_i
+    jmp :_net_poll_while_start_2
+:_net_poll_while_end_2
+    ldm A $rx_buf_ptr
+    sto A $_poll_tmp_ptr
+    ldm A $pkt_src_id
+    ld B A
+    ldm I $_poll_tmp_ptr
+    stx B $_start_memory_
+    ldm B $_poll_tmp_ptr
+    ldi A 1
+    add A B
+    sto A $_poll_tmp_ptr
+    ldm A $pkt_dest_port
+    ld B A
+    ldm I $_poll_tmp_ptr
+    stx B $_start_memory_
+    ldm B $_poll_tmp_ptr
+    ldi A 1
+    add A B
+    sto A $_poll_tmp_ptr
+    ldm A $pkt_src_port
+    ld B A
+    ldm I $_poll_tmp_ptr
+    stx B $_start_memory_
+    ldm B $_poll_tmp_ptr
+    ldi A 1
+    add A B
+    sto A $_poll_tmp_ptr
+    ldm A $_poll_payload_len
+    ld B A
+    ldm I $_poll_tmp_ptr
+    stx B $_start_memory_
+    ldm A $pkt_dest_port
+    stack A $DATASTACK_PTR
+    ldm A $_port_map
+    stack A $DATASTACK_PTR
+    call @DICT.get
+    ustack A $DATASTACK_PTR
+    sto A $dest_deque_ptr
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_net_poll_if_else_11
+    ldm A $rx_buf_ptr
+    stack A $DATASTACK_PTR
+    ldm A $dest_deque_ptr
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    jmp :_net_poll_if_end_11
+:_net_poll_if_else_11
+    ldm A $rx_buf_ptr
+    stack A $DATASTACK_PTR
+    call @sys_net_free
+:_net_poll_if_end_11
+    jmp :_net_poll_if_end_10
+:_net_poll_if_else_10
+    ldm A $rx_buf_ptr
+    stack A $DATASTACK_PTR
+    call @sys_net_free
+:_net_poll_if_end_10
+    jmp :_net_poll_if_end_9
+:_net_poll_if_else_9
+    call @HAL.rx_skip_and_advance
+:_net_poll_if_end_9
+:_net_poll_if_end_7
+:_net_poll_if_end_6
+    ret
+@sys_net_free
+    ldm A $_net_is_configured
+    tst A 0
+    jmpt :sys_net_free_if_else_12
+    ldm A $_packet_pool
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    jmp :sys_net_free_if_end_12
+:sys_net_free_if_else_12
+    call @rt_drop
+:sys_net_free_if_end_12
+    ret
+@sys_net_recv
+    call @_net_poll
+    ret
 
 # .DATA
 % $_net_is_configured 0
@@ -362,3 +635,18 @@
 % $src_port 0
 % $payload_ptr 0
 % $__index 0
+% $r16_addr 0
+% $_r16_val 0
+% $r32_addr 0
+% $_r32_val 0
+% $rx_buf_ptr 0
+% $raw_len 0
+% $pkt_dest_id 0
+% $pkt_src_id 0
+% $pkt_dest_port 0
+% $pkt_src_port 0
+% $_poll_payload_len 0
+% $dest_deque_ptr 0
+% $_poll_i 0
+% $byte_val 0
+% $_poll_tmp_ptr 0

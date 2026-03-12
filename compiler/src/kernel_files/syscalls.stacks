@@ -15,8 +15,9 @@ ASM {
     EQU ~SYS_UDC_CONTROL 33
     EQU ~SYS_NET_BIND 60
     EQU ~SYS_NET_SEND 61
-    # EQU ~SYS_NET_RECV 62
+    EQU ~SYS_NET_RECV 62
     # EQU ~SYS_NET_GET_ADDR 63
+    EQU ~SYS_NET_FREE 64
     EQU ~SYS_NET_CONFIG 65
 
 }
@@ -103,15 +104,20 @@ DEF init_kernel_syscalls {
         ldi M @sys_net_send_isr
         stx M $INT_VECTORS
 
-        # # EQU ~SYS_NET_RECV 62
-        # ldi I ~SYS_NET_RECV
-        # ldi M @sys_net_recv
-        # stx M $INT_VECTORS
+        # EQU ~SYS_NET_RECV 62
+        ldi I ~SYS_NET_RECV
+        ldi M @sys_net_recv_isr
+        stx M $INT_VECTORS
 
         # # EQU ~SYS_NET_GET_ADDR 63
         # ldi I ~SYS_NET_GET_ADDR
         # ldi M @sys_net_get_addr
         # stx M $INT_VECTORS
+
+        # EQU ~SYS_NET_FREE 64
+        ldi I ~SYS_NET_FREE
+        ldi M @sys_net_free_isr
+        stx M $INT_VECTORS
 
     }
 }
@@ -270,31 +276,14 @@ ASM {
         rti
 }
 
+ASM {
+    @sys_net_recv_isr
+        call @sys_net_recv
+        rti
+}
 
-### Network Syscalls
-# ASM {
-#     @sys_net_bind           ; Syscall 60
-#         call @NET.bind
-#         rti
-# }
-
-# ASM {
-#     @sys_net_send           ; Syscall 61
-#         call @NET.send
-#         rti
-# }
-
-# ASM {
-#     @sys_net_recv           ; Syscall 62
-#         call @NET.recv
-#         ustack A $DATASTACK_PTR
-#         sto A $SYSCALL_RETURN_VALUE
-#         rti
-# }
-
-# ASM {
-#     @sys_net_get_addr       ; Syscall 63
-#         ldi A $nic_addr
-#         sto A $SYSCALL_RETURN_VALUE
-#         rti
-# }
+ASM {
+    @sys_net_free_isr
+        call @sys_net_free
+        rti
+}

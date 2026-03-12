@@ -102,7 +102,7 @@ DEF sys_net_config {    # syscall 65
             # Mask to 32 bits (0xFFFFFFFF) to ensure protocol compliance.
             4294967296 %
             AS _local_host_id                      # Save host_id to state
-            _local_host_id `HAL.configure           # Configure NIC with host_id
+            _local_host_id `HAL.configure          # Configure NIC with host_id
 
             # 8. Return Success
             1
@@ -272,4 +272,146 @@ DEF sys_net_send {
         DROP # packet_ptr
         0 # Return failure
     END
+}
+
+# Helper: Read 16-bit value (Big Endian) from an absolute address
+DEF _net_read_16_be {
+    # Stack: address -- value
+    VALUE r16_addr 0 AS r16_addr
+    VALUE _r16_val 0
+
+    # Read MSB
+    r16_addr _net_read_byte 256 * AS _r16_val
+
+    # Read LSB and add
+    r16_addr 1 + _net_read_byte
+    _r16_val +
+}
+
+# Helper: Read 32-bit value (Big Endian) from an absolute address
+DEF _net_read_32_be {
+    # Stack: address -- value
+    VALUE r32_addr 0 AS r32_addr
+    VALUE _r32_val 0
+
+
+    # Read byte 0 (MSB)
+    r32_addr _net_read_byte 256 * 256 * 256 * AS _r32_val
+
+    # Read byte 1
+    r32_addr 1 + _net_read_byte 256 * 256 *
+    _r32_val + AS _r32_val
+
+    # Read byte 2
+    r32_addr 2 + _net_read_byte 256 *
+    _r32_val + AS _r32_val
+
+    # Read byte 3 (LSB)
+    r32_addr 3 + _net_read_byte
+    _r32_val +
+}
+
+# ( -- )
+DEF _net_poll {
+    _net_is_configured IF
+        # 1. Check if a packet is available from the hardware.
+        `HAL.rx_available IF
+            # A packet is waiting. Get a buffer to store it.
+            VALUE rx_buf_ptr 0
+
+            _packet_pool DEQUE.is_empty IF
+                # Pool is empty. Set ptr to 0 to trigger drop logic below.
+                0 AS rx_buf_ptr
+            ELSE
+                _packet_pool DEQUE.pop AS rx_buf_ptr
+            END
+        :jrk
+            rx_buf_ptr 0 != IF
+                # Buffer successfully acquired from pool. Process the packet.
+                VALUE raw_len 0
+                VALUE pkt_dest_id 0
+                VALUE pkt_src_id 0
+                VALUE pkt_dest_port 0
+                VALUE pkt_src_port 0 
+                VALUE _poll_payload_len 0
+                VALUE dest_deque_ptr 0
+
+                # 2. Get raw length and copy the packet from HAL into our buffer.
+                `HAL.rx_peek_len AS raw_len
+                rx_buf_ptr `HAL.rx_copy_and_advance
+
+                # 3. Parse destination ID to validate if the packet is for this node.
+                rx_buf_ptr _net_read_32_be AS pkt_dest_id
+                pkt_dest_id _local_host_id == IF
+                    # Packet is for us. Parse the rest of the header.
+                    rx_buf_ptr 4 +  _net_read_32_be AS pkt_src_id
+                    rx_buf_ptr 8 +  _net_read_16_be AS pkt_dest_port
+                    rx_buf_ptr 10 + _net_read_16_be AS pkt_src_port
+                    raw_len NET_HEADER_SIZE - AS _poll_payload_len
+
+                    # 4. Reformat the buffer in-place to the RX Envelope structure.
+                    VALUE _poll_i 0 
+                    0 AS _poll_i
+                    WHILE _poll_i _poll_payload_len < DO
+                        VALUE byte_val 0
+                        rx_buf_ptr NET_HEADER_SIZE + _poll_i + _net_read_byte AS byte_val
+                        byte_val rx_buf_ptr 4 + _poll_i + _net_write_byte
+                        _poll_i 1 + AS _poll_i
+                    DONE
+
+                    # 5. Write the new envelope header.
+                    VALUE _poll_tmp_ptr 0
+                    rx_buf_ptr AS _poll_tmp_ptr
+                    pkt_src_id AS *_poll_tmp_ptr
+
+                    _poll_tmp_ptr 1 + AS _poll_tmp_ptr
+                    pkt_dest_port AS *_poll_tmp_ptr
+
+                    _poll_tmp_ptr 1 + AS _poll_tmp_ptr
+                    pkt_src_port AS *_poll_tmp_ptr
+
+                    _poll_tmp_ptr 1 + AS _poll_tmp_ptr
+                    _poll_payload_len AS *_poll_tmp_ptr
+
+                    # 6. Find the destination deque and deliver the packet.
+                    # DICT.get expects ( key dict_ptr -- value )
+                    pkt_dest_port _port_map DICT.get AS dest_deque_ptr
+                    dest_deque_ptr 0 != IF
+                        rx_buf_ptr dest_deque_ptr DEQUE.append # Deliver to app deque
+                    ELSE
+                        rx_buf_ptr sys_net_free # No listener, drop packet by recycling buffer
+                    END
+                ELSE
+                    # Packet is not for us. Drop it by recycling the buffer.
+                    rx_buf_ptr sys_net_free
+                END
+            ELSE
+                # Pool was empty. Drop the packet from the hardware ring to prevent
+                # heap exhaustion and keep the system stable.
+                `HAL.rx_skip_and_advance
+            END
+        END
+    END
+}
+
+# ( buffer_ptr -- ) Syscall 64
+DEF sys_net_free {
+    _net_is_configured IF
+        # Stack: buffer_ptr
+        # DEQUE.append expects ( value deque_ptr -- )
+        # The stack currently has the 'value' (buffer_ptr).
+        # We push the 'deque_ptr' (_packet_pool) on top.
+        _packet_pool
+        DEQUE.append
+    ELSE
+        # Network not configured, just drop the pointer to prevent errors.
+        DROP
+    END
+}
+
+# ( -- ) Syscall 62
+# Triggers a poll of the hardware and moves packets to destination deques.
+# Does NOT return a packet on the stack.
+DEF sys_net_recv {
+    _net_poll
 }

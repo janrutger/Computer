@@ -16,8 +16,9 @@
     EQU ~SYS_UDC_CONTROL 33
     EQU ~SYS_NET_BIND 60
     EQU ~SYS_NET_SEND 61
-    # EQU ~SYS_NET_RECV 62
+    EQU ~SYS_NET_RECV 62
     # EQU ~SYS_NET_GET_ADDR 63
+    EQU ~SYS_NET_FREE 64
     EQU ~SYS_NET_CONFIG 65
 
 
@@ -141,6 +142,14 @@
         call @sys_net_send
         rti
 
+    @sys_net_recv_isr
+        call @sys_net_recv
+        rti
+
+    @sys_net_free_isr
+        call @sys_net_free
+        rti
+
 # .FUNCTIONS
 @init_kernel_syscalls
 
@@ -219,14 +228,19 @@
         ldi M @sys_net_send_isr
         stx M $INT_VECTORS
 
-        # # EQU ~SYS_NET_RECV 62
-        # ldi I ~SYS_NET_RECV
-        # ldi M @sys_net_recv
-        # stx M $INT_VECTORS
+        # EQU ~SYS_NET_RECV 62
+        ldi I ~SYS_NET_RECV
+        ldi M @sys_net_recv_isr
+        stx M $INT_VECTORS
 
         # # EQU ~SYS_NET_GET_ADDR 63
         # ldi I ~SYS_NET_GET_ADDR
         # ldi M @sys_net_get_addr
         # stx M $INT_VECTORS
+
+        # EQU ~SYS_NET_FREE 64
+        ldi I ~SYS_NET_FREE
+        ldi M @sys_net_free_isr
+        stx M $INT_VECTORS
 
         ret

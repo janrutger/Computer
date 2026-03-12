@@ -9,6 +9,52 @@ USE std_stern_io
 
 VALUE my_inbox 0
 
+DEF print_message {
+    # ( message_ptr -- )
+    # Prints the contents of a received network message envelope.
+    AS message_ptr
+
+    "--- Received Message ---\n" PRTstring
+
+    # Get pointer to envelope data (which is at offset 2 of the array)
+    VALUE data_ptr 0
+    message_ptr 2 + AS data_ptr
+    VALUE tmp_ptr 0
+
+    # Print Header Fields
+    "  Source ID   : " PRTstring
+    *data_ptr PRINT
+    # "\n" PRTstring
+
+    "  Dest Port   : " PRTstring
+    data_ptr 1 + AS tmp_ptr
+    *tmp_ptr PRINT
+    # "\n" PRTstring
+
+    "  Source Port : " PRTstring
+    data_ptr 2 + AS tmp_ptr
+    *tmp_ptr PRINT
+    # "\n" PRTstring
+
+    "  Payload Len : " PRTstring
+    VALUE message_len 0
+    data_ptr 3 + AS tmp_ptr
+    *tmp_ptr DUP AS message_len PRINT
+    # "\n" PRTstring
+
+    # Print Payload
+    "  Payload     : " PRTstring
+    VALUE mes_load_ptr 0
+    data_ptr 4 + AS mes_load_ptr
+
+    # The payload is not null-terminated. We must add a terminator before printing.
+    mes_load_ptr message_len + AS temp_ptr
+    0 AS *temp_ptr
+
+    mes_load_ptr PRTstring
+    "\n------------------------\n" PRTstring
+ }
+
 DEF main {
     # 1. Prepare the runtime environment
     HEAP.free
@@ -28,23 +74,50 @@ DEF main {
         DEQUE.new AS my_inbox
         100 my_inbox SOCKET.bind
         "INFO: Called SOCKET.bind for port 100.\n" PRTstring
-        "INFO: Use debugger to inspect _port_map in net_core.\n" PRTstring
+        # "INFO: Use debugger to inspect _port_map in net_core.\n" PRTstring
 
         # 5. Test SYS_NET_SEND
         # ( dest_id dest_port src_port str_ptr -- success )
-        STRING testmessage "hello world"
+        STRING testmessage "Hello World!! 42"
         \"stern-test" 100 100 &testmessage SOCKET.snd_text
-
         IF
-            "INFO: Message is send by host succesfull\n" PRTstring
+            "INFO: Message sent by host successfully.\n" PRTstring
         ELSE
-            "INFO: Message is send by host failed\n" PRTstring
+            "INFO: Message send by host failed.\n" PRTstring
         END
 
-    ELSE
-        "FAILURE: SYS_NET_CONFIG returned 0. Check kernel logs.\n" PRTstring
+
+        # 6. Test SYS_NET_RECV - Polling Loop
+        # In this simulated environment, the packet sent in step 5 may not be
+        # instantly available for reading. We must poll for it.
+        64 NEW.array AS message
+        VALUE retry_count 50
+        VALUE read_success 0 # Will be 1 on success, 0 on timeout
+
+        # Try to read. SOCKET.read returns 1 on success.
+        WHILE retry_count 0 > DO
+            message my_inbox SOCKET.read AS read_success
+            
+            read_success IF
+                # Success! Force the loop to exit.
+                0 AS retry_count
+            ELSE
+                # No message yet, decrement and continue.
+                retry_count 1 - AS retry_count
+                ASM {
+                    nop
+                }
+            END
+        DONE
+
+        read_success IF
+            "INFO: Message read by host successful.\n" PRTstring
+            message print_message
+        ELSE
+            "INFO: Message read by host failed (timeout).\n" PRTstring
+        END
+
     END
 }
 
 main
-:break
