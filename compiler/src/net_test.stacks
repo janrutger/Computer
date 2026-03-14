@@ -79,7 +79,7 @@ DEF main {
         # 5. Test SYS_NET_SEND
         # ( str_ptr dest_id dest_port src_port -- success )
         STRING testmessage "Hello World!! 42"
-        &temstmessage \"stern-test" 100 100 SOCKET.snd_text
+        &testmessage \"stern-test" 100 100 SOCKET.snd_text
         IF
             "INFO: Message sent by host successfully.\n" PRTstring
         ELSE
