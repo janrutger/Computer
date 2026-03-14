@@ -60,9 +60,9 @@ class VirtualNIC:
     def _send_hello(self):
         """Sends a broadcast HELLO packet to announce presence to the vSwitch."""
         try:
-            # Format: DEST (Broadcast), SRC (My Address)
-            # We send a header-only packet. The switch will learn the address from this.
-            hello_packet = struct.pack(HEADER_FORMAT, 0xFFFFFFFF, self.nic_address, 0, 0)
+            # Format: DEST (0 = Management), SRC (My Address)
+            # Sending to address 0 allows the switch to learn our location without disturbing other hosts.
+            hello_packet = struct.pack(HEADER_FORMAT, 0x00000000, self.nic_address, 0, 0)
             # Use send() now that the socket is "connected"
             self.sock.send(hello_packet)
             # If send was successful, update the status register with the LINK_UP bit.
@@ -80,8 +80,11 @@ class VirtualNIC:
         Called periodically by the main emulator loop.
         Handles sending and receiving packets.
         """
-        # Sync internal address with MMIO register (in case Driver updated it)
-        self.nic_address = self.ram.read(self.base_address + self.REG_ADDR)
+        # Detect host address changes in the MMIO register (e.g. from SOCKET.init)
+        current_reg_addr = self.ram.read(self.base_address + self.REG_ADDR)
+        if current_reg_addr != self.nic_address:
+            self.nic_address = current_reg_addr
+            self._send_hello()
 
         # 1. Always poll the socket to catch errors (like ConnectionRefused)
         #    and to drain the OS buffer even if the NIC is disabled (drop packets).
@@ -303,7 +306,7 @@ if __name__ == '__main__':
 
     # --- Test 2: Receive a Packet ---
     print("\n--- Test 2: Listening for a response ---")
-    print("INFO: The vSwitch will broadcast our HELLO packet back to us.")
+    print("INFO: Sending an explicit broadcast to verify RX path (HELLO is now silent).")
 
     start_time = time.time()
     packet_received = False
@@ -333,11 +336,10 @@ if __name__ == '__main__':
             try:
                 r_dest, r_src, r_port, r_ctrl = struct.unpack(HEADER_FORMAT, received_bytes[:HEADER_SIZE])
                 r_payload = received_bytes[HEADER_SIZE:]
-                # Use ignore for decoding in case of binary data or partial packets
                 print(f"[Driver] Decoded Packet: DEST={hex(r_dest)}, SRC={hex(r_src)}, PORT={r_port}, CTRL={r_ctrl}, PAYLOAD='{r_payload.decode(errors='ignore')}'")
 
                 if r_src == NIC_ADDR and r_payload == payload:
-                    print("✅ [Driver] Success! Received our own broadcast packet.")
+                    print("✅ [Driver] Success! Received our own test broadcast.")
                     packet_received = True
                     break
                 else:

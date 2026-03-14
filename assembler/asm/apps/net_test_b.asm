@@ -13,10 +13,10 @@
 . $_src 1
 . $_dst 1
 . $_user_buf_count_ptr 1
-. $_str_ptr 1
 . $_src_port 1
 . $_dest_port 1
 . $_dest_id 1
+. $_str_ptr 1
 . $_char_ptr 1
 . $my_inbox 1
 . $message_ptr 1
@@ -160,14 +160,13 @@
     ret
 @SOCKET.snd_text
     ustack A $DATASTACK_PTR
-    sto A $_str_ptr
-    ustack A $DATASTACK_PTR
     sto A $_src_port
     ustack A $DATASTACK_PTR
     sto A $_dest_port
     ustack A $DATASTACK_PTR
     sto A $_dest_id
-    ldm A $_str_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_str_ptr
     stack A $DATASTACK_PTR
     call @STRlen
     ustack A $DATASTACK_PTR
@@ -382,13 +381,6 @@
     ldm A $my_inbox
     stack A $DATASTACK_PTR
     call @SOCKET.bind
-    ldi A 6953595119954
-    stack A $DATASTACK_PTR
-    stack Z $DATASTACK_PTR
-    stack Z $DATASTACK_PTR
-    ldi A $hosthello
-    stack A $DATASTACK_PTR
-    call @SOCKET.snd_text
     ldi A 64
     stack A $DATASTACK_PTR
     call @NEW.array
@@ -439,13 +431,13 @@
         ldm A $received_message
     stack A $DATASTACK_PTR
     call @print_message
+    ldi A $reply_to_a
+    stack A $DATASTACK_PTR
     ldi A 6953595119953
     stack A $DATASTACK_PTR
     ldi A 100
     stack A $DATASTACK_PTR
     ldi A 200
-    stack A $DATASTACK_PTR
-    ldi A $reply_to_a
     stack A $DATASTACK_PTR
     call @SOCKET.snd_text
     ustack A $DATASTACK_PTR
@@ -499,10 +491,10 @@
 % $_src 0
 % $_dst 0
 % $_user_buf_count_ptr 0
-% $_str_ptr 0
 % $_src_port 0
 % $_dest_port 0
 % $_dest_id 0
+% $_str_ptr 0
 % $_char_ptr 0
 % $my_inbox 0
 % $print_message_str_0 \- \- \- \space \R \e \c \e \i \v \e \d \space \M \e \s \s \a \g \e \space \- \- \- \Return \null

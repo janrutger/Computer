@@ -71,6 +71,7 @@
 
         ldi A 2                 ; Enable CMD
         sto A $nic_cmd          ; Write to MMIO
+        nop                     ; Yield/Wait
         ret
 @HAL.send_raw
 

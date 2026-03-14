@@ -77,9 +77,9 @@ DEF main {
         # "INFO: Use debugger to inspect _port_map in net_core.\n" PRTstring
 
         # 5. Test SYS_NET_SEND
-        # ( dest_id dest_port src_port str_ptr -- success )
+        # ( str_ptr dest_id dest_port src_port -- success )
         STRING testmessage "Hello World!! 42"
-        \"stern-test" 100 100 &testmessage SOCKET.snd_text
+        &temstmessage \"stern-test" 100 100 SOCKET.snd_text
         IF
             "INFO: Message sent by host successfully.\n" PRTstring
         ELSE

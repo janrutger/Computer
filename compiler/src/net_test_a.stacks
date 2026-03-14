@@ -54,7 +54,7 @@ DEF main {
     100 my_inbox SOCKET.bind
     # 4. Send message to host-b on port 200
     STRING message_to_b "Hello from Host A"
-    \"host-b" 200 100 &message_to_b SOCKET.snd_text
+    &message_to_b \"host-b" 200 100 SOCKET.snd_text
     IF
         "Host A: Message sent to Host B.\n" PRTstring
     ELSE

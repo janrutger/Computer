@@ -102,6 +102,10 @@ def main():
                     print(f"FORWARD: Unicasting packet from {hex(src_addr)} to {hex(dest_addr)} at {target_udp_addr}")
                     s.sendto(data, target_udp_addr)
 
+                elif dest_addr == 0:
+                    # Management packet, already processed in Learning Phase.
+                    print(f"MGMT: Handled management/registration packet from {hex(src_addr)}")
+
                 else:
                     # Unknown unicast destination, drop the packet
                     print(f"DROP: Dropping packet from {hex(src_addr)} to unknown destination {hex(dest_addr)}")

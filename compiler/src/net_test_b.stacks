@@ -80,7 +80,7 @@ DEF main {
 
         # 5. Send a reply to host A on port 100
         STRING reply_to_a "Reply from Host B"
-        \"host-a" 100 200 &reply_to_a SOCKET.snd_text
+        &reply_to_a \"host-a" 100 200 SOCKET.snd_text
         IF
             "Host B: Reply sent to Host A.\n" PRTstring
         ELSE

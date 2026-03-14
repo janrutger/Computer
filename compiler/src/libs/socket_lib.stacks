@@ -109,11 +109,8 @@ DEF SOCKET.read {
     END
 }
 
-# ( dest_id dest_port src_port str_ptr -- success )
+# ( str_ptr dest_id dest_port src_port -- success )
 DEF SOCKET.snd_text {
-    VALUE _str_ptr 0
-    AS _str_ptr
-
     VALUE _src_port 0
     AS _src_port
 
@@ -122,6 +119,9 @@ DEF SOCKET.snd_text {
 
     VALUE _dest_id 0
     AS _dest_id
+
+    VALUE _str_ptr 0
+    AS _str_ptr
     
     VALUE _char_ptr 0
 
