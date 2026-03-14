@@ -7,7 +7,8 @@ USE std_deque
 
 # --- Static TX Buffer ---
 # We use a single static buffer for sending to avoid heap fragmentation.
-LIST _send_buffer 256
+# LIST _send_buffer 256
+VALUE _send_buffer 0
 
 # --- Syscall IDs ---
 # CONST SYS_NET_CONFIG 65   #We do not need thhes CONST, are already ASM symbols
@@ -28,6 +29,7 @@ DEF SOCKET.init {
         ldi I ~SYS_NET_CONFIG ; syscall 65
         int $INT_VECTORS
     }
+    256 NEW.list AS _send_buffer
 }
 
 # ( array_ptr deque_ptr -- success_flag )
@@ -49,7 +51,7 @@ DEF SOCKET.read {
         ldi I ~SYS_NET_RECV
         int $INT_VECTORS
     }
-    
+
     # 2. Check application mailbox
     _read_deque DEQUE.is_empty IF
         0 # Return Failure (No Data)
@@ -132,7 +134,7 @@ DEF SOCKET.snd_text {
     ELSE
         # 3. Populate the static _send_buffer
         # Layout: [DestID, DestPort, SrcPort, Length, Payload...]
-        &_send_buffer AS _tmp_ptr
+        _send_buffer AS _tmp_ptr
         
         _dest_id     AS *_tmp_ptr
         _tmp_ptr 1 + AS _tmp_ptr
@@ -157,7 +159,7 @@ DEF SOCKET.snd_text {
         DONE
 
         # 5. Call Syscall with pointer to buffer
-        &_send_buffer
+        _send_buffer
         ASM {
             ldi I ~SYS_NET_SEND
             int $INT_VECTORS

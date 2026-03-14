@@ -40,7 +40,7 @@ CONST NET_TYPE_SDP  0  # Unreliable Datagram
 # CONST NET_TYPE_DATA 4  # Reliable Data Chunk
 
 # --- Static _tx_scratchpad Buffer ---
-LIST _tx_scratchpad 256
+VALUE _tx_scratchpad 0 # Pointer to the TX scratchpad (Allocated on HEAP)
 
 
 # --- Global State (Pointers) ---
@@ -64,7 +64,7 @@ DEF sys_net_config {    # syscall 65
         # 1. Guard: Prevent double initialization
         DROP DROP
         0 # Return failure
-    ELSE
+    ELSE        
         # 2. Initialize hardware first to check for link status.
         `HAL.init # ( -- link_status )
         # Stack: host_id, rx_buffer_size, link_status
@@ -86,6 +86,8 @@ DEF sys_net_config {    # syscall 65
             # 5. Allocate Kernel Resources (Deferred Allocation)
             8 DICT.new AS _port_map
             DEQUE.new AS _packet_pool
+            # Allocate TX Scratchpad on Heap (256 words)
+            256 NEW.list AS _tx_scratchpad
 
             # 6. Populate Packet Pool (Fixed 16 buffers)
             VALUE _i 0
@@ -162,7 +164,7 @@ DEF _net_write_16 {
     AS w16_val
 
     VALUE w16_base 0 
-    &_tx_scratchpad AS w16_base
+    _tx_scratchpad AS w16_base
     
     # Byte 1 (LSB) -> base + offset + 1
     w16_val 256 %
@@ -183,7 +185,7 @@ DEF _net_write_32 {
     AS w32_val
 
     VALUE w32_base 0 
-    &_tx_scratchpad AS w32_base
+    _tx_scratchpad AS w32_base
     
     # Byte 3 (LSB) -> base + offset + 3
     w32_val 256 %
@@ -257,13 +259,13 @@ DEF sys_net_send {
             
             WHILE __index payload_len < DO
                 payload_ptr __index + _net_read_byte  # Get byte from user payload
-                &_tx_scratchpad 16 + __index +        # Calculate dest address
+                _tx_scratchpad 16 + __index +        # Calculate dest address
                 _net_write_byte                 # Write byte
                 __index 1 + AS __index
             DONE
 
             # 5. Calculate total frame length and send to HAL
-            NET_HEADER_SIZE payload_len + &_tx_scratchpad SWAP `HAL.send_raw
+            NET_HEADER_SIZE payload_len + _tx_scratchpad SWAP `HAL.send_raw
 
             # 6. Return success
             1
@@ -325,7 +327,7 @@ DEF _net_poll {
             ELSE
                 _packet_pool DEQUE.pop AS rx_buf_ptr
             END
-        :jrk
+
             rx_buf_ptr 0 != IF
                 # Buffer successfully acquired from pool. Process the packet.
                 VALUE raw_len 0

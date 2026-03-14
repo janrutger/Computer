@@ -106,6 +106,14 @@
       {
         "file": "asm/apps/ml_hunterhost.asm",
         "output": "../bin/apps/ml_hunterhost.bin"
+      },
+      {
+        "file": "asm/apps/net_test_a.asm",
+        "output": "../bin/apps/net_test_a.bin"
+      },
+      {
+        "file": "asm/apps/net_test_b.asm",
+        "output": "../bin/apps/net_test_b.bin"
       }
     ]
   }

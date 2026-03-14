@@ -1,0 +1,95 @@
+# Sternnet v0.2 Test - Host B
+# Listens for a message from Host A, then sends a reply.
+
+INCLUDE socket_lib
+USE std_heap
+USE std_deque
+USE std_stern_io
+
+VALUE my_inbox 0
+
+DEF print_message {
+    # ( message_ptr -- )
+    # Prints the contents of a received network message envelope.
+    AS message_ptr
+
+    "--- Received Message ---\n" PRTstring
+    # Get pointer to envelope data (which is at offset 2 of the array)
+    VALUE data_ptr 0
+    message_ptr 2 + AS data_ptr
+    VALUE tmp_ptr 0
+    # Print Header Fields
+    "  Source ID   : " PRTstring
+    *data_ptr PRINT
+    "  Dest Port   : " PRTstring
+    data_ptr 1 + AS tmp_ptr
+    *tmp_ptr PRINT
+    "  Source Port : " PRTstring
+    data_ptr 2 + AS tmp_ptr
+    *tmp_ptr PRINT
+    "  Payload Len : " PRTstring
+    VALUE message_len 0
+    data_ptr 3 + AS tmp_ptr
+    *tmp_ptr DUP AS message_len PRINT
+    # Print Payload
+    "  Payload     : " PRTstring
+    VALUE mes_load_ptr 0
+    data_ptr 4 + AS mes_load_ptr
+    # The payload is not null-terminated. We must add a terminator before printing.
+    mes_load_ptr message_len + AS temp_ptr
+    0 AS *temp_ptr
+    mes_load_ptr PRTstring
+    "\n------------------------\n" PRTstring
+}
+
+DEF main {
+    # 1. Prepare the runtime environment
+    HEAP.free
+    32 DEQUE.init_pool
+    STRING hosthello "HELLO"
+    "Starting Network Test Host B...\n" PRTstring
+    # 2. Configure network
+    \"host-b" 128 SOCKET.init
+    
+    # 3. Bind to port 200
+    DEQUE.new AS my_inbox
+    200 my_inbox SOCKET.bind
+
+
+    # 4. Listen for a message from host A
+    64 NEW.array AS received_message
+    VALUE read_success 0 
+    VALUE retry_count 50
+    
+    WHILE retry_count 0 > DO
+        received_message my_inbox SOCKET.read AS read_success
+        read_success IF
+            0 AS retry_count
+        ELSE
+            retry_count 1 - AS retry_count
+            retry_count PRINT
+            ASM {
+                nop
+            }
+        END
+    DONE
+
+    read_success IF
+        "Host B: Received message from Host A:\n" PRTstring
+        received_message print_message
+
+        # 5. Send a reply to host A on port 100
+        STRING reply_to_a "Reply from Host B"
+        \"host-a" 100 200 &reply_to_a SOCKET.snd_text
+        IF
+            "Host B: Reply sent to Host A.\n" PRTstring
+        ELSE
+            "Host B: Failed to send reply to Host A.\n" PRTstring
+        END
+    ELSE
+        "Host B: No message received from Host A.\n" PRTstring
+    END
+    "Host B: Test complete.\n" PRTstring
+}
+
+main

@@ -1,22 +1,22 @@
 {
   "functions": [
-    "WRITE_TO_BYTECODE",
-    "KEYchar",
-    "load_bin_file",
-    "TOS.check",
-    "io_lib_init",
-    "PRTnum",
-    "EXECUTE_BYTECODE",
-    "HALT",
-    "KEYpressed",
-    "PRTcls",
-    "PRTchar",
-    "_read_next_block",
-    "READline",
     "_read_disk_block",
+    "TOKENIZE",
+    "KEYchar",
+    "HALT",
+    "WRITE_TO_BYTECODE",
     "_check_last_block",
+    "PRTcls",
+    "READline",
+    "io_lib_init",
     "CURSORoff",
-    "TOKENIZE"
+    "PRTnum",
+    "KEYpressed",
+    "load_bin_file",
+    "_read_next_block",
+    "TOS.check",
+    "EXECUTE_BYTECODE",
+    "PRTchar"
   ],
   "variables": [
     {

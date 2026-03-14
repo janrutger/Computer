@@ -1,5 +1,5 @@
 # .HEADER
-. $_tx_scratchpad 256
+. $_tx_scratchpad 1
 . $_net_is_configured 1
 . $_port_map 1
 . $_packet_pool 1
@@ -79,6 +79,11 @@
     call @DEQUE.new
     ustack A $DATASTACK_PTR
     sto A $_packet_pool
+    ldi A 256
+    stack A $DATASTACK_PTR
+    call @NEW.list
+    ustack A $DATASTACK_PTR
+    sto A $_tx_scratchpad
     ld A Z
     sto A $_i
 :sys_net_config_while_start_0
@@ -151,7 +156,7 @@
     sto A $w16_off
     ustack A $DATASTACK_PTR
     sto A $w16_val
-    ldi A $_tx_scratchpad
+    ldm A $_tx_scratchpad
     sto A $w16_base
     ldm B $w16_val
     ldi A 256
@@ -179,7 +184,7 @@
     sto A $w32_off
     ustack A $DATASTACK_PTR
     sto A $w32_val
-    ldi A $_tx_scratchpad
+    ldm A $_tx_scratchpad
     sto A $w32_base
     ldm B $w32_val
     ldi A 256
@@ -323,8 +328,7 @@
     add B A
     stack B $DATASTACK_PTR
     call @_net_read_byte
-    ldi A $_tx_scratchpad
-    ld B A
+    ldm B $_tx_scratchpad
     ldi A 16
     add B A
     ldm A $__index
@@ -342,7 +346,7 @@
     ldm A $payload_len
     add B A
     stack B $DATASTACK_PTR
-    ldi A $_tx_scratchpad
+    ldm A $_tx_scratchpad
     stack A $DATASTACK_PTR
     call @rt_swap
     call @HAL.send_raw
@@ -445,7 +449,6 @@
     ustack A $DATASTACK_PTR
     sto A $rx_buf_ptr
 :_net_poll_if_end_8
-:jrk
     ldm A $rx_buf_ptr
     stack A $DATASTACK_PTR
     stack Z $DATASTACK_PTR
@@ -615,6 +618,7 @@
     ret
 
 # .DATA
+% $_tx_scratchpad 0
 % $_net_is_configured 0
 % $_port_map 0
 % $_packet_pool 0

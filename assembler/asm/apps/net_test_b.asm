@@ -32,17 +32,17 @@
 . $mes_load_ptr 1
 . $temp_ptr 1
 . $print_message_str_6 27
-. $main_str_7 41
-. $main_str_8 66
-. $main_str_9 40
-. $testmessage 17
-. $main_str_10 42
-. $main_str_11 36
-. $message 1
-. $retry_count 1
+. $hosthello 6
+. $main_str_7 33
+. $received_message 1
 . $read_success 1
-. $main_str_12 40
-. $main_str_13 46
+. $retry_count 1
+. $main_str_8 39
+. $reply_to_a 18
+. $main_str_9 31
+. $main_str_10 41
+. $main_str_11 42
+. $main_str_12 24
 
 # .CODE
     call @main
@@ -369,66 +369,31 @@
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldi A 8246931439866572030
+        ldi A 6953595119954
     stack A $DATASTACK_PTR
     ldi A 128
     stack A $DATASTACK_PTR
     call @SOCKET.init
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :main_if_end_0
-    ldi A $main_str_8
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        call @DEQUE.new
+    call @DEQUE.new
     ustack A $DATASTACK_PTR
     sto A $my_inbox
-    ldi A 100
+    ldi A 200
     stack A $DATASTACK_PTR
     ldm A $my_inbox
     stack A $DATASTACK_PTR
     call @SOCKET.bind
-    ldi A $main_str_9
+    ldi A 6953595119954
     stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldi A 8246931439866572030
-    stack A $DATASTACK_PTR
-    ldi A 100
-    stack A $DATASTACK_PTR
-    ldi A 100
-    stack A $DATASTACK_PTR
-    ldi A $testmessage
+    stack Z $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldi A $hosthello
     stack A $DATASTACK_PTR
     call @SOCKET.snd_text
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :main_if_else_1
-    ldi A $main_str_10
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        jmp :main_if_end_1
-:main_if_else_1
-    ldi A $main_str_11
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-    :main_if_end_1
     ldi A 64
     stack A $DATASTACK_PTR
     call @NEW.array
     ustack A $DATASTACK_PTR
-    sto A $message
+    sto A $received_message
 :main_while_start_0
     ldm A $retry_count
     stack A $DATASTACK_PTR
@@ -437,7 +402,7 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :main_while_end_0
-    ldm A $message
+    ldm A $received_message
     stack A $DATASTACK_PTR
     ldm A $my_inbox
     stack A $DATASTACK_PTR
@@ -445,44 +410,78 @@
     ustack A $DATASTACK_PTR
     sto A $read_success
     tst A 0
-    jmpt :main_if_else_2
+    jmpt :main_if_else_0
     ld A Z
     sto A $retry_count
-    jmp :main_if_end_2
-:main_if_else_2
+    jmp :main_if_end_0
+:main_if_else_0
     ldm B $retry_count
     ldi A 1
     sub B A
     ld A B
     sto A $retry_count
+    stack A $DATASTACK_PTR
+    call @rt_print_tos
 
-                    nop
-                :main_if_end_2
+                nop
+            :main_if_end_0
     jmp :main_while_start_0
 :main_while_end_0
     ldm A $read_success
     tst A 0
-    jmpt :main_if_else_3
+    jmpt :main_if_else_1
+    ldi A $main_str_8
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $received_message
+    stack A $DATASTACK_PTR
+    call @print_message
+    ldi A 6953595119953
+    stack A $DATASTACK_PTR
+    ldi A 100
+    stack A $DATASTACK_PTR
+    ldi A 200
+    stack A $DATASTACK_PTR
+    ldi A $reply_to_a
+    stack A $DATASTACK_PTR
+    call @SOCKET.snd_text
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :main_if_else_2
+    ldi A $main_str_9
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        jmp :main_if_end_2
+:main_if_else_2
+    ldi A $main_str_10
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+    :main_if_end_2
+    jmp :main_if_end_1
+:main_if_else_1
+    ldi A $main_str_11
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+    :main_if_end_1
     ldi A $main_str_12
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldm A $message
-    stack A $DATASTACK_PTR
-    call @print_message
-    jmp :main_if_end_3
-:main_if_else_3
-    ldi A $main_str_13
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-    :main_if_end_3
-:main_if_end_0
-    ret
+        ret
 
 # .DATA
 
@@ -517,13 +516,13 @@
 % $print_message_str_5 \space \space \P \a \y \l \o \a \d \space \space \space \space \space \: \space \null
 % $mes_load_ptr 0
 % $print_message_str_6 \Return \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \Return \null
-% $main_str_7 \S \t \a \r \t \i \n \g \space \N \e \t \w \o \r \k \space \I \n \i \t \i \a \l \i \z \a \t \i \o \n \space \T \e \s \t \. \. \. \Return \null
-% $main_str_8 \S \U \C \C \E \S \S \: \space \S \Y \S \_ \N \E \T \_ \C \O \N \F \I \G \space \r \e \t \u \r \n \e \d \space \1 \. \space \N \e \t \w \o \r \k \space \s \t \a \c \k \space \i \s \space \c \o \n \f \i \g \u \r \e \d \. \Return \null
-% $main_str_9 \I \N \F \O \: \space \C \a \l \l \e \d \space \S \O \C \K \E \T \. \b \i \n \d \space \f \o \r \space \p \o \r \t \space \1 \0 \0 \. \Return \null
-% $testmessage \H \e \l \l \o \space \W \o \r \l \d \! \! \space \4 \2 \null
-% $main_str_10 \I \N \F \O \: \space \M \e \s \s \a \g \e \space \s \e \n \t \space \b \y \space \h \o \s \t \space \s \u \c \c \e \s \s \f \u \l \l \y \. \Return \null
-% $main_str_11 \I \N \F \O \: \space \M \e \s \s \a \g \e \space \s \e \n \d \space \b \y \space \h \o \s \t \space \f \a \i \l \e \d \. \Return \null
-% $retry_count 50
+% $hosthello \H \E \L \L \O \null
+% $main_str_7 \S \t \a \r \t \i \n \g \space \N \e \t \w \o \r \k \space \T \e \s \t \space \H \o \s \t \space \B \. \. \. \Return \null
 % $read_success 0
-% $main_str_12 \I \N \F \O \: \space \M \e \s \s \a \g \e \space \r \e \a \d \space \b \y \space \h \o \s \t \space \s \u \c \c \e \s \s \f \u \l \. \Return \null
-% $main_str_13 \I \N \F \O \: \space \M \e \s \s \a \g \e \space \r \e \a \d \space \b \y \space \h \o \s \t \space \f \a \i \l \e \d \space \( \t \i \m \e \o \u \t \) \. \Return \null
+% $retry_count 50
+% $main_str_8 \H \o \s \t \space \B \: \space \R \e \c \e \i \v \e \d \space \m \e \s \s \a \g \e \space \f \r \o \m \space \H \o \s \t \space \A \: \Return \null
+% $reply_to_a \R \e \p \l \y \space \f \r \o \m \space \H \o \s \t \space \B \null
+% $main_str_9 \H \o \s \t \space \B \: \space \R \e \p \l \y \space \s \e \n \t \space \t \o \space \H \o \s \t \space \A \. \Return \null
+% $main_str_10 \H \o \s \t \space \B \: \space \F \a \i \l \e \d \space \t \o \space \s \e \n \d \space \r \e \p \l \y \space \t \o \space \H \o \s \t \space \A \. \Return \null
+% $main_str_11 \H \o \s \t \space \B \: \space \N \o \space \m \e \s \s \a \g \e \space \r \e \c \e \i \v \e \d \space \f \r \o \m \space \H \o \s \t \space \A \. \Return \null
+% $main_str_12 \H \o \s \t \space \B \: \space \T \e \s \t \space \c \o \m \p \l \e \t \e \. \Return \null

@@ -1,5 +1,5 @@
 # .HEADER
-. $_send_buffer 256
+. $_send_buffer 1
 . $_read_deque 1
 . $_user_buf 1
 . $_user_buf_len 1
@@ -24,7 +24,12 @@
 
         ldi I ~SYS_NET_CONFIG ; syscall 65
         int $INT_VECTORS
-        ret
+        ldi A 256
+    stack A $DATASTACK_PTR
+    call @NEW.list
+    ustack A $DATASTACK_PTR
+    sto A $_send_buffer
+    ret
 @SOCKET.read
     ustack A $DATASTACK_PTR
     sto A $_read_deque
@@ -147,7 +152,7 @@
     stack Z $DATASTACK_PTR
     jmp :SOCKET.snd_text_if_end_2
 :SOCKET.snd_text_if_else_2
-    ldi A $_send_buffer
+    ldm A $_send_buffer
     sto A $_tmp_ptr
     ldm A $_dest_id
     ld B A
@@ -211,7 +216,7 @@
     sto A $_i
     jmp :SOCKET.snd_text_while_start_1
 :SOCKET.snd_text_while_end_1
-    ldi A $_send_buffer
+    ldm A $_send_buffer
     stack A $DATASTACK_PTR
 
             ldi I ~SYS_NET_SEND
@@ -225,6 +230,7 @@
         ret
 
 # .DATA
+% $_send_buffer 0
 % $_read_deque 0
 % $_user_buf 0
 % $_user_buf_len 0
