@@ -1,0 +1,96 @@
+# rdp_test.stacks
+# Test program for the Reliable Data Protocol (RDP) library.
+# Simulates a loopback connection between two ports (100 and 101) 
+# within the same process to verify the handshake logic.
+
+INCLUDE socket_lib
+INCLUDE rdp_lib
+
+USE std_stern_io
+USE std_deque
+USE std_time
+
+# --- Constants & Globals ---
+VALUE _inbox_server 0   # Port 100
+VALUE _inbox_client 0   # Port 101
+VALUE _client_conn 0    # Pointer to the client-side connection record
+
+# Helper to print the state of a connection
+DEF print_conn_state {
+    AS _conn
+    "(2=INIT, 3=OPEN) " PRTstring RDP_STATE _conn LIST.get PRINT
+}
+
+DEF main {
+    "--- RDP Handshake Test ---\n" PRTstring
+
+    # 1. Initialize Network & RDP
+    HEAP.free
+    32 DEQUE.init_pool
+    # TIME.init  ; is done at boottime by the bootfile
+    
+    # Configure the generic network stack
+    \"stern-test" 128 SOCKET.init
+    IF
+        "Network Initialized.\n" PRTstring
+    ELSE
+        "Network Init Failed.\n" PRTstring
+        HALT
+    END
+
+    # Initialize the RDP library
+    RDP.init
+    "RDP Library Initialized.\n" PRTstring
+
+    # 2. Setup Sockets (Inbox Deques)
+    # Server on Port 100
+    DEQUE.new AS _inbox_server
+    100 _inbox_server SOCKET.bind
+    "Bound Port 100 (Server)\n" PRTstring
+
+    # Client on Port 101
+    DEQUE.new AS _inbox_client
+    101 _inbox_client SOCKET.bind
+    "Bound Port 101 (Client)\n" PRTstring
+
+    # 3. Initiate Connection (Client -> Server)
+    # Connect to "stern-test" (self), DestPort 100, SrcPort 101
+    # RDP.connect returns (conn_ptr success_flag). We swap them to handle correctly.
+    \"stern-test" 100 101 RDP.connect
+    SWAP AS _client_conn
+    
+    IF
+        "Client: Connect call success. Sent HELLO.\n" PRTstring
+        _client_conn print_conn_state
+    ELSE
+        DROP # Drop the failed conn_ptr
+        "Client: Connect call failed.\n" PRTstring
+        HALT
+    END
+
+    # 4. Event Loop (Process Packets)
+    # We assume the handshake takes a few ticks.
+    VALUE _loop_count 0
+    WHILE _loop_count 10 < DO
+        "Tick " PRTstring _loop_count PRTnum
+        "  " PRTstring
+        
+        ASM {
+            nop
+        }
+        # Update Server (Should receive HELLO, send STAT_ACK)
+        _inbox_server RDP.update
+        ASM {
+            nop
+        }
+        # Update Client (Should receive STAT_ACK, switch to OPEN)
+        _inbox_client RDP.update
+
+        # Check State
+        _client_conn print_conn_state
+
+        _loop_count 1 + AS _loop_count
+    DONE
+}
+
+main

@@ -8,50 +8,23 @@ USE std_deque
 USE std_stern_io
 
 VALUE my_inbox 0
+VALUE list_data 0
 
 DEF print_message {
     # ( message_ptr -- )
     # Prints the contents of a received network message envelope.
     AS message_ptr
-
     "--- Received Message ---\n" PRTstring
-
-    # Get pointer to envelope data (which is at offset 2 of the array)
-    VALUE data_ptr 0
-    message_ptr 2 + AS data_ptr
-    VALUE tmp_ptr 0
-
-    # Print Header Fields
     "  Source ID   : " PRTstring
-    *data_ptr PRINT
-    # "\n" PRTstring
-
+    message_ptr MESSAGE.src PRINT
     "  Dest Port   : " PRTstring
-    data_ptr 1 + AS tmp_ptr
-    *tmp_ptr PRINT
-    # "\n" PRTstring
-
+    message_ptr MESSAGE.dest_port PRINT
     "  Source Port : " PRTstring
-    data_ptr 2 + AS tmp_ptr
-    *tmp_ptr PRINT
-    # "\n" PRTstring
-
+    message_ptr MESSAGE.src_port PRINT
     "  Payload Len : " PRTstring
-    VALUE message_len 0
-    data_ptr 3 + AS tmp_ptr
-    *tmp_ptr DUP AS message_len PRINT
-    # "\n" PRTstring
-
-    # Print Payload
+    message_ptr MESSAGE.len PRINT
     "  Payload     : " PRTstring
-    VALUE mes_load_ptr 0
-    data_ptr 4 + AS mes_load_ptr
-
-    # The payload is not null-terminated. We must add a terminator before printing.
-    mes_load_ptr message_len + AS temp_ptr
-    0 AS *temp_ptr
-
-    mes_load_ptr PRTstring
+    message_ptr MESSAGE.as_string PRTstring
     "\n------------------------\n" PRTstring
  }
 
@@ -77,13 +50,13 @@ DEF main {
         # "INFO: Use debugger to inspect _port_map in net_core.\n" PRTstring
 
         # 5. Test SYS_NET_SEND
-        # ( str_ptr dest_id dest_port src_port -- success )
-        STRING testmessage "Hello World!! 42"
-        &testmessage \"stern-test" 100 100 SOCKET.snd_text
+        # ( num dest_id dest_port src_port -- success )
+        # We testen een negatief getal om de teken-afhandeling en cijfer-conversie te verifiëren.
+        1234 NEGATE \"stern-test" 100 100 SOCKET.snd_num
         IF
-            "INFO: Message sent by host successfully.\n" PRTstring
+            "INFO: Number sent by host successfully.\n" PRTstring
         ELSE
-            "INFO: Message send by host failed.\n" PRTstring
+            "INFO: Number send by host failed.\n" PRTstring
         END
 
 
@@ -113,8 +86,58 @@ DEF main {
         read_success IF
             "INFO: Message read by host successful.\n" PRTstring
             message print_message
+
+            "INFO: Testing MESSAGE.as_num: " PRTstring
+            message MESSAGE.as_num PRINT
+            "\n" PRTstring
         ELSE
             "INFO: Message read by host failed (timeout).\n" PRTstring
+        END
+
+        # --- 7. Test SOCKET.snd_list ---
+        "INFO: Starting SOCKET.snd_list test...\n" PRTstring
+        
+        # Create a heap array
+        5 NEW.array AS list_data
+        
+        # Populate it with "TEST!" (84, 69, 83, 84, 33)
+        84 list_data ARRAY.append
+        69 list_data ARRAY.append
+        83 list_data ARRAY.append
+        84 list_data ARRAY.append
+        33 list_data ARRAY.append
+
+        # Send it ( list_ptr dest_id dest_port src_port -- success )
+        list_data \"stern-test" 100 100 SOCKET.snd_list
+        
+        IF
+            "INFO: List sent successfully.\n" PRTstring
+        ELSE
+            "INFO: List send failed.\n" PRTstring
+        END
+
+        # Receive it
+        50 AS retry_count
+        0 AS read_success
+        
+        WHILE retry_count 0 > DO
+            message my_inbox SOCKET.read AS read_success
+            
+            read_success IF
+                0 AS retry_count
+            ELSE
+                retry_count 1 - AS retry_count
+                ASM { 
+                    nop 
+                }
+            END
+        DONE
+
+        read_success IF
+             "INFO: List message received.\n" PRTstring
+             message print_message
+        ELSE
+             "INFO: List message receive timeout.\n" PRTstring
         END
 
     END

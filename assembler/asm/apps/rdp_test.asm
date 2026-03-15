@@ -30,25 +30,37 @@
 . $_is_neg 1
 . $_curr_ptr 1
 . $_val 1
-. $my_inbox 1
-. $message_ptr 1
-. $print_message_str_0 26
-. $print_message_str_1 17
-. $print_message_str_2 17
-. $print_message_str_3 17
-. $print_message_str_4 17
-. $print_message_str_5 17
-. $print_message_str_6 27
-. $main_str_7 33
-. $message_to_b 18
-. $main_str_8 33
-. $main_str_9 43
-. $received_message 1
-. $read_success 1
-. $retry_count 1
-. $main_str_10 39
-. $main_str_11 42
-. $main_str_12 24
+. $_rdp_conns 1
+. $_rdp_ctrl_packet 1
+. $_rdp_recv_buf 1
+. $_conn 1
+. $_conn_ptr 1
+. $_new_conn 1
+. $_key 1
+. $_msg_type 1
+. $_src_id 1
+. $_local_port 1
+. $_seq_num 1
+. $_retries 1
+. $_state 1
+. $_current_state 1
+. $_inbox 1
+. $_payload_ptr 1
+. $_inbox_server 1
+. $_inbox_client 1
+. $_client_conn 1
+. $print_conn_state_str_0 18
+. $main_str_1 28
+. $main_str_2 22
+. $main_str_3 22
+. $main_str_4 26
+. $main_str_5 25
+. $main_str_6 25
+. $main_str_7 43
+. $main_str_8 30
+. $_loop_count 1
+. $main_str_9 6
+. $main_str_10 3
 
 # .CODE
     call @main
@@ -681,113 +693,608 @@
 :MESSAGE.as_num_if_end_10
     ret
 
-@print_message
+
+@RDP.init
+    ldi A 8
+    stack A $DATASTACK_PTR
+    call @DICT.new
     ustack A $DATASTACK_PTR
-    sto A $message_ptr
-    ldi A $print_message_str_0
+    sto A $_rdp_conns
+    ldi A 2
     stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldi A $print_message_str_1
+    call @NEW.array
+    ustack A $DATASTACK_PTR
+    sto A $_rdp_ctrl_packet
+    ldi A 256
     stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldm A $message_ptr
+    call @NEW.array
+    ustack A $DATASTACK_PTR
+    sto A $_rdp_recv_buf
+    ret
+@_rdp_make_key
+    call @rt_swap
+    ldi A 65536
+    ustack B $DATASTACK_PTR
+    mul A B
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    ret
+@_rdp_send_control_packet
+    ustack A $DATASTACK_PTR
+    sto A $_msg_type
+    ustack A $DATASTACK_PTR
+    sto A $_conn
+    stack Z $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_dest_id
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_dest_port
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_src_port
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_seq_num
+    ldm B $_rdp_ctrl_packet
+    ldi A 1
+    add A B
+    sto A $_ARR_TEMP_PTR
+    ld B Z
+    ldm I $_ARR_TEMP_PTR
+    stx B $_start_memory_
+    ldm A $_msg_type
+    stack A $DATASTACK_PTR
+    ldm A $_rdp_ctrl_packet
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $_seq_num
+    stack A $DATASTACK_PTR
+    ldm A $_rdp_ctrl_packet
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $_rdp_ctrl_packet
+    stack A $DATASTACK_PTR
+    ldm A $_dest_id
+    stack A $DATASTACK_PTR
+    ldm A $_dest_port
+    stack A $DATASTACK_PTR
+    ldm A $_src_port
+    stack A $DATASTACK_PTR
+    call @SOCKET.snd_list
+    ret
+@_rdp_check_timeout
+    ustack A $DATASTACK_PTR
+    sto A $_conn
+    call @TIME.uptime
+    ldi A 9
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    ldi A 2000
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_rdp_check_timeout_if_end_0
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_retries
+    stack A $DATASTACK_PTR
+    ldi A 5
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_rdp_check_timeout_if_else_1
+    stack Z $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    jmp :_rdp_check_timeout_if_end_1
+:_rdp_check_timeout_if_else_1
+    ldm B $_retries
+    ldi A 1
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    call @TIME.uptime
+    ldi A 9
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_state
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_rdp_check_timeout_if_else_2
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    ldi A 129
+    stack A $DATASTACK_PTR
+    call @_rdp_send_control_packet
+    call @rt_drop
+    jmp :_rdp_check_timeout_if_end_2
+:_rdp_check_timeout_if_else_2
+    ldm A $_state
+    stack A $DATASTACK_PTR
+    ldi A 5
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_rdp_check_timeout_if_end_3
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    ldi A 133
+    stack A $DATASTACK_PTR
+    call @_rdp_send_control_packet
+    call @rt_drop
+:_rdp_check_timeout_if_end_3
+:_rdp_check_timeout_if_end_2
+:_rdp_check_timeout_if_end_1
+:_rdp_check_timeout_if_end_0
+    ret
+@_rdp_alloc_conn
+    ustack A $DATASTACK_PTR
+    sto A $_local_port
+    ustack A $DATASTACK_PTR
+    sto A $_dest_port
+    ustack A $DATASTACK_PTR
+    sto A $_dest_id
+    ldi A 16
+    stack A $DATASTACK_PTR
+    call @NEW.list
+    ustack A $DATASTACK_PTR
+    sto A $_conn
+    ldm A $_dest_id
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldm A $_dest_port
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldm A $_local_port
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    stack Z $DATASTACK_PTR
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    stack Z $DATASTACK_PTR
+    ldi A 5
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    stack Z $DATASTACK_PTR
+    ldi A 6
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    call @TIME.uptime
+    ldi A 9
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    stack Z $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 10
+    stack A $DATASTACK_PTR
+    call @DICT.new
+    ldi A 7
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 10
+    stack A $DATASTACK_PTR
+    call @DICT.new
+    ldi A 8
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    ldm A $_dest_port
+    stack A $DATASTACK_PTR
+    ldm A $_local_port
+    stack A $DATASTACK_PTR
+    call @_rdp_make_key
+    ldm A $_rdp_conns
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    ret
+@RDP.connect
+    call @_rdp_alloc_conn
+    ustack A $DATASTACK_PTR
+    sto A $_conn
+    stack A $DATASTACK_PTR
+    ldi A 129
+    stack A $DATASTACK_PTR
+    call @_rdp_send_control_packet
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :RDP.connect_if_else_4
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    jmp :RDP.connect_if_end_4
+:RDP.connect_if_else_4
+    stack Z $DATASTACK_PTR
+:RDP.connect_if_end_4
+    ret
+@RDP.update
+    ustack A $DATASTACK_PTR
+    sto A $_inbox
+    ldm A $_rdp_conns
+    stack A $DATASTACK_PTR
+    call @DICT.count
+    ustack A $DATASTACK_PTR
+    sto A $_count
+    ld A Z
+    sto A $_i
+:RDP.update_while_start_0
+    ldm A $_i
+    stack A $DATASTACK_PTR
+    ldm A $_count
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :RDP.update_while_end_0
+    ldm A $_i
+    stack A $DATASTACK_PTR
+    ldm A $_rdp_conns
+    stack A $DATASTACK_PTR
+    call @DICT.item
+    ustack A $DATASTACK_PTR
+    sto A $_conn_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_key
+    ldm A $_conn_ptr
+    stack A $DATASTACK_PTR
+    call @_rdp_check_timeout
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_conn_ptr
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :RDP.update_if_else_5
+    ldm A $_key
+    stack A $DATASTACK_PTR
+    ldm A $_rdp_conns
+    stack A $DATASTACK_PTR
+    call @DICT.remove
+    ldm B $_count
+    ldi A 1
+    sub B A
+    ld A B
+    sto A $_count
+    jmp :RDP.update_if_end_5
+:RDP.update_if_else_5
+    ldm B $_i
+    ldi A 1
+    add A B
+    sto A $_i
+:RDP.update_if_end_5
+    jmp :RDP.update_while_start_0
+:RDP.update_while_end_0
+    ldm A $_rdp_recv_buf
+    stack A $DATASTACK_PTR
+    ldm A $_inbox
+    stack A $DATASTACK_PTR
+    call @SOCKET.read
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :RDP.update_if_end_6
+    ldm A $_rdp_recv_buf
+    stack A $DATASTACK_PTR
+    call @MESSAGE.payload_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_payload_ptr
+    ldm I $_payload_ptr
+    ldx A $_start_memory_
+    sto A $_msg_type
+    stack A $DATASTACK_PTR
+    ldi A 128
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :RDP.update_if_else_7
+    ldm A $_rdp_recv_buf
     stack A $DATASTACK_PTR
     call @MESSAGE.src
-    call @rt_print_tos
-    ldi A $print_message_str_2
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldm A $message_ptr
-    stack A $DATASTACK_PTR
-    call @MESSAGE.dest_port
-    call @rt_print_tos
-    ldi A $print_message_str_3
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldm A $message_ptr
+    ustack A $DATASTACK_PTR
+    sto A $_src_id
+    ldm A $_rdp_recv_buf
     stack A $DATASTACK_PTR
     call @MESSAGE.src_port
+    ustack A $DATASTACK_PTR
+    sto A $_src_port
+    ldm A $_rdp_recv_buf
+    stack A $DATASTACK_PTR
+    call @MESSAGE.dest_port
+    ustack A $DATASTACK_PTR
+    sto A $_local_port
+    ldm A $_src_port
+    stack A $DATASTACK_PTR
+    ldm A $_local_port
+    stack A $DATASTACK_PTR
+    call @_rdp_make_key
+    ustack A $DATASTACK_PTR
+    sto A $_key
+    stack A $DATASTACK_PTR
+    ldm A $_rdp_conns
+    stack A $DATASTACK_PTR
+    call @DICT.has_key
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :RDP.update_if_else_8
+    ldm A $_key
+    stack A $DATASTACK_PTR
+    ldm A $_rdp_conns
+    stack A $DATASTACK_PTR
+    call @DICT.get
+    ustack A $DATASTACK_PTR
+    sto A $_conn
+    ldm A $_msg_type
+    stack A $DATASTACK_PTR
+    ldi A 129
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :RDP.update_if_else_9
+    ldm B $_payload_ptr
+    ldi A 1
+    add A B
+    sto A $_tmp_ptr
+    ldm I $_tmp_ptr
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    call @rt_dup
+    ldi A 5
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    ldi A 134
+    stack A $DATASTACK_PTR
+    call @_rdp_send_control_packet
+    call @rt_drop
+    jmp :RDP.update_if_end_9
+:RDP.update_if_else_9
+    ldm A $_msg_type
+    stack A $DATASTACK_PTR
+    ldi A 134
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :RDP.update_if_else_10
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ustack A $DATASTACK_PTR
+    sto A $_current_state
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :RDP.update_if_end_11
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    call @TIME.uptime
+    ldi A 9
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    stack Z $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+:RDP.update_if_end_11
+    jmp :RDP.update_if_end_10
+:RDP.update_if_else_10
+:RDP.update_if_end_10
+:RDP.update_if_end_9
+    jmp :RDP.update_if_end_8
+:RDP.update_if_else_8
+    ldm A $_msg_type
+    stack A $DATASTACK_PTR
+    ldi A 129
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :RDP.update_if_end_12
+    ldm A $_src_id
+    stack A $DATASTACK_PTR
+    ldm A $_src_port
+    stack A $DATASTACK_PTR
+    ldm A $_local_port
+    stack A $DATASTACK_PTR
+    call @_rdp_alloc_conn
+    ustack A $DATASTACK_PTR
+    sto A $_new_conn
+    ldm B $_payload_ptr
+    ldi A 1
+    add A B
+    sto A $_tmp_ptr
+    ldm I $_tmp_ptr
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    call @rt_dup
+    ldi A 5
+    stack A $DATASTACK_PTR
+    ldm A $_new_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldm A $_new_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_new_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    ldm A $_new_conn
+    stack A $DATASTACK_PTR
+    ldi A 134
+    stack A $DATASTACK_PTR
+    call @_rdp_send_control_packet
+    call @rt_drop
+:RDP.update_if_end_12
+:RDP.update_if_end_8
+    jmp :RDP.update_if_end_7
+:RDP.update_if_else_7
+:RDP.update_if_end_7
+:RDP.update_if_end_6
+    ret
+
+@print_conn_state
+    ustack A $DATASTACK_PTR
+    sto A $_conn
+    ldi A $print_conn_state_str_0
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.get
     call @rt_print_tos
-    ldi A $print_message_str_4
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldm A $message_ptr
-    stack A $DATASTACK_PTR
-    call @MESSAGE.len
-    call @rt_print_tos
-    ldi A $print_message_str_5
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldm A $message_ptr
-    stack A $DATASTACK_PTR
-    call @MESSAGE.as_string
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldi A $print_message_str_6
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ret
+    ret
 @main
-    ldm A $HEAP_START
+    ldi A $main_str_1
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $HEAP_START
     sto A $HEAP_FREE
     ldi A 32
     stack A $DATASTACK_PTR
     call @DEQUE.init_pool
-    ldi A $main_str_7
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldi A 6953595119953
+    ldi A 8246931439866572030
     stack A $DATASTACK_PTR
     ldi A 128
     stack A $DATASTACK_PTR
     call @SOCKET.init
-    call @DEQUE.new
-    ustack A $DATASTACK_PTR
-    sto A $my_inbox
-    ldi A 100
-    stack A $DATASTACK_PTR
-    ldm A $my_inbox
-    stack A $DATASTACK_PTR
-    call @SOCKET.bind
-    ldi A $message_to_b
-    stack A $DATASTACK_PTR
-    ldi A 6953595119954
-    stack A $DATASTACK_PTR
-    ldi A 200
-    stack A $DATASTACK_PTR
-    ldi A 100
-    stack A $DATASTACK_PTR
-    call @SOCKET.snd_text
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :main_if_else_0
-    ldi A $main_str_8
+    ldi A $main_str_2
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
@@ -795,79 +1302,126 @@
         int $INT_VECTORS         ; Interrupt to trigger the syscall
         jmp :main_if_end_0
 :main_if_else_0
+    ldi A $main_str_3
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
+:main_if_end_0
+    call @RDP.init
+    ldi A $main_str_4
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @DEQUE.new
+    ustack A $DATASTACK_PTR
+    sto A $_inbox_server
+    ldi A 100
+    stack A $DATASTACK_PTR
+    ldm A $_inbox_server
+    stack A $DATASTACK_PTR
+    call @SOCKET.bind
+    ldi A $main_str_5
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @DEQUE.new
+    ustack A $DATASTACK_PTR
+    sto A $_inbox_client
+    ldi A 101
+    stack A $DATASTACK_PTR
+    ldm A $_inbox_client
+    stack A $DATASTACK_PTR
+    call @SOCKET.bind
+    ldi A $main_str_6
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A 8246931439866572030
+    stack A $DATASTACK_PTR
+    ldi A 100
+    stack A $DATASTACK_PTR
+    ldi A 101
+    stack A $DATASTACK_PTR
+    call @RDP.connect
+    call @rt_swap
+    ustack A $DATASTACK_PTR
+    sto A $_client_conn
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :main_if_else_1
+    ldi A $main_str_7
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $_client_conn
+    stack A $DATASTACK_PTR
+    call @print_conn_state
+    jmp :main_if_end_1
+:main_if_else_1
+    call @rt_drop
+    ldi A $main_str_8
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
+:main_if_end_1
+:main_while_start_0
+    ldm A $_loop_count
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :main_while_end_0
     ldi A $main_str_9
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-    :main_if_end_0
-    ldi A 64
+        ldm A $_loop_count
     stack A $DATASTACK_PTR
-    call @NEW.array
-    ustack A $DATASTACK_PTR
-    sto A $received_message
-:main_while_start_0
-    ldm A $retry_count
-    stack A $DATASTACK_PTR
-    stack Z $DATASTACK_PTR
-    call @rt_gt
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :main_while_end_0
-    ldm A $received_message
-    stack A $DATASTACK_PTR
-    ldm A $my_inbox
-    stack A $DATASTACK_PTR
-    call @SOCKET.read
-    ustack A $DATASTACK_PTR
-    sto A $read_success
-    tst A 0
-    jmpt :main_if_else_1
-    ld A Z
-    sto A $retry_count
-    jmp :main_if_end_1
-:main_if_else_1
-    ldm B $retry_count
-    ldi A 1
-    sub B A
-    ld A B
-    sto A $retry_count
-    stack A $DATASTACK_PTR
-    call @rt_print_tos
-
-                nop
-            :main_if_end_1
-    jmp :main_while_start_0
-:main_while_end_0
-    ldm A $read_success
-    tst A 0
-    jmpt :main_if_else_2
+    call @PRTnum
     ldi A $main_str_10
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldm A $received_message
+    
+            nop
+            ldm A $_inbox_server
     stack A $DATASTACK_PTR
-    call @print_message
-    jmp :main_if_end_2
-:main_if_else_2
-    ldi A $main_str_11
-    stack A $DATASTACK_PTR
+    call @RDP.update
 
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-    :main_if_end_2
-    ldi A $main_str_12
+            nop
+            ldm A $_inbox_client
     stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ret
+    call @RDP.update
+    ldm A $_client_conn
+    stack A $DATASTACK_PTR
+    call @print_conn_state
+    ldm B $_loop_count
+    ldi A 1
+    add A B
+    sto A $_loop_count
+    jmp :main_while_start_0
+:main_while_end_0
+    ret
 
 # .DATA
 
@@ -902,20 +1456,35 @@
 % $_is_neg 0
 % $_curr_ptr 0
 % $_val 0
-% $my_inbox 0
-% $print_message_str_0 \- \- \- \space \R \e \c \e \i \v \e \d \space \M \e \s \s \a \g \e \space \- \- \- \Return \null
-% $print_message_str_1 \space \space \S \o \u \r \c \e \space \I \D \space \space \space \: \space \null
-% $print_message_str_2 \space \space \D \e \s \t \space \P \o \r \t \space \space \space \: \space \null
-% $print_message_str_3 \space \space \S \o \u \r \c \e \space \P \o \r \t \space \: \space \null
-% $print_message_str_4 \space \space \P \a \y \l \o \a \d \space \L \e \n \space \: \space \null
-% $print_message_str_5 \space \space \P \a \y \l \o \a \d \space \space \space \space \space \: \space \null
-% $print_message_str_6 \Return \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \- \Return \null
-% $main_str_7 \S \t \a \r \t \i \n \g \space \N \e \t \w \o \r \k \space \T \e \s \t \space \H \o \s \t \space \A \. \. \. \Return \null
-% $message_to_b \H \e \l \l \o \space \f \r \o \m \space \H \o \s \t \space \A \null
-% $main_str_8 \H \o \s \t \space \A \: \space \M \e \s \s \a \g \e \space \s \e \n \t \space \t \o \space \H \o \s \t \space \B \. \Return \null
-% $main_str_9 \H \o \s \t \space \A \: \space \F \a \i \l \e \d \space \t \o \space \s \e \n \d \space \m \e \s \s \a \g \e \space \t \o \space \H \o \s \t \space \B \. \Return \null
-% $read_success 0
-% $retry_count 50
-% $main_str_10 \H \o \s \t \space \A \: \space \R \e \c \e \i \v \e \d \space \m \e \s \s \a \g \e \space \f \r \o \m \space \H \o \s \t \space \B \: \Return \null
-% $main_str_11 \H \o \s \t \space \A \: \space \N \o \space \m \e \s \s \a \g \e \space \r \e \c \e \i \v \e \d \space \f \r \o \m \space \H \o \s \t \space \B \. \Return \null
-% $main_str_12 \H \o \s \t \space \A \: \space \T \e \s \t \space \c \o \m \p \l \e \t \e \. \Return \null
+
+% $_rdp_conns 0
+% $_rdp_ctrl_packet 0
+% $_rdp_recv_buf 0
+% $_conn 0
+% $_conn_ptr 0
+% $_new_conn 0
+% $_key 0
+% $_msg_type 0
+% $_src_id 0
+% $_local_port 0
+% $_seq_num 0
+% $_retries 0
+% $_state 0
+% $_current_state 0
+% $_inbox 0
+% $_payload_ptr 0
+% $_inbox_server 0
+% $_inbox_client 0
+% $_client_conn 0
+% $print_conn_state_str_0 \( \2 \= \I \N \I \T \, \space \3 \= \O \P \E \N \) \space \null
+% $main_str_1 \- \- \- \space \R \D \P \space \H \a \n \d \s \h \a \k \e \space \T \e \s \t \space \- \- \- \Return \null
+% $main_str_2 \N \e \t \w \o \r \k \space \I \n \i \t \i \a \l \i \z \e \d \. \Return \null
+% $main_str_3 \N \e \t \w \o \r \k \space \I \n \i \t \space \F \a \i \l \e \d \. \Return \null
+% $main_str_4 \R \D \P \space \L \i \b \r \a \r \y \space \I \n \i \t \i \a \l \i \z \e \d \. \Return \null
+% $main_str_5 \B \o \u \n \d \space \P \o \r \t \space \1 \0 \0 \space \( \S \e \r \v \e \r \) \Return \null
+% $main_str_6 \B \o \u \n \d \space \P \o \r \t \space \1 \0 \1 \space \( \C \l \i \e \n \t \) \Return \null
+% $main_str_7 \C \l \i \e \n \t \: \space \C \o \n \n \e \c \t \space \c \a \l \l \space \s \u \c \c \e \s \s \. \space \S \e \n \t \space \H \E \L \L \O \. \Return \null
+% $main_str_8 \C \l \i \e \n \t \: \space \C \o \n \n \e \c \t \space \c \a \l \l \space \f \a \i \l \e \d \. \Return \null
+% $_loop_count 0
+% $main_str_9 \T \i \c \k \space \null
+% $main_str_10 \space \space \null

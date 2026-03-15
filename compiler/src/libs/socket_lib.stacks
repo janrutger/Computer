@@ -4,6 +4,7 @@
 
 USE std_string
 USE std_deque
+USE std_heap
 
 # --- Static TX Buffer ---
 # We use a single static buffer for sending to avoid heap fragmentation.
@@ -167,10 +168,232 @@ DEF SOCKET.snd_text {
     END
 }
 
+
+
+# ( num dest_id dest_port src_port -- success )
+DEF SOCKET.snd_num {
+    # VALUE _src_port 0     ; already defined in snd_text
+    AS _src_port
+    # VALUE _dest_port 0    ; already defined
+    AS _dest_port
+    # VALUE _dest_id 0      ; already defined
+    AS _dest_id
+    VALUE _num 0
+    AS _num
+
+    0 AS _payload_len
+    # VALUE _payload_len 0  ; already defined
+    VALUE _p_ptr 0
+    _send_buffer 4 + AS _p_ptr
+
+    # 1. Handle Negative Numbers
+    _num 0 < IF
+        45 AS *_p_ptr      # Write '-'
+        _p_ptr 1 + AS _p_ptr
+        _payload_len 1 + AS _payload_len
+        _num NEGATE AS _num   # Make positive for digit extraction
+    END
+
+    # 2. Convert to ASCII
+    _num 0 == IF
+        48 AS *_p_ptr      # Just write '0'
+        _payload_len 1 + AS _payload_len
+    ELSE
+        # Extract digits to stack (reverse order)
+        VALUE _digit_count 0
+        0 AS _digit_count
+        WHILE _num 0 > DO
+            _num 10 % 48 + # Get ASCII digit
+            _num 10 // AS _num
+            _digit_count 1 + AS _digit_count
+        DONE
+        # Pop from stack to buffer (correct order)
+        WHILE _digit_count 0 > DO
+            AS *_p_ptr
+            _p_ptr 1 + AS _p_ptr
+            _payload_len 1 + AS _payload_len
+            _digit_count 1 - AS _digit_count
+        DONE
+    END
+
+    # 3. Populate headers in _send_buffer
+    # Layout: [DestID, DestPort, SrcPort, Length, Payload...]
+    _send_buffer AS _tmp_ptr
+    _dest_id     AS *_tmp_ptr
+    _tmp_ptr 1 + AS _tmp_ptr
+    _dest_port   AS *_tmp_ptr
+    _tmp_ptr 1 + AS _tmp_ptr
+    _src_port    AS *_tmp_ptr
+    _tmp_ptr 1 + AS _tmp_ptr
+    _payload_len AS *_tmp_ptr
+
+    # 4. Call Syscall
+    _send_buffer
+    ASM {
+        ldi I ~SYS_NET_SEND
+        int $INT_VECTORS
+    }
+}
+
+
+# ( list_ptr dest_id dest_port src_port -- success )
+# Sends a payload from a heap-allocated array (created with NEW.array).
+DEF SOCKET.snd_list {
+    # Reusing globals defined in SOCKET.snd_text and SOCKET.read
+    AS _src_port
+    AS _dest_port
+    AS _dest_id
+    
+    VALUE _snd_list_ptr 0
+    AS _snd_list_ptr
+
+    # 1. Get payload length from array header
+    _snd_list_ptr ARRAY.len AS _payload_len
+
+    # 2. Safety Check (Max Payload = 240 words)
+    _payload_len 240 > IF
+        0 # Return Failure
+    ELSE
+        # 3. Populate headers in _send_buffer
+        _send_buffer AS _tmp_ptr
+        _dest_id     AS *_tmp_ptr
+        _tmp_ptr 1 + AS _tmp_ptr
+        _dest_port   AS *_tmp_ptr
+        _tmp_ptr 1 + AS _tmp_ptr
+        _src_port    AS *_tmp_ptr
+        _tmp_ptr 1 + AS _tmp_ptr
+        _payload_len AS *_tmp_ptr
+        _tmp_ptr 1 + AS _tmp_ptr # _tmp_ptr now points to payload start
+
+        # 4. Copy Payload from list
+        0 AS _i
+        WHILE _i _payload_len < DO
+            _i _snd_list_ptr ARRAY.get  # Get value from array
+            AS *_tmp_ptr            # Store in buffer
+            _tmp_ptr 1 + AS _tmp_ptr
+            _i 1 + AS _i
+        DONE
+
+        # 5. Call Syscall
+        _send_buffer
+        ASM {
+            ldi I ~SYS_NET_SEND
+            int $INT_VECTORS
+        }
+    END
+}
+
+
+
+
+
 # ( port_id deque_ptr -- )
 DEF SOCKET.bind {
     ASM {
         ldi I ~SYS_NET_BIND ; syscall 60
         int $INT_VECTORS
     }
+}
+
+
+
+# --- MESSAGE Helper Methods ---
+# These methods operate on the array returned/filled by SOCKET.read.
+# Note: They account for the heap-array header (Capacity at index 0, Count at index 1).
+# The Envelope data starts at index 2 of the raw pointer.
+
+VALUE _length 0
+VALUE _ptr 0
+
+
+# ( message_ptr -- source_id )
+DEF MESSAGE.src {
+    2 + AS _tmp_ptr
+    *_tmp_ptr
+}
+
+# ( message_ptr -- dest_port )
+DEF MESSAGE.dest_port {
+    2 + 1 + AS _tmp_ptr
+    *_tmp_ptr
+}
+
+# ( message_ptr -- src_port )
+DEF MESSAGE.src_port {
+    2 + 2 + AS _tmp_ptr
+    *_tmp_ptr
+}
+
+# ( message_ptr -- payload_len )
+DEF MESSAGE.len {
+    2 + 3 + AS _tmp_ptr
+    *_tmp_ptr
+}
+
+# ( message_ptr -- payload_ptr )
+DEF MESSAGE.payload_ptr {
+    2 + 4 +
+}
+
+# ( message_ptr -- payload_ptr )
+# Adds a null terminator after the payload and returns the pointer to the string.
+DEF MESSAGE.as_string {
+    VALUE _msg 0
+    AS _msg
+    
+    _msg MESSAGE.len AS _length
+    _msg MESSAGE.payload_ptr AS _ptr
+    
+    # Add null terminator at ptr + length
+    # Note: This modifies the buffer in-place.
+    VALUE _term_ptr 0
+    _ptr _length + AS _term_ptr
+    0 AS *_term_ptr
+    
+    _ptr # Return the string pointer
+}
+
+
+# ( message_ptr -- num )
+# Converts the ASCII payload of a message back into a signed integer.
+DEF MESSAGE.as_num {
+    # VALUE _msg 0          ; defined in MESSAGE.as_string
+    AS _msg
+    _msg MESSAGE.len AS _length
+    _msg MESSAGE.payload_ptr AS _ptr
+
+    VALUE _res 0
+    0 AS _res
+    VALUE _is_neg 0
+    0 AS _is_neg
+    # 0 AS _i               ; defined in SOCKET.snd_text
+    0 AS _i
+    VALUE _curr_ptr 0
+    VALUE _val 0
+
+    # 1. Handle Sign
+    _length 0 > IF
+        *_ptr 45 == IF      # ASCII '-'
+            1 AS _is_neg
+            1 AS _i
+        END
+    END
+
+    # 2. Convert digits
+    WHILE _i _length < DO
+        _ptr _i + AS _curr_ptr
+        *_curr_ptr 
+        AS _val
+        
+        _val 47 > IF 
+            _val 58 < IF
+                _res 10 * 
+                _val 48 - + AS _res
+            END
+        END
+        _i 1 + AS _i
+    DONE
+
+    # 3. Apply sign and return
+    _is_neg IF 0 _res - ELSE _res END
 }

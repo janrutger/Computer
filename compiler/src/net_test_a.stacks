@@ -12,33 +12,18 @@ DEF print_message {
     # ( message_ptr -- )
     # Prints the contents of a received network message envelope.
     AS message_ptr
-
     "--- Received Message ---\n" PRTstring
-    # Get pointer to envelope data (which is at offset 2 of the array)
-    VALUE data_ptr 0
-    message_ptr 2 + AS data_ptr
-    VALUE tmp_ptr 0
-    # Print Header Fields
+
     "  Source ID   : " PRTstring
-    *data_ptr PRINT
+    message_ptr MESSAGE.src PRINT
     "  Dest Port   : " PRTstring
-    data_ptr 1 + AS tmp_ptr
-    *tmp_ptr PRINT
+    message_ptr MESSAGE.dest_port PRINT
     "  Source Port : " PRTstring
-    data_ptr 2 + AS tmp_ptr
-    *tmp_ptr PRINT
+    message_ptr MESSAGE.src_port PRINT
     "  Payload Len : " PRTstring
-    VALUE message_len 0
-    data_ptr 3 + AS tmp_ptr
-    *tmp_ptr DUP AS message_len PRINT
-    # Print Payload
+    message_ptr MESSAGE.len PRINT
     "  Payload     : " PRTstring
-    VALUE mes_load_ptr 0
-    data_ptr 4 + AS mes_load_ptr
-    # The payload is not null-terminated. We must add a terminator before printing.
-    mes_load_ptr message_len + AS temp_ptr
-    0 AS *temp_ptr
-    mes_load_ptr PRTstring
+    message_ptr MESSAGE.as_string PRTstring
     "\n------------------------\n" PRTstring
 }
 

@@ -13,10 +13,10 @@ HELLO       verzender       | HELLO    | Volgnummer
 DATA        verzender       | DATA     | Volgnummer | payload
 ACK         verzender       | ACK      | Volgnummer
 NACK        ontvanger       | NACK     | Volgnummer 
-STAT_REQ    verzender       | STAT_REQ
+STAT_REQ    verzender       | STAT_REQ | Volgnummer
 STAT_ACK    ontvanger       | STAT_ACK | Volgnummer
 STAT_QRY    ontvanger       | STAT_QRY | Volgnummer
-WAIT        ontvanger       | WAIT
+WAIT        ontvanger       | WAIT     | Volgnummer
 RESUME      ontvanger       | RESUME   | Volgnummer
 
 
@@ -83,3 +83,34 @@ Last_Seq_Sent,      Het allerlaatste volgnummer dat de verzender heeft verstuurd
 Last_Seq_Acked,     Het laatste nummer waarvan we zeker weten dat het is aangekomen.
 State,              "De huidige status: INIT, SENDING, WAITING, of CLOSED."
 
+
+
+
+
+
+## State Machine
+
+De kern van het protocol is een state machine die de status van elke verbinding bijhoudt.
+
+| Huidige Staat | Gebeurtenis (Event)         | Actie                                       | Nieuwe Staat   | Wie?     |
+| :------------ | :-------------------------- | :------------------------------------------ | :------------- | :------- |
+| (Geen)        | `RDP.connect()` aangeroepen | Maak record, stuur `HELLO`                  | `INIT`         | Client   |
+| `LISTEN`      | Ontvangt `HELLO`            | Maak record, stuur `STAT_ACK`               | `OPEN`         | Server   |
+| `INIT`        | Ontvangt `STAT_ACK`         | Verbinding is bevestigd, reset timer/retries | `OPEN`         | Client   |
+| `INIT`        | Timeout                     | Stuur `HELLO` opnieuw, verhoog retry teller | `INIT`         | Client   |
+| `OPEN`        | `RDP.send()` aangeroepen    | Stuur `DATA`, voeg toe aan `Tx_Buffer`      | `OPEN`         | Zender   |
+| `OPEN`        | Ontvangt `DATA` (in volgorde) | Geef data aan applicatie                    | `OPEN`         | Ontvanger|
+| `OPEN`        | Ontvangt `DATA` (niet op volgorde) | Stuur `NACK` met laatst ontvangen nummer   | `OPEN`         | Ontvanger|
+| `OPEN`        | Ontvangt `NACK`             | Stuur ontbrekend pakket opnieuw             | `OPEN`         | Zender   |
+| `OPEN`        | `Tx_Buffer` vol             | Stuur `STAT_REQ`                            | `REQ`          | Zender   |
+| `OPEN`        | Ontvangt `WAIT`             | Pauzeer verzenden                           | `WAIT`         | Zender   |
+| `REQ`         | Ontvangt `STAT_ACK`         | Verwerk ACK, maak `Tx_Buffer` leeg          | `OPEN`         | Zender   |
+| `REQ`         | Timeout                     | Stuur `STAT_REQ` opnieuw                   | `REQ`          | Zender   |
+| `WAIT`        | Ontvangt `RESUME`           | Hervat verzenden                            | `OPEN`         | Zender   |
+| `WAIT`        | Timeout                     | Stuur `STAT_QRY`                            | `WAIT`         | Zender   |
+| Alle          | Max retries bereikt         | Sluit verbinding, geef fout aan applicatie  | `CLOSED`       | Beide    |
+
+**Notities:**
+- **Zender:** De partij die op dat moment `DATA` verstuurt.
+- **Ontvanger:** De partij die op dat moment `DATA` ontvangt.
+- In een peer-to-peer gesprek kunnen beide hosts tegelijkertijd zender en ontvanger zijn.
