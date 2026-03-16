@@ -82,20 +82,40 @@ VALUE _inbox 0
 VALUE _payload_ptr 0
 # VALUE _tmp_ptr 0
 
+# A deque pool of reusable LISTs for storing packet data, to avoid heap fragmentation.
+VALUE _rdp_packet_pool 0
+
 
 # Timeout settings
 CONST RDP_TIMEOUT_MS 2000
 CONST RDP_MAX_RETRIES 5
 
+# --- Packet Pool Configuration ---
+CONST RDP_PACKET_POOL_SIZE 25  # Total number of reusable packet buffers TX windowsize + RX windowsize
+CONST RDP_PACKET_SIZE      64  # Max size of an RDP packet list
+CONST RDP_TX_WINDOW_SIZE   10  # Number of packets that can be in-flight before a STAT_REQ
+CONST RDP_RX_WINDOW_SIZE   15  # Size of the receiver's buffer before a WAIT is sent
 
 # ( -- )
 DEF RDP.init {
-    # Allocate the connection dictionary on the heap.
+    # 1. Allocate the connection dictionary on the heap.
     # Initial size of 8 is a suggestion for the hash table.
-    8 DICT.new AS _rdp_conns
-    2 NEW.array AS _rdp_ctrl_packet
-    # Allocate a receive buffer large enough for max packet size.
+    8 DICT.new AS _rdp_conns            ; holds max 8 connection records
+    
+    # 2. Allocate reusable control and receive buffers.
+    2 NEW.array AS _rdp_ctrl_packet     ; Used for sending Control packages
     256 NEW.array AS _rdp_recv_buf
+
+    # 3. Create and populate the packet pool.
+    DEQUE.new AS _rdp_packet_pool
+    0 AS _i
+    WHILE _i RDP_PACKET_POOL_SIZE < DO
+        RDP_PACKET_SIZE NEW.list    # Create a new list of 64 words
+        _rdp_packet_pool DEQUE.append # Add its pointer to the pool
+        _i 1 + AS _i
+    DONE
+
+    
 }
 
 # Internal helper to create a lookup key from peer_id and peer_port.
@@ -108,6 +128,29 @@ DEF _rdp_make_key {
 }
 
 # --- Internal Helpers ---
+
+# _rdp_get_buffer ( -- buffer_ptr | 0 )
+# Acquires a reusable packet buffer from the global pool.
+# Returns 0 if the pool is exhausted.
+DEF _rdp_get_buffer {
+    _rdp_packet_pool DEQUE.is_empty IF
+        0 # Pool is empty, return failure
+    ELSE
+        _rdp_packet_pool DEQUE.pop
+    END
+}
+
+# _rdp_release_buffer ( buffer_ptr -- )
+# Returns a packet buffer to the global pool.
+# Does nothing if the provided pointer is 0.
+DEF _rdp_release_buffer {
+    DUP 0 != IF
+        _rdp_packet_pool DEQUE.append
+    ELSE
+        DROP # Drop the 0 pointer
+    END
+}
+
 
 # _rdp_send_control_packet ( conn_ptr msg_type -- )
 # Sends a control packet (like HELLO, ACK) with no data payload.
@@ -206,8 +249,8 @@ DEF _rdp_alloc_conn {
     0 RDP_RETRIES _conn LIST.put
 
     # 5. Initialize Buffers (Dictionaries of size 10)
-    10 DICT.new RDP_TX_BUF _conn LIST.put
-    10 DICT.new RDP_RX_BUF _conn LIST.put
+    RDP_TX_WINDOW_SIZE DICT.new RDP_TX_BUF _conn LIST.put
+    RDP_RX_WINDOW_SIZE DICT.new RDP_RX_BUF _conn LIST.put
 
     # 6. Register in Global Table
     _conn _dest_port _local_port _rdp_make_key _rdp_conns DICT.put

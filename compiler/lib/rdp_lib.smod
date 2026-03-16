@@ -15,6 +15,7 @@
 . $_current_state 1
 . $_inbox 1
 . $_payload_ptr 1
+. $_rdp_packet_pool 1
 . $_i 1
 # .FUNCTIONS
 @RDP.init
@@ -33,6 +34,32 @@
     call @NEW.array
     ustack A $DATASTACK_PTR
     sto A $_rdp_recv_buf
+    call @DEQUE.new
+    ustack A $DATASTACK_PTR
+    sto A $_rdp_packet_pool
+    ld A Z
+    sto A $_i
+:RDP.init_while_start_0
+    ldm A $_i
+    stack A $DATASTACK_PTR
+    ldi A 20
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :RDP.init_while_end_0
+    ldi A 64
+    stack A $DATASTACK_PTR
+    call @NEW.list
+    ldm A $_rdp_packet_pool
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    ldm B $_i
+    ldi A 1
+    add A B
+    sto A $_i
+    jmp :RDP.init_while_start_0
+:RDP.init_while_end_0
     ret
 @_rdp_make_key
     call @rt_swap
@@ -42,6 +69,36 @@
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
+    ret
+@_rdp_get_buffer
+    ldm A $_rdp_packet_pool
+    stack A $DATASTACK_PTR
+    call @DEQUE.is_empty
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_rdp_get_buffer_if_else_0
+    stack Z $DATASTACK_PTR
+    jmp :_rdp_get_buffer_if_end_0
+:_rdp_get_buffer_if_else_0
+    ldm A $_rdp_packet_pool
+    stack A $DATASTACK_PTR
+    call @DEQUE.pop
+:_rdp_get_buffer_if_end_0
+    ret
+@_rdp_release_buffer
+    call @rt_dup
+    stack Z $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_rdp_release_buffer_if_else_1
+    ldm A $_rdp_packet_pool
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
+    jmp :_rdp_release_buffer_if_end_1
+:_rdp_release_buffer_if_else_1
+    call @rt_drop
+:_rdp_release_buffer_if_end_1
     ret
 @_rdp_send_control_packet
     ustack A $DATASTACK_PTR
@@ -120,7 +177,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_rdp_check_timeout_if_end_0
+    jmpt :_rdp_check_timeout_if_end_2
     ldi A 10
     stack A $DATASTACK_PTR
     ldm A $_conn
@@ -134,15 +191,15 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_rdp_check_timeout_if_else_1
+    jmpt :_rdp_check_timeout_if_else_3
     stack Z $DATASTACK_PTR
     ldi A 3
     stack A $DATASTACK_PTR
     ldm A $_conn
     stack A $DATASTACK_PTR
     call @LIST.put
-    jmp :_rdp_check_timeout_if_end_1
-:_rdp_check_timeout_if_else_1
+    jmp :_rdp_check_timeout_if_end_3
+:_rdp_check_timeout_if_else_3
     ldm B $_retries
     ldi A 1
     add B A
@@ -171,15 +228,15 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_rdp_check_timeout_if_else_2
+    jmpt :_rdp_check_timeout_if_else_4
     ldm A $_conn
     stack A $DATASTACK_PTR
     ldi A 129
     stack A $DATASTACK_PTR
     call @_rdp_send_control_packet
     call @rt_drop
-    jmp :_rdp_check_timeout_if_end_2
-:_rdp_check_timeout_if_else_2
+    jmp :_rdp_check_timeout_if_end_4
+:_rdp_check_timeout_if_else_4
     ldm A $_state
     stack A $DATASTACK_PTR
     ldi A 5
@@ -187,17 +244,17 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_rdp_check_timeout_if_end_3
+    jmpt :_rdp_check_timeout_if_end_5
     ldm A $_conn
     stack A $DATASTACK_PTR
     ldi A 133
     stack A $DATASTACK_PTR
     call @_rdp_send_control_packet
     call @rt_drop
+:_rdp_check_timeout_if_end_5
+:_rdp_check_timeout_if_end_4
 :_rdp_check_timeout_if_end_3
 :_rdp_check_timeout_if_end_2
-:_rdp_check_timeout_if_end_1
-:_rdp_check_timeout_if_end_0
     ret
 @_rdp_alloc_conn
     ustack A $DATASTACK_PTR
@@ -307,15 +364,15 @@
     call @_rdp_send_control_packet
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.connect_if_else_4
+    jmpt :RDP.connect_if_else_6
     ldm A $_conn
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
-    jmp :RDP.connect_if_end_4
-:RDP.connect_if_else_4
+    jmp :RDP.connect_if_end_6
+:RDP.connect_if_else_6
     stack Z $DATASTACK_PTR
-:RDP.connect_if_end_4
+:RDP.connect_if_end_6
     ret
 @RDP.update
     ustack A $DATASTACK_PTR
@@ -327,7 +384,7 @@
     sto A $_count
     ld A Z
     sto A $_i
-:RDP.update_while_start_0
+:RDP.update_while_start_1
     ldm A $_i
     stack A $DATASTACK_PTR
     ldm A $_count
@@ -335,7 +392,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.update_while_end_0
+    jmpt :RDP.update_while_end_1
     ldm A $_i
     stack A $DATASTACK_PTR
     ldm A $_rdp_conns
@@ -357,7 +414,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.update_if_else_5
+    jmpt :RDP.update_if_else_7
     ldm A $_key
     stack A $DATASTACK_PTR
     ldm A $_rdp_conns
@@ -368,15 +425,15 @@
     sub B A
     ld A B
     sto A $_count
-    jmp :RDP.update_if_end_5
-:RDP.update_if_else_5
+    jmp :RDP.update_if_end_7
+:RDP.update_if_else_7
     ldm B $_i
     ldi A 1
     add A B
     sto A $_i
-:RDP.update_if_end_5
-    jmp :RDP.update_while_start_0
-:RDP.update_while_end_0
+:RDP.update_if_end_7
+    jmp :RDP.update_while_start_1
+:RDP.update_while_end_1
     ldm A $_rdp_recv_buf
     stack A $DATASTACK_PTR
     ldm A $_inbox
@@ -384,7 +441,7 @@
     call @SOCKET.read
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.update_if_end_6
+    jmpt :RDP.update_if_end_8
     ldm A $_rdp_recv_buf
     stack A $DATASTACK_PTR
     call @MESSAGE.payload_ptr
@@ -399,7 +456,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.update_if_else_7
+    jmpt :RDP.update_if_else_9
     ldm A $_rdp_recv_buf
     stack A $DATASTACK_PTR
     call @MESSAGE.src
@@ -428,7 +485,7 @@
     call @DICT.has_key
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.update_if_else_8
+    jmpt :RDP.update_if_else_10
     ldm A $_key
     stack A $DATASTACK_PTR
     ldm A $_rdp_conns
@@ -443,7 +500,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.update_if_else_9
+    jmpt :RDP.update_if_else_11
     ldm B $_payload_ptr
     ldi A 1
     add A B
@@ -475,8 +532,8 @@
     stack A $DATASTACK_PTR
     call @_rdp_send_control_packet
     call @rt_drop
-    jmp :RDP.update_if_end_9
-:RDP.update_if_else_9
+    jmp :RDP.update_if_end_11
+:RDP.update_if_else_11
     ldm A $_msg_type
     stack A $DATASTACK_PTR
     ldi A 134
@@ -484,7 +541,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.update_if_else_10
+    jmpt :RDP.update_if_else_12
     ldi A 3
     stack A $DATASTACK_PTR
     ldm A $_conn
@@ -498,7 +555,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.update_if_end_11
+    jmpt :RDP.update_if_end_13
     ldi A 3
     stack A $DATASTACK_PTR
     ldi A 3
@@ -518,13 +575,13 @@
     ldm A $_conn
     stack A $DATASTACK_PTR
     call @LIST.put
+:RDP.update_if_end_13
+    jmp :RDP.update_if_end_12
+:RDP.update_if_else_12
+:RDP.update_if_end_12
 :RDP.update_if_end_11
     jmp :RDP.update_if_end_10
 :RDP.update_if_else_10
-:RDP.update_if_end_10
-:RDP.update_if_end_9
-    jmp :RDP.update_if_end_8
-:RDP.update_if_else_8
     ldm A $_msg_type
     stack A $DATASTACK_PTR
     ldi A 129
@@ -532,7 +589,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.update_if_end_12
+    jmpt :RDP.update_if_end_14
     ldm A $_src_id
     stack A $DATASTACK_PTR
     ldm A $_src_port
@@ -573,12 +630,12 @@
     stack A $DATASTACK_PTR
     call @_rdp_send_control_packet
     call @rt_drop
-:RDP.update_if_end_12
+:RDP.update_if_end_14
+:RDP.update_if_end_10
+    jmp :RDP.update_if_end_9
+:RDP.update_if_else_9
+:RDP.update_if_end_9
 :RDP.update_if_end_8
-    jmp :RDP.update_if_end_7
-:RDP.update_if_else_7
-:RDP.update_if_end_7
-:RDP.update_if_end_6
     ret
 
 # .DATA
@@ -598,3 +655,4 @@
 % $_current_state 0
 % $_inbox 0
 % $_payload_ptr 0
+% $_rdp_packet_pool 0

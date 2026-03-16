@@ -19,14 +19,21 @@ STAT_QRY    ontvanger       | STAT_QRY | Volgnummer
 WAIT        ontvanger       | WAIT     | Volgnummer
 RESUME      ontvanger       | RESUME   | Volgnummer
 
+## Systeem Constraints
+Om het geheugengebruik op de Stern-ATX (24KB totaal) beperkt te houden:
+- **Max Packet Size:** 64 woorden.
+- **RDP Header:** 2 woorden (`[Type, SeqNum]`).
+- **RDP Payload:** 62 woorden (64 - 2).
+- **Packet Pool:** Een vaste pool van ~20 buffers van 64 woorden (totaal 1280 woorden).
 
-De verzender heeft een vast verzend buffer van 10 posities
+
+De verzender heeft een vast verzend-window van 10 posities (`Tx_Buffer`)
 Dit is een key:value dictonary, waarbij
     De key is het slot waar de uitgaande pakket pointer bewaard wordt en wordt bepaald door berichtnummer modulo 10
     De value is een pointer naar het verzonden bericht (header + payload)
 
 
-De ontvanger heeft een ontvangs buffer van n posities waar n gelijk, kleiner of groter kan zijn dan het verzend buffer
+De ontvanger heeft een ontvangstbuffer van n posities (bijv. 15) die groter is dan het verzend-window.
 de ontvangst buffer is ook een key:value dictonary
     de key is het volgnummer
     de value is een pointer naar het ontvangen bericht
@@ -44,25 +51,26 @@ De ontvanger
     
 
 - De verzender stuurt DATA met volgnummer naar ontvanger
-- De ontvanger plaatst het ontvangen bericht in de ontvangstbuffer
+- De ontvanger plaatst het ontvangen bericht in de ontvangstbuffer. Er wordt **geen** ACK per pakket gestuurd.
 **
-    - Als de ontvanger een pakket mist omdat het volgnummer niet klopt stuur hij een NACK bericht met het laatst ontvangen berichtnummer
-    - Als de verzender een NACK bericht ontvangt, herzend hij berichtnummer + 1 en verstuurd ook een STAT_REQ bericht
-    - De ontvanger stuurt na een STAT_REQ bericht een STAT_ACK bericht en de verzender weet het laatste goed ontvangen bericht en gaat verder
+    - Als de ontvanger een pakket mist (volgnummer klopt niet), stuurt hij een NACK-bericht met het laatst correct ontvangen volgnummer.
+    - Als de ontvanger een pakket ontvangt dat al is verwerkt (duplicaat, volgnummer < verwacht), wordt dit stilzwijgend genegeerd.
+    - Als de verzender een NACK-bericht ontvangt, herzendt hij alleen het specifiek ontbrekende pakket. Een extra STAT_REQ is hier niet nodig.
 **
-    - Als de ontvanger een pakket ontvangt en dan de ontvangstbuffer vol is, stuurt de ontvanger direct een WAIT bericht
-    - Als de verzender een WAIT bericht ontvangt stopt deze met zenden en wacht op een RESUME bericht, of bij bericht verlies een STAT_QRY bericht
-    - de verzender begint met herzenden van berichtnummer + 1
+    - Als de ontvangstbuffer van de ontvanger vol raakt, stuurt deze een WAIT-bericht.
+    - Als de verzender een WAIT-bericht ontvangt, pauzeert hij het verzenden van nieuwe DATA-pakketten en gaat naar de WAIT-staat. Hij wacht op een RESUME-bericht.
+    - Zodra de ontvanger weer ruimte heeft, stuurt hij een RESUME-bericht om het verzenden te hervatten.
 **
     - Wanneer het verzend buffer van 10 posities vol is, stuurt de verzender een STAT_REQ bericht
-    - de ontvanger reageerd met een STAT_ACK bericht met het laatst onvangen bericht nummer
+    - de ontvanger reageert met een STAT_ACK bericht met het laatst onvangen bericht nummer
     - als bericht nummer klopt met het laatst verstuurde bericht, wordt de verzendbuffer geschoont, en de volgende tien berichten kunnen worden verzonden
-    - Als het bericht nummer niet klopt met het laatst verstuurde bericht, herzend hij berichtnummer + 1 en verstuurd ook een STAT_REQ bericht
+    - Als het berichtnummer in de STAT_ACK niet klopt, herzendt de verzender de ontbrekende pakketten vanaf het bevestigde nummer.
 ** 
     - Wanneer de ontvanger een bericht verwacht maar niks meer ontvangt stuurt de ontvanger na n re-try's een STAT_QRY bericht
-    - De verzender stuurt een ACK wanneer het laatste bericht verzonden is, of , herzend hij berichtnummer + 1 en verstuurd ook een STAT_REQ bericht
+    - De reactie van de zender hangt af van zijn staat (zie state machine). Dit is de sleutel tot het doorbreken van een deadlock.
 ** 
-    - Wanneer de verzender een WAIT bericht heeft ontvangen maar binnen n re-try's geen RESUME bericht, dan stuurt het een STAT_REQ bericht
+    - Wanneer de verzender in de WAIT-staat is en na een timeout nog geen RESUME heeft ontvangen, stuurt hij een STAT_REQ om de status van de ontvanger te peilen. Hij blijft in de WAIT-staat en hervat het zenden niet.
+    - Als de zender als antwoord hierop een `STAT_ACK` ontvangt, weet hij dat de verbinding nog in orde is. Hij reset zijn timer en blijft wachten op een `RESUME`-bericht.
     - De verzender kan een ACK sturen aan het einde van de stream, hiermee worden de re-try's gestopt en kan de verwerking eerder starten
 
 
@@ -94,20 +102,41 @@ De kern van het protocol is een state machine die de status van elke verbinding 
 
 | Huidige Staat | Gebeurtenis (Event)         | Actie                                       | Nieuwe Staat   | Wie?     |
 | :------------ | :-------------------------- | :------------------------------------------ | :------------- | :------- |
+| **1. Connectie**|                           |                                             |                |          |
 | (Geen)        | `RDP.connect()` aangeroepen | Maak record, stuur `HELLO`                  | `INIT`         | Client   |
 | `LISTEN`      | Ontvangt `HELLO`            | Maak record, stuur `STAT_ACK`               | `OPEN`         | Server   |
 | `INIT`        | Ontvangt `STAT_ACK`         | Verbinding is bevestigd, reset timer/retries | `OPEN`         | Client   |
 | `INIT`        | Timeout                     | Stuur `HELLO` opnieuw, verhoog retry teller | `INIT`         | Client   |
+
+| **2. Data**   |                             |                                             |                |          |
 | `OPEN`        | `RDP.send()` aangeroepen    | Stuur `DATA`, voeg toe aan `Tx_Buffer`      | `OPEN`         | Zender   |
-| `OPEN`        | Ontvangt `DATA` (in volgorde) | Geef data aan applicatie                    | `OPEN`         | Ontvanger|
+| `OPEN`        | Ontvangt `DATA` (in volgorde) | Plaats in `Rx_Buffer` (geen ACK)            | `OPEN`         | Ontvanger|
+| `OPEN`        | Ontvangt `DATA` (duplicaat) | Negeer pakket (geen actie)                  | `OPEN`         | Ontvanger|
+
+| **3. Recovery**|                            |                                             |                |          |
 | `OPEN`        | Ontvangt `DATA` (niet op volgorde) | Stuur `NACK` met laatst ontvangen nummer   | `OPEN`         | Ontvanger|
-| `OPEN`        | Ontvangt `NACK`             | Stuur ontbrekend pakket opnieuw             | `OPEN`         | Zender   |
+| `OPEN`        | Ontvangt `NACK`             | Stuur ontbrekend pakket opnieuw (zonder STAT_REQ) | `OPEN`         | Zender   |
+
+| **4. Sync (Tx)**|                           |                                             |                |          |
 | `OPEN`        | `Tx_Buffer` vol             | Stuur `STAT_REQ`                            | `REQ`          | Zender   |
-| `OPEN`        | Ontvangt `WAIT`             | Pauzeer verzenden                           | `WAIT`         | Zender   |
 | `REQ`         | Ontvangt `STAT_ACK`         | Verwerk ACK, maak `Tx_Buffer` leeg          | `OPEN`         | Zender   |
 | `REQ`         | Timeout                     | Stuur `STAT_REQ` opnieuw                   | `REQ`          | Zender   |
+| `OPEN`        | Ontvangt `STAT_REQ`         | Stuur `STAT_ACK` met laatste ontvangen nummer | `OPEN`         | Ontvanger|
+
+| **5. Flow (Rx)**|                           |                                             |                |          |
+| `OPEN`        | `Rx_Buffer` vol             | Stuur `WAIT`                                | `OPEN`         | Ontvanger|
+| `OPEN`        | `Rx_Buffer` heeft weer ruimte | Stuur `RESUME`                              | `OPEN`         | Ontvanger|
+| `OPEN`        | Ontvangt `WAIT`             | Pauzeer verzenden                           | `WAIT`         | Zender   |
 | `WAIT`        | Ontvangt `RESUME`           | Hervat verzenden                            | `OPEN`         | Zender   |
-| `WAIT`        | Timeout                     | Stuur `STAT_QRY`                            | `WAIT`         | Zender   |
+
+| **6. Watchdog**|                            |                                             |                |          |
+| `OPEN`        | Timeout (Geen Data)         | Stuur `STAT_QRY`                            | `OPEN`         | Ontvanger|
+| `OPEN`        | Ontvangt `STAT_QRY`         | Stuur `ACK` of Herzend + `STAT_REQ`         | `OPEN`/`REQ`   | Zender   |
+| `WAIT`        | Timeout (geen RESUME)       | Stuur `STAT_REQ`                            | `WAIT`         | Zender   |
+| `WAIT`        | Ontvangt `STAT_ACK`         | Reset timer, blijf wachten op `RESUME`      | `WAIT`         | Zender   |
+| `WAIT`        | Ontvangt `STAT_QRY`         | Hervat verzenden (stuur volgend DATA)       | `OPEN`         | Zender   |
+
+| **7. Algemeen**|                            |                                             |                |          |
 | Alle          | Max retries bereikt         | Sluit verbinding, geef fout aan applicatie  | `CLOSED`       | Beide    |
 
 **Notities:**
