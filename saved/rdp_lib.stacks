@@ -33,23 +33,23 @@ CONST RDP_STATE_REQ       5   # Maintenance: Sent STAT_REQ, Expecting STAT_ACK
 CONST RDP_CONN_SIZE       16
 
 # Field Offsets
-CONST RDP_PEER_ID     0   # Remote Host ID
-CONST RDP_PEER_PORT   1   # Remote Port
-CONST RDP_LOCAL_PORT  2   # Local Port binding
-CONST RDP_STATE       3   # Current State (RDP_STATE_*)
+CONST RDP_OFF_PEER_ID     0   # Remote Host ID
+CONST RDP_OFF_PEER_PORT   1   # Remote Port
+CONST RDP_OFF_LOCAL_PORT  2   # Local Port binding
+CONST RDP_OFF_STATE       3   # Current State (RDP_STATE_*)
 
 # Sequence Numbers
-CONST RDP_SEQ_OUT     4   # Next Seq Num to Send
-CONST RDP_SEQ_IN      5   # Next Seq Num Expected (Recv)
-CONST RDP_SEQ_ACK     6   # Last Seq Num ACKed by peer (What they have)
+CONST RDP_OFF_SEQ_OUT     4   # Next Seq Num to Send
+CONST RDP_OFF_SEQ_IN      5   # Next Seq Num Expected (Recv)
+CONST RDP_OFF_SEQ_ACK     6   # Last Seq Num ACKed by peer (What they have)
 
 # Buffers
-CONST RDP_TX_BUF      7   # Pointer to TX Dictionary (Sent but not ACKed)
-CONST RDP_RX_BUF      8   # Pointer to RX Dictionary (Received out of order)
+CONST RDP_OFF_TX_BUF      7   # Pointer to TX Dictionary (Sent but not ACKed)
+CONST RDP_OFF_RX_BUF      8   # Pointer to RX Dictionary (Received out of order)
 
 # Timing & Retries
-CONST RDP_TIMER       9   # Timestamp of last action (for Timeout)
-CONST RDP_RETRIES     10  # Retry counter
+CONST RDP_OFF_TIMER       9   # Timestamp of last action (for Timeout)
+CONST RDP_OFF_RETRIES     10  # Retry counter
 
 # --- Library Globals ---
 # Dictionary to hold active connection pointers, keyed by a composite of peer_id and peer_port.
@@ -91,9 +91,9 @@ CONST RDP_TIMEOUT_MS 2000
 CONST RDP_MAX_RETRIES 5
 
 # --- Packet Pool Configuration ---
-CONST RDP_PACKET_POOL_SIZE 16  # Total number of reusable packet buffers TX windowsize + RX windowsize
+CONST RDP_PACKET_POOL_SIZE 16  # Total number of reusable packet buffers (TX + RX window)
 CONST RDP_PACKET_SIZE      64  # Max size of an RDP packet list
-CONST RDP_TX_WINDOW_SIZE    6 # Number of packets that can be in-flight before a STAT_REQ
+CONST RDP_TX_WINDOW_SIZE   6   # Number of packets that can be in-flight before a STAT_REQ
 CONST RDP_RX_WINDOW_SIZE   10  # Size of the receiver's buffer before a WAIT is sent
 
 # ( -- )
@@ -106,14 +106,14 @@ DEF RDP.init {
     2 NEW.array AS _rdp_ctrl_packet     ; Used for sending Control packages
     256 NEW.array AS _rdp_recv_buf
 
-    # 3. Create and populate the packet pool.
-    DEQUE.new AS _rdp_packet_pool
-    0 AS _i
-    WHILE _i RDP_PACKET_POOL_SIZE < DO
-        RDP_PACKET_SIZE NEW.list    # Create a new list of 64 words
-        _rdp_packet_pool DEQUE.append # Add its pointer to the pool
-        _i 1 + AS _i
-    DONE
+    # # 3. Create and populate the packet pool.
+    # DEQUE.new AS _rdp_packet_pool
+    # 0 AS _i
+    # WHILE _i RDP_PACKET_POOL_SIZE < DO
+    #     RDP_PACKET_SIZE NEW.list    # Create a new list of 64 words
+    #     _rdp_packet_pool DEQUE.append # Add its pointer to the pool
+    #     _i 1 + AS _i
+    # DONE
 
     
 }
@@ -160,10 +160,10 @@ DEF _rdp_send_control_packet {
     AS _conn
 
     # 1. Get connection details from the record
-    RDP_PEER_ID    _conn LIST.get AS _dest_id
-    RDP_PEER_PORT  _conn LIST.get AS _dest_port
-    RDP_LOCAL_PORT _conn LIST.get AS _src_port
-    RDP_SEQ_OUT    _conn LIST.get AS _seq_num
+    RDP_OFF_PEER_ID    _conn LIST.get AS _dest_id     # Local var for clarity
+    RDP_OFF_PEER_PORT  _conn LIST.get AS _dest_port   # Local var for clarity
+    RDP_OFF_LOCAL_PORT _conn LIST.get AS _src_port    # Local var for clarity
+    RDP_OFF_SEQ_OUT    _conn LIST.get AS _seq_num     # Local var for clarity
 
     # 2. Create the RDP packet [Type, SeqNum] as a temporary array
     _rdp_ctrl_packet ARRAY.clear
@@ -172,8 +172,7 @@ DEF _rdp_send_control_packet {
 
     # 3. Send using the socket library's list sender
     # ( list_ptr dest_id dest_port src_port -- success )
-    _rdp_ctrl_packet _dest_id _dest_port _src_port SOCKET.snd_list
-    # Returns success flag to caller
+    _rdp_ctrl_packet _dest_id _dest_port _src_port SOCKET.snd_list # Leaves success flag on stack
 
     # 4. DO NOT increment the sequence number for control packets.
     # Sequence numbers should only be consumed by DATA packets to track the
@@ -186,26 +185,26 @@ DEF _rdp_check_timeout {
     AS _conn
 
     # 1. Check delta time
-    TIME.uptime 
-    RDP_TIMER _conn LIST.get -
+    TIME.uptime
+    RDP_OFF_TIMER _conn LIST.get -
     RDP_TIMEOUT_MS > IF
         # --- Timeout Expired ---
         
         # 2. Check Max Retries
-        RDP_RETRIES _conn LIST.get AS _retries
+        RDP_OFF_RETRIES _conn LIST.get AS _retries
         _retries RDP_MAX_RETRIES > IF
             # Too many retries, close connection.
-            RDP_STATE_CLOSED RDP_STATE _conn LIST.put
+            RDP_STATE_CLOSED RDP_OFF_STATE _conn LIST.put
             # TODO: Notify application of error?
         ELSE
             # 3. Increment Retry Counter
-            _retries 1 + RDP_RETRIES _conn LIST.put
+            _retries 1 + RDP_OFF_RETRIES _conn LIST.put
             
             # 4. Reset Timer
-            TIME.uptime RDP_TIMER _conn LIST.put
+            TIME.uptime RDP_OFF_TIMER _conn LIST.put
 
             # 5. Handle State-Specific Retransmission
-            RDP_STATE _conn LIST.get AS _state
+            RDP_OFF_STATE _conn LIST.get AS _state
             
             _state RDP_STATE_INIT == IF
                 # Resend HELLO
@@ -234,23 +233,23 @@ DEF _rdp_alloc_conn {
     RDP_CONN_SIZE NEW.list AS _conn
 
     # 2. Set Header Fields
-    _dest_id    RDP_PEER_ID    _conn LIST.put
-    _dest_port  RDP_PEER_PORT  _conn LIST.put
-    _local_port RDP_LOCAL_PORT _conn LIST.put
+    _dest_id    RDP_OFF_PEER_ID    _conn LIST.put
+    _dest_port  RDP_OFF_PEER_PORT  _conn LIST.put
+    _local_port RDP_OFF_LOCAL_PORT _conn LIST.put
     
     # 3. Set State to INIT (Default, caller might change this)
-    RDP_STATE_INIT RDP_STATE _conn LIST.put
+    RDP_STATE_INIT RDP_OFF_STATE _conn LIST.put
     
     # 4. Initialize Counters (Zero out)
-    0 RDP_SEQ_OUT _conn LIST.put
-    0 RDP_SEQ_IN  _conn LIST.put
-    0 RDP_SEQ_ACK _conn LIST.put
-    TIME.uptime RDP_TIMER _conn LIST.put
-    0 RDP_RETRIES _conn LIST.put
+    0 RDP_OFF_SEQ_OUT _conn LIST.put
+    0 RDP_OFF_SEQ_IN  _conn LIST.put
+    0 RDP_OFF_SEQ_ACK _conn LIST.put
+    TIME.uptime RDP_OFF_TIMER _conn LIST.put
+    0 RDP_OFF_RETRIES _conn LIST.put
 
     # 5. Initialize Buffers (Dictionaries of size 10)
-    RDP_TX_WINDOW_SIZE DICT.new RDP_TX_BUF _conn LIST.put
-    RDP_RX_WINDOW_SIZE DICT.new RDP_RX_BUF _conn LIST.put
+    RDP_TX_WINDOW_SIZE DICT.new RDP_OFF_TX_BUF _conn LIST.put
+    RDP_RX_WINDOW_SIZE DICT.new RDP_OFF_RX_BUF _conn LIST.put
 
     # 6. Register in Global Table
     _conn _dest_port _local_port _rdp_make_key _rdp_conns DICT.put
@@ -271,9 +270,90 @@ DEF RDP.connect {
     IF
         _conn 1
     ELSE
-        0
+        # On failure, return (0, 0) for (conn_ptr, success_flag).
+        _conn 0 # The _conn pointer is still on the stack, return it with a 0 flag.
     END
 }
+
+# RDP.send ( conn_ptr data_ptr length -- success_flag )
+# Sends a block of data reliably over the given connection.
+# This function will handle breaking the data into multiple packets if it
+# exceeds the RDP payload size.
+# DEF RDP.send {
+#     # Stack: conn_ptr data_ptr length
+#     AS _len
+#     AS _data
+#     AS _conn
+
+#     # --- Pre-flight Checks ---
+#     # 1. Check connection state, data size, and window fullness
+#     VALUE _can_send 1 AS _can_send
+#     RDP_OFF_STATE _conn LIST.get RDP_STATE_OPEN != IF 0 AS _can_send END
+#     _len RDP_PACKET_SIZE 2 - > IF 0 AS _can_send END # TODO: Implement packet splitting for large data
+    
+#     RDP_OFF_TX_BUF _conn LIST.get AS _tx_buf
+#     # Check if window is full (count >= window_size). Stacks doesn't have >= or a standalone NOT.
+#     # We simulate `NOT (count < window_size)` with the expression `1 - (count < window_size)`.
+#     _tx_buf DICT.count RDP_TX_WINDOW_SIZE < 1 SWAP - IF 0 AS _can_send END
+
+#     _can_send IF
+#         # --- Acquire Resources ---
+#         _rdp_get_buffer AS _pkt_buf
+#         _pkt_buf 0 != IF
+#             # --- Buffer acquired, proceed to build and send ---
+
+#             # 1. Get sequence number and destination info from connection record
+#             RDP_OFF_SEQ_OUT _conn LIST.get AS _seq_num
+#             RDP_OFF_PEER_ID _conn LIST.get AS _dest_id
+#             RDP_OFF_PEER_PORT _conn LIST.get AS _dest_port
+#             RDP_OFF_LOCAL_PORT _conn LIST.get AS _src_port
+
+#             # 2. Build the packet: Clear buffer, add RDP header
+#             _pkt_buf LIST.clear
+#             RDP_MSG_DATA _pkt_buf LIST.append
+#             _seq_num _pkt_buf LIST.append
+
+#             # 3. Copy payload from data_ptr (which is a LIST) to the packet buffer
+#             0 AS _i
+#             WHILE _i _len < DO
+#                 _i _data LIST.get # Get word from source list
+#                 _pkt_buf LIST.append
+#                 _i 1 + AS _i
+#             DONE
+
+#             # 4. Send the packet via the socket library
+#             _pkt_buf _dest_id _dest_port _src_port SOCKET.snd_list
+#             IF
+#                 # --- Send Success: Update state ---
+#                 # a. Add packet to the Tx_Buffer for potential retransmission
+#                 _pkt_buf _seq_num RDP_TX_WINDOW_SIZE % _tx_buf DICT.put
+
+#                 # b. Increment the outgoing sequence number for the next packet
+#                 _seq_num 1 + RDP_OFF_SEQ_OUT _conn LIST.put
+
+#                 # c. Update connection timer to reset the timeout
+#                 TIME.uptime RDP_OFF_TIMER _conn LIST.put
+
+#                 # d. If the window is now full, send STAT_REQ and change state
+#                 _tx_buf DICT.count RDP_TX_WINDOW_SIZE == IF
+#                     _conn RDP_MSG_STAT_REQ _rdp_send_control_packet DROP
+#                     RDP_STATE_REQ RDP_OFF_STATE _conn LIST.put
+#                 END
+#                 1 # Return success
+#             ELSE
+#                 # --- Send Failure: Cleanup ---
+#                 _pkt_buf _rdp_release_buffer # Return the unused buffer to the pool
+#                 0 # Return failure
+#             END
+#         ELSE
+#             # --- Buffer acquisition failure ---
+#             0 # Return failure
+#         END
+#     ELSE
+#         # --- Pre-flight check failed ---
+#         0 # Return failure
+#     END
+# }
 
 # RDP.update ( inbox_deque -- )
 # This is the main engine of the RDP protocol. It should be called
@@ -291,7 +371,7 @@ DEF RDP.update {
         
         _conn_ptr _rdp_check_timeout
 
-        RDP_STATE _conn_ptr LIST.get RDP_STATE_CLOSED == IF
+        RDP_OFF_STATE _conn_ptr LIST.get RDP_STATE_CLOSED == IF
             # Connection died, remove it.
             _key _rdp_conns DICT.remove
             _count 1 - AS _count
@@ -323,21 +403,21 @@ DEF RDP.update {
                     # --- Scenario: Remote Peer Restart / Re-connect ---
                     # Always accept HELLO on existing connections as a reset request.
                     _payload_ptr 1 + AS _tmp_ptr
-                    *_tmp_ptr DUP
-                    RDP_SEQ_IN _conn LIST.put
-                    RDP_SEQ_OUT _conn LIST.put
-                    RDP_STATE_OPEN RDP_STATE _conn LIST.put
+                    *_tmp_ptr DUP AS _seq_num
+                    _seq_num RDP_OFF_SEQ_IN _conn LIST.put
+                    _seq_num RDP_OFF_SEQ_OUT _conn LIST.put
+                    RDP_STATE_OPEN RDP_OFF_STATE _conn LIST.put
                     _conn RDP_MSG_STAT_ACK _rdp_send_control_packet DROP
                 ELSE
                     _msg_type RDP_MSG_STAT_ACK == IF
                         # --- Handle STAT_ACK ---
-                        RDP_STATE _conn LIST.get AS _current_state
+                        RDP_OFF_STATE _conn LIST.get AS _current_state
                         _current_state RDP_STATE_INIT == IF
                             # Our handshake is complete!
-                            RDP_STATE_OPEN RDP_STATE _conn LIST.put
+                            RDP_STATE_OPEN RDP_OFF_STATE _conn LIST.put
                             # Reset timer/retries here.
-                            TIME.uptime RDP_TIMER _conn LIST.put
-                            0 RDP_RETRIES _conn LIST.put
+                            TIME.uptime RDP_OFF_TIMER _conn LIST.put
+                            0 RDP_OFF_RETRIES _conn LIST.put
                         END
                         # TODO: Handle STAT_ACK in other states like REQ
                     ELSE
@@ -354,13 +434,13 @@ DEF RDP.update {
                     _src_id _src_port _local_port _rdp_alloc_conn AS _new_conn
                         
                         # Correctly set the expected incoming sequence number based on the HELLO packet.
-                        _payload_ptr 1 + AS _tmp_ptr # Get address of sequence number in payload
-                        *_tmp_ptr DUP 
-                        RDP_SEQ_IN  _new_conn LIST.put
-                        RDP_SEQ_OUT _new_conn LIST.put
+                        _payload_ptr 1 + AS _tmp_ptr # Get address of sequence number
+                        *_tmp_ptr DUP AS _seq_num
+                        _seq_num RDP_OFF_SEQ_IN  _new_conn LIST.put
+                        _seq_num RDP_OFF_SEQ_OUT _new_conn LIST.put
 
                         # We now transition to OPEN and send a STAT_ACK.
-                        RDP_STATE_OPEN RDP_STATE _new_conn LIST.put
+                        RDP_STATE_OPEN RDP_OFF_STATE _new_conn LIST.put
                         _new_conn RDP_MSG_STAT_ACK _rdp_send_control_packet DROP
                 END
             END
@@ -373,84 +453,3 @@ DEF RDP.update {
         END
     END
 }
-
-
-# RDP.send ( conn_ptr data_ptr length -- success_flag )
-# Sends a block of data reliably over the given connection.
-# This function will handle breaking the data into multiple packets if it
-# exceeds the RDP payload size.
-# DEF RDP.send {
-#     # Stack: conn_ptr data_ptr length
-#     AS _len
-#     AS _data
-#     AS _conn
-
-#     # --- Pre-flight Checks ---
-#     # 1. Check connection state, data size, and window fullness
-#     VALUE _can_send 1 AS _can_send
-#     RDP_STATE _conn LIST.get RDP_STATE_OPEN != IF 0 AS _can_send END
-#     _len RDP_PACKET_SIZE 2 - > IF 0 AS _can_send END # TODO: Implement packet splitting for large data
-    
-#     RDP_TX_BUF _conn LIST.get AS _tx_buf
-#     # Check if window is full (count >= window_size). Stacks doesn't have >= or a standalone NOT.
-#     # We simulate `NOT (count < window_size)` with the expression `1 - (count < window_size)`.
-#     _tx_buf DICT.count RDP_TX_WINDOW_SIZE < 1 SWAP - IF 0 AS _can_send END
-
-#     _can_send IF
-#         # --- Acquire Resources ---
-#         _rdp_get_buffer AS _pkt_buf
-#         _pkt_buf 0 != IF
-#             # --- Buffer acquired, proceed to build and send ---
-
-#             # 1. Get sequence number and destination info from connection record
-#             RDP_SEQ_OUT _conn LIST.get AS _seq_num
-#             RDP_PEER_ID _conn LIST.get AS _dest_id
-#             RDP_PEER_PORT _conn LIST.get AS _dest_port
-#             RDP_LOCAL_PORT _conn LIST.get AS _src_port
-
-#             # 2. Build the packet: Clear buffer, add RDP header
-#             _pkt_buf LIST.clear
-#             RDP_MSG_DATA _pkt_buf LIST.append
-#             _seq_num _pkt_buf LIST.append
-
-#             # 3. Copy payload from data_ptr (which is a LIST) to the packet buffer
-#             0 AS _i
-#             WHILE _i _len < DO
-#                 _i _data LIST.get # Get word from source list
-#                 _pkt_buf LIST.append
-#                 _i 1 + AS _i
-#             DONE
-
-#             # 4. Send the packet via the socket library
-#             _pkt_buf _dest_id _dest_port _src_port SOCKET.snd_list
-#             IF
-#                 # --- Send Success: Update state ---
-#                 # a. Add packet to the Tx_Buffer for potential retransmission
-#                 _pkt_buf _seq_num RDP_TX_WINDOW_SIZE % _tx_buf DICT.put
-
-#                 # b. Increment the outgoing sequence number for the next packet
-#                 _seq_num 1 + RDP_SEQ_OUT _conn LIST.put
-
-#                 # c. Update connection timer to reset the timeout
-#                 TIME.uptime RDP_TIMER _conn LIST.put
-
-#                 # d. If the window is now full, send STAT_REQ and change state
-#                 _tx_buf DICT.count RDP_TX_WINDOW_SIZE == IF
-#                     _conn RDP_MSG_STAT_REQ _rdp_send_control_packet DROP
-#                     RDP_STATE_REQ RDP_STATE _conn LIST.put
-#                 END
-#                 1 # Return success
-#             ELSE
-#                 # --- Send Failure: Cleanup ---
-#                 _pkt_buf _rdp_release_buffer # Return the unused buffer to the pool
-#                 0 # Return failure
-#             END
-#         ELSE
-#             # --- Buffer acquisition failure ---
-#             0 # Return failure
-#         END
-#     ELSE
-#         # --- Pre-flight check failed ---
-#         0 # Return failure
-#     END
-# }

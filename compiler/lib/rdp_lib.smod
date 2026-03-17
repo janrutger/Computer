@@ -42,7 +42,7 @@
 :RDP.init_while_start_0
     ldm A $_i
     stack A $DATASTACK_PTR
-    ldi A 20
+    ldi A 16
     stack A $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
@@ -325,7 +325,7 @@
     ldm A $_conn
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 10
+    ldi A 6
     stack A $DATASTACK_PTR
     call @DICT.new
     ldi A 7
