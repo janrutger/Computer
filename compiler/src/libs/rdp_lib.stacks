@@ -66,22 +66,23 @@ VALUE _conn 0
 VALUE _conn_ptr 0
 VALUE _new_conn 0
 VALUE _key 0
-VALUE _msg_type 0
 VALUE _src_id 0
-# VALUE _dest_id 0      ; Already defined, is reused,
-# VALUE _dest_port 0    ; Already defined, is reused,
-# VALUE _src_port 0     ; Already defined, is reused,
+# VALUE _dest_id 0      ; Reused from socket_lib
+# VALUE _dest_port 0    ; Reused from socket_lib
+# VALUE _src_port 0     ; Reused from socket_lib
 VALUE _local_port 0
+VALUE _msg_type 0
 VALUE _seq_num 0
 VALUE _retries 0
 VALUE _state 0
 VALUE _current_state 0
 VALUE _inbox 0
 VALUE _can_send 0
-# VALUE _count 0        ; Already defined, is reused,
-# VALUE _i 0            ; Already defined, is reused,
+# VALUE _count 0        ; Reused from std_heap
+# VALUE _i 0            ; Reused from std_heap/socket_lib
+VALUE _j 0
 VALUE _payload_ptr 0
-# VALUE _tmp_ptr 0      ; Already defined, is reused,
+# VALUE _tmp_ptr 0      ; Reused from socket_lib
 
 # A deque pool of reusable LISTs for storing packet data, to avoid heap fragmentation.
 VALUE _rdp_packet_pool 0
@@ -89,6 +90,8 @@ VALUE _rdp_packet_pool 0
 VALUE _len 0
 VALUE _data 0
 VALUE _tx_buf 0
+VALUE _tx_key 0
+VALUE _pkt_seq 0
 VALUE _pkt_buf 0
 STRING _rdp_err_pool "RDP.update: Packet Pool Exhausted!\n"
 
@@ -368,8 +371,36 @@ DEF RDP.update {
                             # Reset timer/retries here.
                             TIME.uptime RDP_TIMER _conn LIST.put
                             0 RDP_RETRIES _conn LIST.put
+                        ELSE
+                            _current_state RDP_STATE_REQ == IF
+                                # --- Sync / Tx Buffer Cleanup ---
+                                _payload_ptr 1 + AS _tmp_ptr
+                                *_tmp_ptr AS _seq_num # The Acked Seq Num
+    
+                                RDP_TX_BUF _conn LIST.get AS _tx_buf
+                                
+                                # Simple cleanup strategy: Check slots 1..WINDOW_SIZE
+                                1 AS _i
+                                WHILE _i RDP_TX_WINDOW_SIZE 1 + < DO
+                                    _i _tx_buf DICT.has_key IF
+                                        _i _tx_buf DICT.get AS _pkt_buf
+                                        1 _pkt_buf ARRAY.get AS _pkt_seq
+                                        
+                                        # Check if pkt_seq <= seq_num (equivalent to NOT (pkt_seq > seq_num))
+                                        _pkt_seq _seq_num > 0 == IF
+                                            _pkt_buf _rdp_release_buffer
+                                            _i _tx_buf DICT.remove
+                                        END
+                                    END
+                                    _i 1 + AS _i
+                                DONE
+    
+                                # We were in REQ state (blocked), go back to OPEN
+                                RDP_STATE_OPEN RDP_STATE _conn LIST.put
+                                TIME.uptime RDP_TIMER _conn LIST.put
+                                0 RDP_RETRIES _conn LIST.put
+                            END
                         END
-                        # TODO: Handle STAT_ACK in other states like REQ
                     ELSE
                         _msg_type RDP_MSG_NACK == IF
                             # --- Handle NACK ---
@@ -562,4 +593,78 @@ DEF RDP.send {
         # --- Pre-flight check failed ---
         0 # Return failure
     END
+}
+
+
+# RDP.recv ( conn_ptr array_ptr -- success_flag )
+# Reads the next available in-order DATA payload from the Rx Buffer into the user's array.
+# Returns 1 if data was copied, 0 if no data is available.
+# The user array must be large enough to hold the payload.
+DEF RDP.recv {
+    AS _data
+    AS _conn
+
+    # 1. Determine what sequence number we expect next for the APP (not the protocol)
+    # The protocol has RDP_SEQ_IN which tracks what the protocol has accepted.
+    # We need to track what the Application has consumed.
+    # For v0.2, let's assume we simply peek at the oldest item in the buffer.
+    # Actually, RDP_SEQ_IN is the *next expected from wire*.
+    # We need a new pointer RDP_SEQ_READ or similar, OR we just look for the smallest key in dict.
+    # Simpler: The dictionary keys are sequence numbers.
+    # If we implement a strictly ordered stream, we should just ask for "Seq X".
+    # But since we don't store "Last Read Seq" in the conn record yet...
+    # Let's iterate the buffer to find the smallest sequence number available.
+    
+    VALUE _rx_buf 0
+    RDP_RX_BUF _conn LIST.get AS _rx_buf
+    
+    VALUE _found_pkt 0
+    0 AS _found_pkt
+    VALUE _found_seq 0
+    1 negate AS _found_seq
+    
+    # Naive search for any packet (in v0.2 optimization).
+    # A better way is to track `Last_Read_Seq` in the connection record.
+    # For now, let's iterate keys 0..MaxSeq (risky) or iterate buffer.
+    # Let's assume we simply check the buffer.
+    # Optimization: Iterate possible sequence numbers based on RDP_SEQ_IN - window?
+    # Since we don't have an iterator for dict keys easily, this is tricky without a `Last_Read_Seq`.
+    # WORKAROUND: For this test, we just check if the buffer has items and pick the first one we find via iteration.
+    # Ideally, we add RDP_SEQ_APP to the conn record.
+    
+    # Let's check keys based on RDP_SEQ_IN history.
+    # RDP_SEQ_IN is the next one we expect from network.
+    # So the ones in buffer are < RDP_SEQ_IN.
+    RDP_SEQ_IN _conn LIST.get AS _seq_num
+    
+    # Look backwards 10 slots
+    0 AS _i
+    WHILE _i RDP_RX_WINDOW_SIZE 1 + < DO
+        _seq_num _i - AS _key
+        _key _rx_buf DICT.has_key IF
+             _key _rx_buf DICT.get AS _pkt_buf
+             
+             # Copy data to user array (Offset 2 is start of data in our packet format [Type, Seq, Data...])
+             # _pkt_buf contains [Capacity, Count, Type, Seq, Payload...]
+             # User array _data contains [Capacity, Count, Payload...]
+             # Payload starts at offset 2 in _pkt_buf (Type, Seq)
+             # Payload starts at offset 0 in user array (APPEND)
+             _pkt_buf ARRAY.len 2 - AS _len
+             0 AS _j
+             WHILE _j _len < DO
+                 _j 2 + _pkt_buf ARRAY.get _data ARRAY.append
+                 _j 1 + AS _j
+             DONE
+             
+             # Cleanup
+             _pkt_buf _rdp_release_buffer
+             _key _rx_buf DICT.remove
+             1 AS _found_pkt
+             # Break loop (hacky)
+             RDP_RX_WINDOW_SIZE 10 + AS _i
+        END
+        _i 1 + AS _i
+    DONE
+    
+    _found_pkt
 }

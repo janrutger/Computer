@@ -20,6 +20,10 @@ VALUE _has_sent 0       # Flag to send only once
 VALUE _cnt 0
 VALUE _idx 0
 VALUE __ptr 0
+VALUE _recv_buf 0       # Buffer to hold received data
+VALUE _recv_success 0
+VALUE _recv_i 0
+VALUE _recv_len 0
 
 # Helper to print the state of a connection
 DEF print_conn_state {
@@ -53,6 +57,10 @@ DEF main {
     # Initialize the RDP library
     RDP.init
     "RDP Library Initialized.\n" PRTstring
+
+    # Alloc receive buffer for testing (Capacity 64)
+    64 NEW.array AS _recv_buf
+
 
     # 2. Setup Sockets (Inbox Deques)
     # Server on Port 100
@@ -123,6 +131,25 @@ DEF main {
         ELSE
             _server_conn print_server_rx_state
         END
+        
+        # TEST RDP.recv: Check if server has data for application
+        _server_conn 0 != IF
+            _recv_buf ARRAY.clear
+            _server_conn _recv_buf RDP.recv AS _recv_success
+            _recv_success IF
+                "Server App: Received Data! Payload: " PRTstring
+                
+                _recv_buf ARRAY.len AS _recv_len
+                0 AS _recv_i
+                WHILE _recv_i _recv_len < DO
+                    _recv_i _recv_buf ARRAY.get PRTnum
+                    ", " PRTstring
+                    _recv_i 1 + AS _recv_i
+                DONE
+                "\n" PRTstring
+            END
+        END
+
 
         # Check State
         _client_conn print_conn_state
