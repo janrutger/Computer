@@ -82,6 +82,33 @@ De ontvanger
     - de ontvanger controleert de eerste byte van de payload, <129 dan SPD pakket > 128 dan RDP pakket
     - Een toevoeging van een BIN berichttype maakt binary data over SDP mogelijk
 
+## Gedetailleerde Flow Scenario's
+
+### Scenario A: "Buffer Vol" (High Traffic / Sync)
+Doel: Voorkomen dat de zender vastloopt als de ontvanger niet snel genoeg verwerkt, en geheugen vrijmaken.
+1.  De zender verstuurt pakketten 0 t/m 5 (6 stuks).
+2.  De `Tx_Buffer` van de zender zit nu vol (6 posities).
+3.  De zender wil pakket 6 sturen, maar detecteert `Buffer Full`.
+4.  De zender verandert status naar `REQ` en stuurt een `STAT_REQ` bericht.
+5.  De zender pauzeert het versturen van nieuwe data (pakket 6 wacht).
+6.  De ontvanger ontvangt `STAT_REQ`, controleert zijn status, en antwoordt met `STAT_ACK` (Seq 5, "Ik heb alles t/m 5").
+7.  De zender ontvangt `STAT_ACK`, ziet dat 5 bevestigd is.
+8.  De zender verwijdert pakketten 0 t/m 5 uit de `Tx_Buffer` (buffer is nu leeg).
+9.  De zender verandert status terug naar `OPEN`.
+10. De zender hervat en verstuurt pakket 6.
+
+### Scenario B: "Eén Bericht" (Low Traffic / Watchdog)
+Doel: Bevestigen en opschonen van communicatie die stopt voordat de buffer vol is.
+1.  De zender verstuurt pakket 0.
+2.  De `Tx_Buffer` bevat 1 pakket. De zender heeft geen verdere data.
+3.  De ontvanger ontvangt pakket 0. Omdat het protocol optimistisch is, stuurt hij **geen** directe ACK.
+4.  Het wordt stil op de lijn.
+5.  De **Watchdog** van de ontvanger verloopt (Timeout, bijv. na 2 seconden).
+6.  De ontvanger stuurt een `STAT_QRY` ("Ik heb t/m 0, leef je nog?").
+7.  De zender ontvangt `STAT_QRY` en vergelijkt dit met zijn `Tx_Buffer`.
+    - Als de zender ziet dat 0 is aangekomen: Hij schoont `Tx_Buffer` op en stuurt `ACK`.
+    - Als de zender ziet dat er meer was (bijv. pakket 1 gemist): Hij herzendt pakket 1 en stuurt `STAT_REQ`.
+8.  Beide partijen zijn weer in sync.
 
 ## Connectie record:
 Veld,               Beschrijving
@@ -117,6 +144,12 @@ De kern van het protocol is een state machine die de status van elke verbinding 
 | `OPEN`        | Ontvangt `DATA` (niet op volgorde) | Stuur `NACK` met laatst ontvangen nummer   | `OPEN`         | Ontvanger|
 | `OPEN`        | Ontvangt `NACK`             | Stuur ontbrekend pakket opnieuw (zonder STAT_REQ) | `OPEN`         | Zender   |
 
+**Status Update (17 maart):**
+Deze fase is succesvol geïmplementeerd en geverifieerd, but not fully tested yet
+- De ontvanger detecteert gaten in de sequence nummers en verstuurt NACKs.
+- De zender reageert op NACKs door het specifieke pakket uit de `Tx_Buffer` opnieuw te versturen.
+- **Belangrijke Fix:** Er is een kritieke bug opgelost in de "First Packet Deadlock" situatie. De helper `_rdp_prev_seq` mag nu negatieve waarden (-1) teruggeven. Dit zorgt ervoor dat als het allereerste pakket (Seq 0) verloren gaat, de ontvanger correct om Seq 0 kan vragen (via `prev_seq` -1).
+
 | **4. Sync (Tx)**|                           |                                             |                |          |
 | `OPEN`        | `Tx_Buffer` vol             | Stuur `STAT_REQ`                            | `REQ`          | Zender   |
 | `REQ`         | Ontvangt `STAT_ACK`         | Verwerk ACK, maak `Tx_Buffer` leeg          | `OPEN`         | Zender   |
@@ -131,7 +164,7 @@ De kern van het protocol is een state machine die de status van elke verbinding 
 
 | **6. Watchdog**|                            |                                             |                |          |
 | `OPEN`        | Timeout (Geen Data)         | Stuur `STAT_QRY`                            | `OPEN`         | Ontvanger|
-| `OPEN`        | Ontvangt `STAT_QRY`         | Stuur `ACK` of Herzend + `STAT_REQ`         | `OPEN`/`REQ`   | Zender   |
+| `OPEN`        | Ontvangt `STAT_QRY`         | Stuur `ACK` of Herzend (+ `STAT_REQ`)       | `OPEN`(/`REQ`) | Zender   |
 | `WAIT`        | Timeout (geen RESUME)       | Stuur `STAT_REQ`                            | `WAIT`         | Zender   |
 | `WAIT`        | Ontvangt `STAT_ACK`         | Reset timer, blijf wachten op `RESUME`      | `WAIT`         | Zender   |
 | `WAIT`        | Ontvangt `STAT_QRY`         | Hervat verzenden (stuur volgend DATA)       | `OPEN`         | Zender   |

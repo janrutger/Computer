@@ -68,9 +68,9 @@ VALUE _new_conn 0
 VALUE _key 0
 VALUE _msg_type 0
 VALUE _src_id 0
-# VALUE _dest_id 0
-# VALUE _dest_port 0
-# VALUE _src_port 0
+# VALUE _dest_id 0      ; Already defined, is reused,
+# VALUE _dest_port 0    ; Already defined, is reused,
+# VALUE _src_port 0     ; Already defined, is reused,
 VALUE _local_port 0
 VALUE _seq_num 0
 VALUE _retries 0
@@ -78,13 +78,19 @@ VALUE _state 0
 VALUE _current_state 0
 VALUE _inbox 0
 VALUE _can_send 0
-# VALUE _count 0
-# VALUE _i 0
+# VALUE _count 0        ; Already defined, is reused,
+# VALUE _i 0            ; Already defined, is reused,
 VALUE _payload_ptr 0
-# VALUE _tmp_ptr 0
+# VALUE _tmp_ptr 0      ; Already defined, is reused,
 
 # A deque pool of reusable LISTs for storing packet data, to avoid heap fragmentation.
 VALUE _rdp_packet_pool 0
+
+VALUE _len 0
+VALUE _data 0
+VALUE _tx_buf 0
+VALUE _pkt_buf 0
+STRING _rdp_err_pool "RDP.update: Packet Pool Exhausted!\n"
 
 
 # Timeout settings
@@ -128,6 +134,14 @@ DEF _rdp_make_key {
     SWAP 65536 * +
 }
 
+# Internal helper: Calculate the previous sequence number (modulo logic)
+# ( seq_num -- prev_seq_num )
+DEF _rdp_prev_seq {
+    # In our simple protocol with incrementing integers, previous is just -1.
+    # If we had wrapping at 65535, we'd handle it here.
+    1 -
+}
+
 # --- Internal Helpers ---
 
 # _rdp_get_buffer ( -- buffer_ptr | 0 )
@@ -153,32 +167,43 @@ DEF _rdp_release_buffer {
 }
 
 
-# _rdp_send_control_packet ( conn_ptr msg_type -- success_flag )
-# Sends a control packet (like HELLO, ACK) with no data payload.
-# It constructs a 2-word payload [Type, SeqNum] and sends it.
-DEF _rdp_send_control_packet {
+# _rdp_send_raw_ctrl_packet ( conn_ptr msg_type seq_num -- success_flag )
+# Low-level helper to send a control packet with a specific sequence number.
+DEF _rdp_send_raw_ctrl_packet {
+    AS _seq_num
     AS _msg_type
     AS _conn
 
-    # 1. Get connection details from the record
     RDP_PEER_ID    _conn LIST.get AS _dest_id
     RDP_PEER_PORT  _conn LIST.get AS _dest_port
     RDP_LOCAL_PORT _conn LIST.get AS _src_port
-    RDP_SEQ_OUT    _conn LIST.get AS _seq_num
 
-    # 2. Create the RDP packet [Type, SeqNum] as a temporary array
+    # Create the RDP packet [Type, SeqNum] as a temporary array
     _rdp_ctrl_packet ARRAY.clear
     _msg_type _rdp_ctrl_packet ARRAY.append
     _seq_num _rdp_ctrl_packet ARRAY.append
 
-    # 3. Send using the socket library's list sender
-    # ( list_ptr dest_id dest_port src_port -- success )
+    # Send using the socket library's list sender
     _rdp_ctrl_packet _dest_id _dest_port _src_port SOCKET.snd_list
-    # Returns success flag to caller
+}
 
-    # 4. DO NOT increment the sequence number for control packets.
-    # Sequence numbers should only be consumed by DATA packets to track the
-    # data stream itself.
+# _rdp_send_control_packet ( conn_ptr msg_type -- success_flag )
+# Sends a sender-initiated control packet (HELLO, STAT_REQ) using RDP_SEQ_OUT.
+DEF _rdp_send_control_packet {
+    AS _msg_type
+    AS _conn
+    RDP_SEQ_OUT _conn LIST.get AS _seq_num
+    _conn _msg_type _seq_num _rdp_send_raw_ctrl_packet
+}
+
+# _rdp_send_response_packet ( conn_ptr msg_type -- success_flag )
+# Sends a receiver-initiated packet (NACK, STAT_ACK) using the LAST received sequence number.
+# Uses _rdp_prev_seq on RDP_SEQ_IN.
+DEF _rdp_send_response_packet {
+    AS _msg_type
+    AS _conn
+    RDP_SEQ_IN _conn LIST.get _rdp_prev_seq AS _seq_num
+    _conn _msg_type _seq_num _rdp_send_raw_ctrl_packet
 }
 
 # _rdp_check_timeout ( conn_ptr -- )
@@ -276,6 +301,10 @@ DEF RDP.connect {
     END
 }
 
+
+VALUE _expected_seq 0
+VALUE _rx_pkt 0
+
 # RDP.update ( inbox_deque -- )
 # This is the main engine of the RDP protocol. It should be called
 # frequently in the application's main loop. It polls for incoming
@@ -342,7 +371,85 @@ DEF RDP.update {
                         END
                         # TODO: Handle STAT_ACK in other states like REQ
                     ELSE
-                        # TODO: Handle other message types like DATA, ACK, NACK...
+                        _msg_type RDP_MSG_NACK == IF
+                            # --- Handle NACK ---
+                            # Peer reports missing packet. NACK seq is the last received seq.
+                            # We must resend (NACK_seq + 1).
+                            _payload_ptr 1 + AS _tmp_ptr
+                            *_tmp_ptr 1 + AS _seq_num
+
+                            # Calculate Key: (seq % window) + 1
+                            _seq_num RDP_TX_WINDOW_SIZE % 1 + AS _key
+
+                            RDP_TX_BUF _conn LIST.get AS _tx_buf
+                            _key _tx_buf DICT.has_key IF
+                                _key _tx_buf DICT.get AS _pkt_buf
+                                RDP_PEER_ID    _conn LIST.get AS _dest_id
+                                RDP_PEER_PORT  _conn LIST.get AS _dest_port
+                                RDP_LOCAL_PORT _conn LIST.get AS _src_port
+                                _pkt_buf _dest_id _dest_port _src_port SOCKET.snd_list DROP
+                            END
+                        ELSE
+                        _msg_type RDP_MSG_DATA == IF
+                            # --- Handle DATA Packet ---
+                            RDP_STATE _conn LIST.get RDP_STATE_OPEN == IF
+                                # 1. Extract Sequence Number
+                                _payload_ptr 1 + AS _tmp_ptr
+                                *_tmp_ptr AS _seq_num
+
+                                # 2. Check Sequence Number against Expected (RDP_SEQ_IN)
+                                RDP_SEQ_IN _conn LIST.get AS _expected_seq
+
+                                _seq_num _expected_seq == IF
+                                    # --- In Order Packet ---
+                                    # a. Store in Rx_Buffer (Key is seq_num)
+                                    _rdp_get_buffer AS _rx_pkt
+                                    _rx_pkt 0 != IF
+                                        # Copy data from recv_buf to new safe buffer
+                                        # Header + Payload
+                                        _rx_pkt ARRAY.clear
+                                        # Just Copy the whole payload part (which includes our RDP header)
+                                        # _payload_ptr points to [Type, Seq, Data...]
+                                        # We can iterate and copy.
+                                        # Simplified copy for now:
+                                        RDP_MSG_DATA _rx_pkt ARRAY.append
+                                        _seq_num _rx_pkt ARRAY.append
+                                        
+                                        # Copy rest of payload
+                                        # _payload_ptr points to [Type, Seq, Data...]
+                                        # Data starts at _payload_ptr + 2
+                                        _rdp_recv_buf MESSAGE.len 2 - AS _len
+                                        0 AS _i
+                                        WHILE _i _len < DO
+                                            _payload_ptr 2 + _i + AS _tmp_ptr
+                                            *_tmp_ptr _rx_pkt ARRAY.append
+                                            _i 1 + AS _i
+                                        DONE
+                                        
+                                        # Store in Dictionary
+                                        _rx_pkt _seq_num 1 + RDP_RX_BUF _conn LIST.get DICT.put
+                                    ELSE
+                                        &_rdp_err_pool PRTstring HALT
+                                    END
+                                    
+                                    _seq_num 1 + RDP_SEQ_IN _conn LIST.put
+                                    
+                                    # b. Update Timer (Activity detected)
+                                    TIME.uptime RDP_TIMER _conn LIST.put
+
+                                ELSE
+                                    _seq_num _expected_seq > IF
+                                        # --- Out of Order (Missing Packet) ---
+                                        # Send NACK for the last correctly received packet (expected - 1)
+                                        _conn RDP_MSG_NACK _rdp_send_response_packet DROP
+                                    ELSE
+                                        # --- Duplicate (seq < expected) ---
+                                        # Ignore silently as per spec.
+                                    END
+                                END
+                            END
+                        END
+                        END
                     END
                 END
 
@@ -375,10 +482,7 @@ DEF RDP.update {
     END
 }
 
-VALUE _len 0
-VALUE _data 0
-VALUE _tx_buf 0
-VALUE _pkt_buf 0
+
 # RDP.send ( conn_ptr array_ptr length -- success_flag )
 # Sends a block of data reliably over the given connection.
 # NOTE: array_ptr must be a pointer to a Heap Array (created with NEW.array).

@@ -14,14 +14,24 @@ USE std_time
 VALUE _inbox_server 0   # Port 100
 VALUE _inbox_client 0   # Port 101
 VALUE _client_conn 0    # Pointer to the client-side connection record
+VALUE _server_conn 0    # Pointer to the server-side connection record (found in dict)
 VALUE _test_payload 0   # Array for testing data send
 VALUE _has_sent 0       # Flag to send only once
+VALUE _cnt 0
+VALUE _idx 0
+VALUE __ptr 0
 
 # Helper to print the state of a connection
 DEF print_conn_state {
     AS _conn
     "(2=INIT, 3=OPEN) " PRTstring RDP_STATE _conn LIST.get PRINT
 }
+
+DEF print_server_rx_state {
+    AS _conn
+    "Server RX Next Seq: " PRTstring RDP_SEQ_IN _conn LIST.get PRTnum "\n" PRTstring
+}
+
 
 DEF main {
     "--- RDP Handshake Test ---\n" PRTstring
@@ -94,6 +104,25 @@ DEF main {
         }
         # Update Client (Should receive STAT_ACK, switch to OPEN)
         _inbox_client RDP.update
+
+        # Find Server Connection pointer for inspection (only once after handshake)
+        _server_conn 0 == IF
+            # Iterate through connections to find the one that isn't the client's
+            _rdp_conns DICT.count AS _cnt
+            0 AS _idx
+            WHILE _idx _cnt < DO
+                _idx _rdp_conns DICT.item AS __ptr DROP # Get value, drop key
+                __ptr _client_conn != IF
+                    __ptr AS _server_conn
+                    "Server Connection identified.\n" PRTstring
+                    _cnt AS _idx # Break loop
+                ELSE
+                    _idx 1 + AS _idx
+                END
+            DONE
+        ELSE
+            _server_conn print_server_rx_state
+        END
 
         # Check State
         _client_conn print_conn_state
