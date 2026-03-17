@@ -77,6 +77,7 @@ VALUE _retries 0
 VALUE _state 0
 VALUE _current_state 0
 VALUE _inbox 0
+VALUE _can_send 0
 # VALUE _count 0
 # VALUE _i 0
 VALUE _payload_ptr 0
@@ -110,7 +111,7 @@ DEF RDP.init {
     DEQUE.new AS _rdp_packet_pool
     0 AS _i
     WHILE _i RDP_PACKET_POOL_SIZE < DO
-        RDP_PACKET_SIZE NEW.list    # Create a new list of 64 words
+        RDP_PACKET_SIZE NEW.array   # Create a new array of 64 words
         _rdp_packet_pool DEQUE.append # Add its pointer to the pool
         _i 1 + AS _i
     DONE
@@ -374,83 +375,87 @@ DEF RDP.update {
     END
 }
 
-
-# RDP.send ( conn_ptr data_ptr length -- success_flag )
+VALUE _len 0
+VALUE _data 0
+VALUE _tx_buf 0
+VALUE _pkt_buf 0
+# RDP.send ( conn_ptr array_ptr length -- success_flag )
 # Sends a block of data reliably over the given connection.
+# NOTE: array_ptr must be a pointer to a Heap Array (created with NEW.array).
 # This function will handle breaking the data into multiple packets if it
 # exceeds the RDP payload size.
-# DEF RDP.send {
-#     # Stack: conn_ptr data_ptr length
-#     AS _len
-#     AS _data
-#     AS _conn
+DEF RDP.send {
+    # Stack: conn_ptr data_ptr length
+    AS _len
+    AS _data
+    AS _conn
 
-#     # --- Pre-flight Checks ---
-#     # 1. Check connection state, data size, and window fullness
-#     VALUE _can_send 1 AS _can_send
-#     RDP_STATE _conn LIST.get RDP_STATE_OPEN != IF 0 AS _can_send END
-#     _len RDP_PACKET_SIZE 2 - > IF 0 AS _can_send END # TODO: Implement packet splitting for large data
+    # --- Pre-flight Checks ---
+    # 1. Check connection state, data size, and window fullness
+    1 AS _can_send
+    RDP_STATE _conn LIST.get RDP_STATE_OPEN != IF 0 AS _can_send END
+    _len RDP_PACKET_SIZE 2 - > IF 0 AS _can_send END # TODO: Implement packet splitting for large data
     
-#     RDP_TX_BUF _conn LIST.get AS _tx_buf
-#     # Check if window is full (count >= window_size). Stacks doesn't have >= or a standalone NOT.
-#     # We simulate `NOT (count < window_size)` with the expression `1 - (count < window_size)`.
-#     _tx_buf DICT.count RDP_TX_WINDOW_SIZE < 1 SWAP - IF 0 AS _can_send END
+    RDP_TX_BUF _conn LIST.get AS _tx_buf
+    # Check if window is full (count >= window_size). Stacks doesn't have >= or a standalone NOT.
+    # We simulate `NOT (count < window_size)` with the expression `1 - (count < window_size)`.
+    _tx_buf DICT.count RDP_TX_WINDOW_SIZE < 1 SWAP - IF 0 AS _can_send END
 
-#     _can_send IF
-#         # --- Acquire Resources ---
-#         _rdp_get_buffer AS _pkt_buf
-#         _pkt_buf 0 != IF
-#             # --- Buffer acquired, proceed to build and send ---
+    _can_send IF
+        # --- Acquire Resources ---
+        _rdp_get_buffer AS _pkt_buf
+        _pkt_buf 0 != IF
+            # --- Buffer acquired, proceed to build and send ---
 
-#             # 1. Get sequence number and destination info from connection record
-#             RDP_SEQ_OUT _conn LIST.get AS _seq_num
-#             RDP_PEER_ID _conn LIST.get AS _dest_id
-#             RDP_PEER_PORT _conn LIST.get AS _dest_port
-#             RDP_LOCAL_PORT _conn LIST.get AS _src_port
+            # 1. Get sequence number and destination info from connection record
+            RDP_SEQ_OUT _conn LIST.get AS _seq_num
+            RDP_PEER_ID _conn LIST.get AS _dest_id
+            RDP_PEER_PORT _conn LIST.get AS _dest_port
+            RDP_LOCAL_PORT _conn LIST.get AS _src_port
 
-#             # 2. Build the packet: Clear buffer, add RDP header
-#             _pkt_buf LIST.clear
-#             RDP_MSG_DATA _pkt_buf LIST.append
-#             _seq_num _pkt_buf LIST.append
+            # 2. Build the packet: Clear buffer, add RDP header
+            _pkt_buf ARRAY.clear
+            RDP_MSG_DATA _pkt_buf ARRAY.append
+            _seq_num _pkt_buf ARRAY.append
 
-#             # 3. Copy payload from data_ptr (which is a LIST) to the packet buffer
-#             0 AS _i
-#             WHILE _i _len < DO
-#                 _i _data LIST.get # Get word from source list
-#                 _pkt_buf LIST.append
-#                 _i 1 + AS _i
-#             DONE
+            # 3. Copy payload from data_ptr (which is an ARRAY) to the packet buffer
+            0 AS _i
+            WHILE _i _len < DO
+                _i _data ARRAY.get # Get word from source array
+                _pkt_buf ARRAY.append
+                _i 1 + AS _i
+            DONE
 
-#             # 4. Send the packet via the socket library
-#             _pkt_buf _dest_id _dest_port _src_port SOCKET.snd_list
-#             IF
-#                 # --- Send Success: Update state ---
-#                 # a. Add packet to the Tx_Buffer for potential retransmission
-#                 _pkt_buf _seq_num RDP_TX_WINDOW_SIZE % _tx_buf DICT.put
+            # 4. Send the packet via the socket library
+            _pkt_buf _dest_id _dest_port _src_port SOCKET.snd_list
+            IF
+                # --- Send Success: Update state ---
+                # a. Add packet to the Tx_Buffer for potential retransmission
+                _pkt_buf _seq_num RDP_TX_WINDOW_SIZE % 1 + _tx_buf DICT.put
 
-#                 # b. Increment the outgoing sequence number for the next packet
-#                 _seq_num 1 + RDP_SEQ_OUT _conn LIST.put
+                # b. Increment the outgoing sequence number for the next packet
+                _seq_num 1 + RDP_SEQ_OUT _conn LIST.put
 
-#                 # c. Update connection timer to reset the timeout
-#                 TIME.uptime RDP_TIMER _conn LIST.put
+                # c. Update connection timer to reset the timeout
+                TIME.uptime RDP_TIMER _conn LIST.put
 
-#                 # d. If the window is now full, send STAT_REQ and change state
-#                 _tx_buf DICT.count RDP_TX_WINDOW_SIZE == IF
-#                     _conn RDP_MSG_STAT_REQ _rdp_send_control_packet DROP
-#                     RDP_STATE_REQ RDP_STATE _conn LIST.put
-#                 END
-#                 1 # Return success
-#             ELSE
-#                 # --- Send Failure: Cleanup ---
-#                 _pkt_buf _rdp_release_buffer # Return the unused buffer to the pool
-#                 0 # Return failure
-#             END
-#         ELSE
-#             # --- Buffer acquisition failure ---
-#             0 # Return failure
-#         END
-#     ELSE
-#         # --- Pre-flight check failed ---
-#         0 # Return failure
-#     END
-# }
+                # d. If the window is now full, send STAT_REQ and change state
+                _tx_buf DICT.count RDP_TX_WINDOW_SIZE == IF
+                    _conn RDP_MSG_STAT_REQ _rdp_send_control_packet DROP
+                    RDP_STATE_REQ RDP_STATE _conn LIST.put
+                END
+                1 # Return success
+            ELSE
+                # --- Send Failure: Cleanup ---
+                _pkt_buf _rdp_release_buffer # Return the unused buffer to the pool
+                0 # Return failure
+            END
+        ELSE
+            # --- Buffer acquisition failure ---
+            0 # Return failure
+        END
+    ELSE
+        # --- Pre-flight check failed ---
+        0 # Return failure
+    END
+}

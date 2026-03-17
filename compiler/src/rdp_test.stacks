@@ -14,6 +14,8 @@ USE std_time
 VALUE _inbox_server 0   # Port 100
 VALUE _inbox_client 0   # Port 101
 VALUE _client_conn 0    # Pointer to the client-side connection record
+VALUE _test_payload 0   # Array for testing data send
+VALUE _has_sent 0       # Flag to send only once
 
 # Helper to print the state of a connection
 DEF print_conn_state {
@@ -68,6 +70,13 @@ DEF main {
         HALT
     END
 
+    # Prepare a dummy payload
+    10 NEW.array AS _test_payload
+    42 _test_payload ARRAY.append
+    43 _test_payload ARRAY.append
+    44 _test_payload ARRAY.append
+    45 _test_payload ARRAY.append
+
     # 4. Event Loop (Process Packets)
     # We assume the handshake takes a few ticks.
     VALUE _loop_count 0
@@ -88,6 +97,22 @@ DEF main {
 
         # Check State
         _client_conn print_conn_state
+
+        # TEST RDP.send: If OPEN and not yet sent, try sending data
+        RDP_STATE _client_conn LIST.get RDP_STATE_OPEN == IF
+            _has_sent 0 == IF
+                "State OPEN. Attempting RDP.send...\n" PRTstring
+                
+                # ( conn_ptr data_ptr length -- success )
+                _client_conn _test_payload 4 RDP.send 
+                IF
+                    "RDP.send SUCCESS.\n" PRTstring
+                    1 AS _has_sent
+                ELSE
+                    "RDP.send FAILED.\n" PRTstring
+                END
+            END
+        END
 
         _loop_count 1 + AS _loop_count
     DONE
