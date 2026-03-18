@@ -93,7 +93,24 @@ VALUE _tx_buf 0
 VALUE _tx_key 0
 VALUE _pkt_seq 0
 VALUE _pkt_buf 0
+VALUE _last_sent 0
+VALUE _resend_seq 0
 STRING _rdp_err_pool "RDP.update: Packet Pool Exhausted!\n"
+
+# Debug strings for RDP.print_status
+STRING _str_rdp_status "--- RDP Status ---\n"
+STRING _str_active_conn "Active Connections: "
+STRING _str_conn "Conn "
+STRING _str_colon ": "
+STRING _str_state "State="
+STRING _str_seq_out " SeqOUT="
+STRING _str_seq_in " SeqIN="
+STRING _str_tx_buf "   TxBuf Size="
+STRING _str_rx_buf " RxBuf Size="
+STRING _str_timer "   Timer="
+STRING _str_retries " Retries="
+STRING _str_rdp_footer "------------------\n"
+STRING _str_newline "\n"
 
 
 # Timeout settings
@@ -240,11 +257,15 @@ DEF _rdp_check_timeout {
                 # Resend HELLO
                 _conn RDP_MSG_HELLO _rdp_send_control_packet DROP
             ELSE
-                _state RDP_STATE_REQ == IF
-                     # Resend STAT_REQ (Keep-alive or Poll)
-                    _conn RDP_MSG_STAT_REQ _rdp_send_control_packet DROP
+                _state RDP_STATE_OPEN == IF
+                    # Watchdog: Send STAT_QRY to check connection
+                    _conn RDP_MSG_STAT_QRY _rdp_send_response_packet DROP
+                ELSE
+                    _state RDP_STATE_REQ == IF
+                         # Resend STAT_REQ (Keep-alive or Poll)
+                        _conn RDP_MSG_STAT_REQ _rdp_send_control_packet DROP
+                    END
                 END
-                # TODO: Add logic for OPEN state (Resend DATA from TX_BUF) here later
             END
         END
     END
@@ -408,6 +429,75 @@ DEF RDP.update {
                             # Respond with STAT_ACK containing last received seq (RDP_SEQ_IN - 1).
                             _conn RDP_MSG_STAT_ACK _rdp_send_response_packet DROP
                         ELSE
+                            _msg_type RDP_MSG_STAT_QRY == IF
+                                # --- Handle STAT_QRY ---
+                                # Peer asks "Are you there?". Check payload seq against our sent history.
+                                _payload_ptr 1 + AS _tmp_ptr
+                                *_tmp_ptr AS _seq_num
+
+                                # 1. Cleanup Buffer (They have up to _seq_num)
+                                RDP_TX_BUF _conn LIST.get AS _tx_buf
+                                1 AS _i
+                                WHILE _i RDP_TX_WINDOW_SIZE 1 + < DO
+                                    _i _tx_buf DICT.has_key IF
+                                        _i _tx_buf DICT.get AS _pkt_buf
+                                        1 _pkt_buf ARRAY.get AS _pkt_seq
+                                        # Check if pkt_seq <= seq_num
+                                        _pkt_seq _seq_num > 0 == IF
+                                            _pkt_buf _rdp_release_buffer
+                                            _i _tx_buf DICT.remove
+                                        END
+                                    END
+                                    _i 1 + AS _i
+                                DONE
+
+                                # 2. Check sync status
+                                RDP_SEQ_OUT _conn LIST.get 1 - AS _last_sent 
+                                _last_sent _seq_num == IF
+                                    # In Sync: Send ACK
+                                    _conn RDP_MSG_ACK _seq_num _rdp_send_raw_ctrl_packet DROP
+                                ELSE
+                                    # Out of Sync: Retransmit + STAT_REQ
+                                    _seq_num 1 + AS _resend_seq 
+                                    _resend_seq RDP_TX_WINDOW_SIZE % 1 + AS _key
+                                    
+                                    _key _tx_buf DICT.has_key IF
+                                        _key _tx_buf DICT.get AS _pkt_buf
+                                        RDP_PEER_ID    _conn LIST.get AS _dest_id
+                                        RDP_PEER_PORT  _conn LIST.get AS _dest_port
+                                        RDP_LOCAL_PORT _conn LIST.get AS _src_port
+                                        _pkt_buf _dest_id _dest_port _src_port SOCKET.snd_list DROP
+                                        _conn RDP_MSG_STAT_REQ _rdp_send_control_packet DROP
+                                    ELSE
+                                        # Fallback if packet missing from buffer: just confirm what they have
+                                        _conn RDP_MSG_ACK _seq_num _rdp_send_raw_ctrl_packet DROP
+                                    END
+                                END
+                            ELSE
+                                _msg_type RDP_MSG_ACK == IF
+                                    # --- Handle ACK ---
+                                    # Ack received (from Watchdog or other). Clean up buffer.
+                                    _payload_ptr 1 + AS _tmp_ptr
+                                    *_tmp_ptr AS _seq_num
+
+                                    RDP_TX_BUF _conn LIST.get AS _tx_buf
+                                    1 AS _i
+                                    WHILE _i RDP_TX_WINDOW_SIZE 1 + < DO
+                                        _i _tx_buf DICT.has_key IF
+                                            _i _tx_buf DICT.get AS _pkt_buf
+                                            1 _pkt_buf ARRAY.get AS _pkt_seq
+                                            # Check if pkt_seq <= seq_num
+                                            _pkt_seq _seq_num > 0 == IF
+                                                _pkt_buf _rdp_release_buffer
+                                                _i _tx_buf DICT.remove
+                                            END
+                                        END
+                                        _i 1 + AS _i
+                                    DONE
+                                    
+                                    TIME.uptime RDP_TIMER _conn LIST.put
+                                    0 RDP_RETRIES _conn LIST.put
+                                ELSE
                         _msg_type RDP_MSG_NACK == IF
                             # --- Handle NACK ---
                             # Peer reports missing packet. NACK seq is the last received seq.
@@ -473,6 +563,7 @@ DEF RDP.update {
                                     
                                     # b. Update Timer (Activity detected)
                                     TIME.uptime RDP_TIMER _conn LIST.put
+                                    0 RDP_RETRIES _conn LIST.put
 
                                 ELSE
                                     _seq_num _expected_seq > IF
@@ -485,6 +576,8 @@ DEF RDP.update {
                                     END
                                 END
                             END
+                        END
+                        END
                         END
                         END
                         END
@@ -674,4 +767,39 @@ DEF RDP.recv {
     DONE
     
     _found_pkt
+}
+
+# RDP.print_status ( -- )
+# Prints the internal status of all active connections for debugging.
+DEF RDP.print_status {
+    &_str_rdp_status PRTstring
+    _rdp_conns DICT.count AS _count
+    &_str_active_conn PRTstring _count PRTnum &_str_newline PRTstring
+    
+    0 AS _i
+    WHILE _i _count < DO
+        _i _rdp_conns DICT.item AS _conn_ptr DROP # Get value (conn_ptr), drop key
+        
+        &_str_conn PRTstring _i PRTnum &_str_colon PRTstring
+        &_str_state PRTstring RDP_STATE _conn_ptr LIST.get PRTnum
+        &_str_seq_out PRTstring RDP_SEQ_OUT _conn_ptr LIST.get PRTnum
+        &_str_seq_in PRTstring RDP_SEQ_IN _conn_ptr LIST.get PRTnum
+        &_str_newline PRTstring
+        
+        &_str_tx_buf PRTstring 
+        RDP_TX_BUF _conn_ptr LIST.get DICT.count PRTnum
+        
+        &_str_rx_buf PRTstring 
+        RDP_RX_BUF _conn_ptr LIST.get DICT.count PRTnum
+        &_str_newline PRTstring
+        
+        &_str_timer PRTstring 
+        RDP_TIMER _conn_ptr LIST.get PRTnum
+        &_str_retries PRTstring 
+        RDP_RETRIES _conn_ptr LIST.get PRTnum
+        &_str_newline PRTstring
+
+        _i 1 + AS _i
+    DONE
+    &_str_rdp_footer PRTstring
 }

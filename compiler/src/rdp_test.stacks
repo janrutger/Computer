@@ -99,7 +99,7 @@ DEF main {
     # 4. Event Loop (Process Packets & Stress Test)
     # We assume the handshake takes a few ticks.
     VALUE _loop_count 0
-    WHILE _loop_count 20 < DO  # Increased ticks to allow for stress test
+    WHILE _loop_count 40 < DO  # Increased ticks to allow for stress test
         "Tick " PRTstring _loop_count PRTnum
         " " PRTstring
         
@@ -185,8 +185,14 @@ DEF main {
             END
         END
 
+        # Print RDP internal status for debugging
+        # RDP.print_status
+
         _loop_count 1 + AS _loop_count
     DONE
+
+    # Print RDP internal status for debugging
+    RDP.print_status
 }
 
 main
