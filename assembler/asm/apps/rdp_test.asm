@@ -74,6 +74,7 @@
 . $_recv_success 1
 . $_recv_i 1
 . $_recv_len 1
+. $_stress_i 1
 . $print_conn_state_str_0 18
 . $print_server_rx_state_str_1 21
 . $print_server_rx_state_str_2 2
@@ -87,13 +88,16 @@
 . $main_str_10 30
 . $_loop_count 1
 . $main_str_11 6
-. $main_str_12 3
+. $main_str_12 2
 . $main_str_13 31
 . $main_str_14 37
 . $main_str_15 3
-. $main_str_16 36
-. $main_str_17 19
-. $main_str_18 18
+. $main_str_16 50
+. $_can_still_send 1
+. $main_str_17 6
+. $main_str_18 6
+. $main_str_19 35
+. $main_str_20 37
 
 # .CODE
     call @main
@@ -1436,12 +1440,28 @@
 :RDP.update_if_else_12
     ldm A $_msg_type
     stack A $DATASTACK_PTR
-    ldi A 132
+    ldi A 133
     stack A $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :RDP.update_if_else_17
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    ldi A 134
+    stack A $DATASTACK_PTR
+    call @_rdp_send_response_packet
+    call @rt_drop
+    jmp :RDP.update_if_end_17
+:RDP.update_if_else_17
+    ldm A $_msg_type
+    stack A $DATASTACK_PTR
+    ldi A 132
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :RDP.update_if_else_18
     ldm B $_payload_ptr
     ldi A 1
     add A B
@@ -1473,7 +1493,7 @@
     call @DICT.has_key
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.update_if_end_18
+    jmpt :RDP.update_if_end_19
     ldm A $_key
     stack A $DATASTACK_PTR
     ldm A $_tx_buf
@@ -1511,9 +1531,9 @@
     stack A $DATASTACK_PTR
     call @SOCKET.snd_list
     call @rt_drop
-:RDP.update_if_end_18
-    jmp :RDP.update_if_end_17
-:RDP.update_if_else_17
+:RDP.update_if_end_19
+    jmp :RDP.update_if_end_18
+:RDP.update_if_else_18
     ldm A $_msg_type
     stack A $DATASTACK_PTR
     ldi A 130
@@ -1521,7 +1541,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.update_if_end_19
+    jmpt :RDP.update_if_end_20
     ldi A 3
     stack A $DATASTACK_PTR
     ldm A $_conn
@@ -1532,7 +1552,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.update_if_end_20
+    jmpt :RDP.update_if_end_21
     ldm B $_payload_ptr
     ldi A 1
     add A B
@@ -1554,7 +1574,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.update_if_else_21
+    jmpt :RDP.update_if_else_22
     call @_rdp_get_buffer
     ustack A $DATASTACK_PTR
     sto A $_rx_pkt
@@ -1563,7 +1583,7 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.update_if_else_22
+    jmpt :RDP.update_if_else_23
     ldm B $_rx_pkt
     ldi A 1
     add A B
@@ -1630,8 +1650,8 @@
     stack A $DATASTACK_PTR
     call @LIST.get
     call @DICT.put
-    jmp :RDP.update_if_end_22
-:RDP.update_if_else_22
+    jmp :RDP.update_if_end_23
+:RDP.update_if_else_23
     ldi A $_rdp_err_pool
     stack A $DATASTACK_PTR
 
@@ -1639,7 +1659,7 @@
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
         call @HALT
-:RDP.update_if_end_22
+:RDP.update_if_end_23
     ldm B $_seq_num
     ldi A 1
     add B A
@@ -1655,8 +1675,8 @@
     ldm A $_conn
     stack A $DATASTACK_PTR
     call @LIST.put
-    jmp :RDP.update_if_end_21
-:RDP.update_if_else_21
+    jmp :RDP.update_if_end_22
+:RDP.update_if_else_22
     ldm A $_seq_num
     stack A $DATASTACK_PTR
     ldm A $_expected_seq
@@ -1664,19 +1684,20 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.update_if_else_23
+    jmpt :RDP.update_if_else_24
     ldm A $_conn
     stack A $DATASTACK_PTR
     ldi A 132
     stack A $DATASTACK_PTR
     call @_rdp_send_response_packet
     call @rt_drop
-    jmp :RDP.update_if_end_23
-:RDP.update_if_else_23
-:RDP.update_if_end_23
+    jmp :RDP.update_if_end_24
+:RDP.update_if_else_24
+:RDP.update_if_end_24
+:RDP.update_if_end_22
 :RDP.update_if_end_21
 :RDP.update_if_end_20
-:RDP.update_if_end_19
+:RDP.update_if_end_18
 :RDP.update_if_end_17
 :RDP.update_if_end_12
 :RDP.update_if_end_11
@@ -1689,7 +1710,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.update_if_end_24
+    jmpt :RDP.update_if_end_25
     ldm A $_src_id
     stack A $DATASTACK_PTR
     ldm A $_src_port
@@ -1730,7 +1751,7 @@
     stack A $DATASTACK_PTR
     call @_rdp_send_control_packet
     call @rt_drop
-:RDP.update_if_end_24
+:RDP.update_if_end_25
 :RDP.update_if_end_10
     jmp :RDP.update_if_end_9
 :RDP.update_if_else_9
@@ -1756,10 +1777,10 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.send_if_end_25
+    jmpt :RDP.send_if_end_26
     ld A Z
     sto A $_can_send
-:RDP.send_if_end_25
+:RDP.send_if_end_26
     ldm A $_len
     stack A $DATASTACK_PTR
     ldi A 64
@@ -1770,10 +1791,10 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.send_if_end_26
+    jmpt :RDP.send_if_end_27
     ld A Z
     sto A $_can_send
-:RDP.send_if_end_26
+:RDP.send_if_end_27
     ldi A 7
     stack A $DATASTACK_PTR
     ldm A $_conn
@@ -1794,13 +1815,13 @@
     sub B A
     ld A B
     tst A 0
-    jmpt :RDP.send_if_end_27
+    jmpt :RDP.send_if_end_28
     ld A Z
     sto A $_can_send
-:RDP.send_if_end_27
+:RDP.send_if_end_28
     ldm A $_can_send
     tst A 0
-    jmpt :RDP.send_if_else_28
+    jmpt :RDP.send_if_else_29
     call @_rdp_get_buffer
     ustack A $DATASTACK_PTR
     sto A $_pkt_buf
@@ -1809,7 +1830,7 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.send_if_else_29
+    jmpt :RDP.send_if_else_30
     ldi A 4
     stack A $DATASTACK_PTR
     ldm A $_conn
@@ -1890,7 +1911,7 @@
     call @SOCKET.snd_list
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.send_if_else_30
+    jmpt :RDP.send_if_else_31
     ldm A $_pkt_buf
     stack A $DATASTACK_PTR
     ldm B $_seq_num
@@ -1926,7 +1947,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.send_if_end_31
+    jmpt :RDP.send_if_end_32
     ldm A $_conn
     stack A $DATASTACK_PTR
     ldi A 133
@@ -1940,24 +1961,24 @@
     ldm A $_conn
     stack A $DATASTACK_PTR
     call @LIST.put
-:RDP.send_if_end_31
+:RDP.send_if_end_32
     ldi A 1
     stack A $DATASTACK_PTR
-    jmp :RDP.send_if_end_30
-:RDP.send_if_else_30
+    jmp :RDP.send_if_end_31
+:RDP.send_if_else_31
     ldm A $_pkt_buf
     stack A $DATASTACK_PTR
     call @_rdp_release_buffer
+    stack Z $DATASTACK_PTR
+:RDP.send_if_end_31
+    jmp :RDP.send_if_end_30
+:RDP.send_if_else_30
     stack Z $DATASTACK_PTR
 :RDP.send_if_end_30
     jmp :RDP.send_if_end_29
 :RDP.send_if_else_29
     stack Z $DATASTACK_PTR
 :RDP.send_if_end_29
-    jmp :RDP.send_if_end_28
-:RDP.send_if_else_28
-    stack Z $DATASTACK_PTR
-:RDP.send_if_end_28
     ret
 @RDP.recv
     ustack A $DATASTACK_PTR
@@ -2010,7 +2031,7 @@
     call @DICT.has_key
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.recv_if_end_32
+    jmpt :RDP.recv_if_end_33
     ldm A $_key
     stack A $DATASTACK_PTR
     ldm A $_rx_buf
@@ -2067,7 +2088,7 @@
     ldi A 10
     add A B
     sto A $_i
-:RDP.recv_if_end_32
+:RDP.recv_if_end_33
     ldm B $_i
     ldi A 1
     add A B
@@ -2253,7 +2274,7 @@
 :main_while_start_0
     ldm A $_loop_count
     stack A $DATASTACK_PTR
-    ldi A 10
+    ldi A 20
     stack A $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
@@ -2422,6 +2443,14 @@
     ldm A $_client_conn
     stack A $DATASTACK_PTR
     call @print_conn_state
+    ldm A $_stress_i
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :main_if_end_6
     ldi A 3
     stack A $DATASTACK_PTR
     ldm A $_client_conn
@@ -2432,21 +2461,35 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :main_if_end_6
-    ldm A $_has_sent
+    jmpt :main_if_end_7
+    ldm A $_stress_i
     stack A $DATASTACK_PTR
     stack Z $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :main_if_end_7
+    jmpt :main_if_end_8
     ldi A $main_str_16
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldm A $_client_conn
+    :main_if_end_8
+    ldi A 1
+    sto A $_can_still_send
+:main_while_start_3
+    ldm A $_stress_i
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ldm A $_can_still_send
+    ustack B $DATASTACK_PTR
+    mul A B
+    tst A 0
+    jmpt :main_while_end_3
+    ldm A $_client_conn
     stack A $DATASTACK_PTR
     ldm A $_test_payload
     stack A $DATASTACK_PTR
@@ -2455,24 +2498,54 @@
     call @RDP.send
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :main_if_else_8
+    jmpt :main_if_else_9
     ldi A $main_str_17
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldi A 1
-    sto A $_has_sent
-    jmp :main_if_end_8
-:main_if_else_8
+        ldm A $_stress_i
+    stack A $DATASTACK_PTR
+    call @PRTnum
     ldi A $main_str_18
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-    :main_if_end_8
+    ldm B $_stress_i
+    ldi A 1
+    add A B
+    sto A $_stress_i
+    jmp :main_if_end_9
+:main_if_else_9
+    ldi A $main_str_19
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+    ld A Z
+    sto A $_can_still_send
+:main_if_end_9
+    jmp :main_while_start_3
+:main_while_end_3
+    ldm A $_stress_i
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :main_if_end_10
+    ldi A $main_str_20
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+    :main_if_end_10
 :main_if_end_7
 :main_if_end_6
     ldm B $_loop_count
@@ -2561,6 +2634,7 @@
 % $_recv_success 0
 % $_recv_i 0
 % $_recv_len 0
+% $_stress_i 0
 % $print_conn_state_str_0 \( \2 \= \I \N \I \T \, \space \3 \= \O \P \E \N \) \space \null
 % $print_server_rx_state_str_1 \S \e \r \v \e \r \space \R \X \space \N \e \x \t \space \S \e \q \: \space \null
 % $print_server_rx_state_str_2 \Return \null
@@ -2574,10 +2648,12 @@
 % $main_str_10 \C \l \i \e \n \t \: \space \C \o \n \n \e \c \t \space \c \a \l \l \space \f \a \i \l \e \d \. \Return \null
 % $_loop_count 0
 % $main_str_11 \T \i \c \k \space \null
-% $main_str_12 \space \space \null
+% $main_str_12 \space \null
 % $main_str_13 \S \e \r \v \e \r \space \C \o \n \n \e \c \t \i \o \n \space \i \d \e \n \t \i \f \i \e \d \. \Return \null
 % $main_str_14 \S \e \r \v \e \r \space \A \p \p \: \space \R \e \c \e \i \v \e \d \space \D \a \t \a \! \space \P \a \y \l \o \a \d \: \space \null
 % $main_str_15 \, \space \null
-% $main_str_16 \S \t \a \t \e \space \O \P \E \N \. \space \A \t \t \e \m \p \t \i \n \g \space \R \D \P \. \s \e \n \d \. \. \. \Return \null
-% $main_str_17 \R \D \P \. \s \e \n \d \space \S \U \C \C \E \S \S \. \Return \null
-% $main_str_18 \R \D \P \. \s \e \n \d \space \F \A \I \L \E \D \. \Return \null
+% $main_str_16 \S \t \a \t \e \space \O \P \E \N \. \space \S \t \a \r \t \i \n \g \space \S \t \r \e \s \s \space \T \e \s \t \space \( \S \c \e \n \a \r \i \o \space \A \) \. \. \. \Return \null
+% $main_str_17 \S \e \n \d \space \null
+% $main_str_18 \space \O \K \. \space \null
+% $main_str_19 \S \e \n \d \space \B \l \o \c \k \e \d \. \space \W \a \i \t \i \n \g \space \f \o \r \space \s \y \n \c \. \. \. \Return \null
+% $main_str_20 \S \t \r \e \s \s \space \T \e \s \t \space \C \o \m \p \l \e \t \e \d \space \S \u \c \c \e \s \s \f \u \l \l \y \. \Return \null

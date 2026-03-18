@@ -402,6 +402,12 @@ DEF RDP.update {
                             END
                         END
                     ELSE
+                        _msg_type RDP_MSG_STAT_REQ == IF
+                            # --- Handle STAT_REQ ---
+                            # Sender requests status (e.g. Tx Window Full).
+                            # Respond with STAT_ACK containing last received seq (RDP_SEQ_IN - 1).
+                            _conn RDP_MSG_STAT_ACK _rdp_send_response_packet DROP
+                        ELSE
                         _msg_type RDP_MSG_NACK == IF
                             # --- Handle NACK ---
                             # Peer reports missing packet. NACK seq is the last received seq.
@@ -479,6 +485,7 @@ DEF RDP.update {
                                     END
                                 END
                             END
+                        END
                         END
                         END
                     END

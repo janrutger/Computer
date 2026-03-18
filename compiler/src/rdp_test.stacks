@@ -24,6 +24,7 @@ VALUE _recv_buf 0       # Buffer to hold received data
 VALUE _recv_success 0
 VALUE _recv_i 0
 VALUE _recv_len 0
+VALUE _stress_i 0       # Counter for stress test loop
 
 # Helper to print the state of a connection
 DEF print_conn_state {
@@ -95,12 +96,13 @@ DEF main {
     44 _test_payload ARRAY.append
     45 _test_payload ARRAY.append
 
-    # 4. Event Loop (Process Packets)
+    # 4. Event Loop (Process Packets & Stress Test)
     # We assume the handshake takes a few ticks.
     VALUE _loop_count 0
-    WHILE _loop_count 10 < DO
+    WHILE _loop_count 20 < DO  # Increased ticks to allow for stress test
         "Tick " PRTstring _loop_count PRTnum
-        "  " PRTstring
+        " " PRTstring
+        
         
         ASM {
             nop
@@ -155,17 +157,30 @@ DEF main {
         _client_conn print_conn_state
 
         # TEST RDP.send: If OPEN and not yet sent, try sending data
-        RDP_STATE _client_conn LIST.get RDP_STATE_OPEN == IF
-            _has_sent 0 == IF
-                "State OPEN. Attempting RDP.send...\n" PRTstring
-                
-                # ( conn_ptr data_ptr length -- success )
-                _client_conn _test_payload 4 RDP.send 
-                IF
-                    "RDP.send SUCCESS.\n" PRTstring
-                    1 AS _has_sent
-                ELSE
-                    "RDP.send FAILED.\n" PRTstring
+        # This test continues across multiple ticks until all 10 packets are sent.
+        _stress_i 10 < IF
+            RDP_STATE _client_conn LIST.get RDP_STATE_OPEN == IF
+                _stress_i 0 == IF
+                    "State OPEN. Starting Stress Test (Scenario A)...\n" PRTstring
+                END
+
+                # In each tick, try to send as many packets as possible until the
+                # buffer is full (RDP.send returns 0) or all 10 are sent.
+                1 AS _can_still_send
+                WHILE _stress_i 10 < _can_still_send * DO
+                    # ( conn_ptr data_ptr length -- success )
+                    _client_conn _test_payload 4 RDP.send
+                    IF
+                        "Send " PRTstring _stress_i PRTnum " OK. " PRTstring
+                        _stress_i 1 + AS _stress_i
+                    ELSE
+                        "Send Blocked. Waiting for sync...\n" PRTstring
+                        0 AS _can_still_send # Break inner loop for this tick
+                    END
+                DONE
+
+                _stress_i 10 == IF
+                    "Stress Test Completed Successfully.\n" PRTstring
                 END
             END
         END
