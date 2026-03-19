@@ -58,10 +58,10 @@ def main():
                     # # 2. Simulate Latency
                     # time.sleep(CHAOS_CONFIG["latency_ms"] / 1000.0)
 
-                    # # 3. Simulate Duplication
-                    # if random.random() < CHAOS_CONFIG["duplication_rate"]:
-                    #     print(f"CHAOS: Duplicating packet from {addr}")
-                    #     s.sendto(data, addr) # This will be processed as a separate packet
+                    # 3. Simulate Duplication
+                    if random.random() < CHAOS_CONFIG["duplication_rate"]:
+                        print(f"CHAOS: Duplicating packet from {addr}")
+                        s.sendto(data, addr) # This will be processed as a separate packet
 
                 if len(data) < HEADER_SIZE:
                     print(f"WARN: Received runt packet from {addr}, ignoring.")

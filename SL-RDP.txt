@@ -55,7 +55,7 @@ De ontvanger
 **
     - Als de ontvanger een pakket mist (volgnummer klopt niet), stuurt hij een NACK-bericht met het laatst correct ontvangen volgnummer.
     - Als de ontvanger een pakket ontvangt dat al is verwerkt (duplicaat, volgnummer < verwacht), wordt dit stilzwijgend genegeerd.
-    - Als de verzender een NACK-bericht ontvangt, herzendt hij alleen het specifiek ontbrekende pakket. Een extra STAT_REQ is hier niet nodig.
+    - Als de verzender een NACK-bericht ontvangt, herzendt hij het specifiek ontbrekende pakket en stuurt direct een STAT_REQ. Dit forceert een snelle update van de ontvanger om eventuele vervolggaten te dichten.
 **
     - Als de ontvangstbuffer van de ontvanger vol raakt, stuurt deze een WAIT-bericht.
     - Als de verzender een WAIT-bericht ontvangt, pauzeert hij het verzenden van nieuwe DATA-pakketten en gaat naar de WAIT-staat. Hij wacht op een RESUME-bericht.
@@ -64,7 +64,7 @@ De ontvanger
     - Wanneer het verzend buffer van 10 posities vol is, stuurt de verzender een STAT_REQ bericht
     - de ontvanger reageert met een STAT_ACK bericht met het laatst onvangen bericht nummer
     - als bericht nummer klopt met het laatst verstuurde bericht, wordt de verzendbuffer geschoont, en de volgende tien berichten kunnen worden verzonden
-    - Als het berichtnummer in de STAT_ACK niet klopt, herzendt de verzender de ontbrekende pakketten vanaf het bevestigde nummer.
+    - Als het berichtnummer in de STAT_ACK niet klopt, herzendt de verzender het eerstvolgende ontbrekende pakket en start een sync-loop (via STAT_REQ).
 ** 
     - Wanneer de ontvanger een bericht verwacht maar niks meer ontvangt stuurt de ontvanger na n re-try's een STAT_QRY bericht
     - De reactie van de zender hangt af van zijn staat (zie state machine). Dit is de sleutel tot het doorbreken van een deadlock.
@@ -154,7 +154,7 @@ De kern van het protocol is een state machine die de status van elke verbinding 
 
 | **3. Recovery**|                            |                                             |                |          |
 | `OPEN`        | Ontvangt `DATA` (niet op volgorde) | Stuur `NACK` met laatst ontvangen nummer   | `OPEN`         | Ontvanger|
-| `OPEN`        | Ontvangt `NACK`             | Stuur ontbrekend pakket opnieuw (zonder STAT_REQ) | `OPEN`         | Zender   |
+| `OPEN`        | Ontvangt `NACK`             | Stuur ontbrekend pakket opnieuw + `STAT_REQ`| `OPEN`         | Zender   |
 
 **Status Update (17 maart):**
 Deze fase is succesvol geïmplementeerd en geverifieerd, but not fully tested yet
