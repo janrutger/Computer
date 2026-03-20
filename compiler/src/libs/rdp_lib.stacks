@@ -50,6 +50,7 @@ CONST RDP_RX_BUF      8   # Pointer to RX Dictionary (Received out of order)
 # Timing & Retries
 CONST RDP_TIMER       9   # Timestamp of last action (for Timeout)
 CONST RDP_RETRIES     10  # Retry counter
+CONST RDP_RX_CONGESTED 11 # Flag: 1 if we sent WAIT, 0 if normal
 
 # --- Library Globals ---
 # Dictionary to hold active connection pointers, keyed by a composite of peer_id and peer_port.
@@ -115,7 +116,7 @@ STRING _str_newline "\n"
 
 # Timeout settings
 CONST RDP_TIMEOUT_MS 2000
-CONST RDP_MAX_RETRIES 5
+CONST RDP_MAX_RETRIES 10
 
 # --- Packet Pool Configuration ---
 CONST RDP_PACKET_POOL_SIZE 16  # Total number of reusable packet buffers TX windowsize + RX windowsize
@@ -264,6 +265,11 @@ DEF _rdp_check_timeout {
                     _state RDP_STATE_REQ == IF
                          # Resend STAT_REQ (Keep-alive or Poll)
                         _conn RDP_MSG_STAT_REQ _rdp_send_control_packet DROP
+                    ELSE
+                        _state RDP_STATE_WAIT == IF
+                            # Probe: Send STAT_REQ to check if receiver is ready
+                            _conn RDP_MSG_STAT_REQ _rdp_send_control_packet DROP
+                        END
                     END
                 END
             END
@@ -297,6 +303,7 @@ DEF _rdp_alloc_conn {
     0 RDP_SEQ_ACK _conn LIST.put
     TIME.uptime RDP_TIMER _conn LIST.put
     0 RDP_RETRIES _conn LIST.put
+    0 RDP_RX_CONGESTED _conn LIST.put
 
     # 5. Initialize Buffers (Dictionaries of size 10)
     RDP_TX_WINDOW_SIZE DICT.new RDP_TX_BUF _conn LIST.put
@@ -336,25 +343,7 @@ VALUE _rx_pkt 0
 DEF RDP.update {
     AS _inbox
 
-    # 1. Maintenance: Check Timeouts for all active connections
-    _rdp_conns DICT.count AS _count
-    0 AS _i
-    WHILE _i _count < DO
-        # DICT.item returns (key value).
-        _i _rdp_conns DICT.item AS _conn_ptr AS _key
-        
-        _conn_ptr _rdp_check_timeout
-
-        RDP_STATE _conn_ptr LIST.get RDP_STATE_CLOSED == IF
-            # Connection died, remove it.
-            _key _rdp_conns DICT.remove
-            _count 1 - AS _count
-        ELSE
-            _i 1 + AS _i
-        END
-    DONE
-
-    # 2. Poll for a new packet using the provided inbox.
+    # 1. Poll for a new packet using the provided inbox.
     _rdp_recv_buf _inbox SOCKET.read IF
         # Packet received. Check if it's an RDP packet.
         _rdp_recv_buf MESSAGE.payload_ptr AS _payload_ptr
@@ -372,6 +361,10 @@ DEF RDP.update {
             _key _rdp_conns DICT.has_key IF
                 # --- Scenario: Existing connection found ---
                 _key _rdp_conns DICT.get AS _conn
+                
+                # Any packet from the peer is a sign of life. Reset Watchdog.
+                TIME.uptime RDP_TIMER _conn LIST.put
+                0 RDP_RETRIES _conn LIST.put
 
                 _msg_type RDP_MSG_HELLO == IF
                     # --- Scenario: Remote Peer Restart / Re-connect ---
@@ -383,6 +376,55 @@ DEF RDP.update {
                     RDP_STATE_OPEN RDP_STATE _conn LIST.put
                     _conn RDP_MSG_STAT_ACK _rdp_send_control_packet DROP
                 ELSE
+                    _msg_type RDP_MSG_WAIT == IF
+                        # --- Handle WAIT ---
+                        # Receiver buffer is full. Pause sending.
+                        RDP_STATE_WAIT RDP_STATE _conn LIST.put
+                        TIME.uptime RDP_TIMER _conn LIST.put
+                    ELSE
+                    _msg_type RDP_MSG_RESUME == IF
+                        # --- Handle RESUME ---
+                        # Receiver has space. Resume sending.
+                        RDP_STATE_OPEN RDP_STATE _conn LIST.put
+                        
+                        # 1. Cleanup Tx Buffer (Same logic as STAT_ACK: seq_num is what they HAVE)
+                        _payload_ptr 1 + AS _tmp_ptr
+                        *_tmp_ptr AS _seq_num
+
+                        RDP_TX_BUF _conn LIST.get AS _tx_buf
+                        1 AS _i
+                        WHILE _i RDP_TX_WINDOW_SIZE 1 + < DO
+                            _i _tx_buf DICT.has_key IF
+                                _i _tx_buf DICT.get AS _pkt_buf
+                                1 _pkt_buf ARRAY.get AS _pkt_seq
+                                _pkt_seq _seq_num > 0 == IF
+                                    _pkt_buf _rdp_release_buffer
+                                    _i _tx_buf DICT.remove
+                                END
+                            END
+                            _i 1 + AS _i
+                        DONE
+
+                        # 2. Resend ALL remaining packets in Tx Buffer (Ordered by Sequence)
+                        # Iterate from (LastAck + 1) to (NextToSend)
+                        _seq_num 1 + AS _resend_seq
+                        RDP_SEQ_OUT _conn LIST.get AS _len  # Reuse _len variable as limit
+                        
+                        WHILE _resend_seq _len < DO
+                            _resend_seq RDP_TX_WINDOW_SIZE % 1 + AS _key
+                            _key _tx_buf DICT.has_key IF
+                                _key _tx_buf DICT.get AS _pkt_buf
+                                RDP_PEER_ID    _conn LIST.get AS _dest_id
+                                RDP_PEER_PORT  _conn LIST.get AS _dest_port
+                                RDP_LOCAL_PORT _conn LIST.get AS _src_port
+                                _pkt_buf _dest_id _dest_port _src_port SOCKET.snd_list DROP
+                            END
+                            _resend_seq 1 + AS _resend_seq
+                        DONE
+
+                        # 3. Force Sync: Check if burst arrived safely
+                        _conn RDP_MSG_STAT_REQ _rdp_send_control_packet DROP
+                    ELSE
                     _msg_type RDP_MSG_STAT_ACK == IF
                         # --- Handle STAT_ACK ---
                         RDP_STATE _conn LIST.get AS _current_state
@@ -443,9 +485,15 @@ DEF RDP.update {
                     ELSE
                         _msg_type RDP_MSG_STAT_REQ == IF
                             # --- Handle STAT_REQ ---
-                            # Sender requests status (e.g. Tx Window Full).
-                            # Respond with STAT_ACK containing last received seq (RDP_SEQ_IN - 1).
-                            _conn RDP_MSG_STAT_ACK _rdp_send_response_packet DROP
+                            # Sender requests status.
+                            # If we are CONGESTED (Buffer Full), respond with WAIT instead of STAT_ACK
+                            # to keep the sender paused.
+                            RDP_RX_CONGESTED _conn LIST.get 1 == IF
+                                _conn RDP_MSG_WAIT _rdp_send_response_packet DROP
+                            ELSE
+                                # Normal operation: Respond with STAT_ACK
+                                _conn RDP_MSG_STAT_ACK _rdp_send_response_packet DROP
+                            END
                         ELSE
                             _msg_type RDP_MSG_STAT_QRY == IF
                                 # --- Handle STAT_QRY ---
@@ -474,6 +522,7 @@ DEF RDP.update {
                                 _last_sent _seq_num == IF
                                     # In Sync: Send ACK
                                     _conn RDP_MSG_ACK _seq_num _rdp_send_raw_ctrl_packet DROP
+                                    RDP_STATE_OPEN RDP_STATE _conn LIST.put # LET OP
                                 ELSE
                                     # Out of Sync: Retransmit + STAT_REQ
                                     _seq_num 1 + AS _resend_seq 
@@ -490,6 +539,7 @@ DEF RDP.update {
                                         # Fallback if packet missing from buffer: just confirm what they have
                                         _conn RDP_MSG_ACK _seq_num _rdp_send_raw_ctrl_packet DROP
                                     END
+                                    RDP_STATE_OPEN RDP_STATE _conn LIST.put
                                 END
                             ELSE
                                 _msg_type RDP_MSG_ACK == IF
@@ -548,6 +598,17 @@ DEF RDP.update {
                                 RDP_SEQ_IN _conn LIST.get AS _expected_seq
 
                                 _seq_num _expected_seq == IF
+                                    # Check RX Buffer Capacity (Scenario C)
+                                    # If count >= Window Size (simulated via < 1 SWAP -)
+                                    RDP_RX_BUF _conn LIST.get DICT.count RDP_RX_WINDOW_SIZE < 1 SWAP - IF
+                                        # Buffer Full.
+                                        # If not already congested, send WAIT and mark.
+                                        RDP_RX_CONGESTED _conn LIST.get 0 == IF
+                                            _conn RDP_MSG_WAIT _rdp_send_response_packet DROP
+                                            # Mark as congested so we know when to send RESUME later
+                                            1 RDP_RX_CONGESTED _conn LIST.put
+                                        END
+                                    ELSE
                                     # --- In Order Packet ---
                                     # a. Store in Rx_Buffer (Key is seq_num)
                                     _rdp_get_buffer AS _rx_pkt
@@ -595,12 +656,15 @@ DEF RDP.update {
                                         # Ignore silently as per spec.
                                     END
                                 END
+                                    END
                             END
                         END
                         END
                         END
                         END
                         END
+                    END
+                    END
                     END
                 END
 
@@ -631,6 +695,24 @@ DEF RDP.update {
             # For now, we ignore them.
         END
     END
+
+    # 2. Maintenance: Check Timeouts for all active connections
+    _rdp_conns DICT.count AS _count
+    0 AS _i
+    WHILE _i _count < DO
+        # DICT.item returns (key value).
+        _i _rdp_conns DICT.item AS _conn_ptr AS _key
+        
+        _conn_ptr _rdp_check_timeout
+
+        RDP_STATE _conn_ptr LIST.get RDP_STATE_CLOSED == IF
+            # Connection died, remove it.
+            _key _rdp_conns DICT.remove
+            _count 1 - AS _count
+        ELSE
+            _i 1 + AS _i
+        END
+    DONE
 }
 
 
@@ -724,45 +806,33 @@ DEF RDP.recv {
     AS _data
     AS _conn
 
-    # 1. Determine what sequence number we expect next for the APP (not the protocol)
-    # The protocol has RDP_SEQ_IN which tracks what the protocol has accepted.
-    # We need to track what the Application has consumed.
-    # For v0.2, let's assume we simply peek at the oldest item in the buffer.
-    # Actually, RDP_SEQ_IN is the *next expected from wire*.
-    # We need a new pointer RDP_SEQ_READ or similar, OR we just look for the smallest key in dict.
-    # Simpler: The dictionary keys are sequence numbers.
-    # If we implement a strictly ordered stream, we should just ask for "Seq X".
-    # But since we don't store "Last Read Seq" in the conn record yet...
-    # Let's iterate the buffer to find the smallest sequence number available.
-    
     VALUE _rx_buf 0
     RDP_RX_BUF _conn LIST.get AS _rx_buf
     
     VALUE _found_pkt 0
     0 AS _found_pkt
-    VALUE _found_seq 0
-    1 negate AS _found_seq
+
+    _rx_buf DICT.count AS _count
     
-    # Naive search for any packet (in v0.2 optimization).
-    # A better way is to track `Last_Read_Seq` in the connection record.
-    # For now, let's iterate keys 0..MaxSeq (risky) or iterate buffer.
-    # Let's assume we simply check the buffer.
-    # Optimization: Iterate possible sequence numbers based on RDP_SEQ_IN - window?
-    # Since we don't have an iterator for dict keys easily, this is tricky without a `Last_Read_Seq`.
-    # WORKAROUND: For this test, we just check if the buffer has items and pick the first one we find via iteration.
-    # Ideally, we add RDP_SEQ_APP to the conn record.
-    
-    # Let's check keys based on RDP_SEQ_IN history.
-    # RDP_SEQ_IN is the next one we expect from network.
-    # So the ones in buffer are < RDP_SEQ_IN.
-    RDP_SEQ_IN _conn LIST.get AS _seq_num
-    
-    # Look backwards 10 slots
-    0 AS _i
-    WHILE _i RDP_RX_WINDOW_SIZE 1 + < DO
-        _seq_num _i - AS _key
-        _key _rx_buf DICT.has_key IF
-             _key _rx_buf DICT.get AS _pkt_buf
+    _count 0 > IF
+        # FIFO Strategy: Find the lowest Sequence Number in the buffer
+        # 1. Initialize min with the first item's key
+        VALUE _min_key 0
+        0 _rx_buf DICT.item DROP AS _min_key
+        
+        # 2. Iterate to find true min
+        VALUE _curr_key 0
+        1 AS _i
+        WHILE _i _count < DO
+            _i _rx_buf DICT.item DROP AS _curr_key
+            _curr_key _min_key < IF
+                _curr_key AS _min_key
+            END
+            _i 1 + AS _i
+        DONE
+        
+        # 3. Retrieve packet
+        _min_key _rx_buf DICT.get AS _pkt_buf
              
              # Copy data to user array (Offset 2 is start of data in our packet format [Type, Seq, Data...])
              # _pkt_buf contains [Capacity, Count, Type, Seq, Payload...]
@@ -778,13 +848,20 @@ DEF RDP.recv {
              
              # Cleanup
              _pkt_buf _rdp_release_buffer
-             _key _rx_buf DICT.remove
+             _min_key _rx_buf DICT.remove
+             
+             # Flow Control Hysteresis (Low Watermark)
+             # Only send RESUME if we were congested AND we now have room for a full TX Window.
+             # Threshold: Count <= (RX_SIZE - TX_SIZE) -> 10 - 6 = 4.
+             RDP_RX_CONGESTED _conn LIST.get 1 == IF
+                 _rx_buf DICT.count 5 < IF
+                     0 RDP_RX_CONGESTED _conn LIST.put
+                     _conn RDP_MSG_RESUME _rdp_send_response_packet DROP
+                 END
+             END
+             
              1 AS _found_pkt
-             # Break loop (hacky)
-             RDP_RX_WINDOW_SIZE 10 + AS _i
-        END
-        _i 1 + AS _i
-    DONE
+    END
     
     _found_pkt
 }

@@ -35,6 +35,7 @@
 . $_poll_i 1
 . $byte_val 1
 . $_poll_tmp_ptr 1
+. $_net_poll_str_0 22
 
 # .CODE
 
@@ -89,7 +90,7 @@
 :sys_net_config_while_start_0
     ldm A $_i
     stack A $DATASTACK_PTR
-    ldi A 16
+    ldi A 20
     stack A $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
@@ -596,7 +597,13 @@
 :_net_poll_if_end_10
     jmp :_net_poll_if_end_9
 :_net_poll_if_else_9
-    call @HAL.rx_skip_and_advance
+    ldi A $_net_poll_str_0
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HAL.rx_skip_and_advance
 :_net_poll_if_end_9
 :_net_poll_if_end_7
 :_net_poll_if_end_6
@@ -654,3 +661,4 @@
 % $_poll_i 0
 % $byte_val 0
 % $_poll_tmp_ptr 0
+% $_net_poll_str_0 \D \E \B \U \G \: \space \P \A \C \K \E \T \space \D \R \O \P \P \E \D \null

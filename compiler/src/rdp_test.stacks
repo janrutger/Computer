@@ -99,7 +99,7 @@ DEF main {
     # 4. Event Loop (Process Packets & Stress Test)
     # We assume the handshake takes a few ticks.
     VALUE _loop_count 0
-    WHILE _loop_count 25 < DO  # Increased ticks to allow for stress test
+    WHILE _loop_count 80 < DO  # Increased ticks for Flow Control test
         "Tick " PRTstring _loop_count PRTnum
         " " PRTstring
         
@@ -136,29 +136,33 @@ DEF main {
         
         # TEST RDP.recv: Check if server has data for application
         _server_conn 0 != IF
-            _recv_buf ARRAY.clear
-            _server_conn _recv_buf RDP.recv AS _recv_success
-            _recv_success IF
-                "Server App: Received Data! Payload: " PRTstring
-                
-                _recv_buf ARRAY.len AS _recv_len
-                0 AS _recv_i
-                WHILE _recv_i _recv_len < DO
-                    _recv_i _recv_buf ARRAY.get PRTnum
-                    ", " PRTstring
-                    _recv_i 1 + AS _recv_i
-                DONE
-                "\n" PRTstring
+            # SCENARIO C TEST: Delay reading to force buffer fill (Backpressure)
+            # Server starts reading only after tick 30
+            _loop_count 30 > IF
+                _recv_buf ARRAY.clear
+                _server_conn _recv_buf RDP.recv AS _recv_success
+                _recv_success IF
+                    "Server App: Received Data! Payload: " PRTstring
+                    
+                    _recv_buf ARRAY.len AS _recv_len
+                    0 AS _recv_i
+                    WHILE _recv_i _recv_len < DO
+                        _recv_i _recv_buf ARRAY.get PRTnum
+                        ", " PRTstring
+                        _recv_i 1 + AS _recv_i
+                    DONE
+                    "\n" PRTstring
+                END
             END
         END
 
 
         # Check State
         _client_conn print_conn_state
-
+        VALUE _stress_count 23
         # TEST RDP.send: If OPEN and not yet sent, try sending data
         # This test continues across multiple ticks until all 10 packets are sent.
-        _stress_i 10 < IF
+        _stress_i _stress_count < IF
             RDP_STATE _client_conn LIST.get RDP_STATE_OPEN == IF
                 _stress_i 0 == IF
                     "State OPEN. Starting Stress Test (Scenario A)...\n" PRTstring
@@ -167,7 +171,7 @@ DEF main {
                 # In each tick, try to send as many packets as possible until the
                 # buffer is full (RDP.send returns 0) or all 10 are sent.
                 1 AS _can_still_send
-                WHILE _stress_i 10 < _can_still_send * DO
+                WHILE _stress_i _stress_count < _can_still_send * DO
                     # ( conn_ptr data_ptr length -- success )
                     _client_conn _test_payload 4 RDP.send
                     IF
@@ -179,7 +183,7 @@ DEF main {
                     END
                 DONE
 
-                _stress_i 10 == IF
+                _stress_i _stress_count == IF
                     "Stress Test Completed Successfully.\n" PRTstring
                 END
             END

@@ -30,7 +30,7 @@ def main():
     if args.chaos:
         print("CHAOS MODE ENABLED: Simulating packet loss, latency, and duplication.")
         CHAOS_CONFIG = {
-            "drop_rate": 0.10,      # 10% chance to drop a packet
+            "drop_rate": 0.03,      # 5% chance to drop a packet
             "latency_ms": 100,      # 100ms artificial delay
             "duplication_rate": 0.05 # 5% chance to duplicate a packet
         }
@@ -58,10 +58,10 @@ def main():
                     # # 2. Simulate Latency
                     # time.sleep(CHAOS_CONFIG["latency_ms"] / 1000.0)
 
-                    # 3. Simulate Duplication
-                    if random.random() < CHAOS_CONFIG["duplication_rate"]:
-                        print(f"CHAOS: Duplicating packet from {addr}")
-                        s.sendto(data, addr) # This will be processed as a separate packet
+                    # # 3. Simulate Duplication
+                    # if random.random() < CHAOS_CONFIG["duplication_rate"]:
+                    #     print(f"CHAOS: Duplicating packet from {addr}")
+                    #     s.sendto(data, addr) # This will be processed as a separate packet
 
                 if len(data) < HEADER_SIZE:
                     print(f"WARN: Received runt packet from {addr}, ignoring.")

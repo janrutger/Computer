@@ -58,8 +58,10 @@ De ontvanger
     - Als de verzender een NACK-bericht ontvangt, herzendt hij het specifiek ontbrekende pakket en stuurt direct een STAT_REQ. Dit forceert een snelle update van de ontvanger om eventuele vervolggaten te dichten.
 **
     - Als de ontvangstbuffer van de ontvanger vol raakt, stuurt deze een WAIT-bericht.
-    - Als de verzender een WAIT-bericht ontvangt, pauzeert hij het verzenden van nieuwe DATA-pakketten en gaat naar de WAIT-staat. Hij wacht op een RESUME-bericht.
+    - Als de verzender een WAIT-bericht ontvangt, pauzeert hij het verzenden van DATA-pakketten en gaat naar de WAIT-staat.
+    - In de WAIT-staat start de zender een 'Probe'-timer (periodieke STAT_REQ) om de verbinding levend te houden en verlies van een RESUME-bericht te detecteren.
     - Zodra de ontvanger weer ruimte heeft, stuurt hij een RESUME-bericht om het verzenden te hervatten.
+    - Pakketten die nog onderweg waren toen de buffer vol raakte, worden door de ontvanger gedropt (genegeerd). De zender zal deze na de RESUME opnieuw versturen (getriggerd door timeout of NACK).
 **
     - Wanneer het verzend buffer van 10 posities vol is, stuurt de verzender een STAT_REQ bericht
     - de ontvanger reageert met een STAT_ACK bericht met het laatst onvangen bericht nummer
@@ -116,11 +118,19 @@ Doel: Voorkomen dat de ontvanger overspoeld wordt als de applicatie de data niet
 1.  De zender verstuurt pakketten 0 t/m 9. De applicatie aan de ontvangstkant leest niets uit.
 2.  De `Rx_Buffer` van de ontvanger (10 posities) raakt vol.
 3.  De ontvanger detecteert dit en stuurt onmiddellijk een `WAIT` bericht (met Seq 9).
+    *   *Note:* Eventuele DATA pakketten die nog binnenkomen terwijl de buffer vol is, worden genegeerd (dropped).
+    *   De ontvanger zet een interne vlag `CONGESTED` op TRUE.
 4.  De zender ontvangt `WAIT`, zet zijn status op `WAIT` en pauzeert het versturen van nieuwe `DATA`.
+    *   De zender start een periodieke timer (bijv. 1 sec) en stuurt `STAT_REQ` (Probe) om te controleren of de ontvanger nog leeft/bereikbaar is.
+    *   Dit voorkomt een deadlock als het `RESUME` bericht verloren zou gaan.
 5.  De applicatie roept `RDP.recv` aan en leest één of meer pakketten uit de `Rx_Buffer`. Er ontstaat ruimte.
-6.  De ontvanger detecteert dat er weer ruimte is.
-7.  De ontvanger stuurt een `RESUME` bericht (met Seq 9).
+6.  De ontvanger detecteert dat er weer voldoende ruimte is (Low Watermark).
+    *   Drempelwaarde: Buffer Count <= (Rx_Size - Tx_Size). Bijv: 10 - 6 = 4.
+7.  Als de buffer onder deze drempel komt EN de `CONGESTED` vlag staat aan: Reset vlag en stuur `RESUME`.
 8.  De zender ontvangt `RESUME`, zet status terug op `OPEN` en hervat het verzenden.
+    *   **Actie:** De zender gebruikt het volgnummer in `RESUME` om de `Tx_Buffer` op te schonen (net als bij een `STAT_ACK`).
+    *   **Herstel:** De zender herzendt **alle** nog aanwezige pakketten in de `Tx_Buffer` (deze zijn immers verloren gegaan tijdens de WAIT).
+    *   Dit zorgt voor een directe en volledige herstart van de datastroom.
 
 ## Connectie record:
 Veld,               Beschrijving
@@ -172,12 +182,12 @@ Deze fase is succesvol geïmplementeerd en geverifieerd, but not fully tested ye
 | `OPEN`        | `Rx_Buffer` vol             | Stuur `WAIT`                                | `OPEN`         | Ontvanger|
 | `OPEN`        | `Rx_Buffer` heeft weer ruimte | Stuur `RESUME`                              | `OPEN`         | Ontvanger|
 | `OPEN`        | Ontvangt `WAIT`             | Pauzeer verzenden                           | `WAIT`         | Zender   |
+| `WAIT`        | Timeout (Probe)             | Stuur `STAT_REQ`                            | `WAIT`         | Zender   |
 | `WAIT`        | Ontvangt `RESUME`           | Hervat verzenden                            | `OPEN`         | Zender   |
 
 | **6. Watchdog**|                            |                                             |                |          |
 | `OPEN`        | Timeout (Geen Data)         | Stuur `STAT_QRY`                            | `OPEN`         | Ontvanger|
 | `OPEN`        | Ontvangt `STAT_QRY`         | Stuur `ACK` of Herzend (+ `STAT_REQ`)       | `OPEN`(/`REQ`) | Zender   |
-| `WAIT`        | Timeout (geen RESUME)       | Stuur `STAT_REQ`                            | `WAIT`         | Zender   |
 | `WAIT`        | Ontvangt `STAT_ACK`         | Reset timer, blijf wachten op `RESUME`      | `WAIT`         | Zender   |
 | `WAIT`        | Ontvangt `STAT_QRY`         | Hervat verzenden (stuur volgend DATA)       | `OPEN`         | Zender   |
 
