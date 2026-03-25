@@ -90,7 +90,7 @@
 :sys_net_config_while_start_0
     ldm A $_i
     stack A $DATASTACK_PTR
-    ldi A 20
+    ldi A 25
     stack A $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR

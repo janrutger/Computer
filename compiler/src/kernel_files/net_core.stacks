@@ -94,7 +94,7 @@ DEF sys_net_config {    # syscall 65
             # 6. Populate Packet Pool (Fixed 16 buffers)
             VALUE _i 0
             0 AS _i
-            WHILE _i 20 < DO  # 16 is the default here
+            WHILE _i 25 < DO  # 16 is the default here
                 _rx_buffer_size NEW.list      # Allocate buffer of size _rx_buffer_size
                 _packet_pool DEQUE.append     # Add to pool
                 _i 1 + AS _i

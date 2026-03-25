@@ -37,6 +37,12 @@ DEF print_server_rx_state {
     "Server RX Next Seq: " PRTstring RDP_SEQ_IN _conn LIST.get PRTnum "\n" PRTstring
 }
 
+MACRO Yield {
+    ASM {
+        nop
+    }
+}
+
 
 DEF main {
     "--- RDP Handshake Test ---\n" PRTstring
@@ -99,19 +105,13 @@ DEF main {
     # 4. Event Loop (Process Packets & Stress Test)
     # We assume the handshake takes a few ticks.
     VALUE _loop_count 0
-    WHILE _loop_count 80 < DO  # Increased ticks for Flow Control test
+    WHILE _loop_count 600 < DO  # Increased ticks for Flow Control test
         "Tick " PRTstring _loop_count PRTnum
         " " PRTstring
         
-        
-        ASM {
-            nop
-        }
+        Yield
         # Update Server (Should receive HELLO, send STAT_ACK)
         _inbox_server RDP.update
-        ASM {
-            nop
-        }
         # Update Client (Should receive STAT_ACK, switch to OPEN)
         _inbox_client RDP.update
 
@@ -140,6 +140,7 @@ DEF main {
             # Server starts reading only after tick 30
             _loop_count 30 > IF
                 _recv_buf ARRAY.clear
+                Yield
                 _server_conn _recv_buf RDP.recv AS _recv_success
                 _recv_success IF
                     "Server App: Received Data! Payload: " PRTstring
@@ -159,7 +160,7 @@ DEF main {
 
         # Check State
         _client_conn print_conn_state
-        VALUE _stress_count 23
+        VALUE _stress_count 250
         # TEST RDP.send: If OPEN and not yet sent, try sending data
         # This test continues across multiple ticks until all 10 packets are sent.
         _stress_i _stress_count < IF
@@ -174,6 +175,7 @@ DEF main {
                 WHILE _stress_i _stress_count < _can_still_send * DO
                     # ( conn_ptr data_ptr length -- success )
                     _client_conn _test_payload 4 RDP.send
+                    Yield
                     IF
                         "Send " PRTstring _stress_i PRTnum " OK. " PRTstring
                         _stress_i 1 + AS _stress_i

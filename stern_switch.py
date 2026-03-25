@@ -99,7 +99,8 @@ def main():
                 elif dest_addr in switching_table:
                     # Unicast to a known destination
                     target_udp_addr = switching_table[dest_addr]
-                    print(f"FORWARD: Unicasting packet from {hex(src_addr)} to {hex(dest_addr)} at {target_udp_addr}")
+                    # Debug print for unicast forwarding
+                    # print(f"FORWARD: Unicasting packet from {hex(src_addr)} to {hex(dest_addr)} at {target_udp_addr}")
                     s.sendto(data, target_udp_addr)
 
                 elif dest_addr == 0:
@@ -109,6 +110,7 @@ def main():
                 else:
                     # Unknown unicast destination, drop the packet
                     print(f"DROP: Dropping packet from {hex(src_addr)} to unknown destination {hex(dest_addr)}")
+
 
             except Exception as e:
                 print(f"ERROR: An exception occurred in the switch loop: {e}")

@@ -115,7 +115,7 @@ STRING _str_newline "\n"
 
 
 # Timeout settings
-CONST RDP_TIMEOUT_MS 2000
+CONST RDP_TIMEOUT_MS 3500       # 3500 3.5 seconds timeout value
 CONST RDP_MAX_RETRIES 10
 
 # --- Packet Pool Configuration ---
@@ -206,6 +206,9 @@ DEF _rdp_send_raw_ctrl_packet {
 
     # Send using the socket library's list sender
     _rdp_ctrl_packet _dest_id _dest_port _src_port SOCKET.snd_list
+    ASM {
+        nop
+    }
 }
 
 # _rdp_send_control_packet ( conn_ptr msg_type -- success_flag )
@@ -385,7 +388,10 @@ DEF RDP.update {
                     _msg_type RDP_MSG_RESUME == IF
                         # --- Handle RESUME ---
                         # Receiver has space. Resume sending.
-                        RDP_STATE_OPEN RDP_STATE _conn LIST.put
+
+                        
+                        # RDP_STATE_OPEN RDP_STATE _conn LIST.put
+                        RDP_STATE_REQ RDP_STATE _conn LIST.put
                         
                         # 1. Cleanup Tx Buffer (Same logic as STAT_ACK: seq_num is what they HAVE)
                         _payload_ptr 1 + AS _tmp_ptr
@@ -424,6 +430,11 @@ DEF RDP.update {
 
                         # 3. Force Sync: Check if burst arrived safely
                         _conn RDP_MSG_STAT_REQ _rdp_send_control_packet DROP
+
+                        # LET OP, not trusted yet!
+                        TIME.uptime RDP_TIMER _conn LIST.put
+                        0 RDP_RETRIES _conn LIST.put
+
                     ELSE
                     _msg_type RDP_MSG_STAT_ACK == IF
                         # --- Handle STAT_ACK ---

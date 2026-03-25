@@ -563,6 +563,7 @@
 
             ldi I ~SYS_NET_SEND
             int $INT_VECTORS
+            nop
         :SOCKET.snd_list_if_end_5
     ret
 @SOCKET.bind
@@ -889,7 +890,9 @@
     ldm A $_src_port
     stack A $DATASTACK_PTR
     call @SOCKET.snd_list
-    ret
+
+        nop
+        ret
 @_rdp_send_control_packet
     ustack A $DATASTACK_PTR
     sto A $_msg_type
@@ -944,7 +947,7 @@
     ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
-    ldi A 2000
+    ldi A 3500
     stack A $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
@@ -1332,7 +1335,7 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :RDP.update_if_else_14
-    ldi A 3
+    ldi A 5
     stack A $DATASTACK_PTR
     ldi A 3
     stack A $DATASTACK_PTR
@@ -1498,6 +1501,18 @@
     stack A $DATASTACK_PTR
     call @_rdp_send_control_packet
     call @rt_drop
+    call @TIME.uptime
+    ldi A 9
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    stack Z $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
     jmp :RDP.update_if_end_14
 :RDP.update_if_else_14
     ldm A $_msg_type
@@ -3213,7 +3228,7 @@
 :main_while_start_0
     ldm A $_loop_count
     stack A $DATASTACK_PTR
-    ldi A 80
+    ldi A 600
     stack A $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
@@ -3235,13 +3250,11 @@
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
     
-            nop
-            ldm A $_inbox_server
+        nop
+        ldm A $_inbox_server
     stack A $DATASTACK_PTR
     call @RDP.update
-
-            nop
-            ldm A $_inbox_client
+    ldm A $_inbox_client
     stack A $DATASTACK_PTR
     call @RDP.update
     ldm A $_server_conn
@@ -3330,7 +3343,9 @@
     ld B Z
     ldm I $_ARR_TEMP_PTR
     stx B $_start_memory_
-    ldm A $_server_conn
+
+        nop
+        ldm A $_server_conn
     stack A $DATASTACK_PTR
     ldm A $_recv_buf
     stack A $DATASTACK_PTR
@@ -3444,7 +3459,9 @@
     ldi A 4
     stack A $DATASTACK_PTR
     call @RDP.send
-    ustack A $DATASTACK_PTR
+
+        nop
+        ustack A $DATASTACK_PTR
     tst A 0
     jmpt :main_if_else_10
     ldi A $main_str_17
@@ -3617,7 +3634,7 @@
 % $main_str_13 \S \e \r \v \e \r \space \C \o \n \n \e \c \t \i \o \n \space \i \d \e \n \t \i \f \i \e \d \. \Return \null
 % $main_str_14 \S \e \r \v \e \r \space \A \p \p \: \space \R \e \c \e \i \v \e \d \space \D \a \t \a \! \space \P \a \y \l \o \a \d \: \space \null
 % $main_str_15 \, \space \null
-% $_stress_count 23
+% $_stress_count 250
 % $main_str_16 \S \t \a \t \e \space \O \P \E \N \. \space \S \t \a \r \t \i \n \g \space \S \t \r \e \s \s \space \T \e \s \t \space \( \S \c \e \n \a \r \i \o \space \A \) \. \. \. \Return \null
 % $main_str_17 \S \e \n \d \space \null
 % $main_str_18 \space \O \K \. \space \null

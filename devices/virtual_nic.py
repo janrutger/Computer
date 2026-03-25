@@ -148,7 +148,8 @@ class VirtualNIC:
                 self.sock.send(packet_bytes)
                 if len(packet_bytes) >= HEADER_SIZE:
                     dest, src, port, ctrl = struct.unpack(HEADER_FORMAT, packet_bytes[:HEADER_SIZE])
-                    print(f"vNIC({hex(self.nic_address)}): Sent {len(packet_bytes)} bytes to {hex(dest)} via {self.switch_addr}")
+                    # Debug line to print a packet send
+                    # print(f"vNIC({hex(self.nic_address)}): Sent {len(packet_bytes)} bytes to {hex(dest)} via {self.switch_addr}")
                 else:
                     print(f"vNIC({hex(self.nic_address)}): Sent {len(packet_bytes)} bytes (Runt Packet) via {self.switch_addr}")
             except ConnectionRefusedError:
@@ -211,7 +212,8 @@ class VirtualNIC:
         # 3. Signal to driver by updating the head register
         self.ram.write(self.base_address + self.REG_RX_HEAD, current_head)
 
-        print(f"vNIC({hex(self.nic_address)}): Wrote {packet_len} bytes to RX Ring. Driver must poll.")
+        # Debug line to print a packet received
+        # print(f"vNIC({hex(self.nic_address)}): Wrote {packet_len} bytes to RX Ring. Driver must poll.")
 
 
 if __name__ == '__main__':

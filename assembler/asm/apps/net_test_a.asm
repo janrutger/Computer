@@ -497,6 +497,7 @@
 
             ldi I ~SYS_NET_SEND
             int $INT_VECTORS
+            nop
         :SOCKET.snd_list_if_end_5
     ret
 @SOCKET.bind

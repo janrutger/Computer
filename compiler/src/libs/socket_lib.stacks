@@ -279,6 +279,7 @@ DEF SOCKET.snd_list {
         ASM {
             ldi I ~SYS_NET_SEND
             int $INT_VECTORS
+            nop
         }
     END
 }

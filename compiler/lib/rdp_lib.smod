@@ -189,7 +189,9 @@
     ldm A $_src_port
     stack A $DATASTACK_PTR
     call @SOCKET.snd_list
-    ret
+
+        nop
+        ret
 @_rdp_send_control_packet
     ustack A $DATASTACK_PTR
     sto A $_msg_type
@@ -244,7 +246,7 @@
     ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
-    ldi A 2000
+    ldi A 3500
     stack A $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
@@ -632,7 +634,7 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :RDP.update_if_else_14
-    ldi A 3
+    ldi A 5
     stack A $DATASTACK_PTR
     ldi A 3
     stack A $DATASTACK_PTR
@@ -798,6 +800,18 @@
     stack A $DATASTACK_PTR
     call @_rdp_send_control_packet
     call @rt_drop
+    call @TIME.uptime
+    ldi A 9
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
+    stack Z $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.put
     jmp :RDP.update_if_end_14
 :RDP.update_if_else_14
     ldm A $_msg_type
