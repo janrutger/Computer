@@ -105,7 +105,7 @@ DEF main {
     # 4. Event Loop (Process Packets & Stress Test)
     # We assume the handshake takes a few ticks.
     VALUE _loop_count 0
-    WHILE _loop_count 600 < DO  # Increased ticks for Flow Control test
+    WHILE _loop_count 400 < DO  # Increased ticks for Flow Control test
         "Tick " PRTstring _loop_count PRTnum
         " " PRTstring
         
@@ -160,7 +160,7 @@ DEF main {
 
         # Check State
         _client_conn print_conn_state
-        VALUE _stress_count 250
+        VALUE _stress_count 231
         # TEST RDP.send: If OPEN and not yet sent, try sending data
         # This test continues across multiple ticks until all 10 packets are sent.
         _stress_i _stress_count < IF

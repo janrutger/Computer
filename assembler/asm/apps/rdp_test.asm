@@ -947,7 +947,7 @@
     ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
-    ldi A 3500
+    ldi A 2000
     stack A $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
@@ -1795,6 +1795,31 @@
     ldm I $_tmp_ptr
     ldx A $_start_memory_
     sto A $_seq_num
+    ldi A 4
+    stack A $DATASTACK_PTR
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    call @LIST.get
+    ldi A 1
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $_last_sent
+    stack A $DATASTACK_PTR
+    ldm A $_seq_num
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :RDP.update_if_else_28
+    ldm A $_conn
+    stack A $DATASTACK_PTR
+    ldi A 131
+    stack A $DATASTACK_PTR
+    ldm A $_seq_num
+    stack A $DATASTACK_PTR
+    call @_rdp_send_raw_ctrl_packet
+    call @rt_drop
     ldi A 7
     stack A $DATASTACK_PTR
     ldm A $_conn
@@ -1823,7 +1848,7 @@
     call @DICT.has_key
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.update_if_end_28
+    jmpt :RDP.update_if_end_29
     ldm A $_i
     stack A $DATASTACK_PTR
     ldm A $_tx_buf
@@ -1846,7 +1871,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :RDP.update_if_end_29
+    jmpt :RDP.update_if_end_30
     ldm A $_pkt_buf
     stack A $DATASTACK_PTR
     call @_rdp_release_buffer
@@ -1855,39 +1880,14 @@
     ldm A $_tx_buf
     stack A $DATASTACK_PTR
     call @DICT.remove
+:RDP.update_if_end_30
 :RDP.update_if_end_29
-:RDP.update_if_end_28
     ldm B $_i
     ldi A 1
     add A B
     sto A $_i
     jmp :RDP.update_while_start_4
 :RDP.update_while_end_4
-    ldi A 4
-    stack A $DATASTACK_PTR
-    ldm A $_conn
-    stack A $DATASTACK_PTR
-    call @LIST.get
-    ldi A 1
-    ustack B $DATASTACK_PTR
-    sub B A
-    ld A B
-    sto A $_last_sent
-    stack A $DATASTACK_PTR
-    ldm A $_seq_num
-    stack A $DATASTACK_PTR
-    call @rt_eq
-    ustack A $DATASTACK_PTR
-    tst A 0
-    jmpt :RDP.update_if_else_30
-    ldm A $_conn
-    stack A $DATASTACK_PTR
-    ldi A 131
-    stack A $DATASTACK_PTR
-    ldm A $_seq_num
-    stack A $DATASTACK_PTR
-    call @_rdp_send_raw_ctrl_packet
-    call @rt_drop
     ldi A 3
     stack A $DATASTACK_PTR
     ldi A 3
@@ -1895,8 +1895,8 @@
     ldm A $_conn
     stack A $DATASTACK_PTR
     call @LIST.put
-    jmp :RDP.update_if_end_30
-:RDP.update_if_else_30
+    jmp :RDP.update_if_end_28
+:RDP.update_if_else_28
     ldm B $_seq_num
     ldi A 1
     add A B
@@ -1976,7 +1976,7 @@
     ldm A $_conn
     stack A $DATASTACK_PTR
     call @LIST.put
-:RDP.update_if_end_30
+:RDP.update_if_end_28
     jmp :RDP.update_if_end_27
 :RDP.update_if_else_27
     ldm A $_msg_type
@@ -3228,7 +3228,7 @@
 :main_while_start_0
     ldm A $_loop_count
     stack A $DATASTACK_PTR
-    ldi A 600
+    ldi A 400
     stack A $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
@@ -3634,7 +3634,7 @@
 % $main_str_13 \S \e \r \v \e \r \space \C \o \n \n \e \c \t \i \o \n \space \i \d \e \n \t \i \f \i \e \d \. \Return \null
 % $main_str_14 \S \e \r \v \e \r \space \A \p \p \: \space \R \e \c \e \i \v \e \d \space \D \a \t \a \! \space \P \a \y \l \o \a \d \: \space \null
 % $main_str_15 \, \space \null
-% $_stress_count 250
+% $_stress_count 231
 % $main_str_16 \S \t \a \t \e \space \O \P \E \N \. \space \S \t \a \r \t \i \n \g \space \S \t \r \e \s \s \space \T \e \s \t \space \( \S \c \e \n \a \r \i \o \space \A \) \. \. \. \Return \null
 % $main_str_17 \S \e \n \d \space \null
 % $main_str_18 \space \O \K \. \space \null

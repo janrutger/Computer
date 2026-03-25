@@ -115,7 +115,7 @@ STRING _str_newline "\n"
 
 
 # Timeout settings
-CONST RDP_TIMEOUT_MS 3500       # 3500 3.5 seconds timeout value
+CONST RDP_TIMEOUT_MS 2000       # 3500 3.5 seconds timeout value
 CONST RDP_MAX_RETRIES 10
 
 # --- Packet Pool Configuration ---
@@ -512,27 +512,44 @@ DEF RDP.update {
                                 _payload_ptr 1 + AS _tmp_ptr
                                 *_tmp_ptr AS _seq_num
 
-                                # 1. Cleanup Buffer (They have up to _seq_num)
-                                RDP_TX_BUF _conn LIST.get AS _tx_buf
-                                1 AS _i
-                                WHILE _i RDP_TX_WINDOW_SIZE 1 + < DO
-                                    _i _tx_buf DICT.has_key IF
-                                        _i _tx_buf DICT.get AS _pkt_buf
-                                        1 _pkt_buf ARRAY.get AS _pkt_seq
-                                        # Check if pkt_seq <= seq_num
-                                        _pkt_seq _seq_num > 0 == IF
-                                            _pkt_buf _rdp_release_buffer
-                                            _i _tx_buf DICT.remove
-                                        END
-                                    END
-                                    _i 1 + AS _i
-                                DONE
+                                # # 1. Cleanup Buffer (They have up to _seq_num)
+                                # RDP_TX_BUF _conn LIST.get AS _tx_buf
+                                # 1 AS _i
+                                # WHILE _i RDP_TX_WINDOW_SIZE 1 + < DO
+                                #     _i _tx_buf DICT.has_key IF
+                                #         _i _tx_buf DICT.get AS _pkt_buf
+                                #         1 _pkt_buf ARRAY.get AS _pkt_seq
+                                #         # Check if pkt_seq <= seq_num
+                                #         _pkt_seq _seq_num > 0 == IF
+                                #             _pkt_buf _rdp_release_buffer
+                                #             _i _tx_buf DICT.remove
+                                #         END
+                                #     END
+                                #     _i 1 + AS _i
+                                # DONE
 
                                 # 2. Check sync status
                                 RDP_SEQ_OUT _conn LIST.get 1 - AS _last_sent 
                                 _last_sent _seq_num == IF
                                     # In Sync: Send ACK
                                     _conn RDP_MSG_ACK _seq_num _rdp_send_raw_ctrl_packet DROP
+
+                                    # Cleanup buffer this lookslike an better place for this
+                                    RDP_TX_BUF _conn LIST.get AS _tx_buf
+                                    1 AS _i
+                                    WHILE _i RDP_TX_WINDOW_SIZE 1 + < DO
+                                        _i _tx_buf DICT.has_key IF
+                                            _i _tx_buf DICT.get AS _pkt_buf
+                                            1 _pkt_buf ARRAY.get AS _pkt_seq
+                                            # Check if pkt_seq <= seq_num
+                                            _pkt_seq _seq_num > 0 == IF
+                                                _pkt_buf _rdp_release_buffer
+                                                _i _tx_buf DICT.remove
+                                            END
+                                        END
+                                        _i 1 + AS _i
+                                    DONE
+
                                     RDP_STATE_OPEN RDP_STATE _conn LIST.put # LET OP
                                 ELSE
                                     # Out of Sync: Retransmit + STAT_REQ

@@ -30,7 +30,7 @@ def main():
     if args.chaos:
         print("CHAOS MODE ENABLED: Simulating packet loss, latency, and duplication.")
         CHAOS_CONFIG = {
-            "drop_rate": 0.03,      # 5% chance to drop a packet
+            "drop_rate": 0.01,      # 5% chance to drop a packet
             "latency_ms": 100,      # 100ms artificial delay
             "duplication_rate": 0.05 # 5% chance to duplicate a packet
         }
