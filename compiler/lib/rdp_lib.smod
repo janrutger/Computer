@@ -246,7 +246,7 @@
     ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
-    ldi A 2000
+    ldi A 3500
     stack A $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR

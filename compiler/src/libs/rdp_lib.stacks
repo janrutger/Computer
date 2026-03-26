@@ -115,7 +115,7 @@ STRING _str_newline "\n"
 
 
 # Timeout settings
-CONST RDP_TIMEOUT_MS 2000       # 3500 3.5 seconds timeout value
+CONST RDP_TIMEOUT_MS 3500       # 3500 3.5 seconds timeout value
 CONST RDP_MAX_RETRIES 10
 
 # --- Packet Pool Configuration ---

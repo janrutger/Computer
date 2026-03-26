@@ -21,7 +21,7 @@ from devices.sensor import Sensor
 from devices.plotter import Plotter
 from devices.lcd_screen import VirtualLCD
 from devices.rtc import RTC
-from devices.virtual_nic import VirtualNIC
+from devices.virtual_nic16 import VirtualNIC
 
 
 # --- Constants ---

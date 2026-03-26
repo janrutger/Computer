@@ -267,6 +267,9 @@
     sto A $usr_tmp_ptr
     ldm I $usr_tmp_ptr
     ldx A $_start_memory_
+    ld B A
+    ldi A 4294967296
+    dmod B A
     sto A $dest_id
     ldm B $usr_tmp_ptr
     ldi A 1

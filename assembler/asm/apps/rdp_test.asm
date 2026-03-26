@@ -947,7 +947,7 @@
     ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
-    ldi A 2000
+    ldi A 3500
     stack A $DATASTACK_PTR
     call @rt_gt
     ustack A $DATASTACK_PTR
@@ -3205,22 +3205,24 @@
     call @NEW.array
     ustack A $DATASTACK_PTR
     sto A $_test_payload
-    ldi A 42
+    ldi A 442
+    ldi B 0
+    sub B A
+    stack B $DATASTACK_PTR
+    ldm A $_test_payload
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldi A 543
     stack A $DATASTACK_PTR
     ldm A $_test_payload
     stack A $DATASTACK_PTR
     call @ARRAY.append
-    ldi A 43
+    ldi A 644
     stack A $DATASTACK_PTR
     ldm A $_test_payload
     stack A $DATASTACK_PTR
     call @ARRAY.append
-    ldi A 44
-    stack A $DATASTACK_PTR
-    ldm A $_test_payload
-    stack A $DATASTACK_PTR
-    call @ARRAY.append
-    ldi A 45
+    ldi A 745
     stack A $DATASTACK_PTR
     ldm A $_test_payload
     stack A $DATASTACK_PTR
@@ -3228,7 +3230,7 @@
 :main_while_start_0
     ldm A $_loop_count
     stack A $DATASTACK_PTR
-    ldi A 400
+    ldi A 500
     stack A $DATASTACK_PTR
     call @rt_lt
     ustack A $DATASTACK_PTR
@@ -3634,7 +3636,7 @@
 % $main_str_13 \S \e \r \v \e \r \space \C \o \n \n \e \c \t \i \o \n \space \i \d \e \n \t \i \f \i \e \d \. \Return \null
 % $main_str_14 \S \e \r \v \e \r \space \A \p \p \: \space \R \e \c \e \i \v \e \d \space \D \a \t \a \! \space \P \a \y \l \o \a \d \: \space \null
 % $main_str_15 \, \space \null
-% $_stress_count 231
+% $_stress_count 269
 % $main_str_16 \S \t \a \t \e \space \O \P \E \N \. \space \S \t \a \r \t \i \n \g \space \S \t \r \e \s \s \space \T \e \s \t \space \( \S \c \e \n \a \r \i \o \space \A \) \. \. \. \Return \null
 % $main_str_17 \S \e \n \d \space \null
 % $main_str_18 \space \O \K \. \space \null

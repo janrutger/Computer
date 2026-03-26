@@ -232,7 +232,9 @@ DEF sys_net_send {
             usr_pkt_ptr AS usr_tmp_ptr
             # 2. Read remaining packet info from user buffer
             VALUE dest_id 0 
-            *usr_tmp_ptr AS dest_id
+            # *usr_tmp_ptr AS dest_id (OLD CODE)
+            # Mask to 32 bits (0xFFFFFFFF) to ensure protocol compliance.
+            *usr_tmp_ptr 4294967296 % AS dest_id 
             usr_tmp_ptr 1 + AS usr_tmp_ptr
 
             VALUE dest_port 0 

@@ -107,11 +107,11 @@ Doel: Bevestigen en opschonen van communicatie die stopt terwijl de buffers (Tx 
     - *Opmerking:* De data is nu beschikbaar voor de applicatie via `RDP.recv`, die het uit de `Rx_Buffer` haalt.
 4.  Het wordt stil op de lijn.
 5.  De **Watchdog** van de ontvanger verloopt (Timeout, bijv. na 2 seconden radiostilte).
-6.  De ontvanger stuurt een `STAT_QRY` met zijn huidige status ("Ik heb t/m 0, leef je nog?").
-7.  De zender ontvangt `STAT_QRY` en vergelijkt dit met zijn `Tx_Buffer`.
-    - Als de zender ziet dat 0 is aangekomen: Hij schoont `Tx_Buffer` op en stuurt `ACK`.
-    - Als de zender ziet dat er meer was (bijv. pakket 1 gemist): Hij herzendt pakket 1 en stuurt `STAT_REQ`.
-8.  Beide partijen zijn weer in sync.
+6.  De Watchdog van de ontvanger stuurt een `STAT_QRY` met zijn huidige status.
+7.  De zender ontvangt `STAT_QRY`:
+    - **In Sync:** De zender stuurt een `ACK` met het volgnummer, schoont de `Tx_Buffer` op en zet de staat op `OPEN`.
+    - **Out of Sync:** De zender herzendt het eerstvolgende missende pakket uit de `Tx_Buffer`, stuurt direct een `STAT_REQ` en zet de staat op `OPEN` om de flow te hervatten.
+8.  Beide partijen zijn weer gesynchroniseerd.
 
 ### Scenario C: "Rx Buffer Vol" (Flow Control / Backpressure)
 Doel: Voorkomen dat de ontvanger overspoeld wordt als de applicatie de data niet snel genoeg verwerkt.
@@ -126,11 +126,12 @@ Doel: Voorkomen dat de ontvanger overspoeld wordt als de applicatie de data niet
 5.  De applicatie roept `RDP.recv` aan en leest één of meer pakketten uit de `Rx_Buffer`. Er ontstaat ruimte.
 6.  De ontvanger detecteert dat er weer voldoende ruimte is (Low Watermark).
     *   Drempelwaarde: Buffer Count <= (Rx_Size - Tx_Size). Bijv: 10 - 6 = 4.
-7.  Als de buffer onder deze drempel komt EN de `CONGESTED` vlag staat aan: Reset vlag en stuur `RESUME`.
-8.  De zender ontvangt `RESUME`, zet status terug op `OPEN` en hervat het verzenden.
-    *   **Actie:** De zender gebruikt het volgnummer in `RESUME` om de `Tx_Buffer` op te schonen (net als bij een `STAT_ACK`).
-    *   **Herstel:** De zender herzendt **alle** nog aanwezige pakketten in de `Tx_Buffer` (deze zijn immers verloren gegaan tijdens de WAIT).
-    *   Dit zorgt voor een directe en volledige herstart van de datastroom.
+7.  Als de buffer onder de drempel komt (Count < 5) EN `CONGESTED` is TRUE: Reset vlag en stuur `RESUME`.
+8.  De zender ontvangt `RESUME`:
+    *   **Staat:** De zender gaat naar `REQ` (Maintenance) staat.
+    *   **Cleanup:** De `Tx_Buffer` wordt opgeschoond op basis van het volgnummer in het `RESUME` bericht.
+    *   **Burst:** De zender herzendt onmiddellijk **alle** resterende pakketten in de `Tx_Buffer`.
+    *   **Verify:** De zender sluit de burst af met een `STAT_REQ` om de ontvangst te verifiëren alvorens terug te keren naar `OPEN`.
 
 ## Connectie record:
 Veld,               Beschrijving
@@ -138,7 +139,7 @@ Peer_Address,       Het IP-adres en de Poort van de tegenpartij.
 Session_ID,         (Optioneel) Unieke ID voor de sessie.
 Last_Seq_Sent,      Het allerlaatste volgnummer dat de verzender heeft verstuurd.
 Last_Seq_Acked,     Het laatste nummer waarvan we zeker weten dat het is aangekomen.
-State,              "De huidige status: INIT, SENDING, WAITING, of CLOSED."
+State,              "De huidige status: INIT, LISTEN, OPEN, WAIT, REQ of CLOSED."
 
 
 
@@ -180,14 +181,14 @@ Deze fase is succesvol geïmplementeerd en geverifieerd, but not fully tested ye
 
 | **5. Flow (Rx)**|                           |                                             |                |          |
 | `OPEN`        | `Rx_Buffer` vol             | Stuur `WAIT`                                | `OPEN`         | Ontvanger|
-| `OPEN`        | `Rx_Buffer` heeft weer ruimte | Stuur `RESUME`                              | `OPEN`         | Ontvanger|
+| `OPEN`        | `Rx_Buffer` heeft weer ruimte | Stuur `RESUME` (indien CONGESTED)           | `OPEN`         | Ontvanger|
 | `OPEN`        | Ontvangt `WAIT`             | Pauzeer verzenden                           | `WAIT`         | Zender   |
 | `WAIT`        | Timeout (Probe)             | Stuur `STAT_REQ`                            | `WAIT`         | Zender   |
-| `WAIT`        | Ontvangt `RESUME`           | Hervat verzenden                            | `OPEN`         | Zender   |
+| `WAIT`        | Ontvangt `RESUME`           | Resend Burst + `STAT_REQ`                   | `REQ`          | Zender   |
 
 | **6. Watchdog**|                            |                                             |                |          |
 | `OPEN`        | Timeout (Geen Data)         | Stuur `STAT_QRY`                            | `OPEN`         | Ontvanger|
-| `OPEN`        | Ontvangt `STAT_QRY`         | Stuur `ACK` of Herzend (+ `STAT_REQ`)       | `OPEN`(/`REQ`) | Zender   |
+| `OPEN`        | Ontvangt `STAT_QRY`         | Stuur `ACK` (In Sync) of Resend (Out Sync)  | `OPEN`         | Zender   |
 | `WAIT`        | Ontvangt `STAT_ACK`         | Reset timer, blijf wachten op `RESUME`      | `WAIT`         | Zender   |
 | `WAIT`        | Ontvangt `STAT_QRY`         | Hervat verzenden (stuur volgend DATA)       | `OPEN`         | Zender   |
 
