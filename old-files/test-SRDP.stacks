@@ -1,0 +1,252 @@
+# ==============================================================================
+# SRDP_lib.stacks - Stern Reliable Data Protocol (Assembler Safe)
+# ==============================================================================
+
+INCLUDE socket_lib
+USE std_heap
+USE std_dict
+USE std_time
+USE std_deque
+
+# --- Globale Variabelen Declaratie (Verplicht voor Assembler) ---
+VALUE _rdp_send_buffer 0
+VALUE _rdp_pool 0
+VALUE _rdp_conns 0
+VALUE _init_i 0
+VALUE _cleanup_i 0
+VALUE _update_type 0
+VALUE _update_seq 0
+VALUE _update_msg 0
+VALUE _send_seq 0
+VALUE _send_b 0
+VALUE _send_k 0
+VALUE _recv_pkt 0
+VALUE _recv_len 0
+VALUE _recv_j 0
+VALUE _cnt_dq 0
+VALUE _cnt_node 0
+
+# --- Message Types ---
+CONST RDP_MSG_HELLO     129
+CONST RDP_MSG_DATA      130
+CONST RDP_MSG_ACK       131
+CONST RDP_MSG_NACK      132
+CONST RDP_MSG_STAT_REQ  133
+CONST RDP_MSG_STAT_ACK  134
+CONST RDP_MSG_WAIT      136
+CONST RDP_MSG_RESUME    137
+
+# --- Connection States ---
+CONST RDP_STATE_CLOSED    0
+CONST RDP_STATE_LISTEN    1
+CONST RDP_STATE_INIT      2
+CONST RDP_STATE_OPEN      3
+CONST RDP_STATE_WAIT      4
+CONST RDP_STATE_REM_WAIT  5
+
+# --- Config ---
+CONST RDP_WINDOW_SIZE     5
+CONST RDP_LOW_WATERMARK   2
+
+# --- Connection Record Layout ---
+CONST CONN_PEER_ID      0
+CONST CONN_PEER_PORT    1
+CONST CONN_LOCAL_PORT   2
+CONST CONN_STATE        3
+CONST CONN_SEQ_OUT      4
+CONST CONN_SEQ_IN       5
+CONST CONN_SEQ_ACK      6
+CONST CONN_TX_BUF       7
+CONST CONN_RX_BUF       8
+
+# ==============================================================================
+# EXTENSIONS & HELPERS
+# ==============================================================================
+
+DEF DEQUE.count {
+    AS _cnt_dq
+    0 AS _cnt_node
+    DEQUE_CTRL_HEAD _cnt_dq LIST.get AS _curr_node
+    WHILE _curr_node 0 != DO
+        _cnt_node 1 + AS _cnt_node
+        DEQUE_OFF_NEXT _curr_node LIST.get AS _curr_node
+    DONE
+    _cnt_node
+}
+
+DEF _rdp_get_buf { 
+    _rdp_pool DEQUE.count 0 > IF _rdp_pool DEQUE.pop ELSE 0 END 
+}
+
+DEF _rdp_ret_buf { AS _b _b _rdp_pool DEQUE.push }
+
+DEF _rdp_seq_le {
+    AS _ack AS _s
+    _s _ack - 65536 % 32768 >
+}
+
+DEF _rdp_send_proto {
+    AS _seq AS _type AS _conn
+    _rdp_send_buffer ARRAY.clear
+    _type _rdp_send_buffer ARRAY.append
+    _seq  _rdp_send_buffer ARRAY.append
+    _rdp_send_buffer 
+    CONN_PEER_ID _conn LIST.get 
+    CONN_PEER_PORT _conn LIST.get 
+    CONN_LOCAL_PORT _conn LIST.get 
+    SOCKET.snd_list DROP
+}
+
+DEF _rdp_cleanup_tx {
+    AS _ack AS _conn
+    CONN_TX_BUF _conn LIST.get AS _tx
+    _tx DICT.count 1 - AS _cleanup_i
+    WHILE _cleanup_i -1 > DO
+        _cleanup_i _tx DICT.item AS _pkt AS _s
+        _s _ack _rdp_seq_le IF
+            _pkt _rdp_ret_buf
+            _s _tx DICT.remove
+        END
+        _cleanup_i 1 - AS _cleanup_i
+    DONE
+}
+
+# ==============================================================================
+# API
+# ==============================================================================
+
+DEF RDP.init {
+    # Maak de buffer aan voor uitgaande pakketten (bijv. 32 words groot)
+    32 NEW.array AS _rdp_send_buffer
+    16 DICT.new AS _rdp_conns
+    16 DEQUE.new AS _rdp_pool
+    0 AS _init_i
+    WHILE _init_i 16 < DO
+        32 NEW.array _rdp_pool DEQUE.push
+        _init_i 1 + AS _init_i
+    DONE
+    1
+}
+
+DEF RDP.connect {
+    AS _dest_id AS _dest_port AS _src_port
+    16 NEW.list AS _conn
+    _dest_id    CONN_PEER_ID    _conn LIST.put
+    _dest_port  CONN_PEER_PORT  _conn LIST.put
+    _src_port   CONN_LOCAL_PORT _conn LIST.put
+    RDP_STATE_INIT CONN_STATE   _conn LIST.put
+    1 CONN_SEQ_OUT _conn LIST.put
+    0 CONN_SEQ_IN  _conn LIST.put
+    RDP_WINDOW_SIZE DICT.new CONN_TX_BUF _conn LIST.put
+    RDP_WINDOW_SIZE DICT.new CONN_RX_BUF _conn LIST.put
+    _conn _src_port _rdp_conns DICT.put
+    _conn RDP_MSG_HELLO CONN_SEQ_OUT _conn LIST.get _rdp_send_proto
+    _conn 1
+}
+
+DEF RDP.update {
+    AS _conn AS _inbox
+    WHILE _inbox DEQUE.count 0 > DO
+        _inbox DEQUE.pop AS _update_msg
+        _update_msg 0 ARRAY.get AS _update_type
+        _update_msg 1 ARRAY.get AS _update_seq
+        
+        _update_type RDP_MSG_HELLO == IF
+            CONN_STATE _conn LIST.get RDP_STATE_LISTEN == IF
+                _update_seq CONN_SEQ_IN _conn LIST.put
+                RDP_STATE_OPEN CONN_STATE _conn LIST.put
+                _conn RDP_MSG_STAT_ACK _update_seq _rdp_send_proto
+            END
+        END
+        
+        _update_type RDP_MSG_STAT_ACK == IF
+            CONN_STATE _conn LIST.get RDP_STATE_INIT == IF
+                RDP_STATE_OPEN CONN_STATE _conn LIST.put
+                _update_seq CONN_SEQ_ACK _conn LIST.put
+            END
+            _conn _update_seq _rdp_cleanup_tx
+        END
+
+        _update_type RDP_MSG_DATA == IF
+            CONN_RX_BUF _conn LIST.get DICT.count RDP_WINDOW_SIZE < IF
+                _update_msg _update_seq CONN_RX_BUF _conn LIST.get DICT.put
+                _update_seq CONN_SEQ_IN _conn LIST.get == IF
+                    _update_seq 1 + 65536 % CONN_SEQ_IN _conn LIST.put
+                END
+                _conn RDP_MSG_ACK CONN_SEQ_IN _conn LIST.get _rdp_send_proto
+            ELSE
+                _conn RDP_MSG_WAIT 0 _rdp_send_proto
+                RDP_STATE_WAIT CONN_STATE _conn LIST.put
+            END
+        END
+
+        _update_type RDP_MSG_ACK == IF _conn _update_seq _rdp_cleanup_tx END
+        _update_type RDP_MSG_WAIT == IF RDP_STATE_REM_WAIT CONN_STATE _conn LIST.put END
+        _update_type RDP_MSG_RESUME == IF RDP_STATE_OPEN CONN_STATE _conn LIST.put END
+
+        _update_type RDP_MSG_DATA == IF
+            _update_seq CONN_RX_BUF _conn LIST.get DICT.has_key != IF
+                _update_msg HEAP.free
+            END
+        ELSE
+            _update_msg HEAP.free
+        END
+    DONE
+}
+
+DEF RDP.send {
+    AS _conn AS _len AS _app
+    0 AS _send_b
+    CONN_STATE _conn LIST.get RDP_STATE_OPEN == IF
+        CONN_TX_BUF _conn LIST.get DICT.count RDP_WINDOW_SIZE < IF
+            _rdp_get_buf AS _send_b
+            _send_b 0 != IF
+                _send_b ARRAY.clear
+                RDP_MSG_DATA _send_b ARRAY.append
+                CONN_SEQ_OUT _conn LIST.get AS _send_seq
+                _send_seq _send_b ARRAY.append
+                0 AS _send_k
+                WHILE _send_k _len < DO
+                    _send_k _app ARRAY.get _send_b ARRAY.append
+                    _send_k 1 + AS _send_k
+                DONE
+                _send_b CONN_PEER_ID _conn LIST.get CONN_PEER_PORT _conn LIST.get CONN_LOCAL_PORT _conn LIST.get SOCKET.snd_list IF
+                    _send_b _send_seq CONN_TX_BUF _conn LIST.get DICT.put
+                    _send_seq 1 + 65536 % CONN_SEQ_OUT _conn LIST.put
+                    1
+                ELSE
+                    _send_b _rdp_ret_buf
+                    0
+                END
+            ELSE 0 END
+        ELSE 0 END
+    ELSE 0 END
+}
+
+DEF RDP.recv {
+    AS _conn AS _buf
+    CONN_RX_BUF _conn LIST.get AS _rx
+    CONN_SEQ_IN _conn LIST.get AS _expected
+    
+    CONN_STATE _conn LIST.get RDP_STATE_WAIT == IF
+        _rx DICT.count RDP_LOW_WATERMARK < IF
+            RDP_STATE_OPEN CONN_STATE _conn LIST.put
+            _conn RDP_MSG_RESUME 0 _rdp_send_proto
+        END
+    END
+
+    _expected _rx DICT.has_key IF
+        _expected _rx DICT.get AS _recv_pkt
+        _recv_pkt ARRAY.len 2 - AS _recv_len
+        0 AS _recv_j
+        WHILE _recv_j _recv_len < DO
+            _recv_j 2 + _recv_pkt ARRAY.get _buf ARRAY.append
+            _recv_j 1 + AS _recv_j
+        DONE
+        _recv_pkt _rdp_ret_buf
+        _expected _rx DICT.remove
+        1
+    ELSE
+        0
+    END
+}

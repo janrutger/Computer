@@ -20,8 +20,6 @@ ASM {
 
 # Now wait for the first RTC tick to set the system time
 `INIT_RTC
-# `NET.init
-# `NET_LIB.init
 
 
 # Init the standard IO library by passing it the addresses of the
@@ -43,10 +41,6 @@ INCLUDE vvm_env_lib
 INCLUDE vvm_core_lib
 
 
-# The network library is using the heap, dict and deque also
-# so the heap must be defind before use
-# `NET.init
-
 `start_kernel
 
 
@@ -67,7 +61,6 @@ ASM {
     INCLUDE syscalls.stacks
     INCLUDE stern_kernel.stacks
     INCLUDE vdisk_routines.stacks
-    # INCLUDE net_driver.stacks
     INCLUDE net_hal.stacks
     INCLUDE net_core.stacks
 }

@@ -1,0 +1,347 @@
+hostA                                   hostB
+
+RDP.init                                RDP.init                    Initialiseer de RDP library, creeerd buffers e.d.
+
+RDP.connect    A <HELLO> B              RDP.update                  Connection records are created and synct
+RDP.update     A <HELLO_ACK> B     -    RDP.SEND                    Host B Zend een <HELLO_ACK> bericht  
+
+timeout                                                             timeout wanneer <HELLO> niet beantwoord wordt door B
+RDP.connect    A <HELLO> B              RDP.update                  Host A herzend connectie verzoek                  
+
+RDP.send       A <DATA> B               RDP.update                  Host A is sending data, stores data for resending
+                                                                    Host B update reads message and stores the message in receive buffer
+RDP.send       A <DATA> B               RDP.update                  Host A (de zender stuurt maximaal 5 berichten)
+RDP.send       A <STAT_REQ> B           RDP.update                  Host A stuurt na (max) 5 berichten een <STAT_REQ> bericht om te horen wat het laatst goed ontvangen bericht is
+                                                                    Bij minder dan 5 berichten, de timeout moet dan een <STAT_REQ> sturen als het znedbuffer minder dan 5 berichten bevat
+RDP.update     A <STAT_ACK> B           RDP.send                    Host B stuurt een <STAT_ACK> met het laast goed ontvangen volgnummer
+                                                                    Host A Controleert het bericht nummer, maakt het verzend buffer leeg als ALLE berichten zijn ontvangen of
+                                                                    Host A NA controle stuurt Host ALLE missende berichten opnieuw, en stuurt een <STAT_REQ>
+timeout                                                             timeout wanneer <STAT_REQ> niet niet beantwoord wordt door B
+RDP.send       A <STAT_REQ> B           RDP.update                  Host A stuurt <STAT_REQ> opnieuw
+
+                                        RDP.receive                 Host B leest bericht uit receivebuffer en wordt door de applicatie afgehandeld
+
+                                                                    Host B ontvangt berichten (RDP.update) en bewaard deze in het receivebuffer,
+RDP.update     A <WAIT> B               RDP.send                    Host B stuurt een <wait> bericht als het receivebuffer vol is
+                                                                    Host A stopt met zenden
+                                        RDP.receive                 Host B leest bericht uit receivebuffer en wordt door de applicatie afgehandeld
+RDP.update     A <RESUME> B             RDP.send                    Host B wanneer het receivebuffer voldoende leeg is (low water mark) stuurt B een <RESUME> met het laatst ontvangen berichtnummer
+RDP.send       A <DATA> B               RDP.update                  Host A begint (her)zenden vanaf het laatste bericht, of een <STAT_REQ> om te syncen
+
+                                                                    Als de <WAIT> verloren gaat, blijft Host A zenden
+RDP.send       A <DATA> B               RDP.update                  Host B verwacht geen <DATA>, gooit dit bericht weg, 
+RDP.update     A <WAIT> B               RDP.send                    en stuurt opnieuw een <WAIT>
+
+                                        timeout                     Als de <RESUME> verloren gaat, blijft Host A stil
+RDP.update     A <RESUME> B             RDP.send                    Host B verstuur <RESUME> opnieuw na timeout
+
+                                                                    Host B ontvangt een bericht met een onverwacht berichtnummer
+RDP.send       A <DATA> B               RDP.update                  Host B ontvangt een oud nummer, het bericht wordt weggegooit
+RDP.update     A <STAT_ACK>             RDP.send                    Host B ontvangt een toekomstig bericht, bericht wordt weggegooit, en Host B stuurt <STAT_ACK> om te syncen
+
+RDP.send       A <BYE> B                RDP.update                  Host A sluit de connectie, host B ruimt op en sluit de connectie
+RDP.update     A <BYE> B                RDP.send                    Host B bevestigt BYE, Host A wacht (TIME_WAIT) alvorens op te ruimen
+                                                                    
+
+
+
+Berichten format:
+
+|             SDP  Header 16                             | SDP payload 240 (max)                        |
+|Dest adres|Src adres|dest poort|src poort|bericht lengte| SDP payload                                  |
+                                                         | RDP header 2          | RDP payload 64 (max) |
+                                                         |bericht type|volgnummer| RDP payload          |
+| SDP header 16                                          | RDP header 2          | payload 64           |
+|                                   RDP message over SDP 82 (max)                                       |
+
+
+
+# --- Message Types (Header[0]) ---
+# Values > 128 to distinguish from ASCII SDP
+CONST RDP_HELLO     129
+CONST RDP_HELLO_ACK 130
+CONST RDP_DATA      131
+CONST RDP_STAT_REQ  132
+CONST RDP_STAT_ACK  133
+CONST RDP_WAIT      134
+CONST RDP_RESUME    135
+CONST RDP_BYE       136
+
+# Offsets binnen de RDP Header (t.o.v. start van payload)
+CONST RDP_OFF_TYPE 0
+CONST RDP_OFF_SEQ  1
+CONST RDP_OFF_DATA 2
+
+
+# --- Connection Record Layout ---
+# A connection is a List of fixed size (16 words).
+# We use offsets to access fields.
+CONST RDP_CONN_SIZE       16
+
+# Field Offsets
+CONST CONN_PEER_ID      0   # Remote Host ID
+CONST CONN_PEER_PORT    1   # Remote Port
+CONST CONN_LOCAL_PORT   2   # Local Port binding
+CONST CONN_STATE        3   # Current State of the connection
+
+# Sequence Numbers
+CONST CONN_STATE_OUT    4   # Current State of the outgoing stream
+CONST CONN_SEQ_OUT      5   # Next Seq Num to Send
+
+CONST CONN_STATE_IN     6   # Current state of the incomming stream
+CONST CONN_SEQ_IN       7   # Next Seq Num Expected (Recv)
+CONST CONN_SEQ_ACK      8   # Last Seq Num ACKed by peer (What they have)
+
+# Buffers
+CONST CONN_TX_BUF       9   # Pointer to TX Dictionary (Sent but not ACKed)
+CONST CONN_RX_BUF       11  # Pointer to RX Dictionary (Received but not yet read by the appliation)
+CONST CONN_RX_CONGESTED 12  # Flag: 1 if we sent WAIT, 0 if normal
+
+# Timing & Retries
+CONST CONN_TIMER        13  # Timestamp of last action (for Timeout)
+CONST CONN_RETRIES      14  # Retry counter
+
+
+ --- Connection States ---
+# These states implicitly define what answer we expect.
+# These states are use for the CONN_STATE
+CONST CONN_CLOSED       0   # initial state till RDP.init, then state LISTEN (1)
+CONST CONN_LISTEN       1   # Waiting for HELLO, expecting something from the other side
+CONST CONN_INIT         2   # Sent HELLO, Expecting HELLO_ACK
+CONST CONN_IDLE         3   # Connected: Normal DATA exchange, after sending, or receiving HELLO_ACK
+
+# These states are use for CONN_STATE_IN/CONN_STATE_OUT 
+CONST CONN_OPEN         4   # 
+CONST CONN_REQ          5   # the OUT-connection did send an <STAT_REQ> expects an <STAT_ACK>, after receiving an <STAT_ACK>, new state is OPEN (4)
+CONST CONN_WAIT         6   # The IN-connection did send an <WAIT> message, is processing messages till it hits the low-water mark, then it sends a <RESUME> and next state is RESUME
+                            # The OUT-connection did receive a WAIT message and is waiting for <RESUME>, (after resending) next state is OPEN (4)
+CONST CONN_RESUME       7   # The IN-connection is in RESUME state, waiting for any (data, msg_qry)
+
+CONST CONN_TIME_WAIT    8   # Graceful wait voor retransmissies na BYE
+                            # From any status, wanneer een <BYE> wordt ontvangen, is de volgende staat CONN_TIME_WAIT (8)
+
+
+
+
+
+## Pseudo code for an simple server/client stacks program
+DEF main {
+
+     2. Setup Sockets (Inbox Deques)
+    # destination on Port 100
+    DEQUE.new AS out-msgbox
+    100 out-msgbox SOCKET.bind
+    "Bound Port 100 (Server)\n" PRTstring
+
+    # Client on Port 101
+    DEQUE.new AS in-msgbox
+    101 in-msgbox SOCKET.bind
+    "Bound Port 101 (Client)\n" PRTstring
+
+
+    RDP.init IF {                                                   # Verwacht geen argumenten
+        RDP.connect AS connection                                   # Verwacht \"dest_id" dest_port local_port > conn_id | 0
+        connection IF {
+            1 AS can_send
+            WHILE true DO
+            
+                in-msgbox   connection RDP.update                   # verwacht SDP mailbox pointer en en connection pointer
+                out-msgbox  connection RDP.update                   # verwacht SDP mailbox pointer en en connection pointer
+        
+        
+                app-buffer connection RDP.receive IF {              # kopieert data naar app-buffer, geeft internal buffer vrij
+                    application handles IN-buffer
+                }
+        
+                can_send IF {
+                    Application creates new OUT-buffer to send
+                    2 AS can_send
+                }
+        
+                can_send IF {
+                    2 can_send == IF {
+                        OUT-buffer connection RDP.send IF {         # verwacht een OUT-buffer en een connection pointer        #
+                            1 AS can_send
+                        }
+                    }
+                }
+            DONE
+        }
+    }
+}
+
+
+================================================================================
+
+# ==============================================================================
+# SRDP (Simple Reliable Data Protocol) - ARCHITECTUUR & SPECIFICATIE
+# ==============================================================================
+# "Keep it Simple, Make it Fun"
+# Filosofie: Dit is een protocol voor het Stern-ATX ecosysteem. 
+# ==============================================================================
+
+# --- STERN-ATX GEHEUGEN CONSTRAINTS (CRITIEK) ---
+# 1. GEHEUGEN LAYOUT: De Stern-ATX beschikt over 24KB (words) systeemgeheugen.
+#    Daarnaast is er een specifieke HEAP van 6KB (6144 words) voor objecten.
+# 2. LINEAIRE HEAP: De 'std_heap' allocator beweegt de HEAP_FREE pointer alleen
+#    vooruit. Er is GEEN Garbage Collector. Objecten kunnen NOOIT echt worden
+#    verwijderd of 'vrijgegeven' (geen free() functie).
+# 3. SIZE AGNOSTIC EMULATIE: Hoewel de Python emulator (memoryR3x.py) flexibel
+#    omgaat met integer groottes, moet de Stacks-code ontworpen worden voor
+#    16-bit precisie en strikte geheugenlimieten.
+# 4. NO-NEW-IN-LOOP: Het aanmaken van heap-objecten (NEW.list, DICT.new) binnen
+#    de main-loop of RDP.update is VERBODEN. Dit leidt onherroepelijk tot een
+#    Heap Overflow omdat de vrije ruimte op de heap nooit toeneemt.
+
+# --- BUFFER POOL & DICTIONARY STRATEGIE ---
+# 1. BUFFER POOL: We pre-alloceren 16 buffers van 64 words via RDP.init.
+#    - Pakketten worden 'geleend' uit de pool (via een Deque) en MOETEN worden 
+#      teruggegeven via RDP.ret_buf zodra ze bevestigd of verwerkt zijn.
+# 2. DICTIONARY GEBRUIK: TX_BUF en RX_BUF mappen SeqNum (Key) -> BufferPointer (Val).
+#    - De Dictionary beheert intern zijn slots. Door DICT.remove te gebruiken 
+#      na een ACK, blijft de Dictionary compact binnen zijn pre-allocated capaciteit.
+
+# --- STATE HIËRARCHIE ---
+# | Variabele        | Toestand      | Betekenis                                  |
+# |------------------|---------------|--------------------------------------------|
+# | CONN_STATE       | CLOSED (0)    | Geen actieve sessie.                       |
+# | (De Levenscyclus)| LISTEN (1)    | Wacht op inkomende HELLO.                  |
+# |                  | INIT (2)      | Bezig met handshake (verzend HELLO).       |
+# |                  | ACTIVE (3)    | Verbinding staat, data-overdracht mogelijk.|
+# |------------------|---------------|--------------------------------------------|
+# | CONN_STATE_OUT   | READY (0)     | Mag direct DATA sturen.                    |
+# | (Zend Flow)      | WAIT (1)      | Gepauzeerd door peer (ontvangen WAIT).     |
+# |                  | REQ (2)       | Wacht op STAT_ACK na een venster-burst.    |
+# |------------------|---------------|--------------------------------------------|
+# | CONN_STATE_IN    | READY (0)     | Kan data ontvangen.                        |
+# | (Ontvang Flow)   | WAIT      (1) | Buffer raakt vol (>8), WAIT is verzonden.  |
+# |                  | RESUME        | er is weer ruimte, Resume in verzonden     |
+# |                  | TIME_WAIT     | Wacht na BYE op laatste pakketten.         |
+# |------------------|---------------|--------------------------------------------|
+
+# --- ARCHITECTURAL PRINCIPLE: EXCLUSIVE PORT OWNERSHIP ---
+# Om "Double Read" conflicten te voorkomen, geldt de volgende strikte regel:
+# 1. Zodra een poort (Deque/msgbox) aan een RDP-verbinding is gekoppeld, 
+#    mag de applicatie NOOIT meer direct SOCKET.read aanroepen op deze poort.
+# 2. RDP.update is de EXCLUSIEVE consument van de msgbox_ptr.
+# 3. Alle inkomende data (zowel RDP-protocol als applicatie-data) wordt door 
+#    RDP.update uit de Deque gehaald en gesorteerd.
+#
+# --- SEQUENCE WRAP-AROUND LOGICA ---
+# 1. 16-BIT BEREIK: Volgnummers lopen van 1 t/m 65535 (startwaarde is 1).
+# 2. CHECK: (NewSeq - LastSeq) & 0xFFFF. 
+#    Resultaat < 32768 is NIEUW, > 32768 is OUD/DUPLICAAT.
+#
+# --- Functie Definities ---
+# RDP.update ( msgbox_ptr connection_ptr -- )
+# 1. Inbox Legen:
+#    - Haal bericht uit msgbox_ptr.
+#    - IS HET EEN CONTROLE PAKKET (Type 131-137)?
+#        * ALTIJD VERWERKEN. Deze nemen nauwelijks ruimte in en zijn 
+#          nodig om de verbinding open te houden of te herstellen.
+#    - IS HET EEN DATA PAKKET (Type 130)?
+#        * CHECK RX_BUF DICT.count. 
+#        * IS COUNT < RDP_RX_WINDOW_SIZE (bijv. 5)?
+#            - Accepteer: Plaats in RX_BUF, update SEQ_IN.
+#        * IS COUNT >= RDP_RX_WINDOW_SIZE?
+#            - Weiger: Laat het pakket in de msgbox_ptr staan (STOP met legen)
+#              OF (beter) gooi het weg en stuur een STAT_ACK/WAIT. 
+#              De zender zal het later herverzenden wanneer er weer ruimte is.
+#
+# 2. Backpressure Signalering:
+#    - Als de RX_BUF vol raakt (count == limit):
+#        * Zet status op WAIT en stuur RDP_MSG_WAIT naar de zender.
+#    - Als de applicatie data verbruikt via RDP.recv en de count zakt onder de grens:
+#        * RDP.recv moet dan een signaal (RESUME) triggeren.
+#
+# RDP.recv ( app_buffer_ptr connection_ptr -- success )
+# - De applicatie gebruikt UITSLUITEND deze functie om data te ontvangen.
+# - Werking:
+#     1. Kijk in CONN_RX_BUF of de key 'CONN_SEQ_IN' aanwezig is.
+#     2. Indien aanwezig: kopieer payload naar app_buffer_ptr, verwijder uit 
+#        dictionary, hoog CONN_SEQ_IN op en geef success (1).
+#     3. Indien niet aanwezig: geef 0 (geen data beschikbaar of gat in sequentie).
+
+# --- SRDP Protocol Constanten (Stacks compatible) ---
+CONST TX_BUF_SIZE 6        # Max uitstaande pakketten (Window)
+CONST RX_BUF_SIZE 10       # Ontvangstbuffer capaciteit
+CONST PKT_POOL_SIZE 16     # Totaal aantal buffers in de centrale pool
+CONST PKT_SIZE 64          # Woorden per pakket (Header + Payload)
+CONST TIMEOUT 3000         # ms voor automatische o.a. STAT_REQ (Idle Sender check)
+CONST MAX_RETRIES 10       # Na 10 pogingen zonder response wordt de verbinding gesloten
+
+# --- Message Types ---
+CONST RDP_HELLO 129
+CONST RDP_HELLO_ACK 130
+CONST RDP_DATA 131
+CONST RDP_STAT_REQ 132
+CONST RDP_STAT_ACK 133
+CONST RDP_WAIT 134
+CONST RDP_RESUME 135
+CONST RDP_BYE 136
+
+# --- Connection Record Layout (16 words) ---
+CONST RDP_CONN_SIZE 16
+CONST CONN_PEER_ID 0       
+CONST CONN_PEER_PORT 1     
+CONST CONN_LOCAL_PORT 2    
+CONST CONN_STATE 3         # Gebruik STATE_ constanten
+CONST CONN_STATE_OUT 4     # Gebruik FLOW_ constanten
+CONST CONN_STATE_IN 6      # Gebruik FLOW_ constanten
+CONST CONN_SEQ_OUT 5       # Volgende te verzenden Seq, default = 1
+CONST CONN_SEQ_IN 7        # Volgende verwachte Seq, default = 0
+CONST CONN_SEQ_ACK 8       # Laatste door peer bevestigde Seq, default = 1
+CONST CONN_TX_BUF 9        # Pointer naar TX Dictionary
+CONST CONN_RX_BUF 11       # Pointer naar RX Dictionary
+CONST CONN_TIMER 13        # Laatste activiteit timestamp
+CONST CONN_RETRIES 14      
+
+# --- RDP API Functies ---
+
+# RDP.init ( -- success )
+# - Initialiseert de Packet Pool en pre-alloceert de 16 buffers op de 6K heap.
+
+# RDP.get_buf ( -- buffer_ptr | 0 )
+# - Haalt een vrije buffer uit de pool. Geeft 0 als de pool leeg is.
+
+# RDP.ret_buf ( buffer_ptr -- )
+# - Geeft een buffer terug aan de pool voor hergebruik.
+
+# RDP.update ( msgbox_ptr connection_ptr -- )
+# - Verwerkt inkomende pakketten en voert de state-machine logica uit.
+# - Handelt wrap-around, idle-timeouts, flow-control en MAX_RETRIES af.
+
+# RDP.send ( app_buffer_ptr connection_ptr -- success )
+# - Verstuurt data als de status ACTIVE/READY is. 
+# - Kopieert data naar pool-buffer en plaatst in TX_BUF.
+
+# RDP.flush ( connection_ptr -- )
+# - Forceert een STAT_REQ als er onbevestigde data in de TX_BUF zit.
+
+# RDP.receive ( app_buffer_ptr connection_ptr -- success )
+# - Kopieert in-order data naar de app_buffer_ptr en geeft de pool-buffer direct vrij.
+# - Geeft success (1) of 0 als er geen data beschikbaar is.
+
+# ==============================================================================
+# AANDACHTSPUNTEN BIJ IMPLEMENTATIE (CHECKLIST)
+# ==============================================================================
+# 1. DEADLOCK PREVENTIE: Gebruik de statische `_send_buffer` van socket_lib voor 
+#    controle-berichten (ACK, WAIT, STAT_REQ, etc.) in plaats van de Packet Pool. 
+#    Dit garandeert dat protocol-updates altijd verstuurd kunnen worden, ook 
+#    als de pool volledig bezet is door DATA-pakketten.
+# 2. INBOX DRAINING: Gebruik een WHILE loop in `RDP.update` om alle wachtende 
+#    pakketten in de Deque in één keer te verwerken. Dit voorkomt latency en 
+#    overloop van de kernel-buffers bij bursts.
+# 3. DICTIONARY ITERATIE: Bij het verwijderen van items in een loop (bijv. 
+#    timeout checks), houd rekening met het "swap-with-last" mechanisme van 
+#    `DICT.remove`. Hoog de index teller NIET op na een verwijdering.
+# 4. SEQUENCE LOGICA: Gebruik strikt de `(New - Last) & 0xFFFF` vergelijking om 
+#    de 16-bit wrap-around correct af te handelen. Een resultaat < 32768 is 'nieuw'.
+# 5. EXCLUSIEF EIGENAARSCHAP: De applicatie mag NOOIT `SOCKET.read` aanroepen op 
+#    een poort die door SRDP wordt beheerd; dit "steelt" pakketten van de state-machine.
+# 6. RX THRESHOLDS: Implementeer de "Low Water Mark" (bijv. onder 5 pakketten) 
+#    voor het sturen van RESUME om onnodig "klapperen" van de flow-control te voorkomen.
+# 7. FLOW CONTROL HYSTERESIS: Gebruik High/Low watermarks voor de RX_BUF. 
+#    Stuur WAIT bij een volle dictionary (High), 
+#    maar stuur pas RESUME wanneer de applicatie de dictionary heeft leeggegeten tot onder 
+#    de drempelwaarde (low water mark).

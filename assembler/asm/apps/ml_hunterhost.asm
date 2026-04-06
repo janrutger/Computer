@@ -252,6 +252,14 @@
     stack A $DATASTACK_PTR
     call @VVM.run
 :_main_if_end_14
+    ldm A $loop_counter
+    stack A $DATASTACK_PTR
+    ldi A 25
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_main_if_end_15
     stack Z $DATASTACK_PTR
     ldi A $VVM1
     stack A $DATASTACK_PTR
@@ -261,10 +269,11 @@
     call @rt_neq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_15
+    jmpt :_main_if_end_16
     ldi A $VVM1
     stack A $DATASTACK_PTR
     call @VVM.run
+:_main_if_end_16
 :_main_if_end_15
     ldm B $loop_counter
     ldi A 1
@@ -301,58 +310,58 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_16
+    jmpt :_main_if_end_17
     ldi A $_main_str_8
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-    :_main_if_end_16
+    :_main_if_end_17
     call @KEYpressed
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_17
+    jmpt :_main_if_end_18
     call @rt_dup
     ldi A 27
     stack A $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_else_18
+    jmpt :_main_if_else_19
     ld A Z
     sto A $sim_running
     call @rt_drop
-    jmp :_main_if_end_18
-:_main_if_else_18
+    jmp :_main_if_end_19
+:_main_if_else_19
     ldi A 116
     stack A $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :_main_if_end_19
+    jmpt :_main_if_end_20
     ldm A $train_running
     tst A 0
-    jmpt :_main_if_else_20
+    jmpt :_main_if_else_21
     ld A Z
     sto A $train_running
-    jmp :_main_if_end_20
-:_main_if_else_20
+    jmp :_main_if_end_21
+:_main_if_else_21
     ldi A 1
     sto A $train_running
-:_main_if_end_20
+:_main_if_end_21
     ldi A $_main_str_9
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-    :_main_if_end_19
-:_main_if_end_18
+    :_main_if_end_20
+:_main_if_end_19
     ldm A $train_count
     stack A $DATASTACK_PTR
     call @rt_print_tos
-:_main_if_end_17
+:_main_if_end_18
     jmp :_main_while_start_0
 :_main_while_end_0
     ldi A 1
@@ -3134,7 +3143,7 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :_HOST.train_if_else_10
-    ldi A 2500
+    ldi A 2000
     sto A $current_lr
     jmp :_HOST.train_if_end_10
 :_HOST.train_if_else_10
@@ -3271,6 +3280,8 @@
     ldi A 10000
     stack A $DATASTACK_PTR
     call @NN.set_scale
+    call @rt_rnd
+    call @rt_drop
     call @rt_rnd
     call @rt_drop
     call @rt_rnd

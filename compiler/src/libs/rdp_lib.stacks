@@ -96,6 +96,7 @@ VALUE _pkt_seq 0
 VALUE _pkt_buf 0
 VALUE _last_sent 0
 VALUE _resend_seq 0
+VALUE _received_seq 0
 STRING _rdp_err_pool "RDP.update: Packet Pool Exhausted!\n"
 
 # Debug strings for RDP.print_status
@@ -301,8 +302,8 @@ DEF _rdp_alloc_conn {
     RDP_STATE_INIT RDP_STATE _conn LIST.put
     
     # 4. Initialize Counters (Zero out)
-    0 RDP_SEQ_OUT _conn LIST.put
-    0 RDP_SEQ_IN  _conn LIST.put
+    1 RDP_SEQ_OUT _conn LIST.put
+    1 RDP_SEQ_IN  _conn LIST.put
     0 RDP_SEQ_ACK _conn LIST.put
     TIME.uptime RDP_TIMER _conn LIST.put
     0 RDP_RETRIES _conn LIST.put
@@ -393,23 +394,20 @@ DEF RDP.update {
                         # RDP_STATE_OPEN RDP_STATE _conn LIST.put
                         RDP_STATE_REQ RDP_STATE _conn LIST.put
                         
-                        # 1. Cleanup Tx Buffer (Same logic as STAT_ACK: seq_num is what they HAVE)
+                        # 1. Cleanup Tx Buffer: Remove confirmed sequence range
                         _payload_ptr 1 + AS _tmp_ptr
-                        *_tmp_ptr AS _seq_num
+                        *_tmp_ptr AS _received_seq
 
                         RDP_TX_BUF _conn LIST.get AS _tx_buf
-                        1 AS _i
-                        WHILE _i RDP_TX_WINDOW_SIZE 1 + < DO
+                        RDP_SEQ_ACK _conn LIST.get 1 + AS _i
+                        WHILE _i _received_seq 1 + < DO
                             _i _tx_buf DICT.has_key IF
-                                _i _tx_buf DICT.get AS _pkt_buf
-                                1 _pkt_buf ARRAY.get AS _pkt_seq
-                                _pkt_seq _seq_num > 0 == IF
-                                    _pkt_buf _rdp_release_buffer
-                                    _i _tx_buf DICT.remove
-                                END
+                                _i _tx_buf DICT.get _rdp_release_buffer
+                                _i _tx_buf DICT.remove
                             END
                             _i 1 + AS _i
                         DONE
+                        _received_seq RDP_SEQ_ACK _conn LIST.put
 
                         # 2. Resend ALL remaining packets in Tx Buffer (Ordered by Sequence)
                         # Iterate from (LastAck + 1) to (NextToSend)
@@ -417,9 +415,8 @@ DEF RDP.update {
                         RDP_SEQ_OUT _conn LIST.get AS _len  # Reuse _len variable as limit
                         
                         WHILE _resend_seq _len < DO
-                            _resend_seq RDP_TX_WINDOW_SIZE % 1 + AS _key
-                            _key _tx_buf DICT.has_key IF
-                                _key _tx_buf DICT.get AS _pkt_buf
+                            _resend_seq _tx_buf DICT.has_key IF
+                                _resend_seq _tx_buf DICT.get AS _pkt_buf
                                 RDP_PEER_ID    _conn LIST.get AS _dest_id
                                 RDP_PEER_PORT  _conn LIST.get AS _dest_port
                                 RDP_LOCAL_PORT _conn LIST.get AS _src_port
@@ -448,25 +445,19 @@ DEF RDP.update {
                         ELSE
                             # --- Sync / Tx Buffer Cleanup (Valid for OPEN and REQ) ---
                             _payload_ptr 1 + AS _tmp_ptr
-                            *_tmp_ptr AS _seq_num # The Acked Seq Num
+                            *_tmp_ptr AS _received_seq # The Acked Seq Num
 
                             RDP_TX_BUF _conn LIST.get AS _tx_buf
                             
-                            # Simple cleanup strategy: Check slots 1..WINDOW_SIZE
-                            1 AS _i
-                            WHILE _i RDP_TX_WINDOW_SIZE 1 + < DO
+                            RDP_SEQ_ACK _conn LIST.get 1 + AS _i
+                            WHILE _i _received_seq 1 + < DO
                                 _i _tx_buf DICT.has_key IF
-                                    _i _tx_buf DICT.get AS _pkt_buf
-                                    1 _pkt_buf ARRAY.get AS _pkt_seq
-                                    
-                                    # Check if pkt_seq <= seq_num (equivalent to NOT (pkt_seq > seq_num))
-                                    _pkt_seq _seq_num > 0 == IF
-                                        _pkt_buf _rdp_release_buffer
-                                        _i _tx_buf DICT.remove
-                                    END
+                                    _i _tx_buf DICT.get _rdp_release_buffer
+                                    _i _tx_buf DICT.remove
                                 END
                                 _i 1 + AS _i
                             DONE
+                            _received_seq RDP_SEQ_ACK _conn LIST.put
 
                             # If we were in REQ state (blocked), go back to OPEN
                             _current_state RDP_STATE_REQ == IF
@@ -478,10 +469,9 @@ DEF RDP.update {
                             # --- SYNC APPROACH: Fast Retransmit ---
                             # If peer is behind our last sent packet, push the next one.
                             RDP_SEQ_OUT _conn LIST.get 1 - AS _last_sent
-                            _last_sent _seq_num > IF
+                            _last_sent _received_seq > IF
                                 # Peer needs seq_num + 1
-                                _seq_num 1 + AS _resend_seq
-                                _resend_seq RDP_TX_WINDOW_SIZE % 1 + AS _key
+                                _received_seq 1 + AS _key
                                 
                                 _key _tx_buf DICT.has_key IF
                                     _key _tx_buf DICT.get AS _pkt_buf
@@ -536,25 +526,20 @@ DEF RDP.update {
 
                                     # Cleanup buffer this lookslike an better place for this
                                     RDP_TX_BUF _conn LIST.get AS _tx_buf
-                                    1 AS _i
-                                    WHILE _i RDP_TX_WINDOW_SIZE 1 + < DO
+                                    RDP_SEQ_ACK _conn LIST.get 1 + AS _i
+                                    WHILE _i _seq_num 1 + < DO
                                         _i _tx_buf DICT.has_key IF
-                                            _i _tx_buf DICT.get AS _pkt_buf
-                                            1 _pkt_buf ARRAY.get AS _pkt_seq
-                                            # Check if pkt_seq <= seq_num
-                                            _pkt_seq _seq_num > 0 == IF
-                                                _pkt_buf _rdp_release_buffer
-                                                _i _tx_buf DICT.remove
-                                            END
+                                            _i _tx_buf DICT.get _rdp_release_buffer
+                                            _i _tx_buf DICT.remove
                                         END
                                         _i 1 + AS _i
                                     DONE
+                                    _seq_num RDP_SEQ_ACK _conn LIST.put
 
                                     RDP_STATE_OPEN RDP_STATE _conn LIST.put # LET OP
                                 ELSE
                                     # Out of Sync: Retransmit + STAT_REQ
-                                    _seq_num 1 + AS _resend_seq 
-                                    _resend_seq RDP_TX_WINDOW_SIZE % 1 + AS _key
+                                    _seq_num 1 + AS _key
                                     
                                     _key _tx_buf DICT.has_key IF
                                         _key _tx_buf DICT.get AS _pkt_buf
@@ -577,19 +562,15 @@ DEF RDP.update {
                                     *_tmp_ptr AS _seq_num
 
                                     RDP_TX_BUF _conn LIST.get AS _tx_buf
-                                    1 AS _i
-                                    WHILE _i RDP_TX_WINDOW_SIZE 1 + < DO
+                                    RDP_SEQ_ACK _conn LIST.get 1 + AS _i
+                                    WHILE _i _seq_num 1 + < DO
                                         _i _tx_buf DICT.has_key IF
-                                            _i _tx_buf DICT.get AS _pkt_buf
-                                            1 _pkt_buf ARRAY.get AS _pkt_seq
-                                            # Check if pkt_seq <= seq_num
-                                            _pkt_seq _seq_num > 0 == IF
-                                                _pkt_buf _rdp_release_buffer
-                                                _i _tx_buf DICT.remove
-                                            END
+                                            _i _tx_buf DICT.get _rdp_release_buffer
+                                            _i _tx_buf DICT.remove
                                         END
                                         _i 1 + AS _i
                                     DONE
+                                    _seq_num RDP_SEQ_ACK _conn LIST.put
                                     
                                     TIME.uptime RDP_TIMER _conn LIST.put
                                     0 RDP_RETRIES _conn LIST.put
@@ -601,8 +582,8 @@ DEF RDP.update {
                             _payload_ptr 1 + AS _tmp_ptr
                             *_tmp_ptr 1 + AS _seq_num
 
-                            # Calculate Key: (seq % window) + 1
-                            _seq_num RDP_TX_WINDOW_SIZE % 1 + AS _key
+                            # Key is simply the required sequence number
+                            _seq_num AS _key
 
                             RDP_TX_BUF _conn LIST.get AS _tx_buf
                             _key _tx_buf DICT.has_key IF
@@ -796,7 +777,7 @@ DEF RDP.send {
             IF
                 # --- Send Success: Update state ---
                 # a. Add packet to the Tx_Buffer for potential retransmission
-                _pkt_buf _seq_num RDP_TX_WINDOW_SIZE % 1 + _tx_buf DICT.put
+                _pkt_buf _seq_num _tx_buf DICT.put
 
                 # b. Increment the outgoing sequence number for the next packet
                 _seq_num 1 + RDP_SEQ_OUT _conn LIST.put
