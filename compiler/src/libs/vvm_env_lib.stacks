@@ -121,7 +121,7 @@ CONST PRINT_NUM     10
 # DEVICES
 CONST UDC_IO        50
 
-### end of the syscalls
+### end of the implemented syscalls
 
 
 
@@ -199,8 +199,9 @@ DEF s_fetch {
     # 1. Get the host deque pointer from the VVM struct
     VVM_HOST_ptr _env_vvm_ptr VVMpeek AS _env_host_dq
 
+    # TODO make it saver to check the queue first, then read when its not empty
     # 2. Fetch the value from the host deque.
-    #    This is a blocking operation if the deque is empty, waiting for the host.
+    #    When the deque is empty, the action will fail and halts the system
     _env_host_dq DEQUE.pop_tail AS _env_val
 
     # 3. Get the VVM's current stack pointer (points to next free slot)

@@ -1,0 +1,244 @@
+# .HEADER
+. $_power_base 1
+. $_power_exp 1
+. $_power_res 1
+. $n 1
+. $res 1
+. $_sqrt_y 1
+. $_sqrt_L 1
+. $_sqrt_R 1
+. $_sqrt_M 1
+. $P 1
+. $N 1
+. $C 1
+. $R 1
+
+# .CODE
+    stack Z $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    stack Z $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+:_main_while_start_0
+    ldm A $N
+    stack A $DATASTACK_PTR
+    ldi A 700
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_main_while_end_0
+    ldm A $P
+    stack A $DATASTACK_PTR
+    ldm A $N
+    stack A $DATASTACK_PTR
+:_main_while_start_1
+    call @rt_dup
+    stack Z $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_main_while_end_1
+    call @rt_swap
+    call @rt_over
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    dmod B A
+    stack A $DATASTACK_PTR
+    jmp :_main_while_start_1
+:_main_while_end_1
+    call @rt_drop
+    ustack A $DATASTACK_PTR
+    sto A $C
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :_main_if_else_0
+    ldm A $P
+    stack A $DATASTACK_PTR
+    ldm B $N
+    ldi A 1
+    add A B
+    ustack B $DATASTACK_PTR
+    add A B
+    sto A $R
+    jmp :_main_if_end_0
+:_main_if_else_0
+    ldm B $P
+    ldm A $C
+    dmod B A
+    ld A B
+    sto A $R
+:_main_if_end_0
+    ldm A $R
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 17
+    stack A $DATASTACK_PTR
+    call @rt_udc_control
+    ldm A $R
+    sto A $P
+    ldm B $N
+    ldi A 1
+    add A B
+    sto A $N
+    jmp :_main_while_start_0
+:_main_while_end_0
+    ret
+
+# .FUNCTIONS
+
+@power
+    ustack A $DATASTACK_PTR
+    sto A $_power_exp
+    ustack A $DATASTACK_PTR
+    sto A $_power_base
+    ldi A 1
+    sto A $_power_res
+:loop_POWER
+    ldm A $_power_exp
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :power_if_end_0
+    ldm A $_power_res
+    stack A $DATASTACK_PTR
+    jmp :_power_end
+:power_if_end_0
+    ldm B $_power_res
+    ldm A $_power_base
+    mul A B
+    sto A $_power_res
+    ldm B $_power_exp
+    ldi A 1
+    sub B A
+    ld A B
+    sto A $_power_exp
+    jmp :loop_POWER
+:_power_end
+    ret
+@factorial
+    ldi A 1
+    sto A $res
+    ustack A $DATASTACK_PTR
+    sto A $n
+    ldi A 1
+    sto A $res
+:factorial_while_start_0
+    ldm A $n
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :factorial_while_end_0
+    ldm B $res
+    ldm A $n
+    mul A B
+    sto A $res
+    ldm B $n
+    ldi A 1
+    sub B A
+    ld A B
+    sto A $n
+    jmp :factorial_while_start_0
+:factorial_while_end_0
+    ldm A $res
+    stack A $DATASTACK_PTR
+    ret
+@isqrt
+    ustack A $DATASTACK_PTR
+    sto A $_sqrt_y
+    ld A Z
+    sto A $_sqrt_L
+    ldm B $_sqrt_y
+    ldi A 1
+    add A B
+    sto A $_sqrt_R
+:isqrt_while_start_1
+    ldm A $_sqrt_L
+    stack A $DATASTACK_PTR
+    ldm B $_sqrt_R
+    ldi A 1
+    sub B A
+    stack B $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :isqrt_while_end_1
+    ldm B $_sqrt_L
+    ldm A $_sqrt_R
+    add B A
+    ldi A 2
+    dmod B A
+    ld A B
+    sto A $_sqrt_M
+    stack A $DATASTACK_PTR
+    call @rt_dup
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    ldm A $_sqrt_y
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :isqrt_if_else_1
+    ldm A $_sqrt_M
+    sto A $_sqrt_R
+    jmp :isqrt_if_end_1
+:isqrt_if_else_1
+    ldm A $_sqrt_M
+    sto A $_sqrt_L
+:isqrt_if_end_1
+    jmp :isqrt_while_start_1
+:isqrt_while_end_1
+    ldm A $_sqrt_L
+    stack A $DATASTACK_PTR
+    ret
+
+
+# .DATA
+
+% $_power_base 0
+% $_power_exp 0
+% $_power_res 0
+% $n 0
+% $res 1
+% $_sqrt_y 0
+% $_sqrt_L 0
+% $_sqrt_R 0
+% $_sqrt_M 0
+% $P 1
+% $N 2
+% $C 0
+% $R 0

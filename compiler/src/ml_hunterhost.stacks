@@ -15,7 +15,7 @@ USE vvm_core_lib
 VALUE VVM0 30720        ; The memory address for VVM0, stored in a variable.
 VALUE VVM1 31744        ; The memory address for VVM1, stored in a variable.
 
-VALUE vvm_timeslice 75  ; Max instructions per VVM per frame to prevent infinite loops.
+VALUE vvm_timeslice 100  ; Max instructions per VVM per frame to prevent infinite loops.
 VALUE loop_counter  0   ; A temporary counter for the run loop.
 VALUE sim_running   1   ; 1 = true, simulation is running
 VALUE train_running 1   ; 1 = true, training is running
@@ -238,7 +238,7 @@ DEF _HOST.plot {
         old_x0 Xoffset + old_y0 Yoffset + radius TURTLE.circle
     ELSE
         # Agent 1
-        darkGray TURTLE.color
+        lightGray TURTLE.color
         old_x1 Xoffset + old_y1 Yoffset + radius TURTLE.circle
         dx_fp AS old_x1 dy_fp AS old_y1
         yellow TURTLE.color
@@ -322,20 +322,17 @@ target_x target_y 1 3 &VVM1 VVM.start
 
 # # Run/Crank the VVMs
 1 TIME.start
+2 TIME.start
 # WHILE   VVM_status &VVM0 VVMpeek VVM_Halted != 
 #         VVM_status &VVM1 VVMpeek VVM_Halted != + DO
 WHILE sim_running DO
     # The loop_counter must be reset each frame to avoid a stall.
     vvm_timeslice AS loop_counter
     WHILE loop_counter DO
-        VVM_status &VVM0 VVMpeek VVM_Halted != IF
-            &VVM0 VVM.run
-        END
-
-        loop_counter 25 > IF
-            VVM_status &VVM1 VVMpeek VVM_Halted != IF
-                &VVM1 VVM.run
-            END
+        loop_counter 5 % IF
+            VVM_status &VVM0 VVMpeek VVM_Halted != IF &VVM0 VVM.run END
+        ELSE
+            VVM_status &VVM1 VVMpeek VVM_Halted != IF &VVM1 VVM.run END
         END
 
         loop_counter 1 - AS loop_counter
@@ -343,8 +340,9 @@ WHILE sim_running DO
 
 
     # Check for any pending syscalls from either VVM
-    &VVM0 VVM.check_syscalls
-    &VVM1 VVM.check_syscalls
+    # Since the Agent does not use syscalls, the check is not needed
+    # &VVM0 VVM.check_syscalls
+    # &VVM1 VVM.check_syscalls
 
     # ADVICE: For better performance, consider a "run-until-block" loop for each VVM.
     # Example: WHILE VVM_status &VVM0 VVMpeek VVM_Running == DO &VVM0 VVM.run DONE
@@ -357,7 +355,10 @@ WHILE sim_running DO
 
 
     train_count 10 % 0 == IF
-        "." PRTstring                 # Print heartbeat
+        # 2 TIME.read TIME.as_string
+        # ".\n" PRTstring                 # Print heartbeat
+        # 2 TIME.start
+        "." PRTstring
     END
 
     KEYpressed IF
@@ -376,5 +377,6 @@ WHILE sim_running DO
     
     train_count PRINT
     END
+    
 DONE
 1 TIME.read TIME.as_string

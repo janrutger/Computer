@@ -196,7 +196,7 @@ DEF DEQUE.pop_tail {
         &_dq_err_empty PRTstring HALT
     END
     
-    DEQUE_OFF_VAL _dq_tail LIST.get AS _dq_val
+    DEQUE_OFF_VAL  _dq_tail LIST.get AS _dq_val
     DEQUE_OFF_PREV _dq_tail LIST.get AS _dq_prev
     
     # tail = prev

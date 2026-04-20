@@ -251,7 +251,7 @@ class CPU_M1:
 
         # Handle SLEEP state (e.g. NOP)
         if self.state == "SLEEP":
-            time.sleep(0)
+            # time.sleep(0)     # since running threadless, this sleep has no function
             self.state = "FETCH"
             self.instructions_executed += 1
             self.stats["predicted_correct"] += 1

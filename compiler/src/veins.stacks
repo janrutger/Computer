@@ -20,10 +20,12 @@ CONST ROOTY 240       # (480 / 3)*2 = 320
 CONST CELL_COLOR  5     ; green
 CONST AUXIN_COLOR 2     ; red 
 
-CONST OBJ_RADIUS    2   ; the turtle expect an integer
-CONST AUXINS_MAX    75
-CONST GENERATIONS   200 
-CONST KILL_DISTANCE 20
+CONST OBJ_RADIUS      2   ; the turtle expect an integer
+CONST AUXINS_MAX      25  ; default was 75
+CONST AUXINS_MAX_GROW 5   ; 
+
+CONST GENERATIONS   150 
+CONST KILL_DISTANCE 15
 
 # Lets create the C-type Struct methods
 CONST Xoffset   0       ; The values will be stored as FixedPoint
@@ -60,15 +62,28 @@ VALUE current_auxin 0
 VALUE kill_dict 0
 VALUE generation 0
 
+# -- The object PUT method
+# Where cells and auxins are struct objects
+# ( value offset object_ptr -- )
+MACRO OBJ.put {
+    LIST.put        ; All arguments  are in the correct order on the stack
+}
+
+# -- The object GET method
+# Where cells and auxins are struct objects
+# ( offset object_ptr -- value )
+MACRO OBJ.get {
+    LIST.get        ; All arguments are in the correct order on the stack
+} 
 
 # -- Creates an new cell struct
 # ( -- cell_ptr )
 DEF NEW.cell {
     CELLsize NEW.list AS _cell_ptr
-    0 Xoffset _cell_ptr LIST.put        ; store FP(0) in Xoffset
-    0 Yoffset _cell_ptr LIST.put
-    0 DXoffset _cell_ptr LIST.put
-    0 DYoffset _cell_ptr LIST.put
+    0 Xoffset  _cell_ptr OBJ.put        ; store FP(0) in Xoffset
+    0 Yoffset  _cell_ptr OBJ.put
+    0 DXoffset _cell_ptr OBJ.put
+    0 DYoffset _cell_ptr OBJ.put
 
     _cell_ptr
 }
@@ -77,25 +92,11 @@ DEF NEW.cell {
 # ( -- auxin_ptr )
 DEF NEW.auxin {
     AUXINsize NEW.list AS _auxin_ptr
-    0 Xoffset _auxin_ptr LIST.put        ; store FP(0) in Xoffset
-    0 Yoffset _auxin_ptr LIST.put
+    0 Xoffset _auxin_ptr OBJ.put        ; store FP(0) in Xoffset
+    0 Yoffset _auxin_ptr OBJ.put
 
     _auxin_ptr
 }
-
-# -- The object PUT method
-# Where cells and auxins are struct objects
-# ( value offset object_ptr -- )
-DEF OBJ.put {
-    LIST.put        ; All arguments  are in the correct order on the stack
-}
-
-# -- The object GET method
-# Where cells and auxins are struct objects
-# ( offset object_ptr -- value )
-DEF OBJ.get {
-    LIST.get        ; All arguments are in the correct order on the stack
-} 
 
 # -- Calculate the distance between 2 object
 # -- Expecting the values in Fix point format
@@ -104,10 +105,10 @@ DEF OBJ.distance {
     AS _obj1_ptr
     AS _obj2_ptr
 
-    Xoffset _obj1_ptr LIST.get AS _x1
-    Yoffset _obj1_ptr LIST.get AS _y1
-    Xoffset _obj2_ptr LIST.get AS _x2
-    Yoffset _obj2_ptr LIST.get AS _y2
+    Yoffset _obj1_ptr OBJ.get AS _y1
+    Xoffset _obj1_ptr OBJ.get AS _x1
+    Xoffset _obj2_ptr OBJ.get AS _x2
+    Yoffset _obj2_ptr OBJ.get AS _y2
 
     _x1 _x2 FP.sub DUP FP.mul
     _y1 _y2 FP.sub DUP FP.mul
@@ -117,8 +118,8 @@ DEF OBJ.distance {
 ## ( cell_ptr -- )
 DEF CELL.clear_direction {
     AS _cell_ptr
-    0 DXoffset _cell_ptr LIST.put
-    0 DYoffset _cell_ptr LIST.put
+    0 DXoffset _cell_ptr OBJ.put
+    0 DYoffset _cell_ptr OBJ.put
 
 }
 
@@ -131,10 +132,10 @@ DEF CELL.update_direction {
     AS _obj2_ptr    ; OBJ2 = Auxin Pointer
     AS _distance    ; as FP
 
-    Xoffset _obj1_ptr LIST.get AS _x1   ; Cell X
-    Yoffset _obj1_ptr LIST.get AS _y1
-    Xoffset _obj2_ptr LIST.get AS _x2   ; Auxin X
-    Yoffset _obj2_ptr LIST.get AS _y2
+    Xoffset _obj1_ptr OBJ.get AS _x1   ; Cell X
+    Yoffset _obj1_ptr OBJ.get AS _y1
+    Xoffset _obj2_ptr OBJ.get AS _x2   ; Auxin X
+    Yoffset _obj2_ptr OBJ.get AS _y2
 
     _x2 _x1 FP.sub AS _vx           ; calc direction vector
     _y2 _y1 FP.sub AS _vy
@@ -147,20 +148,20 @@ DEF CELL.update_direction {
     # # Inverse Distance Weighting: Force = KILL_DISTANCE / Distance
     # # We multiply by KILL_DISTANCE first to keep values in a good range (avoiding underflow)
     # # Then divide by distance (avoiding overflow from squaring)
-    # KILL_DISTANCE FP.from_int AS _factor
-    # _vx _factor FP.mul _distance FP.div AS _vx
-    # _vy _factor FP.mul _distance FP.div AS _vy
+        KILL_DISTANCE FP.from_int AS _factor
+        _vx _factor FP.mul _distance FP.div AS _vx
+        _vy _factor FP.mul _distance FP.div AS _vy
 
     # _vx and _vy are normalized vectors
 
-    DXoffset _obj1_ptr LIST.get AS _dx  ; recalcutate the direction vector
-    DYoffset _obj1_ptr LIST.get AS _dy
+    DXoffset _obj1_ptr OBJ.get AS _dx  ; recalcutate the direction vector
+    DYoffset _obj1_ptr OBJ.get AS _dy
 
     _dx _vx FP.add AS _dx
     _dy _vy FP.add AS _dy
 
-    _dx DXoffset _obj1_ptr LIST.put     ; Store the updated direction vector
-    _dy DYoffset _obj1_ptr LIST.put
+    _dx DXoffset _obj1_ptr OBJ.put     ; Store the updated direction vector
+    _dy DYoffset _obj1_ptr OBJ.put
 }
 
 ##### END OF STRUCT HELPERS #####
@@ -175,28 +176,63 @@ VALUE Auxins_dict 0
 DEF AUXIN.create {
     Auxins_dict DICT.count AUXINS_MAX < IF
         AUXINS_MAX Auxins_dict DICT.count - AS _space_left
-        _space_left 5 > IF
-            5 AS _num_auxins
+        _space_left AUXINS_MAX_GROW > IF
+            AUXINS_MAX_GROW AS _num_auxins
         ELSE
             _space_left AS _num_auxins
         END
+        
+        #START options
+        ## This while loop for creating Auxins is using the Full screen-size to use
+            # WHILE _num_auxins DO
+            #     # Random X: (RND * W) / 999
+            #     RND SCREEN_W * 999 // AS _i_value           ; 1. Get random integer coordinate
+            #     _i_value FP.from_int AS _x1                 ; 2. Convert to Fixed Point
+            #     RND SCREEN_H * 999 // AS _i_value           ; 1. Get random integer coordinate
+            #     _i_value FP.from_int AS _y1                 ; 2. Convert to Fixed Point
 
-        WHILE _num_auxins DO
-            # Random X: (RND * W) / 999
-            RND SCREEN_W * 999 // AS _i_value           ; 1. Get random integer coordinate
-            _i_value FP.from_int AS _x1                 ; 2. Convert to Fixed Point
-            RND SCREEN_H * 999 // AS _i_value           ; 1. Get random integer coordinate
-            _i_value FP.from_int AS _y1                 ; 2. Convert to Fixed Point
 
+            #     NEW.auxin AS auxin_ptr
+            #     _x1 Xoffset auxin_ptr LIST.put
+            #     _y1 Yoffset auxin_ptr LIST.put
 
-            NEW.auxin AS auxin_ptr
-            _x1 Xoffset auxin_ptr LIST.put
-            _y1 Yoffset auxin_ptr LIST.put
+            #     auxin_ptr auxin_ptr Auxins_dict DICT.put
 
-            auxin_ptr auxin_ptr Auxins_dict DICT.put
+            #     _num_auxins 1 - AS _num_auxins
+            # DONE
 
-            _num_auxins 1 - AS _num_auxins
-        DONE
+        ## END full-screen use
+        ## This while loop for creating Auxins is using the Circle (radius 200) to use
+
+            WHILE _num_auxins DO
+                # Rejection Sampling voor een cirkel met radius 200
+                # Genereer een dx en dy tussen -200 en 200
+                RND 400 * 999 // 200 - AS _dx
+                RND 400 * 999 // 200 - AS _dy
+
+                # Controleer of de afstand tot het midden (0,0) binnen de radius 200 valt
+                # Pythagoras: x^2 + y^2 <= r^2  (200^2 = 40000)
+                _dx _dx * _dy _dy * + 40000 < IF
+                    # Het punt valt binnen de cirkel, bereken absolute coordinaten
+                    ROOTX _dx + FP.from_int AS _x1
+                    ROOTY _dy + FP.from_int AS _y1
+
+                    # Maak de auxin aan
+                    NEW.auxin AS auxin_ptr
+                    _x1 Xoffset auxin_ptr OBJ.put
+                    _y1 Yoffset auxin_ptr OBJ.put
+
+                    # Voeg toe aan de dictionary
+                    auxin_ptr auxin_ptr Auxins_dict DICT.put
+
+                    # Alleen verlagen als we een geldig punt in de cirkel hebben gevonden
+                    _num_auxins 1 - AS _num_auxins
+                END
+                # Als het punt buiten de cirkel viel, slaat de IF over en 
+                # blijft _num_auxins gelijk, waardoor de loop het opnieuw probeert.
+            DONE
+        ## End Circle
+        ## END OPTIONS
     END
 }
 
@@ -352,8 +388,8 @@ DEF main {
     # Create the Cell-dict and populate the root cell
     1050 DICT.new AS Cells_dict                 # Create the dictonary
     NEW.cell AS cell_ptr                        # Create the root cell
-    ROOTX FP.from_int Xoffset cell_ptr OBJ.put  # Start X
-    ROOTY FP.from_int Yoffset cell_ptr OBJ.put  # Start Y
+    ROOTX       FP.from_int Xoffset cell_ptr OBJ.put  # Start X
+    ROOTY 200 - FP.from_int Yoffset cell_ptr OBJ.put  # Start Y, higher (-), lower (+) on the screen, on the circle
     cell_ptr cell_ptr Cells_dict DICT.put       # Store cell in Cells
     "-- Cell dictonary created\n" PRTstring
 
@@ -365,8 +401,8 @@ DEF main {
 
 
     "-- -- Start generator" PRTstring
-    # GENERATIONS AS generation
-    100 AS generation
+    GENERATIONS AS generation
+    # 100 AS generation
     DRAW.cells
     DRAW.auxins
     "-- Cells and Auxins drawn\n" PRTstring
