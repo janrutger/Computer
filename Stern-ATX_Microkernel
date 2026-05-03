@@ -1,0 +1,47 @@
+Leidende Principes: Stern-ATX Microkernel & VVM-Runtime
+1. De VVM is de Standaard voor Applicaties
+Geen enkele "User Applicatie" draait direct op de Host-CPU (Level 1). 
+Applicaties draaien uitsluitend binnen een gesanboxte VVM (Level 2). 
+Dit garandeert dat een vastgelopen jager of een corrupte app nooit de Kernel (de Host) kan laten crashen.
+
+2. Coöperatieve Scheduling (Hardware-Triggered)
+De hardware (Vector 2) geeft elke 1000 cycli een "hartslag" via een vlag. 
+De Kernel-loop bepaalt de exacte omvang van de rekentijd (burst) per actieve VVM, niet de VVM zelf. 
+De vlag wordt op veilige momenten gecontroleerd om van VVM te wisselen. 
+Dit voorkomt complexe problemen met onderbroken Syscalls en shadow-registers.
+
+
+3. De Kernel is een Service Registry (FFI Bridge)
+De host-functies (zoals NN.predict of TURTLE.flip) zijn services die door de kernel worden aangeboden.
+
+Applicaties (VVM's) maken gebruik van de Rich EXEC interface.
+De Kernel vult zijn interne Service Registry (een tabel van ID's naar functie-pointers) 
+tijdens de initialisatiefase. De assembler bewaart de symbolen van de resident host-functies, 
+waardoor de Kernel deze adressen kan opvragen (via de '&' operator) en statisch kan koppelen 
+aan de Service Registry. Dit zorgt voor een efficiënte "Late Binding" op Kernel-niveau.
+
+4. Atomaire Host Services (Stateless)
+Host-functies worden altijd volledig afgerond voordat een context-switch plaatsvindt. 
+Hierdoor is complexe re-entrancy boekhouding niet nodig. 
+De VVM is zelf verantwoordelijk voor het bijhouden van zijn eigen status en variabelen binnen zijn eigen 1KB sandbox.
+
+
+5. De "Idle" Kernel (Yielding)
+Wanneer de kernel klaar is met het inplannen van taken en er geen interactie nodig is, 
+moet hij de CPU vrijgeven via de NOP (yield) instructie. 
+Dit houdt de host-computer (jouw echte PC) koel en geeft Pygame de ruimte om soepel te renderen.
+
+6. Slot-based Object Memory
+Het Programma-geheugen (9216-17407) is verdeeld in twee zones:
+A. Resident Zone (9216 - 13311): Gereserveerd voor de Kernel en gedeelde libraries (Core Services).
+B. Service Slot Zone (13312 - 17407): Verdeeld in vaste slots van 128 woorden voor app-specifieke services.
+
+Host-modules worden gecompileerd voor een specifiek slot-adres binnen Zone B. 
+De Service ID (100+) bepaalt de offset vanaf de start van de Slot Zone (13312), 
+waardoor de Kernel adressen via een vaste formule kan berekenen zonder de Resident Zone te raken.
+
+7. Kernel Managed Resources (Heap Persistence)
+De Kernel (Process 0) is de eigenaar van de systeem-brede heap-structuren (Dictionaries, Deques, Lists). 
+Deze structuren worden eenmalig gealloceerd tijdens de initialisatie van de kernel. 
+Dit garandeert persistentie van systeemdata (zoals de Service Registry en de Process Tabel) 
+zonder het risico op heap-overflow in een omgeving zonder garbage collection.

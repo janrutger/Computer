@@ -1,32 +1,34 @@
 {
   "functions": [
-    "FP.power",
-    "STRcmp",
-    "STRfind",
-    "HALT",
-    "READline",
-    "PRTnum",
     "STRlen",
-    "_STRNatoi",
-    "KEYpressed",
-    "power",
-    "io_lib_init",
-    "FP.fprint",
-    "FP.from_string",
-    "FP.div",
-    "STRatoi",
-    "factorial",
-    "PRTchar",
-    "isqrt",
-    "PRTcls",
-    "STRcopy",
-    "TOS.check",
-    "CURSORoff",
+    "FP.power",
     "FP.mul",
-    "TOS_nnl",
+    "READline",
+    "CURSORoff",
+    "FP.pi",
+    "factorial",
+    "STRatoi",
+    "STRcmp",
+    "power",
+    "PRTchar",
+    "_STRNatoi",
+    "HALT",
+    "isqrt",
+    "FP.div",
+    "FP.print",
     "STRhash",
-    "KEYchar",
-    "FP.print"
+    "TOS.check",
+    "KEYpressed",
+    "io_lib_init",
+    "PRTnum",
+    "FP.from_string",
+    "STRcopy",
+    "STRfind",
+    "FP.sin",
+    "TOS_nnl",
+    "FP.fprint",
+    "PRTcls",
+    "KEYchar"
   ],
   "variables": [
     {
@@ -195,6 +197,11 @@
       "size": 38
     },
     {
+      "name": "s_pi",
+      "type": "STRING",
+      "size": 17
+    },
+    {
       "name": "fp_b",
       "type": "VALUE",
       "size": 1
@@ -321,6 +328,21 @@
     },
     {
       "name": "sign",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "sin_x",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_nn",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_exp",
       "type": "VALUE",
       "size": 1
     }

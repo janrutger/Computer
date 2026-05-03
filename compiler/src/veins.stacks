@@ -21,6 +21,7 @@ CONST CELL_COLOR  5     ; green
 CONST AUXIN_COLOR 2     ; red 
 
 CONST OBJ_RADIUS      2   ; the turtle expect an integer
+CONST CELL_MAX        1000
 CONST AUXINS_MAX      25  ; default was 75
 CONST AUXINS_MAX_GROW 5   ; 
 
@@ -142,17 +143,17 @@ DEF CELL.update_direction {
 
     # vector normalizing
     
-    # _vx _distance FP.div AS _vx     ; Normalize the vectors
-    # _vy _distance FP.div AS _vy
+    _vx _distance FP.div AS _vx     ; Normalize the vectors
+    _vy _distance FP.div AS _vy
 
     # # Inverse Distance Weighting: Force = KILL_DISTANCE / Distance
     # # We multiply by KILL_DISTANCE first to keep values in a good range (avoiding underflow)
     # # Then divide by distance (avoiding overflow from squaring)
-        KILL_DISTANCE FP.from_int AS _factor
-        _vx _factor FP.mul _distance FP.div AS _vx
-        _vy _factor FP.mul _distance FP.div AS _vy
+        # KILL_DISTANCE FP.from_int AS _factor
+        # _vx _factor FP.mul _distance FP.div AS _vx
+        # _vy _factor FP.mul _distance FP.div AS _vy
 
-    # _vx and _vy are normalized vectors
+    # # _vx and _vy are normalized vectors
 
     DXoffset _obj1_ptr OBJ.get AS _dx  ; recalcutate the direction vector
     DYoffset _obj1_ptr OBJ.get AS _dy
@@ -229,7 +230,7 @@ DEF AUXIN.create {
                     _num_auxins 1 - AS _num_auxins
                 END
                 # Als het punt buiten de cirkel viel, slaat de IF over en 
-                # blijft _num_auxins gelijk, waardoor de loop het opnieuw probeert.
+                # blijft _num_auxins gelijk, waardoor de loop het opnieuw probeerd.
             DONE
         ## End Circle
         ## END OPTIONS
@@ -281,7 +282,9 @@ DEF grow {
     0 AS current_cell
     WHILE current_cell Cells_dict DICT.count < DO
         current_cell Cells_dict DICT.item AS cell_ptr DROP ; Deleting DICT-key from the stack
-        cell_ptr CELL.clear_direction
+        # cell_ptr CELL.clear_direction
+        0 DXoffset cell_ptr OBJ.put
+        0 DYoffset cell_ptr OBJ.put
         current_cell 1 + AS current_cell
     DONE
     
@@ -386,10 +389,10 @@ DEF main {
     "\nStart of Simulation..... \n" PRTstring
 
     # Create the Cell-dict and populate the root cell
-    1050 DICT.new AS Cells_dict                 # Create the dictonary
+    CELL_MAX DICT.new AS Cells_dict             # Create the dictonary
     NEW.cell AS cell_ptr                        # Create the root cell
     ROOTX       FP.from_int Xoffset cell_ptr OBJ.put  # Start X
-    ROOTY 200 - FP.from_int Yoffset cell_ptr OBJ.put  # Start Y, higher (-), lower (+) on the screen, on the circle
+    ROOTY 200 + FP.from_int Yoffset cell_ptr OBJ.put  # Start Y, 200 positions higher (-), lower (+) on the screen, on the circle
     cell_ptr cell_ptr Cells_dict DICT.put       # Store cell in Cells
     "-- Cell dictonary created\n" PRTstring
 
@@ -402,7 +405,6 @@ DEF main {
 
     "-- -- Start generator" PRTstring
     GENERATIONS AS generation
-    # 100 AS generation
     DRAW.cells
     DRAW.auxins
     "-- Cells and Auxins drawn\n" PRTstring

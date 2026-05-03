@@ -11,6 +11,7 @@
 . $SCALE_FACTOR 1
 . $FP_DOT_STR 2
 . $div_error 38
+. $s_pi 17
 . $fp_b 1
 . $fp_a 1
 . $result_sign 1
@@ -37,6 +38,9 @@
 . $frac_as_int 1
 . $divisor 1
 . $sign 1
+. $sin_x 1
+. $_nn 1
+. $_exp 1
 . $_gpu_tdl_ptr 1
 . $_gpu_temp_ptr 1
 . $_nn_scale 1
@@ -872,6 +876,119 @@
     mul B A
     stack B $DATASTACK_PTR
 :_fp_from_string_end
+    ret
+@FP.pi
+    ldi A $s_pi
+    stack A $DATASTACK_PTR
+    call @FP.from_string
+    ret
+@FP.sin
+    ustack A $DATASTACK_PTR
+    sto A $sin_x
+:loop_range
+    ldm A $sin_x
+    stack A $DATASTACK_PTR
+    call @FP.pi
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :FP.sin_if_end_16
+    ldm A $sin_x
+    stack A $DATASTACK_PTR
+    call @FP.pi
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    mul A B
+    ustack B $DATASTACK_PTR
+    sub B A
+    ld A B
+    sto A $sin_x
+    jmp :loop_range
+:FP.sin_if_end_16
+:loop_range_neg
+    ldm A $sin_x
+    stack A $DATASTACK_PTR
+    call @FP.pi
+    ustack A $DATASTACK_PTR
+    ldi B 0
+    sub B A
+    stack B $DATASTACK_PTR
+    call @rt_lt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :FP.sin_if_end_17
+    ldm A $sin_x
+    stack A $DATASTACK_PTR
+    call @FP.pi
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    mul A B
+    ustack B $DATASTACK_PTR
+    add A B
+    sto A $sin_x
+    jmp :loop_range_neg
+:FP.sin_if_end_17
+    ldm A $sin_x
+    stack A $DATASTACK_PTR
+    ldi A 2
+    sto A $_nn
+:loop_taylor
+    ldm A $_nn
+    stack A $DATASTACK_PTR
+    ldi A 10
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :FP.sin_if_end_18
+    jmp :end_taylor
+:FP.sin_if_end_18
+    ldm B $_nn
+    ldi A 2
+    mul B A
+    ldi A 1
+    sub B A
+    ld A B
+    sto A $_exp
+    ldm A $sin_x
+    stack A $DATASTACK_PTR
+    ldm A $_exp
+    stack A $DATASTACK_PTR
+    call @FP.power
+    ldm A $_exp
+    stack A $DATASTACK_PTR
+    call @factorial
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
+    mul B A
+    stack B $DATASTACK_PTR
+    call @FP.div
+    ldm B $_nn
+    ldi A 2
+    dmod B A
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :FP.sin_if_else_19
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    jmp :FP.sin_if_end_19
+:FP.sin_if_else_19
+    ustack A $DATASTACK_PTR
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+:FP.sin_if_end_19
+    ldm B $_nn
+    ldi A 1
+    add A B
+    sto A $_nn
+    jmp :loop_taylor
+:end_taylor
     ret
 
 
@@ -3737,6 +3854,7 @@
 % $SCALE_FACTOR 1000
 % $FP_DOT_STR \. \null
 % $div_error \E \R \R \O \R \: \space \F \i \x \e \d \space \p \o \i \n \t \space \D \i \v \i \s \i \o \n \space \b \y \space \z \e \r \o \! \Return \null
+% $s_pi \3 \. \1 \4 \1 \5 \9 \2 \6 \5 \3 \5 \8 \9 \7 \9 \null
 % $fp_b 0
 % $fp_a 0
 % $result_sign 1
@@ -3763,6 +3881,9 @@
 % $frac_as_int 0
 % $divisor 0
 % $sign 1
+% $sin_x 0
+% $_nn 0
+% $_exp 0
 
 % $_gpu_tdl_ptr 0
 % $_gpu_temp_ptr 0

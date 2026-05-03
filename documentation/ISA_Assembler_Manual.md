@@ -31,7 +31,7 @@ This section defines the main system binary (Kernel/OS).
     *   `file`: Path to the `.asm` source file.
     *   `base_address`: The memory address where this code will be loaded.
     *   `restore_symbols`: (Boolean)
-        *   `false`: Symbols defined in this file are kept in the assembler's memory. Subsequent files can reference them. (Typical for the Kernel).
+        *   `false`: Symbols are kept. This allows modular builds where "Host Services" are compiled into specific memory zones while remaining accessible to the Kernel.
         *   `true`: Symbols defined in this file are discarded after assembly. (Typical for overlays).
 
 #### `apps` Section

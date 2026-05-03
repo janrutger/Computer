@@ -1,5 +1,5 @@
 {
-    "workbench.colorTheme": "Default Dark Modern",
+    "workbench.colorTheme": "Dark Modern",
 
     "[stern-asm]": {"editor.cursorStyle": "block",}
 

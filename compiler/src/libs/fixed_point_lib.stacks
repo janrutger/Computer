@@ -12,9 +12,10 @@ USE std_string
 VALUE SCALE_FACTOR  1000 ;.default 3 fixed-point scale factor
 
 CONST FP_DOT 46     ; the assci value for a single .
-STRING FP_DOT_STR "."
 
+STRING FP_DOT_STR "."
 STRING div_error "ERROR: Fixed point Division by zero!\n"
+STRING s_pi "3.14159265358979" 
 
 # DEF FP.set_scale {
 #     AS SCALE_FACTOR
@@ -348,4 +349,68 @@ DEF FP.from_string {
     sign * ; Apply sign
 
     :_fp_from_string_end
+}
+
+; Returns the value of PI scaled to the current SCALE_FACTOR
+; ( -- fp_pi )
+DEF FP.pi {
+    &s_pi FP.from_string
+}
+
+VALUE sin_x 0
+VALUE _nn 0
+VALUE _exp 0 
+DEF FP.sin { ; ( x_fp -- result_fp )
+    AS sin_x
+
+    ; OPTIMALISATIE 1: Range Reduction
+    ; Breng sin_x naar het bereik [-PI, PI]. Dit voorkomt dat machten zoals 10^13 
+    ; de 32-bit registers laten overlopen en versnelt de convergentie enorm.
+    ; Bij schaal 1000: PI ~ 3142, 2*PI ~ 6283.
+    ; Omdat de sinus periodiek is, blijft de uitkomst identiek.
+    :loop_range
+    sin_x FP.pi > IF
+        sin_x FP.pi 2 * FP.sub AS sin_x ; Trek 2*PI af
+        GOTO loop_range
+    END
+    :loop_range_neg
+    sin_x FP.pi negate < IF
+        sin_x FP.pi 2 * FP.add AS sin_x
+        GOTO loop_range_neg
+    END
+
+
+
+    sin_x               ; Initialiseer resultaat met de eerste term (sin_x)
+    
+    ; We gebruiken een loop voor de termen: sin_x^3/3!, sin_x^5/5!, ..., sin_x^19/19!
+    ; De machten zijn altijd oneven: (2n + 1)
+    
+    2 AS _nn          ; Teller voor de term-nummering
+    :loop_taylor
+    _nn 10 > IF
+        GOTO end_taylor
+    END
+
+    ; Bereken de exponent: exponent = (2 * _nn) - 1
+    _nn 2 * 1 - AS _exp
+
+    ; Bereken de term: (sin_x^_exp / _exp!)
+    sin_x _exp FP.power
+    _exp factorial FP.from_int
+    FP.div
+
+    ; Bepaal het teken: _nn=2 is min, _nn=3 is plus, _nn=4 is min, etc.
+    ; Als _nn even is -> aftrekken, als _nn oneven is -> optellen
+    _nn 2 % 0 == IF
+        FP.sub      ; Trek term af
+    ELSE
+        FP.add      ; Tel term op
+    END
+
+    _nn 1 + AS _nn
+    GOTO loop_taylor
+
+    :end_taylor
+    ; Het resultaat staat nu op de stack
 }

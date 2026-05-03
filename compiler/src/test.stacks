@@ -1,1 +1,148 @@
-# Create something new
+; Test script voor de universele FP.sin functie in fixed_point_lib
+
+INCLUDE math_lib
+INCLUDE fixed_point_lib
+USE std_stern_io
+INCLUDE turtle_lib
+
+; --- Constants ---
+CONST SCREEN_WIDTH 640
+CONST SCREEN_HEIGHT 480
+
+; Center of the screen
+CONST X_OFFSET 320 ; SCREEN_WIDTH / 2
+CONST Y_OFFSET 240 ; SCREEN_HEIGHT - 40, to move axis down
+
+; Instelbare wereld-limieten (voor x = -100 .. 100)
+VALUE WORLD_X_MIN 0
+100 NEGATE AS WORLD_X_MIN
+VALUE WORLD_X_MAX 100
+VALUE WORLD_Y_RANGE 1 ; Sinus is altijd -1 .. 1
+
+; Frequentie-factor in Fixed Point (bijv. 100 = 0.1 frequentie)
+VALUE WAVE_FREQ 40
+VALUE WAVE_AMP 500
+
+
+; Dynamische schaling bij schaal 1000:
+; We verlagen de schaal iets om binnen de 0..639 en 20..479 grenzen te blijven
+; Dit voorkomt wrapping door de modulo operator in TURTLE.goto
+VALUE SCALE_X 3190 
+VALUE SCALE_Y 219000 
+VALUE step_divider 3  ; Voor 0.1 stappen
+
+; Converteert wereld-X naar scherm-X pixel
+DEF world_to_screen_x { ; ( world_x_fp -- screen_x_int )
+    SCALE_X FP.mul
+    X_OFFSET FP.from_int
+    FP.add
+    FP.to_int
+}
+
+; Converteert wereld-Y naar scherm-Y pixel
+DEF world_to_screen_y { ; ( world_y_fp -- screen_y_int )
+    SCALE_Y FP.mul
+    Y_OFFSET FP.from_int SWAP
+    FP.sub ; Trek af van offset omdat pixel-Y naar beneden toe oploopt
+    FP.to_int
+}
+
+DEF draw_axes {
+    lightGray TURTLE.color
+    ; Y-axis (x is constant at X_OFFSET)
+    X_OFFSET 20 ; a small offset from the top (20) to show the text line
+    X_OFFSET SCREEN_HEIGHT 1 - TURTLE.line
+    ; X-axis (y is constant at Y_OFFSET)
+    0 Y_OFFSET 
+    SCREEN_WIDTH 1 - Y_OFFSET TURTLE.line
+}
+
+; Tekent een enkel punt op basis van FP wereldcoördinaten
+DEF draw_point { ; ( x_fp y_fp -- )
+    AS wy
+    AS wx
+
+    wx world_to_screen_x AS sx
+    wy world_to_screen_y AS sy
+    
+    ; Alleen tekenen als het binnen schermresolutie valt (safety clipping)
+    sy 0 > IF sy SCREEN_HEIGHT < IF
+        sx sy TURTLE.goto
+    END END
+}
+DEF f_sinus {       ; ( amp freq x -- y)
+    AS WAVE_X
+    AS WAVE_FREQ
+    AS WAVE_AMP 
+
+    WAVE_X WAVE_FREQ FP.mul FP.sin WAVE_AMP FP.mul AS wy
+    wy
+}
+
+# MAIN PROGRAM
+
+; Stel de Fixed Point schaal in (bijv. 1000 voor 3 decimalen)
+1000 FP.set_scale
+
+TURTLE.start
+db_pixel TURTLE.mode
+
+draw_axes
+; Definieer parameters voor de twee golven
+600 AS a1
+50  AS f1
+
+400 AS a2
+250 AS f2
+
+200 AS a3
+450 AS f3
+
+100 AS a4
+650 AS f4
+
+; Bereken totale amplitude voor automatische schaalbewaking (normalisatie)
+a1 a2 FP.add a3 FP.add a4 FP.add AS total_amp
+
+step_divider FP.from_int AS f_step_divider
+
+; De teken-lus direct in main
+WORLD_X_MIN step_divider * AS i
+:main_loop
+i WORLD_X_MAX step_divider * > IF GOTO main_end END
+
+    ; Bereken huidige X (wx)
+    i FP.from_int f_step_divider FP.div AS wx
+    
+    ; Bereken individuele y-waarden
+    a1 f1 wx f_sinus AS y1
+    a2 f2 wx f_sinus AS y2
+    a3 f3 wx f_sinus AS y3
+    a4 f4 wx f_sinus AS y4
+    
+    ; Teken de individuele componenten in het grijs
+    gray TURTLE.color
+    wx y1 draw_point
+    wx y2 draw_point
+    wx y3 draw_point
+    wx y4 draw_point
+    
+    ; Bereken de som en teken deze in het rood
+    # red TURTLE.color
+    # y1 y2 FP.add y3 FP.add wx SWAP draw_point
+
+    red TURTLE.color
+    y1 y2 FP.add y3 FP.add y4 FP.add
+    ; Pas normalisatie toe: (som * 1000) / total_amp
+    total_amp 0 > IF 
+        total_amp FP.div 1000 FP.mul 
+    END AS y_sum
+    wx y_sum draw_point
+
+    i 50 % 0 == IF TURTLE.flip END
+
+    i 1 + AS i
+    GOTO main_loop
+
+:main_end
+TURTLE.flip
