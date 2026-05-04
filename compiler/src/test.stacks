@@ -70,12 +70,13 @@ DEF draw_point { ; ( x_fp y_fp -- )
         sx sy TURTLE.goto
     END END
 }
-DEF f_sinus {       ; ( amp freq x -- y)
+DEF f_sinus {       ; ( amp freq phase x -- y)
     AS WAVE_X
+    AS WAVE_PHASE
     AS WAVE_FREQ
     AS WAVE_AMP 
 
-    WAVE_X WAVE_FREQ FP.mul FP.sin WAVE_AMP FP.mul AS wy
+    WAVE_X WAVE_FREQ FP.mul WAVE_PHASE FP.add FP.sin WAVE_AMP FP.mul AS wy
     wy
 }
 
@@ -89,17 +90,32 @@ db_pixel TURTLE.mode
 
 draw_axes
 ; Definieer parameters voor de twee golven
-600 AS a1
-50  AS f1
 
-400 AS a2
-250 AS f2
+CONST g120 2094
+CONST g240 4188
 
-200 AS a3
-450 AS f3
+CONST g360 6283
+CONST g270 4711
+CONST g180 3141
+CONST g90 1570
+CONST g45 785 ; Not used in this specific setup, but kept for reference
+CONST g0 0    ; Not used in this specific setup, but kept for reference
 
-100 AS a4
-650 AS f4
+0 AS a1
+0 AS f1
+g45 AS p1
+
+230 AS a2
+50 AS f2
+g90 AS p2 ; Phase shift of 90 degrees
+
+230 AS a3
+50 AS f3
+g180 AS p3 ; Phase shift of 180 degrees
+
+230 AS a4
+50 AS f4
+g270 AS p4 ; Phase shift of 270 degrees
 
 ; Bereken totale amplitude voor automatische schaalbewaking (normalisatie)
 a1 a2 FP.add a3 FP.add a4 FP.add AS total_amp
@@ -115,10 +131,10 @@ i WORLD_X_MAX step_divider * > IF GOTO main_end END
     i FP.from_int f_step_divider FP.div AS wx
     
     ; Bereken individuele y-waarden
-    a1 f1 wx f_sinus AS y1
-    a2 f2 wx f_sinus AS y2
-    a3 f3 wx f_sinus AS y3
-    a4 f4 wx f_sinus AS y4
+    a1 f1 p1 wx f_sinus AS y1
+    a2 f2 p2 wx f_sinus AS y2
+    a3 f3 p3 wx f_sinus AS y3
+    a4 f4 p4 wx f_sinus AS y4
     
     ; Teken de individuele componenten in het grijs
     gray TURTLE.color
@@ -139,7 +155,7 @@ i WORLD_X_MAX step_divider * > IF GOTO main_end END
     END AS y_sum
     wx y_sum draw_point
 
-    i 50 % 0 == IF TURTLE.flip END
+    i 10 % 0 == IF TURTLE.flip END
 
     i 1 + AS i
     GOTO main_loop

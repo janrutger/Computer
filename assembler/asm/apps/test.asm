@@ -87,14 +87,19 @@
 . $wy 1
 . $wx 1
 . $WAVE_X 1
+. $WAVE_PHASE 1
 . $a1 1
 . $f1 1
+. $p1 1
 . $a2 1
 . $f2 1
+. $p2 1
 . $a3 1
 . $f3 1
+. $p3 1
 . $a4 1
 . $f4 1
+. $p4 1
 . $total_amp 1
 . $f_step_divider 1
 . $i 1
@@ -115,22 +120,30 @@
     stack A $DATASTACK_PTR
     call @TURTLE.mode
     call @draw_axes
-    ldi A 800
+    ld A Z
     sto A $a1
-    ldi A 50
+    ld A Z
     sto A $f1
-    ldi A 400
+    ldi A 785
+    sto A $p1
+    ldi A 230
     sto A $a2
-    ldi A 250
+    ldi A 50
     sto A $f2
-    ldi A 200
+    ldi A 1570
+    sto A $p2
+    ldi A 230
     sto A $a3
-    ldi A 450
+    ldi A 50
     sto A $f3
-    ldi A 100
+    ldi A 3141
+    sto A $p3
+    ldi A 230
     sto A $a4
-    ldi A 650
+    ldi A 50
     sto A $f4
+    ldi A 4711
+    sto A $p4
     ldm B $a1
     ldm A $a2
     add B A
@@ -173,6 +186,8 @@
     stack A $DATASTACK_PTR
     ldm A $f1
     stack A $DATASTACK_PTR
+    ldm A $p1
+    stack A $DATASTACK_PTR
     ldm A $wx
     stack A $DATASTACK_PTR
     call @f_sinus
@@ -181,6 +196,8 @@
     ldm A $a2
     stack A $DATASTACK_PTR
     ldm A $f2
+    stack A $DATASTACK_PTR
+    ldm A $p2
     stack A $DATASTACK_PTR
     ldm A $wx
     stack A $DATASTACK_PTR
@@ -191,6 +208,8 @@
     stack A $DATASTACK_PTR
     ldm A $f3
     stack A $DATASTACK_PTR
+    ldm A $p3
+    stack A $DATASTACK_PTR
     ldm A $wx
     stack A $DATASTACK_PTR
     call @f_sinus
@@ -199,6 +218,8 @@
     ldm A $a4
     stack A $DATASTACK_PTR
     ldm A $f4
+    stack A $DATASTACK_PTR
+    ldm A $p4
     stack A $DATASTACK_PTR
     ldm A $wx
     stack A $DATASTACK_PTR
@@ -261,7 +282,7 @@
     stack A $DATASTACK_PTR
     call @draw_point
     ldm B $i
-    ldi A 50
+    ldi A 10
     dmod B A
     stack A $DATASTACK_PTR
     stack Z $DATASTACK_PTR
@@ -1757,6 +1778,8 @@
     ustack A $DATASTACK_PTR
     sto A $WAVE_X
     ustack A $DATASTACK_PTR
+    sto A $WAVE_PHASE
+    ustack A $DATASTACK_PTR
     sto A $WAVE_FREQ
     ustack A $DATASTACK_PTR
     sto A $WAVE_AMP
@@ -1765,6 +1788,10 @@
     ldm A $WAVE_FREQ
     stack A $DATASTACK_PTR
     call @FP.mul
+    ldm A $WAVE_PHASE
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
     call @FP.sin
     ldm A $WAVE_AMP
     stack A $DATASTACK_PTR
