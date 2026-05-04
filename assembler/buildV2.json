@@ -9,7 +9,7 @@
         "restore_symbols": false
       },
       {
-        "file": "asm/apps/net_test.asm",
+        "file": "asm/apps/fourier.asm",
         "base_address": 9216,
         "restore_symbols": true
       }
@@ -108,12 +108,12 @@
         "output": "../bin/apps/ml_hunterhost.bin"
       },
       {
-        "file": "asm/apps/net_test_a.asm",
-        "output": "../bin/apps/net_test_a.bin"
+        "file": "asm/apps/net_test.asm",
+        "output": "../bin/apps/net_test.bin"
       },
       {
-        "file": "asm/apps/net_test_b.asm",
-        "output": "../bin/apps/net_test_b.bin"
+        "file": "asm/apps/fourier.asm",
+        "output": "../bin/apps/fourier.bin"
       }
     ]
   }

@@ -22,7 +22,7 @@ De taal ondersteunt de volgende kernkeywords voor programmastructuur en controle
 
 *   `:label` - Definieert een sprongdoel.
 *   `{ }` - Definieert codeblokken (voor functies, loops).
-*   `DO END` - Gebruikt met `WHILE` en `TIMES` voor loop body's.
+*   `DO DONE` - Gebruikt met `WHILE` en `TIMES` voor loop body's.
 *   `IF ELSE END` - Conditionele uitvoering.
 *   `GOTO` - Onvoorwaardelijke sprong naar een label.
 *   `DEF` - Definieert een functie.
@@ -40,7 +40,7 @@ Vergelijkingen die een booleaanse waarde (waar/onwaar) op de stack plaatsen:
 
 ### Expressies (Stack Manipulatie & Aritmetiek)
 
-*   `+`, `-`, `*`, `/`, `%` - Basis rekenkundige operaties.
+*   `+`, `-`, `*`, `//`, `%` - Basis rekenkundige operaties.
 *   `DUP` - Dupliceert de bovenste waarde van de stack.
 *   `SWAP` - Verwisselt de twee bovenste waarden van de stack.
 *   `DROP` - Verwijdert de bovenste waarde van de stack.
@@ -97,7 +97,7 @@ Stacks is ontworpen voor de Stern-ATX, een virtuele machine met strikte geheugen
 *   **Totaal Geheugen:** 24KB (words).
 *   **Heap:** 6KB (6144 words) voor objecten.
 *   **Lineaire Heap:** Geen Garbage Collector; objecten kunnen niet worden vrijgegeven. Dit vereist zorgvuldig geheugenbeheer (`NO-NEW-IN-LOOP` principe).
-*   **16-bit Precisie:** Ontworpen voor 16-bit integer operaties.
+
 
 ### VVM (Virtual on Virtual Machine) & SIMPL
 De Stern-ATX kan meerdere "Virtual on Virtual Machines" (VVM's) hosten. Deze VVM's draaien code geschreven in SIMPL (Stacks Intermediate Machine Programming Language), een bytecode-formaat dat efficiënt is voor opslag en uitvoering.
@@ -134,9 +134,9 @@ Een bibliotheek voor het bouwen, trainen en uitvoeren van multi-layer perceptron
 **Loop met variabele:**
 ```stacks
 VALUE A 0
-WHILE A @ 10 < DO
-    A @ DUP PRINT
-    1 + A !
+WHILE A 10 < DO
+    A DUP PRINT
+    1 + AS A
 DONE
 ```
 
