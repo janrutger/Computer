@@ -1216,6 +1216,17 @@
     jmp :loop_taylor
 :end_taylor
     ret
+@FP.cos
+    call @FP.pi
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    dmod B A
+    ld A B
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @FP.sin
+    ret
 
 
 @GPU.tdl

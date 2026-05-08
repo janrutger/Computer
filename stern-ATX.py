@@ -217,6 +217,7 @@ def main():
             
             if cycles_this_burst > max_burst_cycles:
                 max_burst_cycles = cycles_this_burst
+                
 
         
         # --- Device Ticks ---

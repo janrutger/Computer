@@ -4,6 +4,8 @@ INCLUDE math_lib
 INCLUDE fixed_point_lib
 USE std_stern_io
 INCLUDE turtle_lib
+USE std_time
+
 
 ; --- Constants ---
 CONST SCREEN_WIDTH 640
@@ -15,8 +17,8 @@ CONST Y_OFFSET 240 ; SCREEN_HEIGHT - 40, to move axis down
 
 ; Instelbare wereld-limieten (voor x = -100 .. 100)
 VALUE WORLD_X_MIN 0
-75 NEGATE AS WORLD_X_MIN
-VALUE WORLD_X_MAX 75
+200 NEGATE AS WORLD_X_MIN
+VALUE WORLD_X_MAX 200
 VALUE WORLD_Y_RANGE 1 ; Sinus is altijd -1 .. 1
 
 ; Frequentie-factor in Fixed Point (bijv. 100 = 0.1 frequentie)
@@ -29,7 +31,7 @@ VALUE WAVE_AMP 500
 ; Dit voorkomt wrapping door de modulo operator in TURTLE.goto
 VALUE SCALE_X 0 
 VALUE SCALE_Y 219000 
-VALUE step_divider 2  ; Hoe lager hoe ruwer het plaatje [1 .. 10]
+VALUE step_divider 1  ; Hoe lager hoe ruwer het plaatje [1 .. 10]
 
 ; Converteert wereld-X naar scherm-X pixel
 DEF world_to_screen_x { ; ( world_x_fp -- screen_x_int )
@@ -81,6 +83,7 @@ DEF f_sinus {       ; ( amp freq phase x -- y)
 }
 
 # MAIN PROGRAM
+0 TIME.start
 
 ; Stel de Fixed Point schaal in (bijv. 1000 voor 3 decimalen)
 1000 FP.set_scale
@@ -107,25 +110,25 @@ CONST g240 4188
 CONST g360 6283
 CONST g270 4711
 CONST g180 3141
-CONST g90 1570
-CONST g45 785 ; Not used in this specific setup, but kept for reference
-CONST g0 0    ; Not used in this specific setup, but kept for reference
+CONST g90  1570
+CONST g45  785 
+CONST g0   0   
 
-800 AS a1
-100 AS f1
-g120 AS p1
+500 AS a1       ; Amplitude
+13 AS f1        ; Frequency
+g45 AS p1       ; Phase shift of some degrees
 
 500 AS a2
-50 AS f2
-g90 AS p2 ; Phase shift of some degrees
+29 AS f2
+g90 AS p2 
 
 500 AS a3
-50 AS f3
-g0 AS p3 ; Phase shift of some degrees
+47 AS f3
+g180 AS p3 
 
 500 AS a4
-50 AS f4
-g45 AS p4 ; Phase shift of some degrees
+83 AS f4
+g360 AS p4 
 
 ; Bereken totale amplitude voor automatische schaalbewaking (normalisatie)
 a1 a2 FP.add a3 FP.add a4 FP.add AS total_amp
@@ -154,9 +157,6 @@ i WORLD_X_MAX step_divider * > IF GOTO main_end END
     wx y4 draw_point
     
     ; Bereken de som en teken deze in het rood
-    # red TURTLE.color
-    # y1 y2 FP.add y3 FP.add wx SWAP draw_point
-
     red TURTLE.color
     y1 y2 FP.add y3 FP.add y4 FP.add
     ; Pas normalisatie toe: (som * 1000) / total_amp
@@ -172,3 +172,4 @@ i WORLD_X_MAX step_divider * > IF GOTO main_end END
 
 :main_end
 TURTLE.flip
+0 TIME.read TIME.as_string 13 PRTchar

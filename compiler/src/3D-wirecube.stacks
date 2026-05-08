@@ -99,84 +99,6 @@ DEF init_cube {
 
 }
 
-VALUE cube_faces 0
-
-DEF init_faces {
-    24 NEW.list AS cube_faces
-
-    # De volgorde van punten bepaalt wat de 'buitenkant' is.
-    
-    # Voorvlak (Z-negatief zijde)
-    p4 0 cube_faces LIST.put  p5 1 cube_faces LIST.put
-    p6 2 cube_faces LIST.put  p7 3 cube_faces LIST.put
-
-    # Achtervlak (Z-positief zijde)
-    p1 4 cube_faces LIST.put  p0 5 cube_faces LIST.put
-    p3 6 cube_faces LIST.put  p2 7 cube_faces LIST.put
-
-    # Rechtervlak
-    p5 8 cube_faces LIST.put  p1 9 cube_faces LIST.put
-    p2 10 cube_faces LIST.put p6 11 cube_faces LIST.put
-
-    # Linkervlak
-    p0 12 cube_faces LIST.put p4 13 cube_faces LIST.put
-    p7 14 cube_faces LIST.put p3 15 cube_faces LIST.put
-
-    # Bovenvlak
-    p7 16 cube_faces LIST.put p6 17 cube_faces LIST.put
-    p2 18 cube_faces LIST.put p3 19 cube_faces LIST.put
-
-    # Ondervlak
-    p0 20 cube_faces LIST.put p1 21 cube_faces LIST.put
-    p5 22 cube_faces LIST.put p4 23 cube_faces LIST.put
-}
-
-
-DEF draw_solid_cube {
-    0 AS f
-    WHILE f 6 < DO
-        f 4 * AS f_idx
-        
-        # Haal de scherm-indices van de eerste 3 punten van het vlak
-        f_idx     cube_faces LIST.get 3 // 2 * AS s1
-        f_idx 1 + cube_faces LIST.get 3 // 2 * AS s2
-        f_idx 2 + cube_faces LIST.get 3 // 2 * AS s3
-        f_idx 3 + cube_faces LIST.get 3 // 2 * AS s4
-
-        # Haal de X en Y coördinaten van deze punten op
-        s1 screen_points LIST.get AS X1  s1 1 + screen_points LIST.get AS Y1
-        s2 screen_points LIST.get AS X2  s2 1 + screen_points LIST.get AS Y2
-        s3 screen_points LIST.get AS X3  s3 1 + screen_points LIST.get AS Y3
-        s4 screen_points LIST.get AS X4  s4 1 + screen_points LIST.get AS Y4
-
-        # Back-face culling berekening (Cross Product van 2 vectoren in 2D)
-        # Formule: (X2-X1)*(Y3-Y1) - (Y2-Y1)*(X3-X1)
-        X2 X1 - Y3 Y1 - *
-        Y2 Y1 - X3 X1 - *
-        - AS surface
-
-        # Als surface > 0, dan wijst het vlak naar de camera
-        surface 0 > IF
-            # Kies een kleur per vlak voor extra effect, of houd het groen
-            f 0 == IF red TURTLE.color          END
-            f 1 == IF blue TURTLE.color         END
-            f 2 == IF green TURTLE.color        END
-            f 3 == IF yellow TURTLE.color       END
-            f 4 == IF cyan TURTLE.color         END
-            f 5 == IF lightBlue TURTLE.color    END
-
-            X1 Y1 X2 Y2 TURTLE.line
-            X2 Y2 X3 Y3 TURTLE.line
-            X3 Y3 X4 Y4 TURTLE.line
-            X4 Y4 X1 Y1 TURTLE.line
-            
-        END
-
-        f 1 + AS f
-    DONE
-    TURTLE.flip
-}
-
 
 
 DEF init_display {
@@ -188,11 +110,38 @@ DEF init_display {
 }
 
 
-VALUE camera_z      400
-VALUE f_camera_z    0
-VALUE focus         400
-VALUE f_focus       0
+VALUE camera_z 200
+VALUE f_camera_z 0
+VALUE focus 250
+VALUE f_focus 0
 
+# DEF project_all {
+#     0 AS i
+#     WHILE i 8 < DO
+#         # 1. Bereken de start-index van de vertex (i * 3)
+#         i 3 * AS v_idx
+#         v_idx cube_vertices LIST.get AS vx
+#         v_idx 1 + cube_vertices LIST.get AS vy
+#         v_idx 2 + cube_vertices LIST.get AS vz
+
+#         # 2. Perspectief berekening: Schaal = Focus / (Z + Afstand)
+#         vz f_camera_z FP.add AS denom
+        
+#         # Bereken X scherm positie: (X * focus / denom) + midden
+#         vx f_focus FP.mul denom FP.div 
+#         FP.to_int 320 + AS sx
+        
+#         # Bereken Y scherm positie: (Y * focus / denom) + midden
+#         vy f_focus FP.mul denom FP.div 
+#         FP.to_int 240 + AS sy
+
+#         # 3. Sla op in screen_points (i * 2 voor X, i * 2 + 1 voor Y)
+#         sx i 2 * screen_points LIST.put
+#         sy i 2 * 1 + screen_points LIST.put
+
+#         i 1 + AS i
+#     DONE
+# }
 
 DEF draw_cube {
     0 AS j
@@ -204,28 +153,59 @@ DEF draw_cube {
         # Zoek de bijbehorende 2D punten op in screen_points
         # Voor p1:
         p1_idx 3 // 2 * AS s1_idx  ; Converteer vertex-idx (0,3,6..) naar screen-idx (0,2,4..)
-        s1_idx screen_points LIST.get AS X1
-        s1_idx 1 + screen_points LIST.get AS Y1
+        s1_idx screen_points LIST.get AS x1
+        s1_idx 1 + screen_points LIST.get AS y1
 
         # Voor p2:
         p2_idx 3 // 2 * AS s2_idx
-        s2_idx screen_points LIST.get AS X2
-        s2_idx 1 + screen_points LIST.get AS Y2
+        s2_idx screen_points LIST.get AS x2
+        s2_idx 1 + screen_points LIST.get AS y2
 
-        j 8 < IF lightGray TURTLE.color 
+        j 8 < IF lightRed TURTLE.color 
         ELSE j 15 > IF darkGray TURTLE.color 
-        ELSE lightGray TURTLE.color END END
+        ELSE red TURTLE.color END END
         
 
 
         # Teken de lijn naar de UDC
-        X1 Y1 X2 Y2 TURTLE.line
+        x1 y1 x2 y2 TURTLE.line
 
         j 2 + AS j  ; Spring naar het volgende paar (edge)
     DONE
     TURTLE.flip    ; Toon de buffer op het scherm
 }
 
+# VALUE angle 0
+
+# DEF project_and_rotate {
+#     0 AS i
+#     WHILE i 8 < DO
+#         # 1. Haal de originele punten op
+#         i 3 * AS v_idx
+#         v_idx     cube_vertices LIST.get AS vx
+#         v_idx 1 + cube_vertices LIST.get AS vy
+#         v_idx 2 + cube_vertices LIST.get AS vz
+
+#         # 2. Directe Rotatie (Y-as)
+#         # We doen de berekening direct hier om 'rotate_point' functies te besparen
+#         angle FP.cos AS ca
+#         angle FP.sin AS sa
+
+#         vx ca FP.mul  vz sa FP.mul  FP.sub AS rx   ; de nieuwe X
+#         vx sa FP.mul  vz ca FP.mul  FP.add AS rz   ; de nieuwe Z
+
+#         # 3. Directe Projectie naar screen_points
+#         rz f_camera_z FP.add AS denom
+        
+#         rx f_focus FP.mul denom FP.div FP.to_int 320 + AS sx
+#         vy f_focus FP.mul denom FP.div FP.to_int 240 + AS sy
+
+#         sx i 2 * screen_points LIST.put
+#         sy i 2 * 1 + screen_points LIST.put
+
+#         i 1 + AS i
+#     DONE
+# }
 
 VALUE angle_y 0
 VALUE angle_x 0
@@ -267,12 +247,22 @@ DEF project_and_rotate_2_axes {
 }
 
 
+# DEF MAIN {
+#     HEAP.free 
+#     1000 FP.set_scale
+
+
+#     init_cube
+#     init_display
+
+#     project_all    ; Bereken de 2D punten
+#     draw_cube      ; Teken de lijnen
+# }
 
 DEF MAIN {
     HEAP.free 
     1000 FP.set_scale
     init_cube
-    init_faces
     init_display
 
     focus    FP.from_int AS f_focus
@@ -287,13 +277,11 @@ DEF MAIN {
         IO 2 NEW
         
         project_and_rotate_2_axes
-        draw_solid_cube
-        # draw_cube
-        # draw_solid_cube
+        draw_cube
         
         ; Verhoog hoeken met verschillende snelheden
-        angle_y 31 + AS angle_y
-        angle_x 47 + AS angle_x
+        angle_y 30 + AS angle_y
+        angle_x 50 + AS angle_x
         
         ; Reset hoeken bij 360
         angle_y _circle > IF 0 AS angle_y END

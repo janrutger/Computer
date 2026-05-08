@@ -109,11 +109,21 @@
 . $y_sum 1
 
 # .CODE
-    ldi A 75
+    ldi A 200
     ldi B 0
     sub B A
     ld A B
     sto A $WORLD_X_MIN
+    stack Z $DATASTACK_PTR
+    ldm A $p_watch_list
+    ustack B $DATASTACK_PTR
+    add A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    ld B A
+    ldm I $current_watch
+    stx B $_start_memory_
     ldi A 1000
     sto A $SCALE_FACTOR
     ldm A $WORLD_X_MAX
@@ -166,29 +176,29 @@
     stack A $DATASTACK_PTR
     call @TURTLE.mode
     call @draw_axes
-    ldi A 800
+    ldi A 500
     sto A $a1
-    ldi A 100
+    ldi A 13
     sto A $f1
-    ldi A 2094
+    ldi A 785
     sto A $p1
     ldi A 500
     sto A $a2
-    ldi A 50
+    ldi A 29
     sto A $f2
     ldi A 1570
     sto A $p2
     ldi A 500
     sto A $a3
-    ldi A 50
+    ldi A 47
     sto A $f3
-    ld A Z
+    ldi A 3141
     sto A $p3
     ldi A 500
     sto A $a4
-    ldi A 50
+    ldi A 83
     sto A $f4
-    ldi A 785
+    ldi A 6283
     sto A $p4
     ldm B $a1
     ldm A $a2
@@ -345,6 +355,23 @@
     jmp :main_loop
 :main_end
     call @TURTLE.flip
+    stack Z $DATASTACK_PTR
+    ldm A $p_watch_list
+    ustack B $DATASTACK_PTR
+    add A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldm I $current_watch
+    ldx A $_start_memory_
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    call @TIME.as_string
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @PRTchar
     ret
 
 # .FUNCTIONS
@@ -1056,6 +1083,17 @@
     sto A $_nn
     jmp :loop_taylor
 :end_taylor
+    ret
+@FP.cos
+    call @FP.pi
+    ldi A 2
+    ustack B $DATASTACK_PTR
+    dmod B A
+    ld A B
+    ustack B $DATASTACK_PTR
+    add B A
+    stack B $DATASTACK_PTR
+    call @FP.sin
     ret
 
 
@@ -1927,10 +1965,10 @@
 % $circ_y 0
 % $circ_p 0
 % $WORLD_X_MIN 0
-% $WORLD_X_MAX 75
+% $WORLD_X_MAX 200
 % $WORLD_Y_RANGE 1
 % $WAVE_FREQ 40
 % $WAVE_AMP 500
 % $SCALE_X 0
 % $SCALE_Y 219000
-% $step_divider 2
+% $step_divider 1

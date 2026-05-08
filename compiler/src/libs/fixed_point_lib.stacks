@@ -414,3 +414,8 @@ DEF FP.sin { ; ( x_fp -- result_fp )
     :end_taylor
     ; Het resultaat staat nu op de stack
 }
+
+DEF FP.cos { ; ( x_fp -- result_fp )
+    FP.pi 2 // +
+    FP.sin
+}

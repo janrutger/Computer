@@ -144,31 +144,31 @@ DEF draw_solid_cube {
         f_idx 3 + cube_faces LIST.get 3 // 2 * AS s4
 
         # Haal de X en Y coördinaten van deze punten op
-        s1 screen_points LIST.get AS X1  s1 1 + screen_points LIST.get AS Y1
-        s2 screen_points LIST.get AS X2  s2 1 + screen_points LIST.get AS Y2
-        s3 screen_points LIST.get AS X3  s3 1 + screen_points LIST.get AS Y3
-        s4 screen_points LIST.get AS X4  s4 1 + screen_points LIST.get AS Y4
+        s1 screen_points LIST.get AS x1  s1 1 + screen_points LIST.get AS y1
+        s2 screen_points LIST.get AS x2  s2 1 + screen_points LIST.get AS y2
+        s3 screen_points LIST.get AS x3  s3 1 + screen_points LIST.get AS y3
+        s4 screen_points LIST.get AS x4  s4 1 + screen_points LIST.get AS y4
 
         # Back-face culling berekening (Cross Product van 2 vectoren in 2D)
-        # Formule: (X2-X1)*(Y3-Y1) - (Y2-Y1)*(X3-X1)
-        X2 X1 - Y3 Y1 - *
-        Y2 Y1 - X3 X1 - *
+        # Formule: (x2-x1)*(y3-y1) - (y2-y1)*(x3-x1)
+        x2 x1 - y3 y1 - *
+        y2 y1 - x3 x1 - *
         - AS surface
 
         # Als surface > 0, dan wijst het vlak naar de camera
         surface 0 > IF
             # Kies een kleur per vlak voor extra effect, of houd het groen
-            f 0 == IF red TURTLE.color          END
-            f 1 == IF blue TURTLE.color         END
-            f 2 == IF green TURTLE.color        END
-            f 3 == IF yellow TURTLE.color       END
-            f 4 == IF cyan TURTLE.color         END
-            f 5 == IF lightBlue TURTLE.color    END
+            f 0 == IF red TURTLE.color END
+            f 1 == IF blue TURTLE.color END
+            f 2 == IF green TURTLE.color END
+            f 3 == IF yellow TURTLE.color END
+            f 4 == IF white TURTLE.color END
+            f 5 == IF lightBlue TURTLE.color END
 
-            X1 Y1 X2 Y2 TURTLE.line
-            X2 Y2 X3 Y3 TURTLE.line
-            X3 Y3 X4 Y4 TURTLE.line
-            X4 Y4 X1 Y1 TURTLE.line
+            x1 y1 x2 y2 TURTLE.line
+            x2 y2 x3 y3 TURTLE.line
+            x3 y3 x4 y4 TURTLE.line
+            x4 y4 x1 y1 TURTLE.line
             
         END
 
@@ -188,10 +188,10 @@ DEF init_display {
 }
 
 
-VALUE camera_z      400
-VALUE f_camera_z    0
-VALUE focus         400
-VALUE f_focus       0
+VALUE camera_z 200
+VALUE f_camera_z 0
+VALUE focus 250
+VALUE f_focus 0
 
 
 DEF draw_cube {
@@ -204,22 +204,22 @@ DEF draw_cube {
         # Zoek de bijbehorende 2D punten op in screen_points
         # Voor p1:
         p1_idx 3 // 2 * AS s1_idx  ; Converteer vertex-idx (0,3,6..) naar screen-idx (0,2,4..)
-        s1_idx screen_points LIST.get AS X1
-        s1_idx 1 + screen_points LIST.get AS Y1
+        s1_idx screen_points LIST.get AS x1
+        s1_idx 1 + screen_points LIST.get AS y1
 
         # Voor p2:
         p2_idx 3 // 2 * AS s2_idx
-        s2_idx screen_points LIST.get AS X2
-        s2_idx 1 + screen_points LIST.get AS Y2
+        s2_idx screen_points LIST.get AS x2
+        s2_idx 1 + screen_points LIST.get AS y2
 
-        j 8 < IF lightGray TURTLE.color 
+        j 8 < IF lightRed TURTLE.color 
         ELSE j 15 > IF darkGray TURTLE.color 
-        ELSE lightGray TURTLE.color END END
+        ELSE red TURTLE.color END END
         
 
 
         # Teken de lijn naar de UDC
-        X1 Y1 X2 Y2 TURTLE.line
+        x1 y1 x2 y2 TURTLE.line
 
         j 2 + AS j  ; Spring naar het volgende paar (edge)
     DONE
@@ -280,20 +280,19 @@ DEF MAIN {
     360      FP.from_int AS _circle
 
 
-    45 FP.from_int AS angle_x
-    45 FP.from_int AS angle_y
+    0 FP.from_int AS angle_x
+    0 FP.from_int AS angle_y
     
     WHILE 1 DO
         IO 2 NEW
         
         project_and_rotate_2_axes
-        draw_solid_cube
         # draw_cube
-        # draw_solid_cube
+        draw_solid_cube
         
         ; Verhoog hoeken met verschillende snelheden
-        angle_y 31 + AS angle_y
-        angle_x 47 + AS angle_x
+        angle_y 30 + AS angle_y
+        angle_x  0 + AS angle_x
         
         ; Reset hoeken bij 360
         angle_y _circle > IF 0 AS angle_y END
