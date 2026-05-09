@@ -114,6 +114,14 @@
       {
         "file": "asm/apps/fourier.asm",
         "output": "../bin/apps/fourier.bin"
+      },
+      {
+        "file": "asm/apps/3d_wirecube.asm",
+        "output": "../bin/apps/3d_wirecube.bin"
+      },
+      {
+        "file": "asm/apps/3d_solidcube.asm",
+        "output": "../bin/apps/3d_solidcube.bin"
       }
     ]
   }
