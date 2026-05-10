@@ -38,6 +38,7 @@
 . $frac_as_int 1
 . $divisor 1
 . $sign 1
+. $_fp_pi_cache 1
 . $sin_x 1
 . $_nn 1
 . $_exp 1
@@ -878,9 +879,21 @@
 :_fp_from_string_end
     ret
 @FP.pi
+    ldm A $_fp_pi_cache
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :FP.pi_if_end_16
     ldi A $s_pi
     stack A $DATASTACK_PTR
     call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $_fp_pi_cache
+:FP.pi_if_end_16
+    ldm A $_fp_pi_cache
+    stack A $DATASTACK_PTR
     ret
 @FP.sin
     ustack A $DATASTACK_PTR
@@ -892,7 +905,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.sin_if_end_16
+    jmpt :FP.sin_if_end_17
     ldm A $sin_x
     stack A $DATASTACK_PTR
     call @FP.pi
@@ -904,7 +917,7 @@
     ld A B
     sto A $sin_x
     jmp :loop_range
-:FP.sin_if_end_16
+:FP.sin_if_end_17
 :loop_range_neg
     ldm A $sin_x
     stack A $DATASTACK_PTR
@@ -916,7 +929,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.sin_if_end_17
+    jmpt :FP.sin_if_end_18
     ldm A $sin_x
     stack A $DATASTACK_PTR
     call @FP.pi
@@ -927,7 +940,7 @@
     add A B
     sto A $sin_x
     jmp :loop_range_neg
-:FP.sin_if_end_17
+:FP.sin_if_end_18
     ldm A $sin_x
     stack A $DATASTACK_PTR
     ldi A 2
@@ -940,9 +953,9 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.sin_if_end_18
+    jmpt :FP.sin_if_end_19
     jmp :end_taylor
-:FP.sin_if_end_18
+:FP.sin_if_end_19
     ldm B $_nn
     ldi A 2
     mul B A
@@ -971,18 +984,18 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.sin_if_else_19
+    jmpt :FP.sin_if_else_20
     ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
-    jmp :FP.sin_if_end_19
-:FP.sin_if_else_19
+    jmp :FP.sin_if_end_20
+:FP.sin_if_else_20
     ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
-:FP.sin_if_end_19
+:FP.sin_if_end_20
     ldm B $_nn
     ldi A 1
     add A B
@@ -3892,6 +3905,7 @@
 % $frac_as_int 0
 % $divisor 0
 % $sign 1
+% $_fp_pi_cache 0
 % $sin_x 0
 % $_nn 0
 % $_exp 0

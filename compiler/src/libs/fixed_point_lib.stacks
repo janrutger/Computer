@@ -351,10 +351,14 @@ DEF FP.from_string {
     :_fp_from_string_end
 }
 
-; Returns the value of PI scaled to the current SCALE_FACTOR
-; ( -- fp_pi )
+VALUE _fp_pi_cache 0
+
+; Returns the value of PI scaled to the current SCALE_FACTOR (cached)
 DEF FP.pi {
-    &s_pi FP.from_string
+    _fp_pi_cache 0 == IF
+        &s_pi FP.from_string AS _fp_pi_cache
+    END
+    _fp_pi_cache
 }
 
 VALUE sin_x 0

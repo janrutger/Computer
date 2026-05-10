@@ -38,6 +38,7 @@
 . $frac_as_int 1
 . $divisor 1
 . $sign 1
+. $_fp_pi_cache 1
 . $sin_x 1
 . $_nn 1
 . $_exp 1
@@ -96,6 +97,9 @@
 . $tdl_7 1
 . $tdl_8 1
 . $tdl_9 1
+. $tdl_10 1
+. $tdl_11 1
+. $tdl_12 1
 . $mat_ext_z 1
 . $mat_ext_xy 1
 . $mat_rep_2 1
@@ -749,9 +753,21 @@
 :_fp_from_string_end
     ret
 @FP.pi
+    ldm A $_fp_pi_cache
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :FP.pi_if_end_16
     ldi A $s_pi
     stack A $DATASTACK_PTR
     call @FP.from_string
+    ustack A $DATASTACK_PTR
+    sto A $_fp_pi_cache
+:FP.pi_if_end_16
+    ldm A $_fp_pi_cache
+    stack A $DATASTACK_PTR
     ret
 @FP.sin
     ustack A $DATASTACK_PTR
@@ -763,7 +779,7 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.sin_if_end_16
+    jmpt :FP.sin_if_end_17
     ldm A $sin_x
     stack A $DATASTACK_PTR
     call @FP.pi
@@ -775,7 +791,7 @@
     ld A B
     sto A $sin_x
     jmp :loop_range
-:FP.sin_if_end_16
+:FP.sin_if_end_17
 :loop_range_neg
     ldm A $sin_x
     stack A $DATASTACK_PTR
@@ -787,7 +803,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.sin_if_end_17
+    jmpt :FP.sin_if_end_18
     ldm A $sin_x
     stack A $DATASTACK_PTR
     call @FP.pi
@@ -798,7 +814,7 @@
     add A B
     sto A $sin_x
     jmp :loop_range_neg
-:FP.sin_if_end_17
+:FP.sin_if_end_18
     ldm A $sin_x
     stack A $DATASTACK_PTR
     ldi A 2
@@ -811,9 +827,9 @@
     call @rt_gt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.sin_if_end_18
+    jmpt :FP.sin_if_end_19
     jmp :end_taylor
-:FP.sin_if_end_18
+:FP.sin_if_end_19
     ldm B $_nn
     ldi A 2
     mul B A
@@ -842,18 +858,18 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :FP.sin_if_else_19
+    jmpt :FP.sin_if_else_20
     ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     sub B A
     stack B $DATASTACK_PTR
-    jmp :FP.sin_if_end_19
-:FP.sin_if_else_19
+    jmp :FP.sin_if_end_20
+:FP.sin_if_else_20
     ustack A $DATASTACK_PTR
     ustack B $DATASTACK_PTR
     add B A
     stack B $DATASTACK_PTR
-:FP.sin_if_end_19
+:FP.sin_if_end_20
     ldm B $_nn
     ldi A 1
     add A B
@@ -1780,6 +1796,21 @@
     call @NEW.list
     ustack A $DATASTACK_PTR
     sto A $tdl_9
+    ldi A 7
+    stack A $DATASTACK_PTR
+    call @NEW.list
+    ustack A $DATASTACK_PTR
+    sto A $tdl_10
+    ldi A 7
+    stack A $DATASTACK_PTR
+    call @NEW.list
+    ustack A $DATASTACK_PTR
+    sto A $tdl_11
+    ldi A 7
+    stack A $DATASTACK_PTR
+    call @NEW.list
+    ustack A $DATASTACK_PTR
+    sto A $tdl_12
     ldi A 50
     ldi B 0
     sub B A
@@ -2326,8 +2357,48 @@
     stack A $DATASTACK_PTR
     stack Z $DATASTACK_PTR
     stack Z $DATASTACK_PTR
-    stack Z $DATASTACK_PTR
+    ldm A $tdl_10
+    stack A $DATASTACK_PTR
     ldm A $tdl_9
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $mat_temp
+    stack A $DATASTACK_PTR
+    ldm A $mat_temp_2
+    stack A $DATASTACK_PTR
+    ldm A $mat_final
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldi A 12
+    stack A $DATASTACK_PTR
+    ldm A $tdl_11
+    stack A $DATASTACK_PTR
+    ldm A $tdl_10
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $mat_z_only
+    stack A $DATASTACK_PTR
+    ldm A $mat_denom_col
+    stack A $DATASTACK_PTR
+    ldm A $mat_denoms
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldi A 12
+    stack A $DATASTACK_PTR
+    ldm A $tdl_12
+    stack A $DATASTACK_PTR
+    ldm A $tdl_11
+    stack A $DATASTACK_PTR
+    call @GPU.tdl
+    ldm A $mat_xy_only
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldi A 12
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $tdl_12
     stack A $DATASTACK_PTR
     call @GPU.tdl
     stack Z $DATASTACK_PTR
@@ -2436,6 +2507,138 @@
     ldi A 2
     stack A $DATASTACK_PTR
     ldm A $mat_rep_2
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    stack Z $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $mat_rot_y
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    stack Z $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $mat_rot_y
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    ldi A 1
+    ld B A
+    ldm A $SCALE_FACTOR
+    mul B A
+    stack B $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $mat_rot_y
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    stack Z $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $mat_rot_y
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    stack Z $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $mat_rot_y
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    ldi A 1
+    ld B A
+    ldm A $SCALE_FACTOR
+    mul B A
+    stack B $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $mat_rot_x
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    stack Z $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $mat_rot_x
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    stack Z $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $mat_rot_x
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    stack Z $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $mat_rot_x
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    stack Z $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $mat_rot_x
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    stack Z $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $mat_rot_z
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    stack Z $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $mat_rot_z
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    stack Z $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 1
+    stack A $DATASTACK_PTR
+    ldm A $mat_rot_z
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    stack Z $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    ldm A $mat_rot_z
+    stack A $DATASTACK_PTR
+    call @MATRIX.put
+    ldi A 1
+    ld B A
+    ldm A $SCALE_FACTOR
+    mul B A
+    stack B $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $mat_rot_z
     stack A $DATASTACK_PTR
     call @MATRIX.put
     ldi A 1
@@ -3128,45 +3331,9 @@
     ldm A $mat_rot_y
     stack A $DATASTACK_PTR
     call @MATRIX.put
-    stack Z $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldm A $mat_rot_y
-    stack A $DATASTACK_PTR
-    call @MATRIX.put
     ldm A $sy
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    ldi A 3
-    stack A $DATASTACK_PTR
-    ldm A $mat_rot_y
-    stack A $DATASTACK_PTR
-    call @MATRIX.put
-    stack Z $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldm A $mat_rot_y
-    stack A $DATASTACK_PTR
-    call @MATRIX.put
-    ldi A 1
-    ld B A
-    ldm A $SCALE_FACTOR
-    mul B A
-    stack B $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldm A $mat_rot_y
-    stack A $DATASTACK_PTR
-    call @MATRIX.put
-    stack Z $DATASTACK_PTR
-    ldi A 2
     stack A $DATASTACK_PTR
     ldi A 3
     stack A $DATASTACK_PTR
@@ -3180,14 +3347,6 @@
     ldi A 3
     stack A $DATASTACK_PTR
     ldi A 1
-    stack A $DATASTACK_PTR
-    ldm A $mat_rot_y
-    stack A $DATASTACK_PTR
-    call @MATRIX.put
-    stack Z $DATASTACK_PTR
-    ldi A 3
-    stack A $DATASTACK_PTR
-    ldi A 2
     stack A $DATASTACK_PTR
     ldm A $mat_rot_y
     stack A $DATASTACK_PTR
@@ -3201,42 +3360,6 @@
     ldm A $mat_rot_y
     stack A $DATASTACK_PTR
     call @MATRIX.put
-    ldi A 1
-    ld B A
-    ldm A $SCALE_FACTOR
-    mul B A
-    stack B $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldm A $mat_rot_x
-    stack A $DATASTACK_PTR
-    call @MATRIX.put
-    stack Z $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldm A $mat_rot_x
-    stack A $DATASTACK_PTR
-    call @MATRIX.put
-    stack Z $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldi A 3
-    stack A $DATASTACK_PTR
-    ldm A $mat_rot_x
-    stack A $DATASTACK_PTR
-    call @MATRIX.put
-    stack Z $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldm A $mat_rot_x
-    stack A $DATASTACK_PTR
-    call @MATRIX.put
     ldm A $cx
     stack A $DATASTACK_PTR
     ldi A 2
@@ -3251,14 +3374,6 @@
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 3
-    stack A $DATASTACK_PTR
-    ldm A $mat_rot_x
-    stack A $DATASTACK_PTR
-    call @MATRIX.put
-    stack Z $DATASTACK_PTR
-    ldi A 3
-    stack A $DATASTACK_PTR
-    ldi A 1
     stack A $DATASTACK_PTR
     ldm A $mat_rot_x
     stack A $DATASTACK_PTR
@@ -3303,14 +3418,6 @@
     ldm A $mat_rot_z
     stack A $DATASTACK_PTR
     call @MATRIX.put
-    stack Z $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldi A 3
-    stack A $DATASTACK_PTR
-    ldm A $mat_rot_z
-    stack A $DATASTACK_PTR
-    call @MATRIX.put
     ldm A $sz
     stack A $DATASTACK_PTR
     ldi A 2
@@ -3325,42 +3432,6 @@
     ldi A 2
     stack A $DATASTACK_PTR
     ldi A 2
-    stack A $DATASTACK_PTR
-    ldm A $mat_rot_z
-    stack A $DATASTACK_PTR
-    call @MATRIX.put
-    stack Z $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldi A 3
-    stack A $DATASTACK_PTR
-    ldm A $mat_rot_z
-    stack A $DATASTACK_PTR
-    call @MATRIX.put
-    stack Z $DATASTACK_PTR
-    ldi A 3
-    stack A $DATASTACK_PTR
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldm A $mat_rot_z
-    stack A $DATASTACK_PTR
-    call @MATRIX.put
-    stack Z $DATASTACK_PTR
-    ldi A 3
-    stack A $DATASTACK_PTR
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldm A $mat_rot_z
-    stack A $DATASTACK_PTR
-    call @MATRIX.put
-    ldi A 1
-    ld B A
-    ldm A $SCALE_FACTOR
-    mul B A
-    stack B $DATASTACK_PTR
-    ldi A 3
-    stack A $DATASTACK_PTR
-    ldi A 3
     stack A $DATASTACK_PTR
     ldm A $mat_rot_z
     stack A $DATASTACK_PTR
@@ -3410,17 +3481,17 @@
     ldm A $SCALE_FACTOR
     mul A B
     sto A $angle_z
-    ldi A 5
+    ldi A 3
     ld B A
     ldm A $SCALE_FACTOR
     mul A B
     sto A $shiftY
-    ldi A 5
+    ldi A 7
     ld B A
     ldm A $SCALE_FACTOR
     mul A B
     sto A $shiftX
-    ldi A 3
+    ldi A 11
     ld B A
     ldm A $SCALE_FACTOR
     mul A B
@@ -3437,7 +3508,6 @@
     call @rt_udc_control
     call @project_and_rotate_3_axes
     call @draw_solid_cube
-    call @draw_cube
     ldm B $angle_y
     ldm A $shiftY
     add B A
@@ -3516,6 +3586,7 @@
 % $frac_as_int 0
 % $divisor 0
 % $sign 1
+% $_fp_pi_cache 0
 % $sin_x 0
 % $_nn 0
 % $_exp 0
@@ -3574,6 +3645,9 @@
 % $tdl_7 0
 % $tdl_8 0
 % $tdl_9 0
+% $tdl_10 0
+% $tdl_11 0
+% $tdl_12 0
 % $mat_ext_z 0
 % $mat_ext_xy 0
 % $mat_rep_2 0

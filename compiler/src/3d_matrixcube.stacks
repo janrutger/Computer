@@ -29,6 +29,9 @@ VALUE tdl_6 0
 VALUE tdl_7 0
 VALUE tdl_8 0
 VALUE tdl_9 0
+VALUE tdl_10 0
+VALUE tdl_11 0
+VALUE tdl_12 0
 VALUE mat_ext_z 0
 VALUE mat_ext_xy 0
 VALUE mat_rep_2 0
@@ -40,6 +43,7 @@ VALUE mat_denoms 0
 VALUE mat_xy_only 0
 VALUE mat_screen_coords 0
 
+CONST cube_size 50
 CONST scaleFactor 1000
 
 VALUE f_camera_z 0
@@ -87,45 +91,48 @@ DEF init_cube {
     7 NEW.list AS tdl_7
     7 NEW.list AS tdl_8
     7 NEW.list AS tdl_9
+    7 NEW.list AS tdl_10
+    7 NEW.list AS tdl_11
+    7 NEW.list AS tdl_12
 
     # Achter vlak (z = 50)
-    50 NEGATE FP.from_int 0 cube_vertices LIST.put  ; X Point p4' index=0
-    50 NEGATE FP.from_int 1 cube_vertices LIST.put  ; Y index 1
-    50 FP.from_int 2 cube_vertices LIST.put         ; Z index 2
+    cube_size NEGATE FP.from_int 0 cube_vertices LIST.put  ; X Point p4' index=0
+    cube_size NEGATE FP.from_int 1 cube_vertices LIST.put  ; Y index 1
+    cube_size FP.from_int 2 cube_vertices LIST.put         ; Z index 2
 
 
-    50 FP.from_int 3 cube_vertices LIST.put         ; X Point p5' index=3
-    50 NEGATE FP.from_int 4 cube_vertices LIST.put  ; Y index 4
-    50 FP.from_int 5 cube_vertices LIST.put         ; Z index 5
-
-    
-
-    50 FP.from_int 6 cube_vertices LIST.put  ; X Point p6' index=6
-    50 FP.from_int 7 cube_vertices LIST.put  ; Y index 7
-    50 FP.from_int 8 cube_vertices LIST.put  ; Z index 8
+    cube_size FP.from_int 3 cube_vertices LIST.put         ; X Point p5' index=3
+    cube_size NEGATE FP.from_int 4 cube_vertices LIST.put  ; Y index 4
+    cube_size FP.from_int 5 cube_vertices LIST.put         ; Z index 5
 
     
 
-    50 NEGATE FP.from_int 9 cube_vertices LIST.put     ; X Point p7' index=9
-    50 FP.from_int 10 cube_vertices LIST.put            ; Y index 10
-    50 FP.from_int 11 cube_vertices LIST.put            ; Z index 11
+    cube_size FP.from_int 6 cube_vertices LIST.put  ; X Point p6' index=6
+    cube_size FP.from_int 7 cube_vertices LIST.put  ; Y index 7
+    cube_size FP.from_int 8 cube_vertices LIST.put  ; Z index 8
+
+    
+
+    cube_size NEGATE FP.from_int 9 cube_vertices LIST.put     ; X Point p7' index=9
+    cube_size FP.from_int 10 cube_vertices LIST.put            ; Y index 10
+    cube_size FP.from_int 11 cube_vertices LIST.put            ; Z index 11
 
     # Het voor vlak (z = 50 NEGATE)
-    50 NEGATE FP.from_int 12 cube_vertices LIST.put  ; X Point p4 index=12
-    50 NEGATE FP.from_int 13 cube_vertices LIST.put  ; Y index 13
-    50 NEGATE FP.from_int 14 cube_vertices LIST.put  ; Z index 14
+    cube_size NEGATE FP.from_int 12 cube_vertices LIST.put  ; X Point p4 index=12
+    cube_size NEGATE FP.from_int 13 cube_vertices LIST.put  ; Y index 13
+    cube_size NEGATE FP.from_int 14 cube_vertices LIST.put  ; Z index 14
 
-    50 FP.from_int 15 cube_vertices LIST.put            ; X Point p5 index=15
-    50 NEGATE FP.from_int 16 cube_vertices LIST.put     ; Y index 16
-    50 NEGATE FP.from_int 17 cube_vertices LIST.put     ; Z index 17
+    cube_size FP.from_int 15 cube_vertices LIST.put            ; X Point p5 index=15
+    cube_size NEGATE FP.from_int 16 cube_vertices LIST.put     ; Y index 16
+    cube_size NEGATE FP.from_int 17 cube_vertices LIST.put     ; Z index 17
 
-    50 FP.from_int 18 cube_vertices LIST.put            ; X Point p6 index=18
-    50 FP.from_int 19 cube_vertices LIST.put            ; Y index 19
-    50 NEGATE FP.from_int 20 cube_vertices LIST.put     ; Z index 20
+    cube_size FP.from_int 18 cube_vertices LIST.put            ; X Point p6 index=18
+    cube_size FP.from_int 19 cube_vertices LIST.put            ; Y index 19
+    cube_size NEGATE FP.from_int 20 cube_vertices LIST.put     ; Z index 20
 
-    50 NEGATE FP.from_int 21 cube_vertices LIST.put     ; X Point p7 index=21
-    50 FP.from_int 22 cube_vertices LIST.put            ; Y index 22
-    50 NEGATE FP.from_int 23 cube_vertices LIST.put     ; Z index 23
+    cube_size NEGATE FP.from_int 21 cube_vertices LIST.put     ; X Point p7 index=21
+    cube_size FP.from_int 22 cube_vertices LIST.put            ; Y index 22
+    cube_size NEGATE FP.from_int 23 cube_vertices LIST.put     ; Z index 23
 
     CONST p0 0
     CONST p1 3
@@ -192,9 +199,14 @@ DEF init_cube {
     ; Stap 8: Perspectivische deling (gebruik focus als schaal voor de deling)
     mat_xy_only mat_denoms mat_xy_only focus MAT.DIV tdl_9 tdl_8 GPU.tdl
     ; Stap 9: Verschuif naar schermmidden (320, 240)
-    mat_xy_only mat_screen_offset mat_screen_coords 0 MAT.ADD 0 tdl_9 GPU.tdl
+    mat_xy_only mat_screen_offset mat_screen_coords 0 MAT.ADD tdl_10 tdl_9 GPU.tdl
 
-    ; Initialiseer hulpmatrices (eenmalig)
+    ; Stap 10: VRAM Cleanup (voorkom write-back naar RAM van tussenmatrices)
+    mat_temp mat_temp_2 mat_final 0 MAT.FREE tdl_11 tdl_10 GPU.tdl
+    mat_z_only mat_denom_col mat_denoms 0 MAT.FREE tdl_12 tdl_11 GPU.tdl
+    mat_xy_only 0 0 0 MAT.FREE 0 tdl_12 GPU.tdl
+
+    ; Initialiseer hulpmatrices en constante delen van rotatiematrices (eenmalig)
     0 1 1 mat_ext_z MATRIX.put 0 2 1 mat_ext_z MATRIX.put 1 FP.from_int 3 1 mat_ext_z MATRIX.put
     
     1 FP.from_int 1 1 mat_ext_xy MATRIX.put 0 1 2 mat_ext_xy MATRIX.put
@@ -202,6 +214,11 @@ DEF init_cube {
     0 3 1 mat_ext_xy MATRIX.put 0 3 2 mat_ext_xy MATRIX.put
     
     1 FP.from_int 1 1 mat_rep_2 MATRIX.put 1 FP.from_int 1 2 mat_rep_2 MATRIX.put
+
+    ; Constante delen van rotatiematrices (0 en 1 waarden)
+    0 1 2 mat_rot_y MATRIX.put  0 2 1 mat_rot_y MATRIX.put  1 FP.from_int 2 2 mat_rot_y MATRIX.put  0 2 3 mat_rot_y MATRIX.put  0 3 2 mat_rot_y MATRIX.put
+    1 FP.from_int 1 1 mat_rot_x MATRIX.put  0 1 2 mat_rot_x MATRIX.put  0 1 3 mat_rot_x MATRIX.put  0 2 1 mat_rot_x MATRIX.put  0 3 1 mat_rot_x MATRIX.put
+    0 1 3 mat_rot_z MATRIX.put  0 2 3 mat_rot_z MATRIX.put  0 3 1 mat_rot_z MATRIX.put  0 3 2 mat_rot_z MATRIX.put  1 FP.from_int 3 3 mat_rot_z MATRIX.put
     
     1 AS i
     WHILE i 9 < DO
@@ -250,7 +267,7 @@ DEF draw_solid_cube {
     WHILE f 6 < DO
         f 4 * AS f_idx
         
-        # Haal de scherm-indices van de eerste 3 punten van het vlak
+        # Haal de scherm-indices van de eerste 4 punten van het vlak
         f_idx     cube_faces LIST.get 3 // 2 * AS s1
         f_idx 1 + cube_faces LIST.get 3 // 2 * AS s2
         f_idx 2 + cube_faces LIST.get 3 // 2 * AS s3
@@ -355,28 +372,22 @@ DEF project_and_rotate_3_axes {
     rx FP.cos AS cx  rx FP.sin AS sx
     rz FP.cos AS cz  rz FP.sin AS sz
 
-    ; 2. Vul de rotatie matrices (3x3)
+    ; 2. Vul de rotatie matrices (3x3) (de missende velden toevoegen)
     ; Mat Rot Y: [cy 0 sy, 0 1 0, -sy 0 cy]
-    cy 1 1 mat_rot_y MATRIX.put           0  1 2 mat_rot_y MATRIX.put               sy 1 3 mat_rot_y MATRIX.put
-    0  2 1 mat_rot_y MATRIX.put           1 FP.from_int 2 2 mat_rot_y MATRIX.put    0  2 3 mat_rot_y MATRIX.put
-    sy NEGATE 3 1 mat_rot_y MATRIX.put    0 3 2 mat_rot_y MATRIX.put                cy 3 3 mat_rot_y MATRIX.put
+    cy 1 1 mat_rot_y MATRIX.put             sy 1 3 mat_rot_y MATRIX.put
+    sy NEGATE 3 1 mat_rot_y MATRIX.put      cy 3 3 mat_rot_y MATRIX.put
 
     ; Mat Rot X: [1 0 0, 0 cx sx, 0 -sx cx]
-    1 FP.from_int 1 1 mat_rot_x MATRIX.put    0 1 2 mat_rot_x MATRIX.put            0 1 3 mat_rot_x MATRIX.put
-    0  2 1 mat_rot_x MATRIX.put               cx 2 2 mat_rot_x MATRIX.put           sx 2 3 mat_rot_x MATRIX.put
-    0  3 1 mat_rot_x MATRIX.put               sx NEGATE 3 2 mat_rot_x MATRIX.put    cx 3 3 mat_rot_x MATRIX.put
+    cx 2 2 mat_rot_x MATRIX.put           sx 2 3 mat_rot_x MATRIX.put
+    sx NEGATE 3 2 mat_rot_x MATRIX.put    cx 3 3 mat_rot_x MATRIX.put
 
     ; Mat Rot Z: [cz -sz 0, sz cz 0, 0 0 1]
-    cz 1 1 mat_rot_z MATRIX.put               sz NEGATE 1 2 mat_rot_z MATRIX.put    0 1 3 mat_rot_z MATRIX.put
-    sz 2 1 mat_rot_z MATRIX.put               cz 2 2 mat_rot_z MATRIX.put           0 2 3 mat_rot_z MATRIX.put
-    0  3 1 mat_rot_z MATRIX.put               0  3 2 mat_rot_z MATRIX.put           1 FP.from_int 3 3 mat_rot_z MATRIX.put
+    cz 1 1 mat_rot_z MATRIX.put           sz NEGATE 1 2 mat_rot_z MATRIX.put
+    sz 2 1 mat_rot_z MATRIX.put           cz 2 2 mat_rot_z MATRIX.put
 
     ; 3. Voer GPU operaties uit (Chain tdl_1 -> tdl_2 -> tdl_3)
     tdl_1 GPU.exec DROP
 }
-
-
-
 
 
 
@@ -400,9 +411,9 @@ DEF MAIN {
     45 FP.from_int AS angle_y
     45 FP.from_int AS angle_z
 
-    5 FP.from_int AS shiftY
-    5 FP.from_int AS shiftX
-    5 FP.from_int AS shiftZ
+    3  FP.from_int AS shiftY
+    7  FP.from_int AS shiftX
+    11 FP.from_int AS shiftZ
     
     WHILE running DO
         IO 2 NEW
@@ -410,9 +421,8 @@ DEF MAIN {
         # 0 TIME.start
         project_and_rotate_3_axes
         
-
         draw_solid_cube
-        draw_cube
+        # draw_cube
         # 0 TIME.read TIME.as_string 13 PRTchar
         
         ; Verhoog hoeken met verschillende snelheden
