@@ -2072,42 +2072,42 @@
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 3
+    ldi A 2
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 3
+    ldi A 2
     stack A $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 6
+    ldi A 4
     stack A $DATASTACK_PTR
     ldi A 3
     stack A $DATASTACK_PTR
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 6
+    ldi A 4
     stack A $DATASTACK_PTR
     ldi A 4
     stack A $DATASTACK_PTR
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 9
+    ldi A 6
     stack A $DATASTACK_PTR
     ldi A 5
     stack A $DATASTACK_PTR
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 9
+    ldi A 6
     stack A $DATASTACK_PTR
     ldi A 6
     stack A $DATASTACK_PTR
@@ -2120,56 +2120,56 @@
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 12
+    ldi A 8
     stack A $DATASTACK_PTR
     ldi A 8
     stack A $DATASTACK_PTR
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 15
+    ldi A 10
     stack A $DATASTACK_PTR
     ldi A 9
     stack A $DATASTACK_PTR
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 15
+    ldi A 10
     stack A $DATASTACK_PTR
     ldi A 10
     stack A $DATASTACK_PTR
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 18
+    ldi A 12
     stack A $DATASTACK_PTR
     ldi A 11
     stack A $DATASTACK_PTR
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 18
+    ldi A 12
     stack A $DATASTACK_PTR
     ldi A 12
     stack A $DATASTACK_PTR
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 21
+    ldi A 14
     stack A $DATASTACK_PTR
     ldi A 13
     stack A $DATASTACK_PTR
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 21
+    ldi A 14
     stack A $DATASTACK_PTR
     ldi A 14
     stack A $DATASTACK_PTR
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 12
+    ldi A 8
     stack A $DATASTACK_PTR
     ldi A 15
     stack A $DATASTACK_PTR
@@ -2182,49 +2182,49 @@
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 12
+    ldi A 8
     stack A $DATASTACK_PTR
     ldi A 17
     stack A $DATASTACK_PTR
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 3
+    ldi A 2
     stack A $DATASTACK_PTR
     ldi A 18
     stack A $DATASTACK_PTR
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 15
+    ldi A 10
     stack A $DATASTACK_PTR
     ldi A 19
     stack A $DATASTACK_PTR
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 6
+    ldi A 4
     stack A $DATASTACK_PTR
     ldi A 20
     stack A $DATASTACK_PTR
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 18
+    ldi A 12
     stack A $DATASTACK_PTR
     ldi A 21
     stack A $DATASTACK_PTR
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 9
+    ldi A 6
     stack A $DATASTACK_PTR
     ldi A 22
     stack A $DATASTACK_PTR
     ldm A $cube_edges
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 21
+    ldi A 14
     stack A $DATASTACK_PTR
     ldi A 23
     stack A $DATASTACK_PTR
@@ -2692,34 +2692,34 @@
     call @NEW.list
     ustack A $DATASTACK_PTR
     sto A $cube_faces
-    ldi A 12
+    ldi A 8
     stack A $DATASTACK_PTR
     stack Z $DATASTACK_PTR
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 15
+    ldi A 10
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 18
+    ldi A 12
     stack A $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 21
+    ldi A 14
     stack A $DATASTACK_PTR
     ldi A 3
     stack A $DATASTACK_PTR
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 3
+    ldi A 2
     stack A $DATASTACK_PTR
     ldi A 4
     stack A $DATASTACK_PTR
@@ -2732,42 +2732,42 @@
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 9
+    ldi A 6
     stack A $DATASTACK_PTR
     ldi A 6
     stack A $DATASTACK_PTR
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 6
+    ldi A 4
     stack A $DATASTACK_PTR
     ldi A 7
     stack A $DATASTACK_PTR
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 15
+    ldi A 10
     stack A $DATASTACK_PTR
     ldi A 8
     stack A $DATASTACK_PTR
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 3
+    ldi A 2
     stack A $DATASTACK_PTR
     ldi A 9
     stack A $DATASTACK_PTR
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 6
+    ldi A 4
     stack A $DATASTACK_PTR
     ldi A 10
     stack A $DATASTACK_PTR
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 18
+    ldi A 12
     stack A $DATASTACK_PTR
     ldi A 11
     stack A $DATASTACK_PTR
@@ -2780,49 +2780,49 @@
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 12
+    ldi A 8
     stack A $DATASTACK_PTR
     ldi A 13
     stack A $DATASTACK_PTR
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 21
+    ldi A 14
     stack A $DATASTACK_PTR
     ldi A 14
     stack A $DATASTACK_PTR
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 9
+    ldi A 6
     stack A $DATASTACK_PTR
     ldi A 15
     stack A $DATASTACK_PTR
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 21
+    ldi A 14
     stack A $DATASTACK_PTR
     ldi A 16
     stack A $DATASTACK_PTR
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 18
+    ldi A 12
     stack A $DATASTACK_PTR
     ldi A 17
     stack A $DATASTACK_PTR
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 6
+    ldi A 4
     stack A $DATASTACK_PTR
     ldi A 18
     stack A $DATASTACK_PTR
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 9
+    ldi A 6
     stack A $DATASTACK_PTR
     ldi A 19
     stack A $DATASTACK_PTR
@@ -2835,21 +2835,21 @@
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 3
+    ldi A 2
     stack A $DATASTACK_PTR
     ldi A 21
     stack A $DATASTACK_PTR
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 15
+    ldi A 10
     stack A $DATASTACK_PTR
     ldi A 22
     stack A $DATASTACK_PTR
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldi A 12
+    ldi A 8
     stack A $DATASTACK_PTR
     ldi A 23
     stack A $DATASTACK_PTR
@@ -2877,11 +2877,7 @@
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.get
-    ldi A 3
-    ustack B $DATASTACK_PTR
-    dmod B A
-    ldi A 2
-    mul A B
+    ustack A $DATASTACK_PTR
     sto A $s1
     ldm B $f_idx
     ldi A 1
@@ -2890,11 +2886,7 @@
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.get
-    ldi A 3
-    ustack B $DATASTACK_PTR
-    dmod B A
-    ldi A 2
-    mul A B
+    ustack A $DATASTACK_PTR
     sto A $s2
     ldm B $f_idx
     ldi A 2
@@ -2903,11 +2895,7 @@
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.get
-    ldi A 3
-    ustack B $DATASTACK_PTR
-    dmod B A
-    ldi A 2
-    mul A B
+    ustack A $DATASTACK_PTR
     sto A $s3
     ldm B $f_idx
     ldi A 3
@@ -2916,11 +2904,7 @@
     ldm A $cube_faces
     stack A $DATASTACK_PTR
     call @LIST.get
-    ldi A 3
-    ustack B $DATASTACK_PTR
-    dmod B A
-    ldi A 2
-    mul A B
+    ustack A $DATASTACK_PTR
     sto A $s4
     ldm A $s1
     stack A $DATASTACK_PTR
@@ -3176,11 +3160,7 @@
     call @LIST.get
     ustack A $DATASTACK_PTR
     sto A $p2_idx
-    ldm B $p1_idx
-    ldi A 3
-    dmod B A
-    ldi A 2
-    mul A B
+    ldm A $p1_idx
     sto A $s1_idx
     stack A $DATASTACK_PTR
     ldm A $screen_points
@@ -3197,11 +3177,7 @@
     call @LIST.get
     ustack A $DATASTACK_PTR
     sto A $y1
-    ldm B $p2_idx
-    ldi A 3
-    dmod B A
-    ldi A 2
-    mul A B
+    ldm A $p2_idx
     sto A $s2_idx
     stack A $DATASTACK_PTR
     ldm A $screen_points

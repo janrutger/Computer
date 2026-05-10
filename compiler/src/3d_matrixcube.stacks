@@ -134,14 +134,14 @@ DEF init_cube {
     cube_size FP.from_int 22 cube_vertices LIST.put            ; Y index 22
     cube_size NEGATE FP.from_int 23 cube_vertices LIST.put     ; Z index 23
 
-    CONST p0 0
-    CONST p1 3
-    CONST p2 6
-    CONST p3 9
-    CONST p4 12
-    CONST p5 15
-    CONST p6 18
-    CONST p7 21
+    CONST p0 0  ; Directe scherm-index offsets (0, 2, 4, 6...)
+    CONST p1 2
+    CONST p2 4
+    CONST p3 6
+    CONST p4 8
+    CONST p5 10
+    CONST p6 12
+    CONST p7 14
     
     24 NEW.list AS cube_edges
 
@@ -268,10 +268,10 @@ DEF draw_solid_cube {
         f 4 * AS f_idx
         
         # Haal de scherm-indices van de eerste 4 punten van het vlak
-        f_idx     cube_faces LIST.get 3 // 2 * AS s1
-        f_idx 1 + cube_faces LIST.get 3 // 2 * AS s2
-        f_idx 2 + cube_faces LIST.get 3 // 2 * AS s3
-        f_idx 3 + cube_faces LIST.get 3 // 2 * AS s4
+        f_idx     cube_faces LIST.get AS s1
+        f_idx 1 + cube_faces LIST.get AS s2
+        f_idx 2 + cube_faces LIST.get AS s3
+        f_idx 3 + cube_faces LIST.get AS s4
 
         # Haal de X en Y coördinaten van deze punten op
         s1 screen_points LIST.get AS X1  s1 1 + screen_points LIST.get AS Y1
@@ -328,14 +328,14 @@ DEF draw_cube {
         j     cube_edges LIST.get AS p1_idx
         j 1 + cube_edges LIST.get AS p2_idx
 
-        # Zoek de bijbehorende 2D punten op in screen_points
+        # Zoek de bijbehorende 2D punten op in screen_points (p_idx is nu direct offset)
         # Voor p1:
-        p1_idx 3 // 2 * AS s1_idx  ; Converteer vertex-idx (0,3,6..) naar screen-idx (0,2,4..)
+        p1_idx AS s1_idx
         s1_idx     screen_points LIST.get AS x1
         s1_idx 1 + screen_points LIST.get AS y1
 
         # Voor p2:
-        p2_idx 3 // 2 * AS s2_idx
+        p2_idx AS s2_idx
         s2_idx     screen_points LIST.get AS x2
         s2_idx 1 + screen_points LIST.get AS y2
 
