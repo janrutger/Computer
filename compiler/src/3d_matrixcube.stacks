@@ -396,7 +396,7 @@ DEF MAIN {
     HEAP.free 
     scaleFactor FP.set_scale
 
-    1 AS running
+    100 AS running
 
     focus    FP.from_int AS f_focus
     camera_z FP.from_int AS f_camera_z
@@ -415,6 +415,7 @@ DEF MAIN {
     7  FP.from_int AS shiftX
     11 FP.from_int AS shiftZ
     
+    0 TIME.start
     WHILE running DO
         IO 2 NEW
 
@@ -432,10 +433,14 @@ DEF MAIN {
 
         KEYpressed IF
             27 == IF                ; Check for <esc>
+                running PRINT
                 0 AS running
             END
+        ELSE 
+            running 1 - AS running
         END
     DONE
+    0 TIME.read TIME.as_string 13 PRTchar
 }
 
 MAIN

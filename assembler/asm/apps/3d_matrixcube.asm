@@ -3422,7 +3422,7 @@
     sto A $HEAP_FREE
     ldi A 1000
     sto A $SCALE_FACTOR
-    ldi A 1
+    ldi A 100
     sto A $running
     ldi A 100
     ld B A
@@ -3472,6 +3472,16 @@
     ldm A $SCALE_FACTOR
     mul A B
     sto A $shiftZ
+    stack Z $DATASTACK_PTR
+    ldm A $p_watch_list
+    ustack B $DATASTACK_PTR
+    add A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    ld B A
+    ldm I $current_watch
+    stx B $_start_memory_
 :MAIN_while_start_3
     ldm A $running
     tst A 0
@@ -3505,19 +3515,46 @@
     call @KEYpressed
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :MAIN_if_end_9
+    jmpt :MAIN_if_else_9
     ldi A 27
     stack A $DATASTACK_PTR
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :MAIN_if_end_10
+    ldm A $running
+    stack A $DATASTACK_PTR
+    call @rt_print_tos
     ld A Z
     sto A $running
 :MAIN_if_end_10
+    jmp :MAIN_if_end_9
+:MAIN_if_else_9
+    ldm B $running
+    ldi A 1
+    sub B A
+    ld A B
+    sto A $running
 :MAIN_if_end_9
     jmp :MAIN_while_start_3
 :MAIN_while_end_3
+    stack Z $DATASTACK_PTR
+    ldm A $p_watch_list
+    ustack B $DATASTACK_PTR
+    add A B
+    sto A $current_watch
+    ldm I $p_currentime
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldm I $current_watch
+    ldx A $_start_memory_
+    ustack B $DATASTACK_PTR
+    sub B A
+    stack B $DATASTACK_PTR
+    call @TIME.as_string
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @PRTchar
     ret
 
 # .DATA
