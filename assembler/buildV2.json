@@ -122,6 +122,10 @@
       {
         "file": "asm/apps/3d_solidcube.asm",
         "output": "../bin/apps/3d_solidcube.bin"
+      },
+      {
+        "file": "asm/apps/3d_matrixcube.asm",
+        "output": "../bin/apps/3d_matrixcube.bin"
       }
     ]
   }
