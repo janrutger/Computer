@@ -2776,15 +2776,15 @@
     ld B A
     ldm A $SCALE_FACTOR
     mul A B
-    sto A $angle_x
-    ldi A 45
-    ld B A
-    ldm A $SCALE_FACTOR
-    mul A B
     sto A $angle_y
     ldi A 45
     ld B A
     ldm A $SCALE_FACTOR
+    mul A B
+    sto A $angle_x
+    stack Z $DATASTACK_PTR
+    ldm A $SCALE_FACTOR
+    ustack B $DATASTACK_PTR
     mul A B
     sto A $angle_z
 :MAIN_while_start_3
@@ -2804,16 +2804,11 @@
     add A B
     sto A $angle_y
     ldm B $angle_x
-    ldi A 90
+    ldi A 45
     add A B
     sto A $angle_x
-    ldm A $angle_z
-    stack A $DATASTACK_PTR
-    ldi A 90
-    ldi B 0
-    sub B A
-    ld A B
-    ustack B $DATASTACK_PTR
+    ldm B $angle_z
+    ldi A 35
     add A B
     sto A $angle_z
     ldm A $angle_y

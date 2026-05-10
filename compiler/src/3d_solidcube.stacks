@@ -287,9 +287,9 @@ DEF MAIN {
 
     1 AS running
 
-    45 FP.from_int AS angle_x
     45 FP.from_int AS angle_y
-    45 FP.from_int AS angle_z
+    45 FP.from_int AS angle_x
+    0 FP.from_int AS angle_z
     
     WHILE running DO
         IO 2 NEW
@@ -301,8 +301,8 @@ DEF MAIN {
         
         ; Verhoog hoeken met verschillende snelheden
         angle_y 90 + AS angle_y     # 31
-        angle_x 90 + AS angle_x     # 47
-        angle_z 90 NEGATE + AS angle_z     # 19
+        angle_x 45 + AS angle_x     # 47
+        angle_z 35 + AS angle_z     # 19
         
         ; Reset hoeken bij 360
         angle_y _circle > IF 0 AS angle_y END

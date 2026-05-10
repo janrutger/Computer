@@ -93,10 +93,11 @@ class GPU_R3:
                             self.vram[arg_b] = {'data': matrix, 'dirty': False}
                         mat_b = self.vram[arg_b]['data']
                         
-                        if opcode == 0: result = mat_a + mat_b
+                        if opcode   == 0: result = mat_a + mat_b
                         elif opcode == 1: result = mat_a - mat_b
                         elif opcode == 2: result = np.multiply(mat_a, mat_b)
                         elif opcode == 3: result = np.dot(mat_a, mat_b)
+                        elif opcode == 7: result = np.floor_divide((mat_a * scale), mat_b)
                         else: raise ValueError(f"Invalid GPU Opcode: {opcode}")
 
                         if opcode in [2, 3] and scale != 0 and scale != 1:
