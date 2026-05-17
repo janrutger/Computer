@@ -9,7 +9,7 @@
         "restore_symbols": false
       },
       {
-        "file": "asm/apps/fourier.asm",
+        "file": "asm/apps/vvmware.asm",
         "base_address": 9216,
         "restore_symbols": true
       }

@@ -110,7 +110,7 @@
 . $y_sum 1
 
 # .CODE
-    ldi A 200
+    ldi A 800
     ldi B 0
     sub B A
     ld A B
@@ -177,29 +177,29 @@
     stack A $DATASTACK_PTR
     call @TURTLE.mode
     call @draw_axes
-    ldi A 500
+    ldi A 400
     sto A $a1
-    ldi A 13
+    ldi A 10
     sto A $f1
     ldi A 785
     sto A $p1
-    ldi A 500
+    ldi A 100
     sto A $a2
-    ldi A 29
+    ldi A 45
     sto A $f2
     ldi A 1570
     sto A $p2
-    ldi A 500
+    ldi A 100
     sto A $a3
-    ldi A 47
+    ldi A 35
     sto A $f3
-    ldi A 3141
+    ldi A 1570
     sto A $p3
-    ldi A 500
+    ldi A 100
     sto A $a4
-    ldi A 83
+    ldi A 25
     sto A $f4
-    ldi A 6283
+    ldi A 1570
     sto A $p4
     ldm B $a1
     ldm A $a2
@@ -283,29 +283,6 @@
     call @f_sinus
     ustack A $DATASTACK_PTR
     sto A $y4
-    ldi A 12
-    stack A $DATASTACK_PTR
-    call @TURTLE.color
-    ldm A $wx
-    stack A $DATASTACK_PTR
-    ldm A $y1
-    stack A $DATASTACK_PTR
-    call @draw_point
-    ldm A $wx
-    stack A $DATASTACK_PTR
-    ldm A $y2
-    stack A $DATASTACK_PTR
-    call @draw_point
-    ldm A $wx
-    stack A $DATASTACK_PTR
-    ldm A $y3
-    stack A $DATASTACK_PTR
-    call @draw_point
-    ldm A $wx
-    stack A $DATASTACK_PTR
-    ldm A $y4
-    stack A $DATASTACK_PTR
-    call @draw_point
     ldi A 2
     stack A $DATASTACK_PTR
     call @TURTLE.color
@@ -1979,7 +1956,7 @@
 % $circ_y 0
 % $circ_p 0
 % $WORLD_X_MIN 0
-% $WORLD_X_MAX 200
+% $WORLD_X_MAX 800
 % $WORLD_Y_RANGE 1
 % $WAVE_FREQ 40
 % $WAVE_AMP 500

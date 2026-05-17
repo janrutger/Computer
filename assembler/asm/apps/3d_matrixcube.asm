@@ -150,6 +150,8 @@
 . $shiftY 1
 . $shiftX 1
 . $shiftZ 1
+. $MAIN_str_0 50
+. $MAIN_str_1 13
 
 # .CODE
     call @MAIN
@@ -3422,7 +3424,7 @@
     sto A $HEAP_FREE
     ldi A 1000
     sto A $SCALE_FACTOR
-    ldi A 100
+    ldi A 500
     sto A $running
     ldi A 100
     ld B A
@@ -3472,6 +3474,12 @@
     ldm A $SCALE_FACTOR
     mul A B
     sto A $shiftZ
+    ldi A $MAIN_str_0
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
     stack Z $DATASTACK_PTR
     ldm A $p_watch_list
     ustack B $DATASTACK_PTR
@@ -3494,6 +3502,7 @@
     call @rt_udc_control
     call @project_and_rotate_3_axes
     call @draw_solid_cube
+    call @draw_cube
     ldm B $angle_y
     ldm A $shiftY
     add B A
@@ -3522,9 +3531,18 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :MAIN_if_end_10
+    ldi A 500
+    ld B A
     ldm A $running
+    sub B A
+    stack B $DATASTACK_PTR
+    call @PRTnum
+    ldi A $MAIN_str_1
     stack A $DATASTACK_PTR
-    call @rt_print_tos
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
     ld A Z
     sto A $running
 :MAIN_if_end_10
@@ -3677,3 +3695,5 @@
 % $angle_y 0
 % $angle_x 0
 % $angle_z 0
+% $MAIN_str_0 \Return \P \r \e \s \s \space \< \E \S \C \> \space \t \o \space \q \u \i \t \, \space \o \r \space \w \a \i \t \space \f \o \r \space \5 \0 \0 \space \f \r \a \m \e \s \. \. \. \. \Return \null
+% $MAIN_str_1 \space \F \r \a \m \e \s \space \i \n \: \space \null

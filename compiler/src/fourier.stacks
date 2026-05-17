@@ -17,8 +17,8 @@ CONST Y_OFFSET 240 ; SCREEN_HEIGHT - 40, to move axis down
 
 ; Instelbare wereld-limieten (voor x = -100 .. 100)
 VALUE WORLD_X_MIN 0
-200 NEGATE AS WORLD_X_MIN
-VALUE WORLD_X_MAX 200
+800 NEGATE AS WORLD_X_MIN
+VALUE WORLD_X_MAX 800
 VALUE WORLD_Y_RANGE 1 ; Sinus is altijd -1 .. 1
 
 ; Frequentie-factor in Fixed Point (bijv. 100 = 0.1 frequentie)
@@ -105,6 +105,7 @@ draw_axes
 ; Definieer parameters voor de twee golven
 
 CONST g120 2094
+CONST g135 2355
 CONST g240 4188
 
 CONST g360 6283
@@ -114,21 +115,21 @@ CONST g90  1570
 CONST g45  785 
 CONST g0   0   
 
-500 AS a1       ; Amplitude
-13 AS f1        ; Frequency
+400 AS a1       ; Amplitude
+10 AS f1        ; Frequency
 g45 AS p1       ; Phase shift of some degrees
 
-500 AS a2
-29 AS f2
+100 AS a2
+45 AS f2
 g90 AS p2 
 
-500 AS a3
-47 AS f3
-g180 AS p3 
+100 AS a3
+35 AS f3
+g90 AS p3 
 
-500 AS a4
-83 AS f4
-g360 AS p4 
+100 AS a4
+25 AS f4
+g90 AS p4 
 
 ; Bereken totale amplitude voor automatische schaalbewaking (normalisatie)
 a1 a2 FP.add a3 FP.add a4 FP.add AS total_amp
@@ -150,11 +151,11 @@ i WORLD_X_MAX step_divider * > IF GOTO main_end END
     a4 f4 p4 wx f_sinus AS y4
     
     ; Teken de individuele componenten in het grijs
-    gray TURTLE.color
-    wx y1 draw_point
-    wx y2 draw_point
-    wx y3 draw_point
-    wx y4 draw_point
+    # gray TURTLE.color
+    # wx y1 draw_point
+    # wx y2 draw_point
+    # wx y3 draw_point
+    # wx y4 draw_point
     
     ; Bereken de som en teken deze in het rood
     red TURTLE.color

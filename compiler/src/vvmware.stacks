@@ -61,14 +61,14 @@ DEF main {
 
 
     #SIMPL_code load_simpl_fly          ; to load static
-    SIMPL_code "sbc_fly" VVM.loadcode   ; toload dynamic 
+    SIMPL_code "sbc_fib" VVM.loadcode   ; toload dynamic 
 
     # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
     &SIMPL_code 1024 &host_comm_deque_ptr0 &VVM0 VVM.create
     "VVM0 instance created \n\n" PRTstring
 
     #SIMPL_code load_simpl_chaos3
-    SIMPL_code "sbc_chaos3" VVM.loadcode 
+    SIMPL_code "sbc_fib" VVM.loadcode 
 
     # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
     &SIMPL_code 1024 &host_comm_deque_ptr1 &VVM1 VVM.create
@@ -77,10 +77,10 @@ DEF main {
 
     # Start the VVM
     # ( arg1 ... argn argc &VVM-pointer -- )
-    0 &VVM0 VVM.start
+    10 1 &VVM0 VVM.start
     "VVM0 started \n" PRTstring
 
-    0 &VVM1 VVM.start
+    10 1 &VVM1 VVM.start
     "VVM1 started \n" PRTstring
 
     1 TIME.start
