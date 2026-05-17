@@ -28,23 +28,49 @@ STRING error_stack_collision "VVM Stack Collision (PC>=RSP). \n"
 
 # Peek a value from the VVM struct
 # ( index &VVM-pointer -- value )
+# DEF VVMpeek {
+#     AS _env_ptr
+#     AS _env_idx
+#     *_env_ptr AS _env_ptr
+#     _env_ptr _env_idx + AS _env_ptr
+#     *_env_ptr
+# }
+
 DEF VVMpeek {
-    AS _env_ptr
-    AS _env_idx
-    *_env_ptr AS _env_ptr
-    _env_ptr _env_idx + AS _env_ptr
-    *_env_ptr
+    ASM {
+        ustack I $DATASTACK_PTR   ; 1. I = &VVM-pointer (direct in pointer-register I)
+        ldx B $_start_memory_     ; 2. B = *I (haal basisadres op en parkeer direct in B)
+        
+        ustack I $DATASTACK_PTR   ; 3. I = index (overschrijf I met de index, want &VVM-pointer hebben we niet meer nodig)
+        add I B                   ; 4. I = I + B (bereken doeladres direct IN register I!)
+        
+        ldx A $_start_memory_     ; 5. A = *I (haal de werkelijke waarde op uit het doeladres)
+        stack A $DATASTACK_PTR    ; 6. Push het resultaat terug op de datastack
+    }
 }
 
 # Poke a value in the VVM struct
 # ( value index &VVM-pointer -- )
+# DEF VVMpoke {
+#     AS _env_ptr
+#     AS _env_idx
+#     AS _env_val_tmp
+#     *_env_ptr AS _env_ptr
+#     _env_ptr _env_idx + AS _env_ptr
+#     _env_val_tmp AS *_env_ptr
+# }
+
 DEF VVMpoke {
-    AS _env_ptr
-    AS _env_idx
-    AS _env_val_tmp
-    *_env_ptr AS _env_ptr
-    _env_ptr _env_idx + AS _env_ptr
-    _env_val_tmp AS *_env_ptr
+    ASM {
+        ustack I $DATASTACK_PTR   ; 1. I = &VVM-pointer (direct naar pointer-register I)
+        ldx B $_start_memory_     ; 2. B = *I (basisadres ophalen in B)
+        
+        ustack I $DATASTACK_PTR   ; 3. I = index (overschrijf I met de index)
+        add I B                   ; 4. I = I + B (bereken doeladres direct in I)
+        
+        ustack B $DATASTACK_PTR   ; 5. B = value (pop de waarde direct in B!)
+        stx B $_start_memory_     ; 6. *I = B (schrijf B naar het doeladres)
+    }
 }
 
 
@@ -132,42 +158,129 @@ DEF s_halt {
     VVM_Halted VVM_status _env_vvm_ptr VVMpoke
 }
 
-DEF s_call { 
-    AS _env_vvm_ptr
-    AS _math_a # target address (Label)
+# DEF s_call { 
+#     AS _env_vvm_ptr
+#     AS _math_a # target address (Label)
     
-    # 1. Get current PC (Return Address)
-    VVM_PC _env_vvm_ptr VVMpeek AS _env_val
+#     # 1. Get current PC (Return Address)
+#     VVM_PC _env_vvm_ptr VVMpeek AS _env_val
     
-    # 2. Get RSP and Decrement (Full Descending Stack)
-    VVM_RSP _env_vvm_ptr VVMpeek 1 - AS _env_sp_addr
+#     # 2. Get RSP and Decrement (Full Descending Stack)
+#     VVM_RSP _env_vvm_ptr VVMpeek 1 - AS _env_sp_addr
     
-    # 3. Check Collision (PC >= RSP)
-    # We check if (PC < RSP) is False (0). 
-    # If so, PC >= RSP, which is a collision.
-    _env_val _env_sp_addr < 0 == IF
-        &error_stack_collision PRTstring HALT
-    END
+#     # 3. Check Collision (PC >= RSP)
+#     # We check if (PC < RSP) is False (0). 
+#     # If so, PC >= RSP, which is a collision.
+#     _env_val _env_sp_addr < 0 == IF
+#         &error_stack_collision PRTstring HALT
+#     END
     
-    # 4. Push Return Address and Update RSP
-    _env_val AS *_env_sp_addr
-    _env_sp_addr VVM_RSP _env_vvm_ptr VVMpoke
+#     # 4. Push Return Address and Update RSP
+#     _env_val AS *_env_sp_addr
+#     _env_sp_addr VVM_RSP _env_vvm_ptr VVMpoke
     
-    # 5. Jump to target
-    _math_a VVM_PC _env_vvm_ptr VVMpoke
+#     # 5. Jump to target
+#     _math_a VVM_PC _env_vvm_ptr VVMpoke
+# }
+DEF s_call {
+    ASM {
+        ; --- 1. Haal de parameters van de host-stack (JUISTE VOLGORDE) ---
+        ustack I $DATASTACK_PTR   ; 1. EERST POPPEN: I = &VVM-pointer (_env_vvm_ptr)
+        ustack Y $DATASTACK_PTR   ; 2. DAARNA POPPEN: Y = target address (_math_a)
+        ldx B $_start_memory_     ; 3. B = basisadres van de VVM-struct (anker)
+        
+        ; --- 2. Haal de huidige PC op (Offset 2) ---
+        ldi A 2
+        add A B                   ; A = RAM-adres van VVM_PC
+        ld I A
+        ldx A $_start_memory_     ; A = huidige PC (Return Address)
+        
+        ; --- 3. Haal de huidige RSP op (Offset 5) EN bereken RSP_nieuw ---
+        ldi C 5
+        add C B                   ; C = RAM-adres van VVM_RSP
+        ld I C
+        ldx C $_start_memory_     ; C = huidige RSP-waarde (adres in sandbox)
+        subi C 1                  ; C = RSP_nieuw (RSP - 1)
+        
+        ; --- 4. Collision Check: Is RSP_nieuw > PC? ---
+        tstg C A                  ; Test of C (RSP_nieuw) > A (PC)
+        jmpf :s_call_collision    ; Als False (dus RSP <= PC) -> CRASH!
+        
+        ; --- 5. VEILIG: Push Return Address (A) naar Sandbox Return Stack (*C) ---
+        ld I C                    ; I = RSP_nieuw
+        stx A $_start_memory_     ; Sla Return Address (A) op in sandbox-RAM
+        
+        ; --- 6. Update VVM_RSP in de struct met de nieuwe waarde (C) ---
+        ld X C                    ; Bewaar de nieuwe RSP-waarde (C) even in X
+        ldi C 5
+        add C B                   ; C = RAM-adres van VVM_RSP
+        ld I C
+        stx X $_start_memory_     ; Sla de nieuwe RSP-waarde op in de struct!
+        
+        ; --- 7. Jump naar Target: Schrijf het doeladres (Y) naar VVM_PC (Offset 2) ---
+        ldi C 2
+        add C B                   ; C = RAM-adres van VVM_PC
+        ld I C
+        stx Y $_start_memory_     ; VVM_PC = target address!
+        
+        jmp :s_call_end           ; Sla de error-sectie over
+        
+    :s_call_collision
+        ldi A $error_stack_collision
+        stack A $DATASTACK_PTR
+        ustack A $DATASTACK_PTR   ; Pop pointer van stack voor de syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS          ; Interrupt om de error te printen
+        call @HALT
+        
+    :s_call_end
+    }
 }
 
+# DEF s_ret {
+#     AS _env_vvm_ptr
+#     # 1. Pop Return Address from RSP
+#     VVM_RSP _env_vvm_ptr VVMpeek AS _env_sp_addr
+#     *_env_sp_addr AS _env_val
+    
+#     # 2. Increment RSP and Update
+#     _env_sp_addr 1 + VVM_RSP _env_vvm_ptr VVMpoke
+    
+#     # 3. Set PC (Return)
+#     _env_val VVM_PC _env_vvm_ptr VVMpoke
+# }
+
 DEF s_ret {
-    AS _env_vvm_ptr
-    # 1. Pop Return Address from RSP
-    VVM_RSP _env_vvm_ptr VVMpeek AS _env_sp_addr
-    *_env_sp_addr AS _env_val
-    
-    # 2. Increment RSP and Update
-    _env_sp_addr 1 + VVM_RSP _env_vvm_ptr VVMpoke
-    
-    # 3. Set PC (Return)
-    _env_val VVM_PC _env_vvm_ptr VVMpoke
+    ASM {
+        ; --- 1. Haal de pointer op en vind de virtuele RSP ---
+        ustack I $DATASTACK_PTR   ; 1. I = &VVM-pointer
+        ldx B $_start_memory_     ; 2. B = basisadres van de VVM-struct (anker)
+        
+        ldi A 5
+        add A B                   ; A = RAM-adres van VVM_RSP
+        ld I A
+        ldx A $_start_memory_     ; 3. A = huidige RSP-waarde (adres in sandbox)
+        
+        ; --- 2. Pop het Return Address uit de Sandbox Return Stack ---
+        ld I A                    ; I = huidige RSP
+        ldx Y $_start_memory_     ; 4. Y = Het opgeslagen Return Address (PC)
+        
+        ; --- 3. Verhoog de RSP met 1 (Stack krimpt) ---
+        addi A 1                  ; 5. A = nieuwe RSP-waarde (RSP + 1)
+        
+        ; --- 4. Update VVM_RSP in de struct (Offset 5) ---
+        ld X A                    ; Parkeer de nieuwe RSP-waarde heel even in X
+        ldi A 5
+        add A B                   ; A = RAM-adres van VVM_RSP
+        ld I A
+        stx X $_start_memory_     ; 6. Update VVM_RSP in de struct!
+        
+        ; --- 5. Schrijf het Return Address (Y) naar VVM_PC (Offset 2) ---
+        ldi A 2
+        add A B                   ; A = RAM-adres van VVM_PC
+        ld I A
+        stx Y $_start_memory_     ; 7. VVM_PC = Return Address! Jump voltooid!
+    }
 }
 
 DEF s_nop {
@@ -215,23 +328,57 @@ DEF s_fetch {
 }
 
 # ( A B -- (a b b))
+# DEF s_dup {
+#     AS _env_vvm_ptr
+
+#     # Get SP
+#     VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+#     # Pop B
+#     _env_sp_addr 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _math_b 
+
+#     # Push B twice
+#     _env_sp_addr 1 + AS _env_sp_addr
+#     _math_b AS *_env_sp_addr
+
+#     # Update SP
+#     _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+
+# }
+
 DEF s_dup {
-    AS _env_vvm_ptr
-
-    # Get SP
-    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
-
-    # Pop B
-    _env_sp_addr 1 - AS _env_sp_addr
-    *_env_sp_addr AS _math_b 
-
-    # Push B twice
-    _env_sp_addr 1 + AS _env_sp_addr
-    _math_b AS *_env_sp_addr
-
-    # Update SP
-    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
-
+    ASM {
+        ; --- 1. Haal de &VVM-pointer van de host-stack ---
+        ustack I $DATASTACK_PTR   ; 1. I = &VVM-pointer
+        ldx B $_start_memory_     ; 2. B = basisadres van de VVM-struct
+        
+        ; --- 2. Bereken het RAM-adres van VVM_SP (basis + 3) ---
+        ldi A 3                   ; 3. Offset voor VVM_SP
+        add A B                   ; 4. A = RAM-adres van VVM_SP
+        ld Y A                    ; 5. Parkeer het RAM-adres van VVM_SP in Y
+        
+        ; --- 3. Lees de huidige virtuele SP-waarde ---
+        ld I A                    ; 6. I = RAM-adres van VVM_SP
+        ldx A $_start_memory_     ; 7. A = huidige virtuele SP-waarde (adres in sandbox)
+        
+        ; --- 4. Lees de waarde op de Top van de Stack (SP - 1) ---
+        ld I A                    ; 8. I = huidige virtuele SP
+        subi I 1                  ; 9. I = huidige virtuele SP - 1 (TOS)
+        ldx C $_start_memory_     ; 10. C = de waarde die we willen dupliceren ('b')
+        
+        ; --- 5. Schrijf 'b' naar de nieuwe top (de oude SP-locatie) ---
+        ld I A                    ; 11. I = oorspronkelijke virtuele SP
+        stx C $_start_memory_     ; 12. Schrijf 'b' direct vanuit C naar het sandbox-RAM!
+        
+        ; --- 6. Bereken de nieuwe SP-waarde (oude SP + 1) ---
+        addi A 1                  ; 13. A = nieuwe virtuele SP-waarde
+        
+        ; --- 7. Sla de nieuwe SP op in de VVM-struct ---
+        ld I Y                    ; 14. I = RAM-adres van VVM_SP
+        ld B A                    ; 15. B = nieuwe virtuele SP-waarde (klaarzetten voor stx)
+        stx B $_start_memory_     ; 16. Update VVM_SP in de struct!
+    }
 }
 
 # ( A B -- (a))
@@ -242,26 +389,54 @@ DEF s_drop {
 }
 
 # ( A B -- (b a))
+# DEF s_swap {
+#     AS _env_vvm_ptr
+
+#     # Get SP
+#     VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+#     # Read TOS (B)
+#     _env_sp_addr 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _math_b
+
+#     # Read Next (A)
+#     _env_sp_addr 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _math_a
+
+#     # Write B to A's slot
+#     _math_b AS *_env_sp_addr
+
+#     # Write A to B's slot
+#     _env_sp_addr 1 + AS _env_sp_addr
+#     _math_a AS *_env_sp_addr
+# }
+
 DEF s_swap {
-    AS _env_vvm_ptr
-
-    # Get SP
-    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
-
-    # Read TOS (B)
-    _env_sp_addr 1 - AS _env_sp_addr
-    *_env_sp_addr AS _math_b
-
-    # Read Next (A)
-    _env_sp_addr 1 - AS _env_sp_addr
-    *_env_sp_addr AS _math_a
-
-    # Write B to A's slot
-    _math_b AS *_env_sp_addr
-
-    # Write A to B's slot
-    _env_sp_addr 1 + AS _env_sp_addr
-    _math_a AS *_env_sp_addr
+    ASM {
+        ; --- 1. Haal de huidige virtuele Stack Pointer op ---
+        ustack I $DATASTACK_PTR   ; 1. I = &VVM-pointer
+        ldx B $_start_memory_     ; 2. B = basisadres van de VVM-struct
+        ldi A 3                   ; 3. Offset voor VVM_SP
+        add A B                   ; 4. A = RAM-adres van VVM_SP
+        ld I A                    ; 5. I = RAM-adres van VVM_SP
+        ldx A $_start_memory_     ; 6. A = huidige virtuele SP
+        
+        ; --- 2. Lees TOS (B) op locatie SP - 1 ---
+        ld I A                    ; 7. I = virtuele SP
+        subi I 1                  ; 8. I = virtuele SP - 1
+        ldx B $_start_memory_     ; 9. B = waarde 'B'
+        
+        ; --- 3. Lees Next (A) op locatie SP - 2 EN schrijf 'B' direct terug ---
+        ld I A                    ; 10. I = virtuele SP
+        subi I 2                  ; 11. I = virtuele SP - 2
+        ldx C $_start_memory_     ; 12. C = waarde 'A'
+        stx B $_start_memory_     ; 13. Schrijf 'B' direct naar dit huidige adres (SP - 2)!
+        
+        ; --- 4. Schrijf waarde 'A' naar locatie SP - 1 ---
+        ld I A                    ; 14. I = virtuele SP
+        subi I 1                  ; 15. I = virtuele SP - 1
+        stx C $_start_memory_     ; 16. Schrijf 'A' naar SP - 1
+    }
 }
 
 # ( A B -- (a b a))
@@ -283,70 +458,171 @@ DEF s_over {
 }
 
 # ( A B -- (a + b))
+# DEF s_add {
+#     AS _env_vvm_ptr
+
+#     # Get SP
+#     VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+#     # Pop B
+#     _env_sp_addr 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _math_b
+
+#     # Pop A
+#     _env_sp_addr 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _math_a
+
+#     # Push A + B
+#     _math_a _math_b + AS *_env_sp_addr
+
+#     # Update SP
+#     _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+# }
+
 DEF s_add {
-    AS _env_vvm_ptr
-
-    # Get SP
-    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
-
-    # Pop B
-    _env_sp_addr 1 - AS _env_sp_addr
-    *_env_sp_addr AS _math_b
-
-
-    # Pop A
-    _env_sp_addr 1 - AS _env_sp_addr
-    *_env_sp_addr AS _math_a
-
-    # Push A + B
-    _math_a _math_b + AS *_env_sp_addr
-
-    # Update SP
-    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+    ASM {
+        ; --- 1. Haal de huidige virtuele Stack Pointer op ---
+        ustack I $DATASTACK_PTR   ; 1. I = &VVM-pointer
+        ldx B $_start_memory_     ; 2. B = basisadres van de VVM-struct
+        ldi A 3                   ; 3. Offset voor VVM_SP
+        add A B                   ; 4. A = RAM-adres van VVM_SP
+        ld Y A                    ; 5. Parkeer het RAM-adres van VVM_SP in Y voor de update straks
+        
+        ld I A                    ; 6. I = RAM-adres van VVM_SP
+        ldx A $_start_memory_     ; 7. A = huidige virtuele SP
+        
+        ; --- 2. Lees TOS (B) op locatie SP - 1 ---
+        ld I A                    ; 8. I = virtuele SP
+        subi I 1                  ; 9. I = virtuele SP - 1 (TOS-adres)
+        ldx B $_start_memory_     ; 10. B = waarde 'B'
+        
+        ; --- 3. Lees Next (A) op locatie SP - 2 EN voer de optelling uit ---
+        ld I A                    ; 11. I = virtuele SP
+        subi I 2                  ; 12. I = virtuele SP - 2 (Next-adres)
+        ldx C $_start_memory_     ; 13. C = waarde 'A'
+        
+        add B C                   ; 14. B = B + C (oftewel: B = 'B' + 'A')
+        stx B $_start_memory_     ; 15. Schrijf het resultaat direct naar het huidige adres (SP - 2)!
+        
+        ; --- 4. Update de nieuwe VVM_SP in de struct (oorspronkelijke SP - 1) ---
+        ld B A                    ; 16. B = oorspronkelijke virtuele SP
+        subi B 1                  ; 17. B = oorspronkelijke SP - 1 (dit is de nieuwe vrije plek pointer)
+        
+        ld I Y                    ; 18. I = RAM-adres van VVM_SP (uit register Y)
+        stx B $_start_memory_     ; 19. Sla de nieuwe SP op in de VVM-struct!
+    }
 }
 
 # ( A B -- ( a - b))
+# DEF s_sub {
+#     AS _env_vvm_ptr
+
+#     # Get SP
+#     VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+#     # Pop B
+#     _env_sp_addr 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _math_b
+
+#     # Pop A
+#     _env_sp_addr 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _math_a
+
+#     # Push A - B
+#     _math_a _math_b - AS *_env_sp_addr
+
+#     # Update SP
+#     _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+# }
+
 DEF s_sub {
-    AS _env_vvm_ptr
-
-    # Get SP
-    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
-
-    # Pop B
-    _env_sp_addr 1 - AS _env_sp_addr
-    *_env_sp_addr AS _math_b
-
-    # Pop A
-    _env_sp_addr 1 - AS _env_sp_addr
-    *_env_sp_addr AS _math_a
-
-    # Push A - B
-    _math_a _math_b - AS *_env_sp_addr
-
-    # Update SP
-    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+    ASM {
+        ; --- 1. Haal de huidige virtuele Stack Pointer op ---
+        ustack I $DATASTACK_PTR   ; 1. I = &VVM-pointer
+        ldx B $_start_memory_     ; 2. B = basisadres van de VVM-struct
+        ldi A 3                   ; 3. Offset voor VVM_SP
+        add A B                   ; 4. A = RAM-adres van VVM_SP
+        ld Y A                    ; 5. Parkeer het RAM-adres van VVM_SP in Y
+        
+        ld I A                    ; 6. I = RAM-adres van VVM_SP
+        ldx A $_start_memory_     ; 7. A = huidige virtuele SP
+        
+        ; --- 2. Lees TOS (B) op locatie SP - 1 ---
+        ld I A                    ; 8. I = virtuele SP
+        subi I 1                  ; 9. I = virtuele SP - 1 (TOS-adres)
+        ldx B $_start_memory_     ; 10. B = waarde 'B' (TOS)
+        
+        ; --- 3. Lees Next (A) op locatie SP - 2 EN voer de aftrekking uit ---
+        ld I A                    ; 11. I = virtuele SP
+        subi I 2                  ; 12. I = virtuele SP - 2 (Next-adres)
+        ldx C $_start_memory_     ; 13. C = waarde 'A' (NOS)
+        
+        sub C B                   ; 14. C = C - B (Oftewel: 'A' - 'B' -> exact de juiste volgorde!)
+        stx C $_start_memory_     ; 15. Schrijf het resultaat vanuit C direct naar het huidige adres (SP - 2)!
+        
+        ; --- 4. Update de nieuwe VVM_SP in de struct (oorspronkelijke SP - 1) ---
+        ld B A                    ; 16. B = oorspronkelijke virtuele SP
+        subi B 1                  ; 17. B = oorspronkelijke SP - 1
+        
+        ld I Y                    ; 18. I = RAM-adres van VVM_SP
+        stx B $_start_memory_     ; 19. Sla de nieuwe SP op in de VVM-struct!
+    }
 }
 
 # ( A B -- ( a * b))
+# DEF s_mul {
+#     AS _env_vvm_ptr
+
+#     # Get SP
+#     VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+#     # Pop B
+#     _env_sp_addr 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _math_b
+
+#     # Pop A
+#     _env_sp_addr 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _math_a
+
+#     # Push A * B
+#     _math_a _math_b * AS *_env_sp_addr
+
+#     # Update SP
+#     _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+# }
+
 DEF s_mul {
-    AS _env_vvm_ptr
-
-    # Get SP
-    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
-
-    # Pop B
-    _env_sp_addr 1 - AS _env_sp_addr
-    *_env_sp_addr AS _math_b
-
-    # Pop A
-    _env_sp_addr 1 - AS _env_sp_addr
-    *_env_sp_addr AS _math_a
-
-    # Push A * B
-    _math_a _math_b * AS *_env_sp_addr
-
-    # Update SP
-    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+    ASM {
+        ; --- 1. Haal de huidige virtuele Stack Pointer op ---
+        ustack I $DATASTACK_PTR   ; 1. I = &VVM-pointer
+        ldx B $_start_memory_     ; 2. B = basisadres van de VVM-struct
+        ldi A 3                   ; 3. Offset voor VVM_SP
+        add A B                   ; 4. A = RAM-adres van VVM_SP
+        ld Y A                    ; 5. Parkeer het RAM-adres van VVM_SP in Y voor de update straks
+        
+        ld I A                    ; 6. I = RAM-adres van VVM_SP
+        ldx A $_start_memory_     ; 7. A = huidige virtuele SP
+        
+        ; --- 2. Lees TOS (B) op locatie SP - 1 ---
+        ld I A                    ; 8. I = virtuele SP
+        subi I 1                  ; 9. I = virtuele SP - 1 (TOS-adres)
+        ldx B $_start_memory_     ; 10. B = waarde 'B' (TOS)
+        
+        ; --- 3. Lees Next (A) op locatie SP - 2 EN voer de vermenigvuldiging uit ---
+        ld I A                    ; 11. I = virtuele SP
+        subi I 2                  ; 12. I = virtuele SP - 2 (Next-adres)
+        ldx C $_start_memory_     ; 13. C = waarde 'A' (NOS)
+        
+        mul B C                   ; 14. B = B * C (Oftewel: TOS * NOS)
+        stx B $_start_memory_     ; 15. Schrijf het resultaat direct naar het huidige adres (SP - 2)!
+        
+        ; --- 4. Update de nieuwe VVM_SP in de struct (oorspronkelijke SP - 1) ---
+        ld B A                    ; 16. B = oorspronkelijke virtuele SP
+        subi B 1                  ; 17. B = oorspronkelijke SP - 1 (nieuwe vrije plek pointer)
+        
+        ld I Y                    ; 18. I = RAM-adres van VVM_SP (uit register Y)
+        stx B $_start_memory_     ; 19. Sla de nieuwe SP op in de VVM-struct!
+    }
 }
 
 # ( A B -- ( a // b))
@@ -415,91 +691,265 @@ DEF s_neg {
 }
 
 # ( A B -- ( a == b))
+# DEF s_eq {
+#     AS _env_vvm_ptr
+
+#     # Get SP
+#     VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+#     # Pop B
+#     _env_sp_addr 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _math_b
+
+#     # Pop A
+#     _env_sp_addr 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _math_a
+
+#     # Push A == B
+#     _math_a _math_b == AS *_env_sp_addr
+
+#     # Update SP
+#     _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+# }
 DEF s_eq {
-    AS _env_vvm_ptr
-
-    # Get SP
-    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
-
-    # Pop B
-    _env_sp_addr 1 - AS _env_sp_addr
-    *_env_sp_addr AS _math_b
-
-    # Pop A
-    _env_sp_addr 1 - AS _env_sp_addr
-    *_env_sp_addr AS _math_a
-
-    # Push A == B
-    _math_a _math_b == AS *_env_sp_addr
-
-    # Update SP
-    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+    ASM {
+        ; --- 1. Haal de pointer op en lees de virtuele SP ---
+        ustack I $DATASTACK_PTR   ; 1. I = &VVM-pointer
+        ldx B $_start_memory_     ; 2. B = basisadres van de VVM-struct (anker)
+        
+        ldi A 3
+        add A B                   ; A = RAM-adres van VVM_SP
+        ld X A                    ; Parkeer het RAM-adres van VVM_SP in X voor de update straks
+        
+        ld I A
+        ldx A $_start_memory_     ; 3. A = huidige virtuele SP
+        
+        ; --- 2. Lees de twee waarden van de virtuele stack ---
+        ld I A
+        subi I 1                  ; I = SP - 1 (TOS, math_b)
+        ldx C $_start_memory_     ; 4. C = math_b
+        
+        subi I 1                  ; I = SP - 2 (NOS, math_a)
+        ldx Y $_start_memory_     ; 5. Y = math_a
+        
+        ; --- 3. Voer de 'Is Equal' check uit ---
+        tste Y C                  ; 6. Test of Y (math_a) == C (math_b)
+        jmpt :s_eq_true           ; Als ze gelijk zijn -> spring naar True
+        
+        ; --- Case: False (Niet gelijk) ---
+        ld C Z                    ; 7. C = 0 (via het veilige Zero register Z)
+        jmp :s_eq_write
+        
+    :s_eq_true
+        ldi C 1                   ; 8. C = 1 (True)
+        
+    :s_eq_write
+        ; --- 4. Schrijf het resultaat terug naar de stack (Locatie SP - 2) ---
+        ; Register I staat momenteel al op (SP - 2), dus daar maken we dankbaar gebruik van!
+        stx C $_start_memory_     ; 9. Schrijf True/False naar de stack
+        
+        ; --- 5. Update de nieuwe VVM_SP in de struct (Nieuwe SP = Oude SP - 1) ---
+        subi A 1                  ; 10. A = De nieuwe stack pointer stand
+        ld I X                    ; 11. I = RAM-adres van VVM_SP (teruggehaald uit X)
+        stx A $_start_memory_     ; 12. Sla de nieuwe SP op in de VVM-struct!
+    }
 }
 
 # ( A B -- ( a != b))
+# DEF s_ne {
+#     AS _env_vvm_ptr
+
+#     # Get SP
+#     VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+#     # Pop B
+#     _env_sp_addr 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _math_b
+
+#     # Pop A
+#     _env_sp_addr 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _math_a
+
+#     # Push A != B
+#     _math_a _math_b != AS *_env_sp_addr
+
+#     # Update SP
+#     _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+# }
 DEF s_ne {
-    AS _env_vvm_ptr
-
-    # Get SP
-    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
-
-    # Pop B
-    _env_sp_addr 1 - AS _env_sp_addr
-    *_env_sp_addr AS _math_b
-
-    # Pop A
-    _env_sp_addr 1 - AS _env_sp_addr
-    *_env_sp_addr AS _math_a
-
-    # Push A != B
-    _math_a _math_b != AS *_env_sp_addr
-
-    # Update SP
-    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+    ASM {
+        ; --- 1. Haal de pointer op en lees de virtuele SP ---
+        ustack I $DATASTACK_PTR   ; 1. I = &VVM-pointer
+        ldx B $_start_memory_     ; 2. B = basisadres van de VVM-struct (anker)
+        
+        ldi A 3
+        add A B                   ; A = RAM-adres van VVM_SP
+        ld X A                    ; Parkeer het RAM-adres van VVM_SP in X voor de update straks
+        
+        ld I A
+        ldx A $_start_memory_     ; 3. A = huidige virtuele SP
+        
+        ; --- 2. Lees de twee waarden van de virtuele stack ---
+        ld I A
+        subi I 1                  ; I = SP - 1 (TOS, math_b)
+        ldx C $_start_memory_     ; 4. C = math_b
+        
+        subi I 1                  ; I = SP - 2 (NOS, math_a)
+        ldx Y $_start_memory_     ; 5. Y = math_a
+        
+        ; --- 3. Voer de 'Not Equal' check uit via 'Test Equal' ---
+        tste Y C                  ; 6. Test of Y (math_a) == C (math_b)
+        jmpt :s_ne_false_          ; Als ze WEL gelijk zijn -> spring naar False!
+        
+        ; --- Case: True (Ze zijn ongelijk) ---
+        ldi C 1                   ; 7. C = 1 (True)
+        jmp :s_eq_write_
+        
+    :s_ne_false_
+        ; --- Case: False (Ze zijn gelijk) ---
+        ld C Z                    ; 8. C = 0 (via het veilige Zero register Z)
+        
+    :s_eq_write_
+        ; --- 4. Schrijf het resultaat terug naar de stack (Locatie SP - 2) ---
+        ; Register I staat nog steeds op (SP - 2), daar schrijven we direct naartoe!
+        stx C $_start_memory_     ; 9. Schrijf True/False naar de stack
+        
+        ; --- 5. Update de nieuwe VVM_SP in de struct (Nieuwe SP = Oude SP - 1) ---
+        subi A 1                  ; 10. A = De nieuwe stack pointer stand
+        ld I X                    ; 11. I = RAM-adres van VVM_SP (teruggehaald uit X)
+        stx A $_start_memory_     ; 12. Sla de nieuwe SP op in de VVM-struct!
+    }
 }
 
 # ( A B -- ( a < b))
+# DEF s_lt {
+#     AS _env_vvm_ptr
+
+#     # Get SP
+#     VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+#     # Pop B
+#     _env_sp_addr 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _math_b
+
+#     # Pop A
+#     _env_sp_addr 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _math_a
+
+#     # Push A < B
+#     _math_a _math_b < AS *_env_sp_addr
+
+#     # Update SP
+#     _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+# }
 DEF s_lt {
-    AS _env_vvm_ptr
-
-    # Get SP
-    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
-
-    # Pop B
-    _env_sp_addr 1 - AS _env_sp_addr
-    *_env_sp_addr AS _math_b
-
-    # Pop A
-    _env_sp_addr 1 - AS _env_sp_addr
-    *_env_sp_addr AS _math_a
-
-    # Push A < B
-    _math_a _math_b < AS *_env_sp_addr
-
-    # Update SP
-    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+    ASM {
+        ; --- 1. Haal de pointer op en lees de virtuele SP ---
+        ustack I $DATASTACK_PTR   ; 1. I = &VVM-pointer
+        ldx B $_start_memory_     ; 2. B = basisadres van de VVM-struct (anker)
+        
+        ldi A 3
+        add A B                   ; A = RAM-adres van VVM_SP
+        ld X A                    ; Parkeer het RAM-adres van VVM_SP in X voor de update straks
+        
+        ld I A
+        ldx A $_start_memory_     ; 3. A = huidige virtuele SP
+        
+        ; --- 2. Lees de twee waarden van de virtuele stack ---
+        ld I A
+        subi I 1                  ; I = SP - 1 (TOS, math_b)
+        ldx C $_start_memory_     ; 4. C = math_b (TOS)
+        
+        subi I 1                  ; I = SP - 2 (NOS, math_a)
+        ldx Y $_start_memory_     ; 5. Y = math_a (NOS)
+        
+        ; --- 3. Voer de 'Less Than' check uit via 'Greater Than' (Is B > A?) ---
+        tstg C Y                  ; 6. Test of C (math_b) > Y (math_a)
+        jmpt :s_lt_true_          ; Als TOS > NOS, dan is NOS < TOS -> spring naar True
+        
+        ; --- Case: False (NOS >= TOS) ---
+        ld C Z                    ; 7. C = 0 (via het veilige Zero register Z)
+        jmp :s_lt_write_
+        
+    :s_lt_true_
+        ldi C 1                   ; 8. C = 1 (True)
+        
+    :s_lt_write_
+        ; --- 4. Schrijf het resultaat terug naar de stack (Locatie SP - 2) ---
+        ; Register I staat nu exact op (SP - 2), daar schrijven we direct naartoe
+        stx C $_start_memory_     ; 9. Schrijf True/False naar de stack
+        
+        ; --- 5. Update de nieuwe VVM_SP in de struct (Nieuwe SP = Oude SP - 1) ---
+        subi A 1                  ; 10. A = De nieuwe stack pointer stand
+        ld I X                    ; 11. I = RAM-adres van VVM_SP (teruggehaald uit X)
+        stx A $_start_memory_     ; 12. Sla de nieuwe SP op in de VVM-struct!
+    
+    }
 }
 
 # ( A B -- ( a > b))
+# DEF s_gt {
+#     AS _env_vvm_ptr
+
+#     # Get SP
+#     VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+#     # Pop B
+#     _env_sp_addr 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _math_b
+
+#     # Pop A
+#     _env_sp_addr 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _math_a
+
+#     # Push A > B
+#     _math_a _math_b > AS *_env_sp_addr
+
+#     # Update SP
+#     _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+# }
 DEF s_gt {
-    AS _env_vvm_ptr
-
-    # Get SP
-    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
-
-    # Pop B
-    _env_sp_addr 1 - AS _env_sp_addr
-    *_env_sp_addr AS _math_b
-
-    # Pop A
-    _env_sp_addr 1 - AS _env_sp_addr
-    *_env_sp_addr AS _math_a
-
-    # Push A > B
-    _math_a _math_b > AS *_env_sp_addr
-
-    # Update SP
-    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+    ASM {
+        ; --- 1. Haal de pointer op en lees de virtuele SP ---
+        ustack I $DATASTACK_PTR   ; 1. I = &VVM-pointer
+        ldx B $_start_memory_     ; 2. B = basisadres van de VVM-struct (anker)
+        
+        ldi A 3
+        add A B                   ; A = RAM-adres van VVM_SP
+        ld X A                    ; Parkeer het RAM-adres van VVM_SP in X voor de update straks
+        
+        ld I A
+        ldx A $_start_memory_     ; 3. A = huidige virtuele SP
+        
+        ; --- 2. Lees de twee waarden van de virtuele stack ---
+        ld I A
+        subi I 1                  ; I = SP - 1 (TOS, math_b)
+        ldx C $_start_memory_     ; 4. C = math_b (TOS)
+        
+        subi I 1                  ; I = SP - 2 (NOS, math_a)
+        ldx Y $_start_memory_     ; 5. Y = math_a (NOS)
+        
+        ; --- 3. Voer de 'Greater Than' check uit (Is NOS > TOS?) ---
+        tstg Y C                  ; 6. Test of Y (math_a) > C (math_b)
+        jmpt :s_gt_true_          ; Als NOS > TOS -> spring naar True
+        
+        ; --- Case: False (NOS <= TOS) ---
+        ld C Z                    ; 7. C = 0 (via het veilige Zero register Z)
+        jmp :s_gt_write_
+        
+    :s_gt_true_
+        ldi C 1                   ; 8. C = 1 (True)
+        
+    :s_gt_write_
+        ; --- 4. Schrijf het resultaat terug naar de stack (Locatie SP - 2) ---
+        ; Register I staat nog steeds op (SP - 2), daar schrijven we direct naartoe
+        stx C $_start_memory_     ; 9. Schrijf True/False naar de stack
+        
+        ; --- 5. Update de nieuwe VVM_SP in de struct (Nieuwe SP = Oude SP - 1) ---
+        subi A 1                  ; 10. A = De nieuwe stack pointer stand
+        ld I X                    ; 11. I = RAM-adres van VVM_SP (teruggehaald uit X)
+        stx A $_start_memory_     ; 12. Sla de nieuwe SP op in de VVM-struct!
+    }
 }
 
 # ( A -- |A| )
@@ -529,71 +979,218 @@ DEF s_rnd {
     _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
 }
 
+# DEF s_push {
+#     AS _env_vvm_ptr
+#     AS _env_val
+    
+#     # Get SP (Absolute Address)
+#     VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+#     # Push value to VVM stack (Absolute write)
+#     _env_val AS *_env_sp_addr
+    
+#     # Increment SP and update
+#     _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+# }
+
 DEF s_push {
-    AS _env_vvm_ptr
-    AS _env_val
-    
-    # Get SP (Absolute Address)
-    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
-
-    # Push value to VVM stack (Absolute write)
-    _env_val AS *_env_sp_addr
-    
-    # Increment SP and update
-    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+    ASM {
+        ; --- 1. Haal de parameters van de host-stack (Juiste Volgorde) ---
+        ustack I $DATASTACK_PTR   ; 1. EERST POPPEN: I = &VVM-pointer (_env_vvm_ptr)
+        ustack Y $DATASTACK_PTR   ; 2. DAARNA POPPEN: Y = de te pushen waarde (_env_val)
+        ldx B $_start_memory_     ; 3. B = basisadres van de VVM-struct (anker)
+        
+        ; --- 2. Haal de huidige virtuele Stack Pointer op (Offset 3) ---
+        ldi A 3
+        add A B                   ; A = RAM-adres van VVM_SP
+        ld X A                    ; Parkeer het RAM-adres van VVM_SP in X voor de update straks
+        
+        ld I A
+        ldx A $_start_memory_     ; 4. A = huidige virtuele SP (het schrijfadres)
+        
+        ; --- 3. Schrijf de waarde (Y) naar de Sandbox Stack (*A) ---
+        ld I A                    ; I = huidige virtuele SP
+        stx Y $_start_memory_     ; 5. Schrijf waarde uit Y direct naar het sandbox-RAM
+        
+        ; --- 4. Verhoog de virtuele SP met 1 ---
+        addi A 1                  ; 6. A = nieuwe virtuele SP (SP + 1)
+        
+        ; --- 5. Update VVM_SP in de struct met de nieuwe waarde ---
+        ld I X                    ; I = RAM-adres van VVM_SP (teruggehaald uit X)
+        stx A $_start_memory_     ; 7. Sla de verhoogde SP op in de VVM-struct!
+    }
 }
 
+# DEF s_get {
+#     AS _env_vvm_ptr
+#     AS _math_a # Register index
+
+#     # Read Register
+#     *_env_vvm_ptr VVM_regs + _math_a + AS _env_ptr
+#     *_env_ptr AS _env_val
+
+#     # Push to VVM Stack
+#     VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+#     _env_val AS *_env_sp_addr
+#     _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+# }
 DEF s_get {
-    AS _env_vvm_ptr
-    AS _math_a # Register index
-
-    # Read Register
-    *_env_vvm_ptr VVM_regs + _math_a + AS _env_ptr
-    *_env_ptr AS _env_val
-
-    # Push to VVM Stack
-    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
-    _env_val AS *_env_sp_addr
-    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+    ASM {
+        ; --- 1. Haal de parameters van de host-stack (Juiste Volgorde) ---
+        ustack I $DATASTACK_PTR   ; 1. EERST POPPEN: I = &VVM-pointer (_env_vvm_ptr)
+        ustack Y $DATASTACK_PTR   ; 2. DAARNA POPPEN: Y = register-index (_math_a)
+        ldx B $_start_memory_     ; 3. B = basisadres van de VVM-struct (anker)
+        
+        ; --- 2. Lees de waarde uit het virtuele register (Offset 22) ---
+        ld X B                    ; Kopieer basisadres naar X voor de berekening
+        addi X 22                 ; X = basisadres + 22 (VVM_regs start)
+        add X Y                   ; X = basisadres + 22 + register_index
+        ld I X
+        ldx Y $_start_memory_     ; 4. Y = De gezochte waarde uit het virtuele register
+        
+        ; --- 3. Haal de huidige virtuele Stack Pointer op (Offset 3) ---
+        ldi A 3
+        add A B                   ; A = RAM-adres van VVM_SP
+        ld X A                    ; Parkeer het RAM-adres van VVM_SP in X voor de update straks
+        
+        ld I A
+        ldx A $_start_memory_     ; 5. A = huidige virtuele SP (het schrijfadres)
+        
+        ; --- 4. Schrijf de registerwaarde (Y) naar de Sandbox Stack (*A) ---
+        ld I A                    ; I = huidige virtuele SP
+        stx Y $_start_memory_     ; 6. Schrijf de waarde direct naar de stack
+        
+        ; --- 5. Verhoog de virtuele SP met 1 ---
+        addi A 1                  ; 7. A = nieuwe virtuele SP (SP + 1)
+        
+        ; --- 6. Update VVM_SP in de struct met de nieuwe waarde ---
+        ld I X                    ; I = RAM-adres van VVM_SP (teruggehaald uit X)
+        stx A $_start_memory_     ; 8. Sla de verhoogde SP op in de VVM-struct!
+    }
 }
 
+# DEF s_set {
+#     AS _env_vvm_ptr
+#     AS _math_a # Register index
+
+#     # Pop Value from VVM Stack
+#     VVM_SP _env_vvm_ptr VVMpeek 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _env_val
+#     _env_sp_addr VVM_SP _env_vvm_ptr VVMpoke
+
+#     # Write to Register
+#     *_env_vvm_ptr VVM_regs + _math_a + AS _env_ptr
+#     _env_val AS *_env_ptr
+# }
 DEF s_set {
-    AS _env_vvm_ptr
-    AS _math_a # Register index
-
-    # Pop Value from VVM Stack
-    VVM_SP _env_vvm_ptr VVMpeek 1 - AS _env_sp_addr
-    *_env_sp_addr AS _env_val
-    _env_sp_addr VVM_SP _env_vvm_ptr VVMpoke
-
-    # Write to Register
-    *_env_vvm_ptr VVM_regs + _math_a + AS _env_ptr
-    _env_val AS *_env_ptr
+    ASM {
+        ; --- 1. Haal de parameters van de host-stack (Juiste Volgorde) ---
+        ustack I $DATASTACK_PTR   ; 1. EERST POPPEN: I = &VVM-pointer (_env_vvm_ptr)
+        ustack Y $DATASTACK_PTR   ; 2. DAARNA POPPEN: Y = register-index (_math_a)
+        ldx B $_start_memory_     ; 3. B = basisadres van de VVM-struct (anker)
+        
+        ; --- 2. Haal de huidige VVM_SP op (Offset 3) EN bereken TOS (SP - 1) ---
+        ldi A 3
+        add A B                   ; A = RAM-adres van VVM_SP
+        ld X A                    ; Parkeer het RAM-adres van VVM_SP in X voor de update straks
+        
+        ld I A
+        ldx A $_start_memory_     ; 4. A = huidige virtuele SP
+        subi A 1                  ; 5. A = nieuwe virtuele SP (TOS-adres: SP - 1)
+        
+        ; --- 3. Pop de waarde van de Sandbox Stack (*A) ---
+        ld I A                    ; I = TOS-adres
+        ldx C $_start_memory_     ; 6. C = De waarde van de stack (_env_val)
+        
+        ; --- 4. Update VVM_SP in de struct met de verlaagde waarde ---
+        ld I X                    ; I = RAM-adres van VVM_SP (teruggehaald uit X)
+        stx A $_start_memory_     ; 7. Sla de verlaagde SP op in de VVM-struct
+        
+        ; --- 5. Schrijf de waarde (C) naar het virtuele register (Offset 22) ---
+        ld X B                    ; Kopieer basisadres naar X voor de berekening
+        addi X 22                 ; X = basisadres + 22 (VVM_regs start)
+        add X Y                   ; X = basisadres + 22 + register_index
+        ld I X
+        stx C $_start_memory_     ; 8. Schrijf de waarde vanuit C direct in het virtuele register!
+    }
 }
 
 # there is no s_label needed on runtime
 
-DEF s_bra {
-    AS _env_vvm_ptr
-    AS _math_a # target address
+# DEF s_bra {
+#     AS _env_vvm_ptr
+#     AS _math_a # target address
 
-    # Set PC to target address
-    _math_a VVM_PC _env_vvm_ptr VVMpoke
+#     # Set PC to target address
+#     _math_a VVM_PC _env_vvm_ptr VVMpoke
+# }
+DEF s_bra {
+    ASM {
+        ; --- 1. Haal de parameters van de host-stack (Juiste Volgorde) ---
+        ustack I $DATASTACK_PTR   ; 1. EERST POPPEN: I = &VVM-pointer (_env_vvm_ptr)
+        ustack Y $DATASTACK_PTR   ; 2. DAARNA POPPEN: Y = doeladres (_math_a)
+        ldx B $_start_memory_     ; 3. B = basisadres van de VVM-struct (anker)
+        
+        ; --- 2. Bereken het RAM-adres van VVM_PC (Offset 2) ---
+        ldi A 2
+        add A B                   ; A = RAM-adres van VVM_PC
+        
+        ; --- 3. Schrijf het nieuwe adres direct in de struct ---
+        ld I A                    ; Instellen als adres register
+        stx Y $_start_memory_     ; 4. Sla het doeladres op in VVM_PC!
+    }
 }
 
+# DEF s_brz {
+#     AS _env_vvm_ptr
+#     AS _math_a # target address
+
+#     # Pop value from VVM Stack
+#     VVM_SP _env_vvm_ptr VVMpeek 1 - AS _env_sp_addr
+#     *_env_sp_addr AS _env_val
+#     _env_sp_addr VVM_SP _env_vvm_ptr VVMpoke
+
+#     # Check condition
+#     _env_val 0 == IF
+#         _math_a VVM_PC _env_vvm_ptr VVMpoke
+#     END
+# }
 DEF s_brz {
-    AS _env_vvm_ptr
-    AS _math_a # target address
-
-    # Pop value from VVM Stack
-    VVM_SP _env_vvm_ptr VVMpeek 1 - AS _env_sp_addr
-    *_env_sp_addr AS _env_val
-    _env_sp_addr VVM_SP _env_vvm_ptr VVMpoke
-
-    # Check condition
-    _env_val 0 == IF
-        _math_a VVM_PC _env_vvm_ptr VVMpoke
-    END
+    ASM {
+        ; --- 1. Haal de parameters van de host-stack (Juiste Volgorde) ---
+        ustack I $DATASTACK_PTR   ; 1. EERST POPPEN: I = &VVM-pointer (_env_vvm_ptr)
+        ustack Y $DATASTACK_PTR   ; 2. DAARNA POPPEN: Y = doeladres (_math_a)
+        ldx B $_start_memory_     ; 3. B = basisadres van de VVM-struct (anker)
+        
+        ; --- 2. Haal de huidige VVM_SP op (Offset 3) EN krimp de stack (SP - 1) ---
+        ldi A 3
+        add A B                   ; A = RAM-adres van VVM_SP
+        ld X A                    ; Parkeer het RAM-adres van VVM_SP in X voor de update straks
+        
+        ld I A
+        ldx A $_start_memory_     ; 4. A = huidige virtuele SP
+        subi A 1                  ; 5. A = nieuwe virtuele SP (het adres van de TOS-waarde)
+        
+        ; --- 3. Pop de waarde van de Sandbox Stack (*A) ---
+        ld I A                    ; I = TOS-adres
+        ldx C $_start_memory_     ; 6. C = De waarde van de stack waarmee we gaan testen
+        
+        ; --- 4. Update VVM_SP direct in de struct met de verlaagde waarde ---
+        ld I X                    ; I = RAM-adres van VVM_SP (teruggehaald uit X)
+        stx A $_start_memory_     ; 7. Sla de verlaagde SP op in de VVM-struct
+        
+        ; --- 5. Controleer of de waarde 0 is (C == Z) ---
+        tste C Z                  ; 8. Test of de stackwaarde (C) gelijk is aan 0 (Z)
+        jmpf :s_brz_end_          ; 9. Als NIET nul (False) -> skip de branch en beëindig de functie!
+        
+        ; --- 6. Case True: Schrijf het doeladres (Y) naar VVM_PC (Offset 2) ---
+        ldi A 2
+        add A B                   ; A = RAM-adres van VVM_PC
+        ld I A
+        stx Y $_start_memory_     ; 10. Sla het doeladres op in VVM_PC!
+        
+    :s_brz_end_
+    }
 }
 
 DEF s_bnz {
@@ -723,6 +1320,7 @@ DEF s_exec {
     # Update SP
     _env_sp_addr _argr + VVM_SP _env_vvm_ptr VVMpoke
 }
+
 # End of instruction handlers
 
 

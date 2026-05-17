@@ -11,9 +11,10 @@
 . $main_str_3 30
 . $main_str_4 8
 . $main_str_5 25
-. $main_str_6 25
-. $main_str_7 15
+. $main_str_6 11
+. $main_str_7 25
 . $main_str_8 15
+. $main_str_9 15
 
 # .CODE
     call @main
@@ -122,7 +123,7 @@
         int $INT_VECTORS         ; Interrupt to trigger the syscall
         ldm A $SIMPL_code
     stack A $DATASTACK_PTR
-    ldi A $main_str_4
+    ldi A $main_str_6
     stack A $DATASTACK_PTR
     call @VVM.loadcode
     ldi A $SIMPL_code
@@ -134,7 +135,7 @@
     ldi A $VVM1
     stack A $DATASTACK_PTR
     call @VVM.create
-    ldi A $main_str_6
+    ldi A $main_str_7
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
@@ -147,7 +148,7 @@
     ldi A $VVM0
     stack A $DATASTACK_PTR
     call @VVM.start
-    ldi A $main_str_7
+    ldi A $main_str_8
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
@@ -160,7 +161,7 @@
     ldi A $VVM1
     stack A $DATASTACK_PTR
     call @VVM.start
-    ldi A $main_str_8
+    ldi A $main_str_9
     stack A $DATASTACK_PTR
 
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
@@ -269,8 +270,9 @@
 % $main_str_1 \V \V \M \space \E \n \v \i \r \o \n \m \e \n \t \space \I \n \i \t \i \a \l \i \z \e \d \: \Return \null
 % $main_str_2 \V \V \M \0 \space \b \a \s \e \space \a \d \d \r \e \s \s \space \space \space \space \space \space \space \space \space \space \: \space \null
 % $main_str_3 \V \V \M \1 \space \b \a \s \e \space \a \d \d \r \e \s \s \space \space \space \space \space \space \space \space \space \space \: \space \null
-% $main_str_4 \s \b \c \_ \f \i \b \null
+% $main_str_4 \s \b \c \_ \f \l \y \null
 % $main_str_5 \V \V \M \0 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \Return \null
-% $main_str_6 \V \V \M \1 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \Return \null
-% $main_str_7 \V \V \M \0 \space \s \t \a \r \t \e \d \space \Return \null
-% $main_str_8 \V \V \M \1 \space \s \t \a \r \t \e \d \space \Return \null
+% $main_str_6 \s \b \c \_ \c \h \a \o \s \3 \null
+% $main_str_7 \V \V \M \1 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \Return \null
+% $main_str_8 \V \V \M \0 \space \s \t \a \r \t \e \d \space \Return \null
+% $main_str_9 \V \V \M \1 \space \s \t \a \r \t \e \d \space \Return \null
