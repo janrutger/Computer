@@ -163,6 +163,7 @@ $(LIB_OUT_DIR)/game_lib.smod:        $(LIB_OUT_DIR)/std_string.smod
 $(LIB_OUT_DIR)/game_lib.smod:        $(LIB_OUT_DIR)/std_heap.smod
 
 $(LIB_OUT_DIR)/vvm_core_lib.smod:    $(LIB_OUT_DIR)/vvm_env_lib.smod
+$(LIB_OUT_DIR)/vvm_core_libV2.smod:    $(LIB_OUT_DIR)/vvm_env_libV2.smod
 
 $(LIB_OUT_DIR)/socket_lib.smod:      $(LIB_OUT_DIR)/std_deque.smod
 $(LIB_OUT_DIR)/rdp_lib.smod:         $(LIB_OUT_DIR)/socket_lib.smod
