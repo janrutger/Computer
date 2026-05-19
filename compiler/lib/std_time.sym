@@ -1,9 +1,9 @@
 {
   "functions": [
-    "TIME.wait",
     "TIME.as_string",
-    "TIME.uptime",
-    "TIME.init"
+    "TIME.wait",
+    "TIME.init",
+    "TIME.uptime"
   ],
   "variables": [
     {

@@ -1,0 +1,517 @@
+USE std_heap
+USE std_stern_io
+USE std_string
+
+USE std_dict
+USE std_deque
+
+USE disk_utils
+USE vvm_env_libV2
+
+VALUE _temp_ptr 0
+VALUE _temp_idx 0
+VALUE _temp_val 0
+VALUE _scan_ptr 0
+VALUE _vvm_pc_offset 0
+VALUE _opcode 0
+VALUE _is_opcode 0
+
+STRING error_no_code        "No SIMPL code provided. \n"
+STRING error_no_opcode      "VVM invalid OPCODE found. \n"
+STRING error_no_syscall     "VVM invalid SYSCALL is called. \n"
+STRING error_label_unknown  "VVM label not found. \n"
+STRING error_invalid_reg    "VVM invalid register index. \n"
+STRING error_div_zero       "VVM division by zero error. \n"
+STRING error_vvm_overflow   "VVM memory overflow. \n"
+STRING msg_labels_found     " labels found\n"
+STRING msg_loading          "Loading Image from disk \n"
+STRING error_invalid_syscall "VVM Illigal SYSCALL ID is used. \n"
+
+
+VALUE _run_pc 0
+VALUE _run_opcode 0
+VALUE _run_handler 0
+VALUE _start_argc 0
+VALUE _start_idx 0
+VALUE _syscall_id 0
+VALUE _syscall_handler 0
+
+VALUE _VVMpointer     0
+VALUE _VVMHOSTpointer 0
+VALUE _VVMsize        0
+VALUE _SIMPLcode      0
+
+# ( &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer -- )
+DEF VVM.create {
+    AS _VVMpointer
+    AS _VVMHOSTpointer
+    AS _VVMsize
+    AS _SIMPLcode
+
+    # Step 1: Create the struct
+    VVM_Halted               VVM_status   _VVMpointer VVMpoke # Set initial status
+    _VVMsize                 VVM_size     _VVMpointer VVMpoke # Set VVM size in blocks
+    # PC is absolute. Initialize it to the start of the code section.
+    *_VVMpointer VVM_code +  VVM_PC       _VVMpointer VVMpoke
+    # SP is absolute. Initialize it to the start of the VVM's stack area.
+    *_VVMpointer VVM_stack + VVM_SP       _VVMpointer VVMpoke
+    # Dereference the host pointer to get the actual deque address and store it
+    *_VVMHOSTpointer         VVM_HOST_ptr _VVMpointer VVMpoke
+    # Setup Retrun Stack Pointer (RSP) Start + size
+    *_VVMpointer _VVMsize +  VVM_RSP      _VVMpointer VVMpoke
+
+
+    
+
+
+    # Step 2: Phase 1, let us find the labels
+    label_addresses DICT.clear      # Clean old labels
+    0 AS _vvm_pc_offset             # Reset PC offset counter
+
+    *_SIMPLcode DEQUE.is_empty IF
+        &error_no_code PRTstring HALT
+    ELSE
+        # Get the head node to start scanning
+        *_SIMPLcode DEQUE.head AS _scan_ptr
+        
+        WHILE _scan_ptr 0 != DO
+            # Get the value (token)
+            _scan_ptr DEQUE.value AS _temp_val
+            
+            # Check if the token is a recognized opcode
+            _temp_val opcode_table DICT.has_key IF
+                # It's an opcode, get its numeric value
+                _temp_val opcode_table DICT.get AS _opcode
+                
+                _opcode _label_ == IF
+                    # It's a LABEL directive. It takes 0 words.
+                    # Advance to the next token, which is the label name.
+                    _scan_ptr DEQUE.next AS _scan_ptr
+                    _scan_ptr 0 != IF
+                        _scan_ptr DEQUE.value AS _temp_val # The label name
+                        # Store the label and its address. Do NOT increment the PC offset.
+                        _vvm_pc_offset _temp_val label_addresses DICT.put
+                    END
+                ELSE
+                _opcode _ststr_ == IF
+                    # =========================================================
+                    # FASE 1: STRING SKIP MECHANISME (Zonder BREAK)
+                    # =========================================================
+                    # We gebruiken een statusvlag om te scannen tot _strend_
+                    VALUE _in_string 1
+                    VALUE _sub_op 0
+                    1 AS _in_string
+
+                    WHILE _in_string DO
+                        _scan_ptr DEQUE.next AS _scan_ptr
+                        _scan_ptr 0 == IF
+                            # De deque is leeg maar we hebben geen _strend_ gezien!
+                            &error_no_opcode PRTstring HALT
+                        END
+                        
+                        _scan_ptr DEQUE.value AS _temp_val
+                        
+                        # Controleren of dit token de _strend_ opcode is
+                        _temp_val opcode_table DICT.has_key IF
+                            _temp_val opcode_table DICT.get AS _sub_op
+                            _sub_op _strend_ == IF
+                                # Eindmarker gevonden, we zetten de vlag op 0
+                                0 AS _in_string
+                            END
+                        END
+                    DONE
+                    
+                    # De string wordt een PUSH <pointer>, dus kost 2 woorden in het VVM codegeheugen
+                    _vvm_pc_offset 2 + AS _vvm_pc_offset
+                ELSE
+                    _opcode 50 < IF
+                        # Zero-operand instruction (<50). Takes 1 word.
+                        _vvm_pc_offset 1 + AS _vvm_pc_offset
+                    ELSE
+                        # One-operand instruction (>=50). Takes 2 words.
+                        _vvm_pc_offset 2 + AS _vvm_pc_offset
+                        # Crucially, we must skip the operand token in the deque.
+                        _scan_ptr DEQUE.next AS _scan_ptr
+                    END
+                END END
+            ELSE
+                # This token is not an opcode. This is an error in SIMPL code
+                # (e.g., a stray number or a misspelled opcode).
+                &error_no_opcode PRTstring HALT
+            END
+            
+            # Move to the next token for the next instruction
+            _scan_ptr 0 != IF
+                _scan_ptr DEQUE.next AS _scan_ptr
+            END
+        DONE
+        
+        label_addresses DICT.count PRTnum &msg_labels_found PRTstring
+    END
+    
+    VALUE _vvm_max_size 0
+    VALUE _vvm_needed_size 0
+    
+    # Check VVM Size
+    _VVMsize AS _vvm_max_size
+    VVM_code _vvm_pc_offset + AS _vvm_needed_size
+    _vvm_needed_size _vvm_max_size > IF
+        &error_vvm_overflow PRTstring HALT
+    END
+    
+    # Step 3: Phase 2, The Baker - Transpile and Load Bytecode
+    # We iterate through the SIMPL code deque a second time. We know all
+    # opcodes are valid and all label addresses have been calculated.
+    VALUE _vvm_code_start 0
+    VALUE _vvm_write_ptr 0
+    VALUE _char_val 0
+    VALUE _string_hash 0
+
+
+    # 1. Setup Pointers
+    *_VVMpointer AS _temp_ptr               # Get VVM Base
+    _temp_ptr VVM_code + AS _vvm_code_start # Absolute address of code start
+    _vvm_code_start AS _vvm_write_ptr       # Current writing pointer
+
+    # 2. Loop through the SIMPL code deque
+    WHILE *_SIMPLcode DEQUE.is_empty 0 == DO
+        # Pop Token
+        *_SIMPLcode DEQUE.pop AS _temp_val
+        
+        # Get Opcode
+        _temp_val opcode_table DICT.get AS _opcode
+        
+        # Case: LABEL (60)
+        _opcode _label_ == IF
+            *_SIMPLcode DEQUE.pop DROP      # Discard label name
+        ELSE
+        _opcode _ststr_ == IF
+            # =================================================================
+            # FASE 2: STRING HASH & BAKE MECHANISME (Met Handmatige Index)
+            # =================================================================
+            # We alloceren een nieuwe lijst op de host-heap. 
+            # 64 woorden capaciteit betekent dat er fysiek 65 woorden worden gereserveerd
+            # (offset 0 bevat de capaciteit, data begint op offset 1).
+            64 NEW.list AS _vvm_temp_list_ptr
+            
+            VALUE _in_bake_string 1
+            1 AS _in_bake_string
+            
+            # Onze handmatige karakterteller (begint bij 0)
+            VALUE _str_char_idx 0
+            0 AS _str_char_idx
+
+            VALUE _next_char 0
+
+            WHILE _in_bake_string DO
+                *_SIMPLcode DEQUE.is_empty IF
+                    &error_no_opcode PRTstring HALT
+                END
+                
+                *_SIMPLcode DEQUE.pop AS _char_val
+                
+                # Check if this token is a recognized opcode (like _strend_)
+                _char_val opcode_table DICT.has_key IF
+                    _char_val opcode_table DICT.get AS _sub_op
+                    _sub_op _strend_ == IF
+                        0 AS _in_bake_string
+                    END
+                ELSE
+                    # =========================================================
+                    # ESCAPE LOGICA: Check of dit een backslash '\' (ASCII 92) is
+                    # =========================================================
+                    _char_val 92 == IF
+                        # Pop direct het volgende karakter uit de deque
+                        *_SIMPLcode DEQUE.is_empty IF
+                            &error_no_opcode PRTstring HALT
+                        END
+                        *_SIMPLcode DEQUE.pop AS _next_char
+                        
+                        # Is het volgende karakter een 'n' (ASCII 110)?
+                        _next_char 110 == IF
+                            13 AS _char_val     # Maak er een echte Return (13) van
+                        ELSE
+                            _next_char AS _char_val # Anders behouden we de letter (bijv. voor \")
+                        END
+                    END
+
+                    # Schrijf het (eventueel aangepaste) karakter naar de lijst
+                    _str_char_idx 1 + AS _temp_idx
+                    _char_val _temp_idx _vvm_temp_list_ptr LIST.put
+                    
+                    _str_char_idx 1 + AS _str_char_idx
+                END
+            DONE
+            
+            # Cruciaal voor STRhash: voeg de null-terminator (0) handmatig toe
+            _str_char_idx 1 + AS _temp_idx
+            0 _temp_idx _vvm_temp_list_ptr LIST.put
+            _str_char_idx 1 + AS _str_char_idx
+            
+            # Bereken de hash. STRhash verwacht de pointer naar de null-terminated data.
+            # Omdat de data pas op offset 1 begint, moeten we de pointer ophogen met 1!
+            _vvm_temp_list_ptr 1 + STRhash AS _string_hash
+            
+            VALUE _final_string_ptr 0
+            
+            # Deduplicatie-controle via de string_dict
+            _string_hash string_dict DICT.has_key IF
+                # De string bestaat al! Haal de reeds bestaande pointer op naar de data-offset
+                _string_hash string_dict DICT.get AS _final_string_ptr
+            ELSE
+                # Nieuwe unieke string! De pointer die we in de VVM (en dict) willen opslaan,
+                # is de pointer naar de daadwerkelijke karakters (dus de list_ptr + 1).
+                _vvm_temp_list_ptr 1 + AS _final_string_ptr
+                
+                # Registreer deze data-pointer onder zijn unieke hash in de string_dict
+                _final_string_ptr _string_hash string_dict DICT.put
+            END
+            
+            # Now "bake" the PUSH instruction to the VVM memory
+            _push_ AS *_vvm_write_ptr
+            _vvm_write_ptr 1 + AS _vvm_write_ptr
+            
+            # Schrijf de unieke string-data-pointer direct na de PUSH
+            _final_string_ptr AS *_vvm_write_ptr
+            _vvm_write_ptr 1 + AS _vvm_write_ptr
+        ELSE
+            # Write Opcode (Voor alle normale instructies)
+            _opcode AS *_vvm_write_ptr
+            _vvm_write_ptr 1 + AS _vvm_write_ptr
+            
+            # Case: One Operand (>= 50)
+            _opcode 49 > IF
+                # Pop Operand
+                *_SIMPLcode DEQUE.pop AS _temp_val
+                
+                # Check if Branch (> 60, since 60 is label)
+                _opcode 60 > IF
+                    _temp_val label_addresses DICT.has_key IF
+                        # Resolve Label to Absolute Address
+                        _temp_val label_addresses DICT.get _vvm_code_start + AS _temp_val
+                    ELSE
+                        &error_label_unknown PRTstring HALT
+                    END
+                ELSE
+                    # Handle Register Operands for GET (51) and SET (52)
+                    _opcode 51 == _opcode 52 == + IF
+                        _temp_val 0 < _temp_val 25 > + IF
+                            &error_invalid_reg PRTstring HALT
+                        END
+                    END
+                END
+                
+                # Write Operand (Literal or Resolved Address)
+                _temp_val AS *_vvm_write_ptr
+                _vvm_write_ptr 1 + AS _vvm_write_ptr
+            END
+        END END
+    DONE
+
+
+
+}
+
+# ( arg1 ... argn argc &VVM-pointer -- )
+DEF VVM.start {
+    AS _VVMpointer
+    AS _start_argc # argc
+
+    # 1. Store argc in Register A (VVM_regs + 0)
+    _start_argc VVM_regs _VVMpointer VVMpoke
+
+    # 2. Store arguments in Registers B..Z
+    # Stack: arg1 ... argn (TOS). We pop argn first.
+    _start_argc AS _start_idx # Use argc as loop counter
+    
+    WHILE _start_idx 0 > DO
+        AS _temp_val # Pop argument
+        # Store at VVM_regs + index (e.g., Reg B is index 1)
+        _temp_val VVM_regs _start_idx + _VVMpointer VVMpoke
+        _start_idx 1 - AS _start_idx
+    DONE
+
+    # 3. Reset PC to start of code
+    *_VVMpointer VVM_code + VVM_PC _VVMpointer VVMpoke
+
+    # 4. Set Status to Running
+    VVM_Running VVM_status _VVMpointer VVMpoke
+}
+
+DEF VVM.run {
+    AS _VVMpointer
+    
+    # 1. Get current status
+    VVM_status _VVMpointer VVMpeek AS _temp_val
+
+    # 2. Handle based on status
+    _temp_val VVM_Running == IF
+        # --- STATUS: RUNNING ---
+        # Fetch PC and Opcode
+        VVM_PC _VVMpointer VVMpeek AS _run_pc
+        *_run_pc AS _run_opcode
+
+        # Check for special case: SYS instruction
+        _run_opcode _sys_ == IF
+            # Set status to Sys and do NOT advance PC
+            VVM_Sys VVM_status _VVMpointer VVMpoke
+        ELSE
+            # --- Normal Instruction Execution ---
+            # Advance PC past opcode
+            _run_pc 1 + AS _run_pc
+
+            # Check for operand
+            _run_opcode 49 > IF
+                *_run_pc # Fetch operand for handler
+                _run_pc 1 + AS _run_pc # Advance PC past operand
+            END
+
+            _run_pc VVM_PC _VVMpointer VVMpoke # Update PC in VVM struct
+            _run_opcode opcode_runtimes LIST.get AS _run_handler
+            _VVMpointer _run_handler EXEC # Execute handler
+        END
+    ELSE _temp_val VVM_Idle == IF
+        # --- STATUS: IDLE ---
+        # This state occurs after a host-handled SYSCALL.
+        # We advance the PC past the SYS instruction and resume.
+        VVM_PC _VVMpointer VVMpeek 1 + VVM_PC _VVMpointer VVMpoke
+        VVM_Running VVM_status _VVMpointer VVMpoke
+    END END
+    # If status is Sys, Halted, or Error, do nothing.
+}
+
+
+
+DEF VVM.check_syscalls {
+    AS _VVMpointer
+
+    # 1. Check if VVM is requesting a syscall
+    VVM_status _VVMpointer VVMpeek VVM_Sys == IF
+        # 2. Get the host deque
+        VVM_HOST_ptr _VVMpointer VVMpeek AS _temp_val
+
+        # 3. Pop the syscall ID from the host deque
+        _temp_val DEQUE.pop_tail AS _syscall_id
+
+        # 4. Look up and execute the handler
+        _syscall_id syscall_table DICT.has_key IF
+            _syscall_id syscall_table DICT.get AS _syscall_handler
+            _VVMpointer _syscall_handler EXEC
+        ELSE
+            &error_no_syscall PRTstring HALT
+        END
+
+        # 5. Signal to VVM that the syscall is complete
+        VVM_Idle VVM_status _VVMpointer VVMpoke
+    END
+    
+}
+
+VALUE _filename 0
+VALUE _code_queue 0
+
+# ( code-queue "filename" --)
+# Appending the lines from the file to the code queue
+DEF VVM.loadcode {
+    AS _filename
+    AS _code_queue
+
+    &msg_loading PRTstring
+
+    ASM {
+        # Open file
+        ldm A $_filename
+        ldi I ~SYS_F_OPEN_READ
+        int $INT_VECTORS
+        
+        ldm A $SYSCALL_RETURN_STATUS
+        tste A Z
+        jmpt :vvm_load_end_error
+
+        # Variables
+        . $vvm_val 1
+        . $vvm_digit_seen 1
+
+        # Read first block
+        call @_read_disk_block
+        jmpt :vvm_close_and_end
+
+        :vvm_read_loop
+            sto Z $vvm_val
+            sto Z $vvm_digit_seen
+
+        :vvm_parse_loop
+            inc I $disk_io_buffer_ptr
+            ldx C $disk_io_buffer_base
+            tst C \null
+            jmpf :vvm_process_char
+                # End of block, read next
+                call @_check_last_block
+                jmpt :vvm_close_and_end
+                call @_read_disk_block
+                jmpt :vvm_close_and_end
+
+                # Reset ptr and reload C
+                # The _read_disk_block resets the internal pointer variable to 0.
+                # The top of the loop increments before reading, which would skip the
+                # first character of the new block.
+                # We must manually load the first character here and jump past the loop's load.
+                inc I $disk_io_buffer_ptr
+                ldx C $disk_io_buffer_base
+                jmp :vvm_process_char
+
+            :vvm_process_char
+            tst C \Return
+            jmpt :vvm_check_push
+            # tst C \Newline
+            # jmpt :vvm_check_push
+            # tst C \space
+            # jmpt :vvm_check_push
+            
+
+            :vvm_check_digit
+            ldi A 1
+            sto A $vvm_digit_seen
+            ldm A $vvm_val
+            muli A 10
+            subi C 48
+            add A C
+            sto A $vvm_val
+            jmp :vvm_parse_loop
+
+            :vvm_check_push
+            ldm A $vvm_digit_seen
+            tste A Z
+            jmpt :vvm_parse_loop
+            
+            :vvm_push
+            ldm A $vvm_val
+            stack A $DATASTACK_PTR
+            ldm A $_code_queue
+            stack A $DATASTACK_PTR
+            call @DEQUE.append
+            jmp :vvm_read_loop
+
+        :vvm_close_and_end
+            ldi I ~SYS_F_CLOSE
+            int $INT_VECTORS
+            
+        :vvm_load_end_error
+    }
+}
+
+VALUE _custom_id 0
+VALUE _function_ptr 0
+# ( &function-ptr custum-syscall-id --)
+# Binds an host side function to the VVM custom syscall
+# custom range 100 ....
+DEF VVM.bind {
+    AS _custom_id
+    AS _function_ptr
+
+    _custom_id 100 < IF
+        &error_invalid_syscall PRTstring HALT
+    ELSE
+        _function_ptr  _custom_id  syscall_table DICT.put
+    END
+}

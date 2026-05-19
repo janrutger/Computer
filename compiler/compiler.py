@@ -2,7 +2,7 @@ import argparse
 from lexer import Lexer
 from parser import Parser
 from codegen import CodeGenerator, AsmGenerator
-from simplgen import SimplGenerator
+from simplgenV2 import SimplGenerator
 import os
 import json
 

@@ -1,101 +1,92 @@
 {
   "functions": [
-    "s_eq",
-    "NEW.array",
-    "s_dup",
-    "s_push",
-    "DEQUE.next",
-    "s_set",
-    "TOS.check",
-    "VVMpeek",
-    "_DEQUE.free_node",
-    "DEQUE.head",
-    "VVM.init",
-    "VVMpoke",
-    "PRTcls",
-    "s_brp",
-    "DICT.count",
-    "_read_disk_block",
-    "io_lib_init",
-    "s_mod",
-    "PRTchar",
-    "s_print_num",
-    "DEQUE.init_pool",
-    "LIST.put",
-    "s_sys",
-    "DEQUE.value",
-    "s_mul",
-    "s_ret",
-    "DEQUE.prev",
-    "MATRIX.put",
-    "NEW.list",
-    "s_lt",
-    "s_div",
-    "HALT",
-    "s_nop",
-    "HEAP.init",
-    "s_gt",
-    "DICT.new",
-    "VVM.loadcode",
-    "NEW.matrix",
-    "s_out",
-    "MATRIX.get",
-    "_DEQUE.grow_pool",
-    "s_rnd",
-    "s_add",
-    "DEQUE.is_last",
-    "load_bin_file",
-    "s_swap",
-    "DICT.put",
-    "_check_last_block",
-    "s_sub",
-    "_DEQUE.alloc_node",
-    "CURSORoff",
-    "DEQUE.push",
-    "s_call",
-    "s_brn",
-    "s_over",
-    "VVM.create",
-    "KEYchar",
-    "s_fetch",
-    "DEQUE.append",
-    "ARRAY.len",
-    "s_exec",
-    "VVM.run",
-    "DICT.get",
-    "DICT.has_key",
-    "ARRAY.append",
-    "s_UDC_IO",
-    "_read_next_block",
-    "s_drop",
-    "VVM.check_syscalls",
-    "VVM.start",
-    "DICT.item",
-    "READline",
-    "DICT.remove",
-    "s_brz",
-    "ARRAY.size",
-    "s_abs",
-    "NEW.matrix_populate",
-    "s_neg",
-    "s_bnz",
-    "PRTnum",
-    "DEQUE.new",
-    "ARRAY.get",
-    "s_ne",
-    "DEQUE.pop",
-    "DEQUE.is_empty",
-    "s_bra",
-    "ARRAY.put",
-    "s_get",
-    "DICT.clear",
-    "DEQUE.tail",
     "s_halt",
+    "PRTchar",
+    "ARRAY.size",
+    "io_lib_init",
+    "s_abs",
+    "PRTnum",
+    "_DEQUE.free_node",
+    "s_call",
+    "MATRIX.put",
+    "HALT",
     "DEQUE.pop_tail",
+    "NEW.matrix",
+    "s_sys",
+    "CURSORoff",
+    "ARRAY.append",
+    "ARRAY.put",
+    "DICT.new",
+    "s_prints",
+    "HEAP.init",
+    "DEQUE.init_pool",
+    "_DEQUE.alloc_node",
+    "_DEQUE.grow_pool",
+    "s_ne",
+    "ARRAY.len",
+    "TOS.check",
+    "DEQUE.pop",
+    "s_ret",
+    "DEQUE.next",
+    "READline",
+    "s_mod",
+    "s_brz",
+    "DICT.put",
+    "VVMpeek",
+    "DEQUE.head",
+    "VVMpoke",
+    "MATRIX.get",
+    "s_swap",
+    "DICT.count",
+    "s_brp",
+    "s_push",
+    "s_drop",
+    "s_eq",
+    "s_rnd",
     "LIST.get",
+    "VVM.init",
+    "s_mul",
+    "DICT.get",
+    "NEW.list",
+    "DICT.remove",
+    "DEQUE.value",
+    "DICT.clear",
+    "DEQUE.is_first",
+    "s_set",
+    "PRTcls",
+    "s_fetch",
+    "ARRAY.get",
+    "LIST.put",
+    "s_div",
+    "DEQUE.new",
+    "s_out",
+    "s_get",
+    "NEW.matrix_populate",
+    "s_bnz",
+    "KEYchar",
+    "NEW.array",
+    "s_bra",
+    "s_brn",
+    "s_add",
+    "DEQUE.is_empty",
+    "DICT.item",
+    "s_over",
+    "s_gt",
+    "s_print_num",
+    "s_dup",
+    "s_neg",
+    "s_nop",
+    "DEQUE.push",
+    "s_exec",
+    "DEQUE.tail",
+    "s_sub",
+    "DICT.has_key",
     "KEYpressed",
-    "VVM.bind",
-    "DEQUE.is_first"
+    "DEQUE.is_last",
+    "DEQUE.prev",
+    "DEQUE.append",
+    "s_lt",
+    "s_UDC_IO"
   ],
   "variables": [
     {
@@ -455,276 +446,124 @@
     },
     {
       "name": "opcode_table",
-      "type": "LIB_VAR",
+      "type": "VALUE",
       "size": 1
     },
     {
       "name": "opcode_runtimes",
-      "type": "LIB_VAR",
+      "type": "VALUE",
       "size": 1
     },
     {
       "name": "label_addresses",
-      "type": "LIB_VAR",
+      "type": "VALUE",
       "size": 1
     },
     {
       "name": "syscall_table",
-      "type": "LIB_VAR",
+      "type": "VALUE",
       "size": 1
     },
     {
       "name": "_env_vvm_ptr",
-      "type": "LIB_VAR",
+      "type": "VALUE",
       "size": 1
     },
     {
       "name": "_env_sp_ptr_loc",
-      "type": "LIB_VAR",
+      "type": "VALUE",
       "size": 1
     },
     {
       "name": "_env_sp_addr",
-      "type": "LIB_VAR",
+      "type": "VALUE",
       "size": 1
     },
     {
       "name": "_env_val",
-      "type": "LIB_VAR",
+      "type": "VALUE",
       "size": 1
     },
     {
       "name": "_env_host_ptr_loc",
-      "type": "LIB_VAR",
+      "type": "VALUE",
       "size": 1
     },
     {
       "name": "_env_host_dq",
-      "type": "LIB_VAR",
+      "type": "VALUE",
       "size": 1
     },
     {
       "name": "_env_count",
-      "type": "LIB_VAR",
+      "type": "VALUE",
       "size": 1
     },
     {
       "name": "_env_ptr",
-      "type": "LIB_VAR",
+      "type": "VALUE",
       "size": 1
     },
     {
       "name": "_env_idx",
-      "type": "LIB_VAR",
+      "type": "VALUE",
       "size": 1
     },
     {
       "name": "_env_val_tmp",
-      "type": "LIB_VAR",
+      "type": "VALUE",
       "size": 1
     },
     {
       "name": "_math_a",
-      "type": "LIB_VAR",
+      "type": "VALUE",
       "size": 1
     },
     {
       "name": "_math_b",
-      "type": "LIB_VAR",
+      "type": "VALUE",
       "size": 1
     },
     {
       "name": "error_stack_collision",
-      "type": "LIB_VAR",
+      "type": "STRING",
       "size": 33
     },
     {
+      "name": "_env_sp_read_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
+      "name": "_string_ptr",
+      "type": "VALUE",
+      "size": 1
+    },
+    {
       "name": "_argc",
-      "type": "LIB_VAR",
+      "type": "VALUE",
       "size": 1
     },
     {
       "name": "_argr",
-      "type": "LIB_VAR",
-      "size": 1
-    },
-    {
-      "name": "_temp_ptr",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_temp_idx",
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "type": "VAR",
+      "size": 1
+    },
+    {
+      "name": "string_dict",
       "type": "VALUE",
       "size": 1
     },
     {
-      "name": "_temp_val",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_scan_ptr",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_vvm_pc_offset",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_opcode",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_is_opcode",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "error_no_code",
-      "type": "STRING",
-      "size": 26
-    },
-    {
-      "name": "error_no_opcode",
-      "type": "STRING",
-      "size": 28
-    },
-    {
-      "name": "error_no_syscall",
-      "type": "STRING",
-      "size": 33
-    },
-    {
-      "name": "error_label_unknown",
-      "type": "STRING",
-      "size": 23
-    },
-    {
-      "name": "error_invalid_reg",
-      "type": "STRING",
-      "size": 30
-    },
-    {
-      "name": "error_div_zero",
-      "type": "STRING",
-      "size": 30
-    },
-    {
-      "name": "error_vvm_overflow",
-      "type": "STRING",
-      "size": 23
-    },
-    {
-      "name": "msg_labels_found",
-      "type": "STRING",
-      "size": 15
-    },
-    {
-      "name": "msg_loading",
-      "type": "STRING",
-      "size": 26
-    },
-    {
-      "name": "error_invalid_syscall",
-      "type": "STRING",
-      "size": 34
-    },
-    {
-      "name": "_run_pc",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_run_opcode",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_run_handler",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_start_argc",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_start_idx",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_syscall_id",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_syscall_handler",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_VVMpointer",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_VVMHOSTpointer",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_VVMsize",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_SIMPLcode",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_vvm_max_size",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_vvm_needed_size",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_vvm_code_start",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_vvm_write_ptr",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_filename",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_code_queue",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_custom_id",
-      "type": "VALUE",
-      "size": 1
-    },
-    {
-      "name": "_function_ptr",
+      "name": "_vvm_temp_list_ptr",
       "type": "VALUE",
       "size": 1
     }
@@ -765,6 +604,7 @@
     "_fetch_": 4,
     "_ret_": 6,
     "_exec_": 7,
+    "_prints_": 8,
     "_dup_": 10,
     "_drop_": 11,
     "_swap_": 12,
@@ -791,6 +631,8 @@
     "_brp_": 64,
     "_brn_": 65,
     "_call_": 66,
+    "_ststr_": 90,
+    "_strend_": 91,
     "PRINT_NUM": 10,
     "UDC_IO": 50
   }
