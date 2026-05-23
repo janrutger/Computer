@@ -1,14 +1,14 @@
 # Scalar Stacks compatible version
 
-DEF gcd {
-    WHILE DUP 0 != DO
-        SWAP OVER %
-    DONE
-    DROP
-}
+# DEF gcd {
+#     WHILE DUP 0 != DO
+#         SWAP OVER %
+#     DONE
+#     DROP
+# }
 
 
-30 12 2 1 100 EXEC PRINT
+# 30 12 2 1 100 EXEC PRINT
 
 
 # Init the plotter
@@ -44,3 +44,5 @@ WHILE N 700 < DO
     R AS P 
     N 1 + AS N 
 DONE
+
+"Fly is klaar...\n" PRINTS

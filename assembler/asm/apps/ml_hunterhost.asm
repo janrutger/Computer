@@ -167,6 +167,8 @@
 . $target_arr 1
 . $VVM0_host_dq 1
 . $VVM1_host_dq 1
+. $VVM0_kbd_dq 1
+. $VVM1_kbd_dq 1
 . $AGENT_code 1
 . $old_x0 1
 . $old_y0 1
@@ -268,9 +270,11 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :_main_if_end_15
+    ldi A 10
+    stack A $DATASTACK_PTR
     ldi A $VVM0
     stack A $DATASTACK_PTR
-    call @VVM.run
+    call @VVM.runbatch
 :_main_if_end_15
     jmp :_main_if_end_14
 :_main_if_else_14
@@ -284,9 +288,11 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :_main_if_end_16
+    ldi A 10
+    stack A $DATASTACK_PTR
     ldi A $VVM1
     stack A $DATASTACK_PTR
-    call @VVM.run
+    call @VVM.runbatch
 :_main_if_end_16
 :_main_if_end_14
     ldm B $loop_counter
@@ -3444,6 +3450,12 @@
     sto A $VVM1_host_dq
     call @DEQUE.new
     ustack A $DATASTACK_PTR
+    sto A $VVM0_kbd_dq
+    call @DEQUE.new
+    ustack A $DATASTACK_PTR
+    sto A $VVM1_kbd_dq
+    call @DEQUE.new
+    ustack A $DATASTACK_PTR
     sto A $AGENT_code
     call @VVM.init
     ldi A $init_main_str_2
@@ -3478,6 +3490,8 @@
     stack A $DATASTACK_PTR
     ldi A $VVM0_host_dq
     stack A $DATASTACK_PTR
+    ldi A $VVM0_kbd_dq
+    stack A $DATASTACK_PTR
     ldi A $VVM0
     stack A $DATASTACK_PTR
     call @VVM.create
@@ -3497,6 +3511,8 @@
     ldi A 1024
     stack A $DATASTACK_PTR
     ldi A $VVM1_host_dq
+    stack A $DATASTACK_PTR
+    ldi A $VVM1_kbd_dq
     stack A $DATASTACK_PTR
     ldi A $VVM1
     stack A $DATASTACK_PTR
@@ -3681,6 +3697,8 @@
 % $target_arr 0
 % $VVM0_host_dq 0
 % $VVM1_host_dq 0
+% $VVM0_kbd_dq 0
+% $VVM1_kbd_dq 0
 % $AGENT_code 0
 % $old_x0 0
 % $old_y0 0

@@ -1,0 +1,151 @@
+USE vvm_env_lib_mt
+USE vvm_core_lib_mt
+
+USE std_stern_io
+USE std_string
+
+USE std_time
+
+USE std_heap
+USE std_deque
+USE std_dict
+
+
+# Include the VVM Simpl code apps
+INCLUDE simpl_fly_lib
+INCLUDE simpl_chaos3_lib
+
+
+VALUE VVM0 30720        ; The memory address for VVM0, stored in a variable.
+VALUE VVM1 31744        ; The memory address for VVM1, stored in a variable.
+
+VALUE VVM0_host_deque 0
+VALUE VVM1_host_deque 0
+
+VALUE VVM0_kbd_deque 0
+VALUE VVM1_kbd_deque 0
+
+VALUE SIMPL_code 0
+
+VALUE KERNEL_proces_list 0
+VALUE KERNEL_number_of_processes 0
+VALUE KERNEL_current_process 0
+VALUE KERNEL_current_ptr 0
+
+
+
+
+## Code here
+
+"\nWelkom bij Stern-ATX multitasking kernel project\n" PRTstring
+
+# Define hostfunctions, for now gcd
+DEF host_gcd {
+    WHILE DUP 0 != DO
+        SWAP OVER %
+    DONE
+    DROP
+}
+
+
+# The main program
+DEF kernel_start {
+    HEAP.free
+    50 DEQUE.init_pool "Pool initialized (size 50).\n" PRTstring
+
+    DEQUE.new AS VVM0_host_deque    ; Get a pointer for the host communication deque's
+    DEQUE.new AS VVM1_host_deque   
+
+    DEQUE.new AS VVM0_kbd_deque     ; Get a pointer for the keyboard communication deque's
+    DEQUE.new AS VVM1_kbd_deque     
+
+    DEQUE.new AS SIMPL_code         ; Get a pointer for the SIMPL code buffer
+    
+
+    VVM.init                        ; init VVM environment
+    "VVM Environment Initialized:\n" PRTstring
+    "VVM0 base address          : " PRTstring VVM0  PRINT
+    "VVM1 base address          : " PRTstring VVM1  PRINT
+
+    &host_gcd      101 VVM.bind ; as simpel host function to test teh FFI interface
+
+
+    SIMPL_code load_simpl_fly          ; to load static
+    #SIMPL_code "sbc_stringtest" VVM.loadcode   ; toload dynamic 
+
+    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
+    &SIMPL_code 1024 &VVM0_host_deque &VVM0_kbd_deque &VVM0 VVM.create
+    "VVM0 instance created \n\n" PRTstring
+
+    SIMPL_code load_simpl_chaos3
+    # SIMPL_code "sbc_stringtest" VVM.loadcode 
+
+    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
+    &SIMPL_code 1024 &VVM1_host_deque &VVM1_kbd_deque &VVM1 VVM.create
+    "VVM1 instance created \n\n" PRTstring
+
+
+    # Start the VVM
+    # ( arg1 ... argn argc &VVM-pointer -- )
+    0 &VVM0 VVM.start
+    "VVM0 started \n" PRTstring
+
+    0 &VVM1 VVM.start
+    "VVM1 started \n" PRTstring
+
+
+    # when the kernel is ready only the CLI-VVM (VVM0) is running here
+    # for now VVM0 and VVM1 are loaded with an application script to test the scheduler so far
+    #
+    # Create an dynamic proces list (must be an dict, for removing processes)
+    4 DICT.new AS KERNEL_proces_list        ; room for finally 4 processes
+    0 VVM0 KERNEL_proces_list DICT.put      ; Always register the CLI-VVM (VVM0)
+
+    1 VVM1 KERNEL_proces_list DICT.put      ; For now, also register a other proces
+
+    # Kernel scheduler loop
+    KERNEL_proces_list DICT.count AS KERNEL_number_of_processes
+    0 AS KERNEL_current_process
+
+    1 TIME.start
+    
+    WHILE KERNEL_number_of_processes 0 > DO
+        
+        # 1. Haal de actuele VVM pointer op uit de dictionary
+        KERNEL_current_process KERNEL_proces_list DICT.item DROP AS KERNEL_current_ptr
+        
+        VVM_status &KERNEL_current_ptr VVMpeek AS _proc_status
+        
+        VVM_status &KERNEL_current_ptr VVMpeek VVM_Halted != IF
+            # Proces leeft: Geef hem een burst en handel syscalls af
+            10 &KERNEL_current_ptr VVM.runbatch
+            VVM_status &KERNEL_current_ptr VVMpeek VVM_Sys == IF &KERNEL_current_ptr VVM.check_syscalls END
+ 
+            # Verhoog de index en zet hem direct terug naar 0 als hij de grens RAAKT.
+            KERNEL_current_process 1 + AS KERNEL_current_process
+            KERNEL_current_process KERNEL_number_of_processes == IF
+                0 AS KERNEL_current_process
+            END
+        ELSE
+            
+            KERNEL_current_ptr KERNEL_proces_list DICT.remove
+            KERNEL_proces_list DICT.count AS KERNEL_number_of_processes
+            
+            KERNEL_current_process KERNEL_number_of_processes == IF
+                0 AS KERNEL_current_process
+            END
+        END
+        
+        # 2. Update de hoofd-lus teller voor de WHILE check
+        KERNEL_proces_list DICT.count AS KERNEL_number_of_processes
+
+    DONE
+    1 TIME.read TIME.as_string 
+}
+
+
+
+
+# Start the kernel
+kernel_start
+

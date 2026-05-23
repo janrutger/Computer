@@ -138,7 +138,11 @@
 . $_start_idx 1
 . $_syscall_id 1
 . $_syscall_handler 1
+. $_batch_size 1
+. $_batch_idx 1
+. $_continue_batch 1
 . $_VVMpointer 1
+. $_VVMkbdq 1
 . $_VVMHOSTpointer 1
 . $_VVMsize 1
 . $_SIMPLcode 1
@@ -4422,6 +4426,8 @@
     ustack A $DATASTACK_PTR
     sto A $_VVMpointer
     ustack A $DATASTACK_PTR
+    sto A $_VVMkbdq
+    ustack A $DATASTACK_PTR
     sto A $_VVMHOSTpointer
     ustack A $DATASTACK_PTR
     sto A $_VVMsize
@@ -4477,6 +4483,14 @@
     add B A
     stack B $DATASTACK_PTR
     ldi A 5
+    stack A $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ldm I $_VVMkbdq
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldi A 48
     stack A $DATASTACK_PTR
     ldm A $_VVMpointer
     stack A $DATASTACK_PTR
@@ -5243,6 +5257,48 @@
 :VVM.run_if_end_28
 :VVM.run_if_end_25
     ret
+@VVM.runbatch
+    ustack A $DATASTACK_PTR
+    sto A $_VVMpointer
+    ustack A $DATASTACK_PTR
+    sto A $_batch_size
+    ld A Z
+    sto A $_batch_idx
+    ldi A 1
+    sto A $_continue_batch
+:VVM.runbatch_while_start_5
+    ldm A $_batch_idx
+    stack A $DATASTACK_PTR
+    ldm A $_batch_size
+    stack A $DATASTACK_PTR
+    call @rt_lt
+    ldm A $_continue_batch
+    ustack B $DATASTACK_PTR
+    mul A B
+    tst A 0
+    jmpt :VVM.runbatch_while_end_5
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVM.run
+    stack Z $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    stack Z $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.runbatch_if_end_29
+    ld A Z
+    sto A $_continue_batch
+:VVM.runbatch_if_end_29
+    ldm B $_batch_idx
+    ldi A 1
+    add A B
+    sto A $_batch_idx
+    jmp :VVM.runbatch_while_start_5
+:VVM.runbatch_while_end_5
+    ret
 @VVM.check_syscalls
     ustack A $DATASTACK_PTR
     sto A $_VVMpointer
@@ -5255,7 +5311,7 @@
     call @rt_eq
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :VVM.check_syscalls_if_end_29
+    jmpt :VVM.check_syscalls_if_end_30
     ldi A 4
     stack A $DATASTACK_PTR
     ldm A $_VVMpointer
@@ -5273,7 +5329,7 @@
     call @DICT.has_key
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :VVM.check_syscalls_if_else_30
+    jmpt :VVM.check_syscalls_if_else_31
     ldm A $_syscall_id
     stack A $DATASTACK_PTR
     ldm A $syscall_table
@@ -5286,8 +5342,8 @@
     ldm A $_syscall_handler
     stack A $DATASTACK_PTR
     calls $DATASTACK_PTR
-    jmp :VVM.check_syscalls_if_end_30
-:VVM.check_syscalls_if_else_30
+    jmp :VVM.check_syscalls_if_end_31
+:VVM.check_syscalls_if_else_31
     ldi A $error_no_syscall
     stack A $DATASTACK_PTR
 
@@ -5295,14 +5351,14 @@
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
         call @HALT
-:VVM.check_syscalls_if_end_30
+:VVM.check_syscalls_if_end_31
     ldi A 2
     stack A $DATASTACK_PTR
     stack Z $DATASTACK_PTR
     ldm A $_VVMpointer
     stack A $DATASTACK_PTR
     call @VVMpoke
-:VVM.check_syscalls_if_end_29
+:VVM.check_syscalls_if_end_30
     ret
 @VVM.loadcode
     ustack A $DATASTACK_PTR
@@ -5407,7 +5463,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :VVM.bind_if_else_31
+    jmpt :VVM.bind_if_else_32
     ldi A $error_invalid_syscall
     stack A $DATASTACK_PTR
 
@@ -5415,8 +5471,8 @@
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
         call @HALT
-    jmp :VVM.bind_if_end_31
-:VVM.bind_if_else_31
+    jmp :VVM.bind_if_end_32
+:VVM.bind_if_else_32
     ldm A $_function_ptr
     stack A $DATASTACK_PTR
     ldm A $_custom_id
@@ -5424,7 +5480,7 @@
     ldm A $syscall_table
     stack A $DATASTACK_PTR
     call @DICT.put
-:VVM.bind_if_end_31
+:VVM.bind_if_end_32
     ret
 
 
@@ -5574,7 +5630,11 @@
 % $_start_idx 0
 % $_syscall_id 0
 % $_syscall_handler 0
+% $_batch_size 0
+% $_batch_idx 0
+% $_continue_batch 0
 % $_VVMpointer 0
+% $_VVMkbdq 0
 % $_VVMHOSTpointer 0
 % $_VVMsize 0
 % $_SIMPLcode 0

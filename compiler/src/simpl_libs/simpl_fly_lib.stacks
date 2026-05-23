@@ -4,22 +4,6 @@ MACRO load_simpl_fly {
     AS _sq_
 
     \"PUSH"        _sq_ DEQUE.append
-    30             _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    12             _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    2              _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    1              _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    100            _sq_ DEQUE.append
-    \"EXEC"        _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    10             _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"SYS"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
     0              _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
@@ -70,14 +54,14 @@ MACRO load_simpl_fly {
     \"SET"         _sq_ DEQUE.append
     3              _sq_ DEQUE.append
     \"LABEL"       _sq_ DEQUE.append
-    \"while_1"     _sq_ DEQUE.append
+    \"while_0"     _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append
     1              _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     700            _sq_ DEQUE.append
     \"LT"          _sq_ DEQUE.append
     \"BRZ"         _sq_ DEQUE.append
-    \"endwhile_1"  _sq_ DEQUE.append
+    \"endwhile_0"  _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append
     0              _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append
@@ -137,29 +121,30 @@ MACRO load_simpl_fly {
     \"SET"         _sq_ DEQUE.append
     1              _sq_ DEQUE.append
     \"BRA"         _sq_ DEQUE.append
-    \"while_1"     _sq_ DEQUE.append
+    \"while_0"     _sq_ DEQUE.append
     \"LABEL"       _sq_ DEQUE.append
-    \"endwhile_1"  _sq_ DEQUE.append
+    \"endwhile_0"  _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    70             _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    121            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    107            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    46             _sq_ DEQUE.append
+    46             _sq_ DEQUE.append
+    46             _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
     \"HALT"        _sq_ DEQUE.append
-    \"LABEL"       _sq_ DEQUE.append
-    \"gcd"         _sq_ DEQUE.append
-    \"LABEL"       _sq_ DEQUE.append
-    \"while_0"     _sq_ DEQUE.append
-    \"DUP"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    0              _sq_ DEQUE.append
-    \"NE"          _sq_ DEQUE.append
-    \"BRZ"         _sq_ DEQUE.append
-    \"endwhile_0"  _sq_ DEQUE.append
-    \"SWAP"        _sq_ DEQUE.append
-    \"OVER"        _sq_ DEQUE.append
-    \"MOD"         _sq_ DEQUE.append
-    \"BRA"         _sq_ DEQUE.append
-    \"while_0"     _sq_ DEQUE.append
-    \"LABEL"       _sq_ DEQUE.append
-    \"endwhile_0"  _sq_ DEQUE.append
-    \"DROP"        _sq_ DEQUE.append
-    \"RET"         _sq_ DEQUE.append
     \"LABEL"       _sq_ DEQUE.append
     \"plot"        _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append

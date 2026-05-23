@@ -199,7 +199,7 @@ MACRO load_simpl_chaos3 {
     \"GET"         _sq_ DEQUE.append
     10             _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
-    50             _sq_ DEQUE.append
+    25             _sq_ DEQUE.append
     \"MOD"         _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     0              _sq_ DEQUE.append
@@ -227,6 +227,31 @@ MACRO load_simpl_chaos3 {
     \"endwhile_0"  _sq_ DEQUE.append
     \"LABEL"       _sq_ DEQUE.append
     \"end_of_chaos3" _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    68             _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    67             _sq_ DEQUE.append
+    104            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    99             _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
     \"HALT"        _sq_ DEQUE.append
     \"LABEL"       _sq_ DEQUE.append
     \"screen"      _sq_ DEQUE.append

@@ -8,8 +8,8 @@ INCLUDE gpu3_lib
 INCLUDE mlnn_gpu3_optimized_lib
 INCLUDE turtle_lib
 
-USE vvm_env_libV2
-USE vvm_core_libV2
+USE vvm_env_lib_mt
+USE vvm_core_lib_mt
 
 # the VVM instanes at the top of Extended memory
 VALUE VVM0 30720        ; The memory address for VVM0, stored in a variable.
@@ -54,6 +54,11 @@ CONST SCALE 10000
 # VVM Deque pointers and agent ID
 VALUE VVM0_host_dq 0
 VALUE VVM1_host_dq 0
+
+VALUE VVM0_kbd_dq 0
+VALUE VVM1_kbd_dq 0
+
+
 VALUE AGENT_code   0
 
 # Storage for previous positions to clear them (x, y for agent 0 and 1)
@@ -268,6 +273,8 @@ DEF init_main {
 
     DEQUE.new AS VVM0_host_dq       # Get a pointer for the host communication deque
     DEQUE.new AS VVM1_host_dq       # Get a pointer for the host communication deque
+    DEQUE.new AS VVM0_kbd_dq        # Get a pointer for the keyboard communication deque
+    DEQUE.new AS VVM1_kbd_dq        # Get a pointer for the keyboard communication deque
     DEQUE.new AS AGENT_code         # Get a pointer for the SIMPL code buffer for the agent
     
     VVM.init                        # init VVM environment
@@ -280,13 +287,13 @@ DEF init_main {
 
     # Load and create VVM0
     AGENT_code "sbc_hunter_agent" VVM.loadcode
-    &AGENT_code 1024 &VVM0_host_dq &VVM0 VVM.create
+    &AGENT_code 1024 &VVM0_host_dq &VVM0_kbd_dq &VVM0 VVM.create
     "VVM0 instance created \n\n" PRTstring
 
     # The agent code must be reloaded from disk for the second VVM,
     # as VVM.create consumes the deque.
     AGENT_code "sbc_hunter_agent" VVM.loadcode
-    &AGENT_code 1024 &VVM1_host_dq &VVM1 VVM.create
+    &AGENT_code 1024 &VVM1_host_dq &VVM1_kbd_dq &VVM1 VVM.create
     "VVM1 instance created \n\n" PRTstring
 
 
@@ -330,9 +337,9 @@ WHILE sim_running DO
     vvm_timeslice AS loop_counter
     WHILE loop_counter DO
         loop_counter 5 % IF
-            VVM_status &VVM0 VVMpeek VVM_Halted != IF &VVM0 VVM.run END
+            VVM_status &VVM0 VVMpeek VVM_Halted != IF 10 &VVM0 VVM.runbatch END
         ELSE
-            VVM_status &VVM1 VVMpeek VVM_Halted != IF &VVM1 VVM.run END
+            VVM_status &VVM1 VVMpeek VVM_Halted != IF 10 &VVM1 VVM.runbatch END
         END
 
         loop_counter 1 - AS loop_counter

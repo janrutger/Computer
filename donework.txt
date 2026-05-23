@@ -1,0 +1,17 @@
+in vvm_env_lib_mt
+    Keyboard que toegevoegd aan de VVM header
+    VVM statuscode toegevoegd VVM_WaitIO
+
+In vvm_core_lib_mt
+    made sure its using the right lib version of vvm_env_lib_mt
+    _VVMkbdq toevoegd aan VVM.create
+    VVM.runbatch toegevoegd
+
+
+In kernel_mt
+    Eesrte stappen voor de kernel
+    Nieuwe scheduler loop
+
+
+
+ml_hunterhost, aangepast naar nieuwe lib en getest

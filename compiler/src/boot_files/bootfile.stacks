@@ -37,8 +37,8 @@ INCLUDE disk_utils
 INCLUDE std_dict
 INCLUDE std_deque
 
-INCLUDE vvm_env_libV2
-INCLUDE vvm_core_libV2
+INCLUDE vvm_env_lib_mt
+INCLUDE vvm_core_lib_mt
 
 
 `start_kernel

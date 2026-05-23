@@ -77,7 +77,7 @@ WHILE 1500 N > DO
   X Y draw
 
   N 1 + AS N
-  N 50 % 0 == IF
+  N 25 % 0 == IF
     IO 2 FLIP  # Flip buffer to show new points
   END
 
@@ -85,3 +85,5 @@ DONE
 
 :end_of_chaos3
 # End of program
+
+"De Chaos is compleet\n" PRINTS

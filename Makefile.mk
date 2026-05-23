@@ -38,7 +38,7 @@ ASSEMBLER := python3 assembler/assembler.py
 MICROCODE_ASSEMBLER := python3 $(MICROCODE_DIR)/assembler.py
 
 # --- Main Programs ---
-MAIN_PROGRAMS := main fly maze chaos3 chaos3a chaos3b turtle koch fib conway barnsly taylor pi bubble test etb keypress perceptron ml_xor ml_hunter test_dq veins vvmware ml_hunterhost fourier 3d_wirecube 3d_solidcube 3d_matrixcube
+MAIN_PROGRAMS := kernel_mt main fly maze chaos3 chaos3a chaos3b turtle koch fib conway barnsly taylor pi bubble test etb keypress perceptron ml_xor ml_hunter test_dq veins vvmware ml_hunterhost fourier 3d_wirecube 3d_solidcube 3d_matrixcube
 DEFAULT_PROGRAM := $(firstword $(MAIN_PROGRAMS))
 
 # --- Target Calculation ---
@@ -164,6 +164,7 @@ $(LIB_OUT_DIR)/game_lib.smod:        $(LIB_OUT_DIR)/std_heap.smod
 
 $(LIB_OUT_DIR)/vvm_core_lib.smod:    $(LIB_OUT_DIR)/vvm_env_lib.smod
 $(LIB_OUT_DIR)/vvm_core_libV2.smod:    $(LIB_OUT_DIR)/vvm_env_libV2.smod
+$(LIB_OUT_DIR)/vvm_core_lib_mt.smod:    $(LIB_OUT_DIR)/vvm_env_lib_mt.smod
 
 $(LIB_OUT_DIR)/socket_lib.smod:      $(LIB_OUT_DIR)/std_deque.smod
 $(LIB_OUT_DIR)/rdp_lib.smod:         $(LIB_OUT_DIR)/socket_lib.smod
