@@ -8,8 +8,8 @@ INCLUDE gpu3_lib
 INCLUDE mlnn_gpu3_optimized_lib
 INCLUDE turtle_lib
 
-USE vvm_env_lib
-USE vvm_core_lib
+USE vvm_env_libV2
+USE vvm_core_libV2
 
 # the VVM instanes at the top of Extended memory
 VALUE VVM0 30720        ; The memory address for VVM0, stored in a variable.

@@ -3502,7 +3502,6 @@
     call @rt_udc_control
     call @project_and_rotate_3_axes
     call @draw_solid_cube
-    call @draw_cube
     ldm B $angle_y
     ldm A $shiftY
     add B A

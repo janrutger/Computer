@@ -21,7 +21,7 @@ from devices.sensor import Sensor
 from devices.plotter import Plotter
 from devices.lcd_screen import VirtualLCD
 from devices.rtc import RTC
-from devices.virtual_nic16 import VirtualNIC
+# from devices.virtual_nic16 import VirtualNIC
 
 
 # --- Constants ---
@@ -145,9 +145,9 @@ def main():
     keyboard = Keyboard(interrupt_controller, vector=KEYBOARD_INTERRUPT_VECTOR)
     rtc = RTC(interrupt_controller, vector=RTC_INTERRUPT_VECTOR)
 
-    # Initialize vNIC
-    nic_address = random.randint(0, 0xFFFFFFFF)
-    nic = VirtualNIC(ram, interrupt_controller, MEM_NIC_IO_BASE, nic_address)
+    # # Initialize vNIC
+    # nic_address = random.randint(0, 0xFFFFFFFF)
+    # nic = VirtualNIC(ram, interrupt_controller, MEM_NIC_IO_BASE, nic_address)
 
     vdisk = VirtualDisk(ram, MEM_VDSK_I0_BASE, "bin/apps")
     udc = UDC(ram, MEM_UDC_I0_BASE)
@@ -225,8 +225,8 @@ def main():
         io_start = time.time()
         if not debugger.in_debug_mode:
              rtc.tick()
-             if nic.is_connected:
-                 nic.tick()
+            #  if nic.is_connected:
+            #      nic.tick()
              vdisk.access()
              udc.tick()
              sensor1.tick()

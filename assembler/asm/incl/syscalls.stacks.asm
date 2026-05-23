@@ -14,12 +14,12 @@
     EQU ~SYS_F_READ_BLOCK 29
     EQU ~SYS_F_CLOSE 30
     EQU ~SYS_UDC_CONTROL 33
-    EQU ~SYS_NET_BIND 60
-    EQU ~SYS_NET_SEND 61
-    EQU ~SYS_NET_RECV 62
-    # EQU ~SYS_NET_GET_ADDR 63
-    EQU ~SYS_NET_FREE 64
-    EQU ~SYS_NET_CONFIG 65
+    # EQU ~SYS_NET_BIND 60
+    # EQU ~SYS_NET_SEND 61
+    # EQU ~SYS_NET_RECV 62
+    # # EQU ~SYS_NET_GET_ADDR 63
+    # EQU ~SYS_NET_FREE 64
+    # EQU ~SYS_NET_CONFIG 65
 
 
     . $SYSCALL_RETURN_STATUS 1
@@ -130,26 +130,6 @@
         sto A $SYSCALL_RETURN_STATUS
         rti
 
-    @sys_net_config_isr
-        call @sys_net_config
-        rti
-
-    @sys_net_bind_isr
-        call @sys_net_bind
-        rti
-
-    @sys_net_send_isr
-        call @sys_net_send
-        rti
-
-    @sys_net_recv_isr
-        call @sys_net_recv
-        rti
-
-    @sys_net_free_isr
-        call @sys_net_free
-        rti
-
 # .FUNCTIONS
 @init_kernel_syscalls
 
@@ -213,25 +193,25 @@
         ldi M @sys_udc_control    ; Start of the ISR
         stx M $INT_VECTORS        ; Store ISR
 
-        # EQU ~SYS_NET_CONFIG 65
-        ldi I ~SYS_NET_CONFIG
-        ldi M @sys_net_config_isr
-        stx M $INT_VECTORS
+        # # EQU ~SYS_NET_CONFIG 65
+        # ldi I ~SYS_NET_CONFIG
+        # ldi M @sys_net_config_isr
+        # stx M $INT_VECTORS
 
-        # EQU ~SYS_NET_BIND 60
-        ldi I ~SYS_NET_BIND
-        ldi M @sys_net_bind_isr
-        stx M $INT_VECTORS
+        # # EQU ~SYS_NET_BIND 60
+        # ldi I ~SYS_NET_BIND
+        # ldi M @sys_net_bind_isr
+        # stx M $INT_VECTORS
 
-        # EQU ~SYS_NET_SEND 61
-        ldi I ~SYS_NET_SEND
-        ldi M @sys_net_send_isr
-        stx M $INT_VECTORS
+        # # EQU ~SYS_NET_SEND 61
+        # ldi I ~SYS_NET_SEND
+        # ldi M @sys_net_send_isr
+        # stx M $INT_VECTORS
 
-        # EQU ~SYS_NET_RECV 62
-        ldi I ~SYS_NET_RECV
-        ldi M @sys_net_recv_isr
-        stx M $INT_VECTORS
+        # # EQU ~SYS_NET_RECV 62
+        # ldi I ~SYS_NET_RECV
+        # ldi M @sys_net_recv_isr
+        # stx M $INT_VECTORS
 
         # # EQU ~SYS_NET_GET_ADDR 63
         # ldi I ~SYS_NET_GET_ADDR
@@ -239,8 +219,8 @@
         # stx M $INT_VECTORS
 
         # EQU ~SYS_NET_FREE 64
-        ldi I ~SYS_NET_FREE
-        ldi M @sys_net_free_isr
-        stx M $INT_VECTORS
+        # ldi I ~SYS_NET_FREE
+        # ldi M @sys_net_free_isr
+        # stx M $INT_VECTORS
 
         ret

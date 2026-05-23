@@ -1513,13 +1513,13 @@ DEF VVM.init {
     # =========================================================================
     # NIEUW: Inline String Support voor Compiler Lookup
     # =========================================================================
-    _ststr_  \"STSTR"  opcode_table DICT.put
-    _strend_ \"STREND" opcode_table DICT.put
+    _ststr_  \"STSTR"  opcode_table DICT.put    # For transpiler only, no runtime handler
+    _strend_ \"STREND" opcode_table DICT.put    # For transpiler only, no runtime handler
 
 
 
     # Syscalls
-    &s_print_num  PRINT_NUM  syscall_table DICT.put
+    &s_print_num  PRINT_NUM  syscall_table DICT.put 
     &s_UDC_IO     UDC_IO     syscall_table DICT.put
     
     # &s_print_char PRINT_CHAR syscall_table DICT.put

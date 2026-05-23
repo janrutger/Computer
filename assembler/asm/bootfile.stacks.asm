@@ -194,8 +194,8 @@
     INCLUDE syscalls.stacks
     INCLUDE stern_kernel.stacks
     INCLUDE vdisk_routines.stacks
-    INCLUDE net_hal.stacks
-    INCLUDE net_core.stacks
+    # INCLUDE net_hal.stacks
+    # INCLUDE net_core.stacks
     ret
 
 # .FUNCTIONS

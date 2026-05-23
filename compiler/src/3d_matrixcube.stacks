@@ -425,7 +425,7 @@ DEF MAIN {
         project_and_rotate_3_axes
         
         draw_solid_cube
-        draw_cube
+        # draw_cube
         # 0 TIME.read TIME.as_string 13 PRTchar
         
         ; Verhoog hoeken met verschillende snelheden
