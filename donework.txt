@@ -1,17 +1,25 @@
 in vvm_env_lib_mt
     Keyboard que toegevoegd aan de VVM header
     VVM statuscode toegevoegd VVM_WaitIO
+    de READ syscall toegevoegd
 
 In vvm_core_lib_mt
     made sure its using the right lib version of vvm_env_lib_mt
     _VVMkbdq toevoegd aan VVM.create
     VVM.runbatch toegevoegd
+    Check_syscalls aangepast 
 
 
 In kernel_mt
-    Eesrte stappen voor de kernel
+    Eerste stappen voor de kernel
     Nieuwe scheduler loop
 
 
+Compatebility
+    ml_hunterhost: 
+        aangepast naar nieuwe lib en getest
 
-ml_hunterhost, aangepast naar nieuwe lib en getest
+
+SIMPL Stacks aanpassingen
+    'read' is de Stacks instructie als invoer instructie
+    

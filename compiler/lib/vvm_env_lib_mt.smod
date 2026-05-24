@@ -22,8 +22,10 @@
 . $_argr 1
 . $_syscall_id 1
 . $_syscall_handler 1
+. $_kbd_dq 1
 . $string_dict 1
 . $_vvm_temp_list_ptr 1
+. $kbd_req_queue 1
 # .FUNCTIONS
 @VVMpeek
 
@@ -1301,6 +1303,41 @@
     call @DEQUE.append
 :s_UDC_IO_if_end_7
     ret
+@s_READ
+    ustack A $DATASTACK_PTR
+    sto A $_env_vvm_ptr
+    ldi A 48
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ustack A $DATASTACK_PTR
+    sto A $_kbd_dq
+    stack A $DATASTACK_PTR
+    call @DEQUE.pop_tail
+    ustack A $DATASTACK_PTR
+    sto A $_math_a
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ustack A $DATASTACK_PTR
+    sto A $_env_sp_addr
+    ldm A $_math_a
+    ld B A
+    ldm I $_env_sp_addr
+    stx B $_start_memory_
+    ldm B $_env_sp_addr
+    ldi A 1
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ret
 @VVM.init
     ldi A 100
     stack A $DATASTACK_PTR
@@ -1327,6 +1364,9 @@
     call @DICT.new
     ustack A $DATASTACK_PTR
     sto A $string_dict
+    call @DEQUE.new
+    ustack A $DATASTACK_PTR
+    sto A $kbd_req_queue
     stack Z $DATASTACK_PTR
     ldi A 6384101742
     stack A $DATASTACK_PTR
@@ -1822,6 +1862,13 @@
     ldm A $syscall_table
     stack A $DATASTACK_PTR
     call @DICT.put
+    ldi A @s_READ
+    stack A $DATASTACK_PTR
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldm A $syscall_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
     ret
 
 # .DATA
@@ -1848,3 +1895,4 @@
 % $_argr 0
 % $string_dict 0
 % $_vvm_temp_list_ptr 0
+% $kbd_req_queue 0

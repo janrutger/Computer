@@ -231,6 +231,14 @@ class SimplGenerator(BaseGenerator):
             self.emit('SYS')   # Trigger syscall
             return
 
+        if word.upper() == 'READ':
+            self.emit('PUSH')
+            self.emit(20)      # READ syscall ID
+            self.emit('OUT')   # Send ID to host
+            self.emit('SYS')   # Trigger syscall
+            return
+            
+
         raise Exception(f"SIMPL Target Error: Unknown word '{word}'")
 
     def visit_IfNode(self, node):

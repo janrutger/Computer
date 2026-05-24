@@ -114,6 +114,7 @@
 . $_argr 1
 . $string_dict 1
 . $_vvm_temp_list_ptr 1
+. $kbd_req_queue 1
 . $_temp_ptr 1
 . $_temp_idx 1
 . $_temp_val 1
@@ -158,6 +159,9 @@
 . $_str_char_idx 1
 . $_next_char 1
 . $_final_string_ptr 1
+. $_host_dq 1
+. $_kbd_dq 1
+. $_tail_node 1
 . $_filename 1
 . $_code_queue 1
 . $_custom_id 1
@@ -3898,6 +3902,41 @@
     call @DEQUE.append
 :s_UDC_IO_if_end_7
     ret
+@s_READ
+    ustack A $DATASTACK_PTR
+    sto A $_env_vvm_ptr
+    ldi A 48
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ustack A $DATASTACK_PTR
+    sto A $_kbd_dq
+    stack A $DATASTACK_PTR
+    call @DEQUE.pop_tail
+    ustack A $DATASTACK_PTR
+    sto A $_math_a
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ustack A $DATASTACK_PTR
+    sto A $_env_sp_addr
+    ldm A $_math_a
+    ld B A
+    ldm I $_env_sp_addr
+    stx B $_start_memory_
+    ldm B $_env_sp_addr
+    ldi A 1
+    add B A
+    stack B $DATASTACK_PTR
+    ldi A 3
+    stack A $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ret
 @VVM.init
     ldi A 100
     stack A $DATASTACK_PTR
@@ -3924,6 +3963,9 @@
     call @DICT.new
     ustack A $DATASTACK_PTR
     sto A $string_dict
+    call @DEQUE.new
+    ustack A $DATASTACK_PTR
+    sto A $kbd_req_queue
     stack Z $DATASTACK_PTR
     ldi A 6384101742
     stack A $DATASTACK_PTR
@@ -4415,6 +4457,13 @@
     ldi A @s_UDC_IO
     stack A $DATASTACK_PTR
     ldi A 50
+    stack A $DATASTACK_PTR
+    ldm A $syscall_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A @s_READ
+    stack A $DATASTACK_PTR
+    ldi A 20
     stack A $DATASTACK_PTR
     ldm A $syscall_table
     stack A $DATASTACK_PTR
@@ -5318,7 +5367,73 @@
     stack A $DATASTACK_PTR
     call @VVMpeek
     ustack A $DATASTACK_PTR
-    sto A $_temp_val
+    sto A $_host_dq
+    stack A $DATASTACK_PTR
+    call @DEQUE.tail
+    call @DEQUE.value
+    ustack A $DATASTACK_PTR
+    sto A $_syscall_id
+    stack A $DATASTACK_PTR
+    ldi A 20
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.check_syscalls_if_else_31
+    ldi A 48
+    stack A $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpeek
+    ustack A $DATASTACK_PTR
+    sto A $_kbd_dq
+    stack A $DATASTACK_PTR
+    call @DEQUE.is_empty
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_neq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.check_syscalls_if_else_32
+    ldm A $_host_dq
+    stack A $DATASTACK_PTR
+    call @DEQUE.pop_tail
+    call @rt_drop
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldm A $syscall_table
+    stack A $DATASTACK_PTR
+    call @DICT.get
+    ustack A $DATASTACK_PTR
+    sto A $_syscall_handler
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    ldm A $_syscall_handler
+    stack A $DATASTACK_PTR
+    calls $DATASTACK_PTR
+    ldi A 2
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    jmp :VVM.check_syscalls_if_end_32
+:VVM.check_syscalls_if_else_32
+    ldi A 5
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ldm A $_VVMpointer
+    stack A $DATASTACK_PTR
+    ldm A $kbd_req_queue
+    stack A $DATASTACK_PTR
+    call @DEQUE.push
+:VVM.check_syscalls_if_end_32
+    jmp :VVM.check_syscalls_if_end_31
+:VVM.check_syscalls_if_else_31
+    ldm A $_host_dq
     stack A $DATASTACK_PTR
     call @DEQUE.pop_tail
     ustack A $DATASTACK_PTR
@@ -5329,7 +5444,7 @@
     call @DICT.has_key
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :VVM.check_syscalls_if_else_31
+    jmpt :VVM.check_syscalls_if_else_33
     ldm A $_syscall_id
     stack A $DATASTACK_PTR
     ldm A $syscall_table
@@ -5342,8 +5457,8 @@
     ldm A $_syscall_handler
     stack A $DATASTACK_PTR
     calls $DATASTACK_PTR
-    jmp :VVM.check_syscalls_if_end_31
-:VVM.check_syscalls_if_else_31
+    jmp :VVM.check_syscalls_if_end_33
+:VVM.check_syscalls_if_else_33
     ldi A $error_no_syscall
     stack A $DATASTACK_PTR
 
@@ -5351,13 +5466,14 @@
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
         call @HALT
-:VVM.check_syscalls_if_end_31
+:VVM.check_syscalls_if_end_33
     ldi A 2
     stack A $DATASTACK_PTR
     stack Z $DATASTACK_PTR
     ldm A $_VVMpointer
     stack A $DATASTACK_PTR
     call @VVMpoke
+:VVM.check_syscalls_if_end_31
 :VVM.check_syscalls_if_end_30
     ret
 @VVM.loadcode
@@ -5463,7 +5579,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :VVM.bind_if_else_32
+    jmpt :VVM.bind_if_else_34
     ldi A $error_invalid_syscall
     stack A $DATASTACK_PTR
 
@@ -5471,8 +5587,8 @@
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
         call @HALT
-    jmp :VVM.bind_if_end_32
-:VVM.bind_if_else_32
+    jmp :VVM.bind_if_end_34
+:VVM.bind_if_else_34
     ldm A $_function_ptr
     stack A $DATASTACK_PTR
     ldm A $_custom_id
@@ -5480,7 +5596,7 @@
     ldm A $syscall_table
     stack A $DATASTACK_PTR
     call @DICT.put
-:VVM.bind_if_end_32
+:VVM.bind_if_end_34
     ret
 
 
@@ -5605,6 +5721,7 @@
 % $_argr 0
 % $string_dict 0
 % $_vvm_temp_list_ptr 0
+% $kbd_req_queue 0
 
 % $_temp_ptr 0
 % $_temp_idx 0
@@ -5650,6 +5767,9 @@
 % $_str_char_idx 0
 % $_next_char 0
 % $_final_string_ptr 0
+% $_host_dq 0
+% $_kbd_dq 0
+% $_tail_node 0
 % $_filename 0
 % $_code_queue 0
 % $_custom_id 0

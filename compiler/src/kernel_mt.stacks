@@ -14,6 +14,7 @@ USE std_dict
 # Include the VVM Simpl code apps
 INCLUDE simpl_fly_lib
 INCLUDE simpl_chaos3_lib
+INCLUDE simpl_test_read_lib
 
 
 VALUE VVM0 30720        ; The memory address for VVM0, stored in a variable.
@@ -35,9 +36,10 @@ VALUE KERNEL_current_ptr 0
 
 
 
+
 ## Code here
 
-"\nWelkom bij Stern-ATX multitasking kernel project\n" PRTstring
+"\nWelkom bij Stern-ATX multitasking kernel project\n\n" PRTstring
 
 # Define hostfunctions, for now gcd
 DEF host_gcd {
@@ -57,7 +59,12 @@ DEF kernel_start {
     DEQUE.new AS VVM1_host_deque   
 
     DEQUE.new AS VVM0_kbd_deque     ; Get a pointer for the keyboard communication deque's
-    DEQUE.new AS VVM1_kbd_deque     
+    DEQUE.new AS VVM1_kbd_deque    
+
+    42 VVM0_kbd_deque DEQUE.push    ; fake an KDB entry
+    43 VVM1_kbd_deque DEQUE.push    ; fake an KDB entry
+
+
 
     DEQUE.new AS SIMPL_code         ; Get a pointer for the SIMPL code buffer
     
@@ -70,7 +77,8 @@ DEF kernel_start {
     &host_gcd      101 VVM.bind ; as simpel host function to test teh FFI interface
 
 
-    SIMPL_code load_simpl_fly          ; to load static
+    SIMPL_code load_simpl_test_read    ; to load static
+    #SIMPL_code load_simpl_fly          ; to load static
     #SIMPL_code "sbc_stringtest" VVM.loadcode   ; toload dynamic 
 
     # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create

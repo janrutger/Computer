@@ -3153,6 +3153,7 @@ USE std_dict
 # Include the VVM Simpl code apps
 INCLUDE simpl_fly_lib
 INCLUDE simpl_chaos3_lib
+INCLUDE simpl_test_read_lib
 
 
 VALUE VVM0 30720        ; The memory address for VVM0, stored in a variable.
@@ -3174,9 +3175,10 @@ VALUE KERNEL_current_ptr 0
 
 
 
+
 ## Code here
 
-"\nWelkom bij Stern-ATX multitasking kernel project\n" PRTstring
+"\nWelkom bij Stern-ATX multitasking kernel project\n\n" PRTstring
 
 # Define hostfunctions, for now gcd
 DEF host_gcd {
@@ -3196,7 +3198,12 @@ DEF kernel_start {
     DEQUE.new AS VVM1_host_deque   
 
     DEQUE.new AS VVM0_kbd_deque     ; Get a pointer for the keyboard communication deque's
-    DEQUE.new AS VVM1_kbd_deque     
+    DEQUE.new AS VVM1_kbd_deque    
+
+    42 VVM0_kbd_deque DEQUE.push    ; fake an KDB entry
+    43 VVM1_kbd_deque DEQUE.push    ; fake an KDB entry
+
+
 
     DEQUE.new AS SIMPL_code         ; Get a pointer for the SIMPL code buffer
     
@@ -3209,7 +3216,8 @@ DEF kernel_start {
     &host_gcd      101 VVM.bind ; as simpel host function to test teh FFI interface
 
 
-    SIMPL_code load_simpl_fly          ; to load static
+    SIMPL_code load_simpl_test_read    ; to load static
+    #SIMPL_code load_simpl_fly          ; to load static
     #SIMPL_code "sbc_stringtest" VVM.loadcode   ; toload dynamic 
 
     # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
@@ -3255,12 +3263,11 @@ DEF kernel_start {
         
         VVM_status &KERNEL_current_ptr VVMpeek AS _proc_status
         
-        _proc_status VVM_Halted != IF
+        VVM_status &KERNEL_current_ptr VVMpeek VVM_Halted != IF
             # Proces leeft: Geef hem een burst en handel syscalls af
             10 &KERNEL_current_ptr VVM.runbatch
-            _proc_status VVM_Sys == IF &KERNEL_current_ptr VVM.check_syscalls END
-
-            # STERNWAY INDEX UPDATE: 
+            VVM_status &KERNEL_current_ptr VVMpeek VVM_Sys == IF &KERNEL_current_ptr VVM.check_syscalls END
+ 
             # Verhoog de index en zet hem direct terug naar 0 als hij de grens RAAKT.
             KERNEL_current_process 1 + AS KERNEL_current_process
             KERNEL_current_process KERNEL_number_of_processes == IF
@@ -17959,34 +17966,103 @@ DEF VVM.runbatch {
 
 
 
+# DEF VVM.check_syscalls {
+#     AS _VVMpointer
+
+#     # 1. Check if VVM is requesting a syscall
+#     VVM_status _VVMpointer VVMpeek VVM_Sys == IF
+#         # 2. Get the host deque
+#         VVM_HOST_ptr _VVMpointer VVMpeek AS _temp_val
+
+#         # 3. Pop the syscall ID from the host deque
+#         _temp_val DEQUE.pop_tail AS _syscall_id
+
+#         # 4. Look up and execute the handler
+#         _syscall_id syscall_table DICT.has_key IF
+#             _syscall_id syscall_table DICT.get AS _syscall_handler
+#             _VVMpointer _syscall_handler EXEC
+#         ELSE
+#             &error_no_syscall PRTstring HALT
+#         END
+
+#         # 5. Signal to VVM that the syscall is complete
+#         VVM_Idle VVM_status _VVMpointer VVMpoke
+#     END
+    
+# }
+VALUE _host_dq 0
+VALUE _kbd_dq 0
+VALUE _tail_node 0
+
 DEF VVM.check_syscalls {
     AS _VVMpointer
 
-    # 1. Check if VVM is requesting a syscall
+    # 1. Check of de VVM daadwerkelijk in de Syscall-status staat
     VVM_status _VVMpointer VVMpeek VVM_Sys == IF
-        # 2. Get the host deque
-        VVM_HOST_ptr _VVMpointer VVMpeek AS _temp_val
+        
+        # 2. Haal de host-deque pointer op van deze VVM
+        VVM_HOST_ptr _VVMpointer VVMpeek AS _host_dq
 
-        # 3. Pop the syscall ID from the host deque
-        _temp_val DEQUE.pop_tail AS _syscall_id
+        # 3. MAGIE: Haal de tail-node op uit de host-deque
+        # _host_dq DEQUE.tail AS _tail_node
+        # _tail_node DEQUE.value AS _syscall_id
+        _host_dq DEQUE.tail DEQUE.value AS _syscall_id
 
-        # 4. Look up and execute the handler
-        _syscall_id syscall_table DICT.has_key IF
-            _syscall_id syscall_table DICT.get AS _syscall_handler
-            _VVMpointer _syscall_handler EXEC
+        # Is het onze speciale READ syscall?
+        _syscall_id 20 == IF
+            # Haal de keyboard deque op van deze specifieke VVM
+            VVM_kbdq _VVMpointer VVMpeek AS _kbd_dq
+            
+            # Is er data beschikbaar voor deze VVM?
+            _kbd_dq DEQUE.is_empty 1 != IF
+                # JA! Data is er! We kunnen de syscall nu ECHT afhandelen.
+                # Nu poppen we de ID pas definitief uit de host deque:
+                _host_dq DEQUE.pop_tail DROP   
+                
+                # Voer de handler uit (die we aan ID 20 hebben gekoppeld)
+                20 syscall_table DICT.get AS _syscall_handler
+                _VVMpointer _syscall_handler EXEC
+                
+                # VVM mag weer vrolijk verder draaien
+                VVM_Idle VVM_status _VVMpointer VVMpoke
+            ELSE
+                # NEE! Geen data! De VVM moet onherroepelijk in de wachtstand.
+                VVM_WaitIO VVM_status _VVMpointer VVMpoke
+                
+                # Plaats deze VVM-pointer in de centrale kernel keyboard aanvraag-wachtrij!
+                # (Zodat POLLline straks weet welke VVM als eerste op input wacht)
+                _VVMpointer kbd_req_queue DEQUE.push
+                
+                # LET OP: We poppen de host-deque NIET en we veranderen de PC NIET.
+                # De VVM staat nu 'bevroren' in de tijd. Zodra POLLline data brengt,
+                # zet de kernel de status weer op VVM_Sys, en zal deze check_syscalls
+                # exact op ditzelfde punt de draad weer oppakken!
+            END
         ELSE
-            &error_no_syscall PRTstring HALT
-        END
+            # VEILIGHEID: Het is een normale syscall (zoals PRINT, ID 10)
+            # Deze kunnen we direct poppen en afhandelen!
+            _host_dq DEQUE.pop_tail AS _syscall_id
+            
+            _syscall_id syscall_table DICT.has_key IF
+                _syscall_id syscall_table DICT.get AS _syscall_handler
+                _VVMpointer _syscall_handler EXEC
+            ELSE
+                &error_no_syscall PRTstring HALT
+            END
 
-        # 5. Signal to VVM that the syscall is complete
-        VVM_Idle VVM_status _VVMpointer VVMpoke
+            # Signaleer dat de normale syscall compleet is
+            VVM_Idle VVM_status _VVMpointer VVMpoke
+        END
     END
-    
 }
+
+
+
+
+
 
 VALUE _filename 0
 VALUE _code_queue 0
-
 # ( code-queue "filename" --)
 # Appending the lines from the file to the code queue
 DEF VVM.loadcode {
@@ -21266,7 +21342,7 @@ CONST _strend_      91  ; Einde van een Inline String marker
 CONST PRINT_NUM     10 
 ; CONST PRINT_CHAR    11
 # INPUT
-; CONST READ_NUM      20
+CONST READ          20
 ; CONST READ_CHAR     21
 # SYSTEM
 # DEVICES
@@ -22521,6 +22597,28 @@ DEF s_UDC_IO {
     END
 }
 
+# ( &VVMpointer -- )
+DEF s_READ {
+    AS _env_vvm_ptr
+
+    # 1. Haal de keyboard-deque pointer op uit de VVM-struct
+    VVM_kbdq _env_vvm_ptr VVMpeek AS _kbd_dq
+
+    # 2. Haal de waarde (of string-pointer) uit de kbd_deque
+    # Omdat check_syscalls heeft gegarandeerd dat er data is, kunnen we veilig poppen!
+    _kbd_dq DEQUE.pop_tail AS _math_a
+
+    # 3. Injecteer de waarde rechtstreeks op de virtuele datastack van de VVM
+    # Haal eerst het actuele adres op waar de VVM Stack Pointer op dit moment naar wijst
+    VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
+
+    # Schrijf de binnengekomen waarde naar die geheugenlocatie binnen de VVM
+    _math_a AS *_env_sp_addr
+
+    # 4. Ophoog de virtuele stackpointer van de VVM met 1 (simuleer een push)
+    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+}
+
 # DEF s_print_char {
 
 # }
@@ -22537,6 +22635,8 @@ DEF s_UDC_IO {
 
 VALUE string_dict 0
 VALUE _vvm_temp_list_ptr 0
+VALUE kbd_req_queue 0
+
 
 DEF VVM.init {
     100 DICT.new AS opcode_table
@@ -22547,7 +22647,10 @@ DEF VVM.init {
     50 DICT.new AS syscall_table
 
     256 DICT.new AS string_dict
-    # 81  NEW.list AS _vvm_temp_list_ptr
+
+    DEQUE.new AS kbd_req_queue
+
+
 
 
 
@@ -22642,6 +22745,8 @@ DEF VVM.init {
     # Syscalls
     &s_print_num  PRINT_NUM  syscall_table DICT.put 
     &s_UDC_IO     UDC_IO     syscall_table DICT.put
+    &s_READ       READ       syscall_table DICT.put
+
     
     # &s_print_char PRINT_CHAR syscall_table DICT.put
     # &s_read_num   READ_NUM   syscall_table DICT.put
@@ -22732,7 +22837,7 @@ WHILE 1500 N > DO
   X Y draw
 
   N 1 + AS N
-  N 50 % 0 == IF
+  N 25 % 0 == IF
     IO 2 FLIP  # Flip buffer to show new points
   END
 
@@ -22821,7 +22926,7 @@ DEF plot {
     IO 1 DRAW
     #IO 1 FLIP
 }
-
+ 
 
 1 plot
 1 plot
@@ -22952,6 +23057,13 @@ FILE: src/vvm/stringtest.stacks
 "from SIMPL\n" PRINTS
 
 \"Jan Rutger" PRINT
+
+FILE: src/vvm/test_read.stacks
+------------------------------------------------------------
+"Dit is een test\n" PRINTS
+READ PRINT
+
+"test done\n" PRINTS
 
 FILE: src/vvm/test_simpl.stacks
 ------------------------------------------------------------
@@ -23218,7 +23330,7 @@ MACRO load_simpl_chaos3 {
     \"GET"         _sq_ DEQUE.append
     10             _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
-    50             _sq_ DEQUE.append
+    25             _sq_ DEQUE.append
     \"MOD"         _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     0              _sq_ DEQUE.append
@@ -23923,6 +24035,60 @@ MACRO load_simpl_stringtest {
     10             _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append
     \"SYS"         _sq_ DEQUE.append
+    \"HALT"        _sq_ DEQUE.append
+}
+
+
+FILE: src/simpl_libs/simpl_test_read_lib.stacks
+------------------------------------------------------------
+USE std_deque
+
+MACRO load_simpl_test_read {
+    AS _sq_
+
+    \"STSTR"       _sq_ DEQUE.append
+    68             _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    20             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    10             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    100            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
     \"HALT"        _sq_ DEQUE.append
 }
 
