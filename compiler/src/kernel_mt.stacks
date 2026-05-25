@@ -10,6 +10,8 @@ USE std_heap
 USE std_deque
 USE std_dict
 
+USE parser_tools
+
 
 # Include the VVM Simpl code apps
 INCLUDE simpl_fly_lib
@@ -33,6 +35,16 @@ VALUE KERNEL_number_of_processes 0
 VALUE KERNEL_current_process 0
 VALUE KERNEL_current_ptr 0
 
+VALUE _binnengekomen_regel 0
+VALUE _wachtende_vvm 0
+VALUE _target_kbd_dq 0
+VALUE _rpn_input_ptr 0
+VALUE _tokens_geleverd 0
+
+
+
+
+
 
 
 
@@ -50,6 +62,80 @@ DEF host_gcd {
 }
 
 
+## Kernel helpers
+
+# nonblocking poll line
+
+# ( -- &input_buffer of 0 )
+# De statische buffer blijft exact gelijk voor de tokenizer
+LIST kernel_input_buffer 80
+VALUE kernel_buf_idx 0
+
+# Private loop-control variabele voor de burst-verwerking
+VALUE _poll_loop_continue 0
+
+DEF POLLline {
+    # Schakel de cursor direct in zodra we de hardware polsen
+    CURSORon
+
+    0 AS _result_buffer_ptr       # Standaard geven we 0 terug (regel niet af)
+    1 AS _poll_loop_continue      # Vlag om de burst-lus te besturen
+
+    WHILE _poll_loop_continue DO
+        # Controleer non-blocking of er een toets klaarstaat
+        KEYpressed IF
+            # Er is een karakter! Haal hem van de stack/hardware
+            AS _ingedrukt_karakter
+            
+            # --- Case 1: Return/Enter (ASCII 13) ---
+            _ingedrukt_karakter 13 == IF
+                # Echo het karakter naar het scherm en zet de cursor uit
+                CURSORoff
+                _ingedrukt_karakter PRTchar
+                
+                
+                # Sluit de string in de buffer netjes af met een null-terminator
+                &kernel_input_buffer kernel_buf_idx + AS _term_ptr
+                0 AS *_term_ptr
+                
+                0 AS kernel_buf_idx                # Reset index voor de volgende regel
+                &kernel_input_buffer AS _result_buffer_ptr # Regel is compleet!
+                0 AS _poll_loop_continue           # Stop de burst-lus onmiddellijk
+            ELSE
+                # --- Case 2: Backspace (ASCII 8) ---
+                _ingedrukt_karakter 8 == IF
+                    kernel_buf_idx 0 != IF
+                        CURSORoff
+                        _ingedrukt_karakter PRTchar # Echo de backspace (wist karakter op scherm)
+                        kernel_buf_idx 1 - AS kernel_buf_idx
+                    END
+                ELSE
+                    # --- Case 3: Normaal karakter opslaan ---
+                    # Echo naar het scherm
+                    _ingedrukt_karakter PRTchar
+                    
+                    # Schrijf naar de veilige kernel-buffer
+                    &kernel_input_buffer kernel_buf_idx + AS _write_ptr
+                    _ingedrukt_karakter AS *_write_ptr
+                    
+                    kernel_buf_idx 1 + AS kernel_buf_idx
+                END
+                # We blijven in de WHILE-lus om de hardware-buffer direct HELEMAAL leeg te trekken!
+            END
+        ELSE
+            # De hardware-buffer is voor deze kernel-tik leeg. 
+            # Geef de CPU netjes terug aan de scheduler.
+            0 AS _poll_loop_continue 
+        END
+    DONE
+
+    # Als de regel nog niet af is, staat hier een 0. 
+    # Als Enter is gedrukt, staat hier de pointer &kernel_input_buffer.
+    _result_buffer_ptr
+}
+
+
+
 # The main program
 DEF kernel_start {
     HEAP.free
@@ -61,8 +147,9 @@ DEF kernel_start {
     DEQUE.new AS VVM0_kbd_deque     ; Get a pointer for the keyboard communication deque's
     DEQUE.new AS VVM1_kbd_deque    
 
-    42 VVM0_kbd_deque DEQUE.push    ; fake an KDB entry
-    43 VVM1_kbd_deque DEQUE.push    ; fake an KDB entry
+
+    # 42 VVM0_kbd_deque DEQUE.push    ; fake an KDB entry
+    # 43 VVM1_kbd_deque DEQUE.push    ; fake an KDB entry
 
 
 
@@ -85,6 +172,7 @@ DEF kernel_start {
     &SIMPL_code 1024 &VVM0_host_deque &VVM0_kbd_deque &VVM0 VVM.create
     "VVM0 instance created \n\n" PRTstring
 
+    # SIMPL_code load_simpl_test_read    ; to load static
     SIMPL_code load_simpl_chaos3
     # SIMPL_code "sbc_stringtest" VVM.loadcode 
 
@@ -117,36 +205,92 @@ DEF kernel_start {
 
     1 TIME.start
     
+    
+    VALUE new_input_flag 1
+
     WHILE KERNEL_number_of_processes 0 > DO
-        
-        # 1. Haal de actuele VVM pointer op uit de dictionary
+        kbd_req_queue DEQUE.is_empty 0 == IF
+            new_input_flag IF 
+                0 AS new_input_flag
+                kbd_req_queue DEQUE.tail PRTnum "> " PRTstring
+            END
+
+            # Pol het toetsenbord non-blocking
+            POLLline AS _binnengekomen_regel
+
+            # Alleen actie ondernemen als er ECHT op Enter is gedrukt
+            _binnengekomen_regel 0 != IF
+                _binnengekomen_regel AS _rpn_input_ptr
+
+                # Controleer of er wel een proces op invoer wacht
+                kbd_req_queue DEQUE.is_empty 0 == IF        
+                    
+                    # Haal de VVM uit de wachtrij
+                    kbd_req_queue DEQUE.pop_tail AS _wachtende_vvm
+                    1 AS new_input_flag
+                    
+                    # HAAL DE DEQUE OP (VVMpeek geeft direct het juiste deque-adres terug!)
+                    VVM_kbdq &_wachtende_vvm VVMpeek AS _target_kbd_dq
+
+                    
+                    0 AS _tokens_geleverd
+
+                    # Start de Tokenizer-lus
+                    WHILE _rpn_input_ptr 0 != DO
+                        _rpn_input_ptr 32 TOKENIZE AS _rpn_input_ptr       
+
+                        DUP 0 == IF
+                            DROP
+                        ELSE
+                            STRatoi IF  
+                                # Push DIRECT op de verkregen deque-pointer
+                                _target_kbd_dq DEQUE.push
+                            ELSE
+                                STRhash 
+                                _target_kbd_dq DEQUE.push
+                            END
+                            _tokens_geleverd 1 + AS _tokens_geleverd
+                        END
+                    DONE
+
+                    # Alleen wekken als er tokens zijn verwerkt
+                    _tokens_geleverd 0 > IF
+                        VVM_Sys VVM_status &_wachtende_vvm VVMpoke
+                    ELSE
+                        # Geen tokens? Netjes terugzetten in de wachtrij om pop-errors te voorkomen
+                        _wachtende_vvm kbd_req_queue DEQUE.push
+                    END
+                ELSE
+                    # Geen VVM die wacht? Dump de regel om overflows te voorkomen
+                    "Kernel: Invoer genegeerd, geen wachtend proces.\n" PRTstring
+                END
+            END
+        END
+        # ---------------------------------------------------------------------
+        # Vanaf hier krijgt de scheduler weer 100% vrije baan!
+        # ---------------------------------------------------------------------
         KERNEL_current_process KERNEL_proces_list DICT.item DROP AS KERNEL_current_ptr
-        
         VVM_status &KERNEL_current_ptr VVMpeek AS _proc_status
         
         VVM_status &KERNEL_current_ptr VVMpeek VVM_Halted != IF
-            # Proces leeft: Geef hem een burst en handel syscalls af
-            10 &KERNEL_current_ptr VVM.runbatch
-            VVM_status &KERNEL_current_ptr VVMpeek VVM_Sys == IF &KERNEL_current_ptr VVM.check_syscalls END
+            _proc_status VVM_WaitIO != IF
+                10 &KERNEL_current_ptr VVM.runbatch
+                VVM_status &KERNEL_current_ptr VVMpeek VVM_Sys == IF &KERNEL_current_ptr VVM.check_syscalls END
+            END
  
-            # Verhoog de index en zet hem direct terug naar 0 als hij de grens RAAKT.
             KERNEL_current_process 1 + AS KERNEL_current_process
             KERNEL_current_process KERNEL_number_of_processes == IF
                 0 AS KERNEL_current_process
             END
         ELSE
-            
             KERNEL_current_ptr KERNEL_proces_list DICT.remove
             KERNEL_proces_list DICT.count AS KERNEL_number_of_processes
-            
             KERNEL_current_process KERNEL_number_of_processes == IF
                 0 AS KERNEL_current_process
             END
         END
         
-        # 2. Update de hoofd-lus teller voor de WHILE check
         KERNEL_proces_list DICT.count AS KERNEL_number_of_processes
-
     DONE
     1 TIME.read TIME.as_string 
 }

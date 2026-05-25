@@ -1,4 +1,7 @@
 "Dit is een test\n" PRINTS
 READ PRINT
+READ PRINT
+\"jrk" PRINT
+READ PRINT
 
 "test done\n" PRINTS

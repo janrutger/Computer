@@ -419,82 +419,33 @@ DEF VVM.runbatch {
 }
 
 
-
-# DEF VVM.check_syscalls {
-#     AS _VVMpointer
-
-#     # 1. Check if VVM is requesting a syscall
-#     VVM_status _VVMpointer VVMpeek VVM_Sys == IF
-#         # 2. Get the host deque
-#         VVM_HOST_ptr _VVMpointer VVMpeek AS _temp_val
-
-#         # 3. Pop the syscall ID from the host deque
-#         _temp_val DEQUE.pop_tail AS _syscall_id
-
-#         # 4. Look up and execute the handler
-#         _syscall_id syscall_table DICT.has_key IF
-#             _syscall_id syscall_table DICT.get AS _syscall_handler
-#             _VVMpointer _syscall_handler EXEC
-#         ELSE
-#             &error_no_syscall PRTstring HALT
-#         END
-
-#         # 5. Signal to VVM that the syscall is complete
-#         VVM_Idle VVM_status _VVMpointer VVMpoke
-#     END
-    
-# }
 VALUE _host_dq 0
 VALUE _kbd_dq 0
-VALUE _tail_node 0
-
 DEF VVM.check_syscalls {
     AS _VVMpointer
 
-    # 1. Check of de VVM daadwerkelijk in de Syscall-status staat
     VVM_status _VVMpointer VVMpeek VVM_Sys == IF
-        
-        # 2. Haal de host-deque pointer op van deze VVM
         VVM_HOST_ptr _VVMpointer VVMpeek AS _host_dq
 
-        # 3. MAGIE: Haal de tail-node op uit de host-deque
-        # _host_dq DEQUE.tail AS _tail_node
-        # _tail_node DEQUE.value AS _syscall_id
         _host_dq DEQUE.tail DEQUE.value AS _syscall_id
-
-        # Is het onze speciale READ syscall?
         _syscall_id 20 == IF
-            # Haal de keyboard deque op van deze specifieke VVM
+            # Haal ook hier de deque op via de veilige VVMpeek route met het adres van de pointer
             VVM_kbdq _VVMpointer VVMpeek AS _kbd_dq
             
-            # Is er data beschikbaar voor deze VVM?
-            _kbd_dq DEQUE.is_empty 1 != IF
-                # JA! Data is er! We kunnen de syscall nu ECHT afhandelen.
-                # Nu poppen we de ID pas definitief uit de host deque:
-                _host_dq DEQUE.pop_tail DROP   
+            _kbd_dq DEQUE.is_empty 0 == IF
+                _host_dq DEQUE.pop_tail DROP  
                 
-                # Voer de handler uit (die we aan ID 20 hebben gekoppeld)
                 20 syscall_table DICT.get AS _syscall_handler
                 _VVMpointer _syscall_handler EXEC
                 
-                # VVM mag weer vrolijk verder draaien
                 VVM_Idle VVM_status _VVMpointer VVMpoke
             ELSE
-                # NEE! Geen data! De VVM moet onherroepelijk in de wachtstand.
-                VVM_WaitIO VVM_status _VVMpointer VVMpoke
-                
-                # Plaats deze VVM-pointer in de centrale kernel keyboard aanvraag-wachtrij!
-                # (Zodat POLLline straks weet welke VVM als eerste op input wacht)
-                _VVMpointer kbd_req_queue DEQUE.push
-                
-                # LET OP: We poppen de host-deque NIET en we veranderen de PC NIET.
-                # De VVM staat nu 'bevroren' in de tijd. Zodra POLLline data brengt,
-                # zet de kernel de status weer op VVM_Sys, en zal deze check_syscalls
-                # exact op ditzelfde punt de draad weer oppakken!
+                VVM_status _VVMpointer VVMpeek VVM_WaitIO != IF
+                    VVM_WaitIO VVM_status _VVMpointer VVMpoke
+                    *_VVMpointer kbd_req_queue DEQUE.push
+                END
             END
         ELSE
-            # VEILIGHEID: Het is een normale syscall (zoals PRINT, ID 10)
-            # Deze kunnen we direct poppen en afhandelen!
             _host_dq DEQUE.pop_tail AS _syscall_id
             
             _syscall_id syscall_table DICT.has_key IF
@@ -504,7 +455,6 @@ DEF VVM.check_syscalls {
                 &error_no_syscall PRTstring HALT
             END
 
-            # Signaleer dat de normale syscall compleet is
             VVM_Idle VVM_status _VVMpointer VVMpoke
         END
     END

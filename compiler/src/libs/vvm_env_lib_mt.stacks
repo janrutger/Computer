@@ -1402,27 +1402,30 @@ DEF s_UDC_IO {
     END
 }
 
-# ( &VVMpointer -- )
+
+VALUE _nieuwe_sp 0
+# ( _env_vvm_ptr -- )
 DEF s_READ {
     AS _env_vvm_ptr
 
-    # 1. Haal de keyboard-deque pointer op uit de VVM-struct
+    # Gebruik VVMpeek op de juiste manier: geef de index en het ADRES van de VVM-variabele mee!
+    # Dit haalt gegarandeerd de schone deque-pointer (20060) op zonder te crashen.
     VVM_kbdq _env_vvm_ptr VVMpeek AS _kbd_dq
 
-    # 2. Haal de waarde (of string-pointer) uit de kbd_deque
-    # Omdat check_syscalls heeft gegarandeerd dat er data is, kunnen we veilig poppen!
+    # Haal de nepwaarde (42) uit de queue
     _kbd_dq DEQUE.pop_tail AS _math_a
 
-    # 3. Injecteer de waarde rechtstreeks op de virtuele datastack van de VVM
-    # Haal eerst het actuele adres op waar de VVM Stack Pointer op dit moment naar wijst
+    # Schrijf de waarde naar de virtuele stack van de VVM via VVMpeek van de SP
     VVM_SP _env_vvm_ptr VVMpeek AS _env_sp_addr
-
-    # Schrijf de binnengekomen waarde naar die geheugenlocatie binnen de VVM
     _math_a AS *_env_sp_addr
 
-    # 4. Ophoog de virtuele stackpointer van de VVM met 1 (simuleer een push)
-    _env_sp_addr 1 + VVM_SP _env_vvm_ptr VVMpoke
+    # Verhoog de SP en schrijf hem netjes terug via VVMpoke
+    _env_sp_addr 1 + AS _nieuwe_sp
+    _nieuwe_sp VVM_SP _env_vvm_ptr VVMpoke
 }
+
+
+
 
 # DEF s_print_char {
 
