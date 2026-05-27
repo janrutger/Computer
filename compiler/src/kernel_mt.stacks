@@ -1,3 +1,5 @@
+# Kernel_mt.stacks 
+
 USE vvm_env_lib_mt
 USE vvm_core_lib_mt
 
@@ -17,16 +19,22 @@ USE parser_tools
 INCLUDE simpl_fly_lib
 INCLUDE simpl_chaos3_lib
 INCLUDE simpl_test_read_lib
+INCLUDE simpl_fib_lib
 
+VALUE VVM1 30720        ; The memory address for VVM1, stored in a variable.
+VALUE VVM2 31744        ; The memory address for VVM2, stored in a variable.
+VALUE VVM3 32768        ; The memory address for VVM3, stored in a variable.
+VALUE VVM4 33792        ; The memory address for VVM4, stored in a variable.
 
-VALUE VVM0 30720        ; The memory address for VVM0, stored in a variable.
-VALUE VVM1 31744        ; The memory address for VVM1, stored in a variable.
-
-VALUE VVM0_host_deque 0
 VALUE VVM1_host_deque 0
+VALUE VVM2_host_deque 0
+VALUE VVM3_host_deque 0
+VALUE VVM4_host_deque 0
 
-VALUE VVM0_kbd_deque 0
 VALUE VVM1_kbd_deque 0
+VALUE VVM2_kbd_deque 0
+VALUE VVM3_kbd_deque 0
+VALUE VVM4_kbd_deque 0
 
 VALUE SIMPL_code 0
 
@@ -34,6 +42,8 @@ VALUE KERNEL_proces_list 0
 VALUE KERNEL_number_of_processes 0
 VALUE KERNEL_current_process 0
 VALUE KERNEL_current_ptr 0
+VALUE KERNEL_current_burst 50
+CONST KERNEL_max_burst 200
 
 VALUE _binnengekomen_regel 0
 VALUE _wachtende_vvm 0
@@ -141,15 +151,21 @@ DEF kernel_start {
     HEAP.free
     50 DEQUE.init_pool "Pool initialized (size 50).\n" PRTstring
 
-    DEQUE.new AS VVM0_host_deque    ; Get a pointer for the host communication deque's
-    DEQUE.new AS VVM1_host_deque   
+    DEQUE.new AS VVM1_host_deque    ; Get a pointer for the host communication deque's
+    DEQUE.new AS VVM2_host_deque   
+    DEQUE.new AS VVM3_host_deque
+    DEQUE.new AS VVM4_host_deque
 
-    DEQUE.new AS VVM0_kbd_deque     ; Get a pointer for the keyboard communication deque's
-    DEQUE.new AS VVM1_kbd_deque    
+
+    DEQUE.new AS VVM1_kbd_deque     ; Get a pointer for the keyboard communication deque's
+    DEQUE.new AS VVM2_kbd_deque
+    DEQUE.new AS VVM3_kbd_deque
+    DEQUE.new AS VVM4_kbd_deque
 
 
-    # 42 VVM0_kbd_deque DEQUE.push    ; fake an KDB entry
-    # 43 VVM1_kbd_deque DEQUE.push    ; fake an KDB entry
+   
+    # 42 VVM1_kbd_deque DEQUE.push    ; fake an KDB entry
+    # 43 VVM2_kbd_deque DEQUE.push    ; fake an KDB entry
 
 
 
@@ -158,46 +174,91 @@ DEF kernel_start {
 
     VVM.init                        ; init VVM environment
     "VVM Environment Initialized:\n" PRTstring
-    "VVM0 base address          : " PRTstring VVM0  PRINT
     "VVM1 base address          : " PRTstring VVM1  PRINT
+    "VVM2 base address          : " PRTstring VVM2  PRINT
+    "VVM3 base address          : " PRTstring VVM3  PRINT
+    "VVM4 base address          : " PRTstring VVM4  PRINT
+
 
     &host_gcd      101 VVM.bind ; as simpel host function to test teh FFI interface
 
-
-    SIMPL_code load_simpl_test_read    ; to load static
-    #SIMPL_code load_simpl_fly          ; to load static
-    #SIMPL_code "sbc_stringtest" VVM.loadcode   ; toload dynamic 
-
-    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
-    &SIMPL_code 1024 &VVM0_host_deque &VVM0_kbd_deque &VVM0 VVM.create
-    "VVM0 instance created \n\n" PRTstring
-
+    # VVM1 ############
     # SIMPL_code load_simpl_test_read    ; to load static
-    SIMPL_code load_simpl_chaos3
-    # SIMPL_code "sbc_stringtest" VVM.loadcode 
+    SIMPL_code load_simpl_fly          ; to load static
+    #SIMPL_code "sbc_stringtest" VVM.loadcode   ; toload dynamic 
 
     # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
     &SIMPL_code 1024 &VVM1_host_deque &VVM1_kbd_deque &VVM1 VVM.create
     "VVM1 instance created \n\n" PRTstring
+    ###################
+
+    # VVM2 ############
+    # SIMPL_code load_simpl_test_read    ; to load static
+    # SIMPL_code load_simpl_chaos3
+    SIMPL_code load_simpl_fib
+    # SIMPL_code "sbc_stringtest" VVM.loadcode 
+
+    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
+    &SIMPL_code 1024 &VVM2_host_deque &VVM2_kbd_deque &VVM2 VVM.create
+    "VVM2 instance created \n\n" PRTstring
+    ###################
+
+    # VVM3 ############
+    # SIMPL_code load_simpl_test_read    ; to load static
+    SIMPL_code load_simpl_chaos3
+    # SIMPL_code load_simpl_fib
+    # SIMPL_code "sbc_stringtest" VVM.loadcode 
+
+    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
+    &SIMPL_code 1024 &VVM3_host_deque &VVM3_kbd_deque &VVM3 VVM.create
+    "VVM3 instance created \n\n" PRTstring
+    ###################
+
+    # VVM4 ############
+    # SIMPL_code load_simpl_test_read    ; to load static
+    # SIMPL_code load_simpl_chaos3
+    SIMPL_code load_simpl_fib
+    # SIMPL_code "sbc_stringtest" VVM.loadcode 
+
+    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
+    &SIMPL_code 1024 &VVM4_host_deque &VVM4_kbd_deque &VVM4 VVM.create
+    "VVM4 instance created \n\n" PRTstring
+    ###################
+
+
 
 
     # Start the VVM
     # ( arg1 ... argn argc &VVM-pointer -- )
-    0 &VVM0 VVM.start
-    "VVM0 started \n" PRTstring
+    0 &VVM1 VVM.start                   # VVM1 starts here
+    "VVM1 started \n" PRTstring 
 
-    0 &VVM1 VVM.start
-    "VVM1 started \n" PRTstring
+    0 &VVM2 VVM.start                   # VVM2 starts here
+    "VVM2 started \n" PRTstring
+
+    0 &VVM3 VVM.start                   # VVM3 starts here
+    "VVM3 started \n" PRTstring
+
+    0 &VVM4 VVM.start                   # VVM4 starts here
+    "VVM4 started \n" PRTstring
 
 
-    # when the kernel is ready only the CLI-VVM (VVM0) is running here
-    # for now VVM0 and VVM1 are loaded with an application script to test the scheduler so far
+
+    
+
+
+    # when the kernel is ready only the CLI-VVM (VVM1) is running here
+    # for now VVM1 and VVM2 are loaded with an application script to test the scheduler so far
     #
     # Create an dynamic proces list (must be an dict, for removing processes)
     4 DICT.new AS KERNEL_proces_list        ; room for finally 4 processes
-    0 VVM0 KERNEL_proces_list DICT.put      ; Always register the CLI-VVM (VVM0)
+    1 VVM1 KERNEL_proces_list DICT.put      ; Always register the CLI-VVM (VVM1)
 
-    1 VVM1 KERNEL_proces_list DICT.put      ; For now, also register a other proces
+    2 VVM2 KERNEL_proces_list DICT.put      ; For now, also register a other proces
+    3 VVM3 KERNEL_proces_list DICT.put      ; For now, also register a other proces
+    4 VVM4 KERNEL_proces_list DICT.put      ; For now, also register a other proces
+
+
 
     # Kernel scheduler loop
     KERNEL_proces_list DICT.count AS KERNEL_number_of_processes
@@ -271,10 +332,12 @@ DEF kernel_start {
         # ---------------------------------------------------------------------
         KERNEL_current_process KERNEL_proces_list DICT.item DROP AS KERNEL_current_ptr
         VVM_status &KERNEL_current_ptr VVMpeek AS _proc_status
+
+        KERNEL_max_burst KERNEL_number_of_processes // AS KERNEL_current_burst
         
         VVM_status &KERNEL_current_ptr VVMpeek VVM_Halted != IF
             _proc_status VVM_WaitIO != IF
-                10 &KERNEL_current_ptr VVM.runbatch
+                KERNEL_current_burst &KERNEL_current_ptr VVM.runbatch
                 VVM_status &KERNEL_current_ptr VVMpeek VVM_Sys == IF &KERNEL_current_ptr VVM.check_syscalls END
             END
  

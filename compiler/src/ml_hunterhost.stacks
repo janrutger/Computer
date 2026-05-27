@@ -337,9 +337,9 @@ WHILE sim_running DO
     vvm_timeslice AS loop_counter
     WHILE loop_counter DO
         loop_counter 5 % IF
-            VVM_status &VVM0 VVMpeek VVM_Halted != IF 10 &VVM0 VVM.runbatch END
+            VVM_status &VVM0 VVMpeek VVM_Halted != IF 5 &VVM0 VVM.runbatch END
         ELSE
-            VVM_status &VVM1 VVMpeek VVM_Halted != IF 10 &VVM1 VVM.runbatch END
+            VVM_status &VVM1 VVMpeek VVM_Halted != IF 5 &VVM1 VVM.runbatch END
         END
 
         loop_counter 1 - AS loop_counter

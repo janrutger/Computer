@@ -270,7 +270,7 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :_main_if_end_15
-    ldi A 10
+    ldi A 5
     stack A $DATASTACK_PTR
     ldi A $VVM0
     stack A $DATASTACK_PTR
@@ -288,7 +288,7 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :_main_if_end_16
-    ldi A 10
+    ldi A 5
     stack A $DATASTACK_PTR
     ldi A $VVM1
     stack A $DATASTACK_PTR

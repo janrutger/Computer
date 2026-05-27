@@ -63,7 +63,7 @@ MACRO draw {
 # --- Main Program ---
 screen
 
-WHILE 500 N > DO
+WHILE 1500 N > DO
   # "From Chaos" PRINTS
   RND 3 * 999 // AS R
 

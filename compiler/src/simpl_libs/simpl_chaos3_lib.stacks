@@ -56,7 +56,7 @@ MACRO load_simpl_chaos3 {
     \"LABEL"       _sq_ DEQUE.append
     \"while_0"     _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
-    500            _sq_ DEQUE.append
+    1500           _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append
     10             _sq_ DEQUE.append
     \"GT"          _sq_ DEQUE.append

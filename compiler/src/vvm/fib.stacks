@@ -47,5 +47,9 @@ DEF fib {
 VAR argc
 VAR arg1     # This will be register 1 (B), holds the first argument
 
+# A little test routine
+"Enter a number " PRINTS
+READ AS arg1
+
 # Now call fib with the value that was passed in
 arg1 fib PRINT

@@ -27,7 +27,8 @@ from devices.rtc import RTC
 # --- Constants ---
 # Memory Map
 MEM_SIZE = 24576
-MEM_EXTEND_BLOCKS = 8
+# MEM_EXTEND_BLOCKS = 8
+MEM_EXTEND_BLOCKS = 10  # blocks for the HEAP 4 blocks for 4xVVM
 MEM_LOADER_START = 0
 MEM_KERNEL_START = 1024
 MEM_INT_VECTORS_START = 8192

@@ -3,6 +3,30 @@ USE std_deque
 MACRO load_simpl_fib {
     AS _sq_
 
+    \"STSTR"       _sq_ DEQUE.append
+    69             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    117            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    98             _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    20             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append
     1              _sq_ DEQUE.append
     \"CALL"        _sq_ DEQUE.append
