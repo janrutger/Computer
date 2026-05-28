@@ -34,10 +34,7 @@ DEF handle_error {
 
 
 MACRO run.ps {
-    "PS " PRINTS "Work to do here\n" PRINTS
     0 1 KERNEL.ps EXEC DUP IF handle_error ELSE DROP END
-
-
 }
 
 MACRO run.start {

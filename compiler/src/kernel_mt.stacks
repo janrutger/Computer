@@ -59,7 +59,12 @@ CONST KERNEL_err_cannot_halt 2
 CONST KERNEL_err_cannot_start 3
 CONST KERNEL_err_loading_vvm 4
 
-
+# Define host side functions as syscalls-is's for the FFI interface
+CONST KERNEL.ps     100 ; Syscall ID for the PS function
+CONST KERNEL.start  101 ; Syscall ID for the start function
+CONST KERNEL.resume 102 ; Syscall ID for the resume function
+CONST KERNEL.stop   103 ; Syscall ID for the stop function
+CONST KERNEL.kbd_flush  104 ; Syscall ID for the kbd_flush function
 
 
 
@@ -73,6 +78,52 @@ DEF host_gcd {
         SWAP OVER %
     DONE
     DROP
+}
+
+# =============================================================================
+# FFI 100: host_proc_list (De 'ps' heavy lifter)
+# Signatuur vanuit CLI: 0 1 KERNEL.ps EXEC -> VVM-stack krijgt KERNEL_succes (0)
+# =============================================================================
+
+DEF host_proc_list {
+    # 1. Toon direct de geformatteerde tabel op de host-monitor
+    "\nSlot   VVM-Adres   Status\n" PRTstring
+    "---------------------------\n" PRTstring
+    
+    # Vraag aan de dictionary hoeveel actieve registraties er zijn
+    KERNEL_proces_list DICT.count AS _active_count
+    
+    0 AS _loop_idx
+    WHILE _loop_idx _active_count < DO
+        # CRUCIALE FIX: DICT.item legt (key value) op de stack.
+        # Value (Slot) ligt bovenop, dus die pakken we EERST met AS _slot_num.
+        # Key (&VVM) ligt daaronder, dus die pakken we DAARNA met AS _vvm_ptr.
+        _loop_idx KERNEL_proces_list DICT.item AS _slot_num AS _vvm_ptr
+        
+        # Nu bevat _vvm_ptr het echte adres (bijv. 30720). We kunnen veilig peeken!
+        VVM_status &_vvm_ptr VVMpeek AS _status
+        
+        # 2. Netjes geformatteerd printen
+        " " PRTstring 
+        _slot_num PRTnum 
+        "     " PRTstring 
+        _vvm_ptr PRTnum 
+        "       " PRTstring
+        
+        # 3. Evalueer de status exact volgens de vvm_env_lib_mt constants
+        _status VVM_Running == IF "RUNNING\n" PRTstring END
+        _status VVM_Sys     == IF "SYS_CALL\n" PRTstring END
+        _status VVM_Idle    == IF "IDLE\n"     PRTstring END
+        _status VVM_Error   == IF "ERROR\n"    PRTstring END
+        _status VVM_Halted  == IF "HALTED\n"   PRTstring END
+        _status VVM_WaitIO  == IF "WAIT_IO\n"  PRTstring END
+        
+        _loop_idx 1 + AS _loop_idx
+    DONE
+    "\n" PRTstring
+
+    # 4. De handshake terug naar de VVM-stack van de aanroeper (de CLI)
+    KERNEL_succes 
 }
 
 
@@ -192,7 +243,9 @@ DEF kernel_start {
     "VVM4 base address          : " PRTstring VVM4  PRINT
 
 
-    &host_gcd      150 VVM.bind ; as simpel host function to test teh FFI interface
+    &host_gcd      150 VVM.bind             ; as simpel host function to test teh FFI interface
+    &host_proc_list KERNEL.ps VVM.bind      ; 
+
 
     # VVM1 ############
     # SIMPL_code load_simpl_test_read    ; to load static
@@ -251,8 +304,8 @@ DEF kernel_start {
     # 0 &VVM3 VVM.start                   # VVM3 starts here
     # "VVM3 started \n" PRTstring
 
-    # 0 &VVM4 VVM.start                   # VVM4 starts here
-    # "VVM4 started \n" PRTstring
+    0 &VVM4 VVM.start                   # VVM4 starts here
+    "VVM4 started \n" PRTstring
 
 
 
