@@ -1,0 +1,90 @@
+# The CLI process for the Mutli Tasking Kernel
+
+# All used VAR declarations
+VALUE running 1
+VALUE input_token 0
+
+
+# Define const for error handling
+CONST KERNEL_succes 0
+CONST KERNEL_err_invalid_slot 1
+CONST KERNEL_err_cannot_halt  2
+CONST KERNEL_err_cannot_start 3
+CONST KERNEL_err_loading_vvm  4
+
+# Define host side functions as syscalls-is's for the FFI interface
+CONST KERNEL.ps     100 ; Syscall ID for the PS function
+CONST KERNEL.start  101 ; Syscall ID for the start function
+CONST KERNEL.resume 102 ; Syscall ID for the resume function
+CONST KERNEL.stop   103 ; Syscall ID for the stop function
+CONST KERNEL.kbd_flush  104 ; Syscall ID for the kbd_flush function
+
+
+DEF handle_error {
+    "Error " PRINTS PRINT "is the problem" PRINTS HALT
+}
+
+
+####################
+# For all FFI calls:
+# (Arg1 ... ArgN argc argr Syscall_ID -- [return values])
+# argr = number of return values
+# argc = number of arguments
+####################
+
+
+MACRO run.ps {
+    "PS " PRINTS "Work to do here\n" PRINTS
+    0 1 KERNEL.ps EXEC DUP IF handle_error ELSE DROP END
+
+
+}
+
+MACRO run.start {
+    "Start " PRINTS "Work to do here\n" PRINTS
+}
+
+MACRO run.resume {
+    "Resume " PRINTS "Work to do here\n" PRINTS
+}
+
+MACRO run.stop {
+    "Stop " PRINTS "Work to do here\n" PRINTS
+}
+
+MACRO run.kbd_flush {
+    "Kbd_flush " PRINTS "Work to do here\n" PRINTS
+}
+
+
+
+
+
+
+WHILE running DO
+    "SternOS> " PRINTS
+
+    READ AS input_token
+
+    input_token \"quit" == IF
+        0 AS running
+        GOTO LOOP_EXIT
+    END
+
+    input_token \"ps" == IF
+        run.ps
+        GOTO LOOP_EXIT
+    END
+
+
+
+
+
+
+
+
+:LOOP_EXIT
+DONE
+
+
+"\nQuiting Stern Mutli Tasking monitor\n" PRINTS

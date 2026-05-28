@@ -71,7 +71,7 @@ MACRO load_simpl_fly {
     \"PUSH"        _sq_ DEQUE.append
     1              _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
-    101            _sq_ DEQUE.append
+    150            _sq_ DEQUE.append
     \"EXEC"        _sq_ DEQUE.append
     \"SET"         _sq_ DEQUE.append
     2              _sq_ DEQUE.append
