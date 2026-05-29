@@ -232,10 +232,20 @@ class SimplGenerator(BaseGenerator):
             return
 
         if word.upper() == 'READ':
+            # 1. De string-pointer is zojuist door de voorafgaande StringNode op de 
+            #    interne datastack van de VVM gelegd via STSTR ... STREND.
+            #    We moeten deze pointer NU verplaatsen naar de host-deque (_host_dq).
+            self.emit('OUT')   # Verplaats string-ptr van VVM-stack naar host-deque
+
+            # 2. Zet nu het Syscall ID 20 op de VVM-stack
             self.emit('PUSH')
             self.emit(20)      # READ syscall ID
-            self.emit('OUT')   # Send ID to host
-            self.emit('SYS')   # Trigger syscall
+            
+            # 3. Verhuis ook het Syscall ID naar de host-deque
+            self.emit('OUT')   # Verplaats Syscall ID (20) naar host-deque
+            
+            # 4. Trigger de Syscall trap naar de kernel
+            self.emit('SYS')   # Schakel over naar VVM.check_syscalls
             return
             
 

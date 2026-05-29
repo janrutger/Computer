@@ -22,6 +22,32 @@ MACRO load_simpl_kernel_cli {
     \"BRZ"         _sq_ DEQUE.append
     \"endwhile_0"  _sq_ DEQUE.append
     \"STSTR"       _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    84             _sq_ DEQUE.append
+    121            _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    104            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    102            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    104            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    46             _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
     83             _sq_ DEQUE.append
     116            _sq_ DEQUE.append
     101            _sq_ DEQUE.append
@@ -29,10 +55,11 @@ MACRO load_simpl_kernel_cli {
     110            _sq_ DEQUE.append
     79             _sq_ DEQUE.append
     83             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
     62             _sq_ DEQUE.append
     32             _sq_ DEQUE.append
     \"STREND"      _sq_ DEQUE.append
-    \"PRINTS"      _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     20             _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append
@@ -42,25 +69,10 @@ MACRO load_simpl_kernel_cli {
     \"GET"         _sq_ DEQUE.append
     1              _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
-    6385632776     _sq_ DEQUE.append
-    \"EQ"          _sq_ DEQUE.append
-    \"BRZ"         _sq_ DEQUE.append
-    \"end_0"       _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    0              _sq_ DEQUE.append
-    \"SET"         _sq_ DEQUE.append
-    0              _sq_ DEQUE.append
-    \"BRA"         _sq_ DEQUE.append
-    \"LOOP_EXIT"   _sq_ DEQUE.append
-    \"LABEL"       _sq_ DEQUE.append
-    \"end_0"       _sq_ DEQUE.append
-    \"GET"         _sq_ DEQUE.append
-    1              _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
     5863720        _sq_ DEQUE.append
     \"EQ"          _sq_ DEQUE.append
     \"BRZ"         _sq_ DEQUE.append
-    \"end_1"       _sq_ DEQUE.append
+    \"end_0"       _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     0              _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
@@ -70,27 +82,41 @@ MACRO load_simpl_kernel_cli {
     \"EXEC"        _sq_ DEQUE.append
     \"DUP"         _sq_ DEQUE.append
     \"BRZ"         _sq_ DEQUE.append
-    \"else_2"      _sq_ DEQUE.append
+    \"else_1"      _sq_ DEQUE.append
     \"CALL"        _sq_ DEQUE.append
     \"handle_error" _sq_ DEQUE.append
     \"BRA"         _sq_ DEQUE.append
-    \"end_2"       _sq_ DEQUE.append
+    \"end_1"       _sq_ DEQUE.append
     \"LABEL"       _sq_ DEQUE.append
-    \"else_2"      _sq_ DEQUE.append
+    \"else_1"      _sq_ DEQUE.append
     \"DROP"        _sq_ DEQUE.append
     \"LABEL"       _sq_ DEQUE.append
-    \"end_2"       _sq_ DEQUE.append
+    \"end_1"       _sq_ DEQUE.append
     \"BRA"         _sq_ DEQUE.append
     \"LOOP_EXIT"   _sq_ DEQUE.append
     \"LABEL"       _sq_ DEQUE.append
-    \"end_1"       _sq_ DEQUE.append
+    \"end_0"       _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append
     1              _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     6953974617878  _sq_ DEQUE.append
     \"EQ"          _sq_ DEQUE.append
     \"BRZ"         _sq_ DEQUE.append
-    \"end_3"       _sq_ DEQUE.append
+    \"end_2"       _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    99             _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    73             _sq_ DEQUE.append
+    68             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     20             _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append
@@ -108,20 +134,103 @@ MACRO load_simpl_kernel_cli {
     \"EXEC"        _sq_ DEQUE.append
     \"DUP"         _sq_ DEQUE.append
     \"BRZ"         _sq_ DEQUE.append
-    \"else_4"      _sq_ DEQUE.append
+    \"else_3"      _sq_ DEQUE.append
     \"CALL"        _sq_ DEQUE.append
     \"handle_error" _sq_ DEQUE.append
     \"BRA"         _sq_ DEQUE.append
-    \"end_4"       _sq_ DEQUE.append
+    \"end_3"       _sq_ DEQUE.append
     \"LABEL"       _sq_ DEQUE.append
-    \"else_4"      _sq_ DEQUE.append
+    \"else_3"      _sq_ DEQUE.append
     \"DROP"        _sq_ DEQUE.append
     \"LABEL"       _sq_ DEQUE.append
-    \"end_4"       _sq_ DEQUE.append
+    \"end_3"       _sq_ DEQUE.append
     \"BRA"         _sq_ DEQUE.append
     \"LOOP_EXIT"   _sq_ DEQUE.append
     \"LABEL"       _sq_ DEQUE.append
-    \"end_3"       _sq_ DEQUE.append
+    \"end_2"       _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    6385292014     _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_4"       _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    65             _sq_ DEQUE.append
+    118            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    98             _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    99             _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    100            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    58             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    44             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    117            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    44             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    104            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    44             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    113            _sq_ DEQUE.append
+    117            _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"LOOP_EXIT"   _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_4"       _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    6385632776     _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_5"       _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"LOOP_EXIT"   _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_5"       _sq_ DEQUE.append
     \"STSTR"       _sq_ DEQUE.append
     85             _sq_ DEQUE.append
     110            _sq_ DEQUE.append
@@ -138,8 +247,8 @@ MACRO load_simpl_kernel_cli {
     97             _sq_ DEQUE.append
     110            _sq_ DEQUE.append
     100            _sq_ DEQUE.append
-    58             _sq_ DEQUE.append
-    32             _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
     \"STREND"      _sq_ DEQUE.append
     \"PRINTS"      _sq_ DEQUE.append
     \"LABEL"       _sq_ DEQUE.append

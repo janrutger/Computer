@@ -20,7 +20,7 @@ MACRO load_simpl_fib {
     114            _sq_ DEQUE.append
     32             _sq_ DEQUE.append
     \"STREND"      _sq_ DEQUE.append
-    \"PRINTS"      _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     20             _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append

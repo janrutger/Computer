@@ -421,6 +421,9 @@ DEF VVM.runbatch {
 
 VALUE _host_dq 0
 VALUE _kbd_dq 0
+VALUE _prompt_pointer 0
+VALUE new_input_flag 1
+
 DEF VVM.check_syscalls {
     AS _VVMpointer
 
@@ -429,11 +432,17 @@ DEF VVM.check_syscalls {
 
         _host_dq DEQUE.tail DEQUE.value AS _syscall_id
         _syscall_id 20 == IF
+
+            _host_dq DEQUE.pop_tail DROP
+            _host_dq DEQUE.tail DEQUE.value AS _prompt_pointer
+            20 _host_dq DEQUE.append
+
             # Haal ook hier de deque op via de veilige VVMpeek route met het adres van de pointer
             VVM_kbdq _VVMpointer VVMpeek AS _kbd_dq
-            
             _kbd_dq DEQUE.is_empty 0 == IF
-                _host_dq DEQUE.pop_tail DROP  
+                _host_dq DEQUE.pop_tail DROP        ; Drop syscall ID
+                _host_dq DEQUE.pop_tail DROP        ; Drop prompt pointer
+
                 
                 20 syscall_table DICT.get AS _syscall_handler
                 _VVMpointer _syscall_handler EXEC
@@ -442,11 +451,15 @@ DEF VVM.check_syscalls {
             ELSE
                 VVM_status _VVMpointer VVMpeek VVM_WaitIO != IF
                     VVM_WaitIO VVM_status _VVMpointer VVMpoke
-                    *_VVMpointer kbd_req_queue DEQUE.push
+                    *_VVMpointer kbd_req_queue DEQUE.append
+
+                    _prompt_pointer *_VVMpointer kbd_prompts DICT.put
+                    1 AS new_input_flag   # Forceer de kernel-loop om direct de prompt te evalueren!
+
                 END
             END
         ELSE
-            _host_dq DEQUE.pop_tail AS _syscall_id
+            _host_dq DEQUE.pop_tail AS _syscall_id     # get the syscall
             
             _syscall_id syscall_table DICT.has_key IF
                 _syscall_id syscall_table DICT.get AS _syscall_handler

@@ -1444,6 +1444,7 @@ DEF s_READ {
 VALUE string_dict 0
 VALUE _vvm_temp_list_ptr 0
 VALUE kbd_req_queue 0
+VALUE kbd_prompts 0
 
 
 DEF VVM.init {
@@ -1452,12 +1453,13 @@ DEF VVM.init {
 
     100 DICT.new AS label_addresses
 
-    50 DICT.new AS syscall_table
+    50  DICT.new AS syscall_table
 
-    256 DICT.new AS string_dict
+    100 DICT.new AS string_dict
+    4   DICT.new AS kbd_prompts
 
-    DEQUE.new AS kbd_req_queue
-
+    DEQUE.new    AS kbd_req_queue
+    
 
 
 

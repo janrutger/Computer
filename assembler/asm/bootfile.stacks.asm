@@ -116,6 +116,7 @@
 . $string_dict 1
 . $_vvm_temp_list_ptr 1
 . $kbd_req_queue 1
+. $kbd_prompts 1
 . $_temp_ptr 1
 . $_temp_idx 1
 . $_temp_val 1
@@ -162,6 +163,8 @@
 . $_final_string_ptr 1
 . $_host_dq 1
 . $_kbd_dq 1
+. $_prompt_pointer 1
+. $new_input_flag 1
 . $_filename 1
 . $_code_queue 1
 . $_custom_id 1
@@ -3959,11 +3962,16 @@
     call @DICT.new
     ustack A $DATASTACK_PTR
     sto A $syscall_table
-    ldi A 256
+    ldi A 100
     stack A $DATASTACK_PTR
     call @DICT.new
     ustack A $DATASTACK_PTR
     sto A $string_dict
+    ldi A 4
+    stack A $DATASTACK_PTR
+    call @DICT.new
+    ustack A $DATASTACK_PTR
+    sto A $kbd_prompts
     call @DEQUE.new
     ustack A $DATASTACK_PTR
     sto A $kbd_req_queue
@@ -5381,6 +5389,21 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :VVM.check_syscalls_if_else_31
+    ldm A $_host_dq
+    stack A $DATASTACK_PTR
+    call @DEQUE.pop_tail
+    call @rt_drop
+    ldm A $_host_dq
+    stack A $DATASTACK_PTR
+    call @DEQUE.tail
+    call @DEQUE.value
+    ustack A $DATASTACK_PTR
+    sto A $_prompt_pointer
+    ldi A 20
+    stack A $DATASTACK_PTR
+    ldm A $_host_dq
+    stack A $DATASTACK_PTR
+    call @DEQUE.append
     ldi A 48
     stack A $DATASTACK_PTR
     ldm A $_VVMpointer
@@ -5395,6 +5418,10 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :VVM.check_syscalls_if_else_32
+    ldm A $_host_dq
+    stack A $DATASTACK_PTR
+    call @DEQUE.pop_tail
+    call @rt_drop
     ldm A $_host_dq
     stack A $DATASTACK_PTR
     call @DEQUE.pop_tail
@@ -5440,7 +5467,17 @@
     stack A $DATASTACK_PTR
     ldm A $kbd_req_queue
     stack A $DATASTACK_PTR
-    call @DEQUE.push
+    call @DEQUE.append
+    ldm A $_prompt_pointer
+    stack A $DATASTACK_PTR
+    ldm I $_VVMpointer
+    ldx A $_start_memory_
+    stack A $DATASTACK_PTR
+    ldm A $kbd_prompts
+    stack A $DATASTACK_PTR
+    call @DICT.put
+    ldi A 1
+    sto A $new_input_flag
 :VVM.check_syscalls_if_end_33
 :VVM.check_syscalls_if_end_32
     jmp :VVM.check_syscalls_if_end_31
@@ -5735,6 +5772,7 @@
 % $string_dict 0
 % $_vvm_temp_list_ptr 0
 % $kbd_req_queue 0
+% $kbd_prompts 0
 
 % $_temp_ptr 0
 % $_temp_idx 0
@@ -5782,6 +5820,8 @@
 % $_final_string_ptr 0
 % $_host_dq 0
 % $_kbd_dq 0
+% $_prompt_pointer 0
+% $new_input_flag 1
 % $_filename 0
 % $_code_queue 0
 % $_custom_id 0

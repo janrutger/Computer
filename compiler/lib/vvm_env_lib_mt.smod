@@ -27,6 +27,7 @@
 . $string_dict 1
 . $_vvm_temp_list_ptr 1
 . $kbd_req_queue 1
+. $kbd_prompts 1
 # .FUNCTIONS
 @VVMpeek
 
@@ -1361,11 +1362,16 @@
     call @DICT.new
     ustack A $DATASTACK_PTR
     sto A $syscall_table
-    ldi A 256
+    ldi A 100
     stack A $DATASTACK_PTR
     call @DICT.new
     ustack A $DATASTACK_PTR
     sto A $string_dict
+    ldi A 4
+    stack A $DATASTACK_PTR
+    call @DICT.new
+    ustack A $DATASTACK_PTR
+    sto A $kbd_prompts
     call @DEQUE.new
     ustack A $DATASTACK_PTR
     sto A $kbd_req_queue
@@ -1899,3 +1905,4 @@
 % $string_dict 0
 % $_vvm_temp_list_ptr 0
 % $kbd_req_queue 0
+% $kbd_prompts 0

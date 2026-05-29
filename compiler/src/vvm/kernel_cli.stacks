@@ -55,20 +55,22 @@ MACRO run.kbd_flush {
     "Kbd_flush " PRINTS "Work to do here\n" PRINTS
 }
 
+MACRO run.help {
+    "\n" PRINTS
+    "Availible commands: " PRINTS
+    "ps, resume, help, quit\n\n" PRINTS
+}
+
 
 
 
 
 
 WHILE running DO
-    "SternOS> " PRINTS
+    "\nType help for help.\n" PRINTS
+    "SternOS > " READ AS input_token
 
-    READ AS input_token
-
-    input_token \"quit" == IF
-        0 AS running
-        GOTO LOOP_EXIT
-    END
+    
 
     input_token \"ps" == IF
         run.ps
@@ -76,15 +78,25 @@ WHILE running DO
     END
 
     input_token \"resume" == IF
-        READ                ; Get the target VVM to resume
+        "instanceID " READ                ; Get the target VVM to resume
         run.resume
         GOTO LOOP_EXIT
     END
 
 
+    input_token \"help" == IF
+        run.help
+        GOTO LOOP_EXIT
+    END
+
+    input_token \"quit" == IF
+        0 AS running
+        GOTO LOOP_EXIT
+    END
 
 
-    "Unknown command: " PRINTS 
+
+    "Unknown command\n" PRINTS 
 
 :LOOP_EXIT
 DONE

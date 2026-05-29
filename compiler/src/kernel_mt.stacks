@@ -384,13 +384,24 @@ DEF kernel_start {
     1 TIME.start
     
     
-    VALUE new_input_flag 1
+    # VALUE new_input_flag 1
 
     WHILE KERNEL_number_of_processes 0 > DO
         kbd_req_queue DEQUE.is_empty 0 == IF
             new_input_flag IF 
                 0 AS new_input_flag
-                kbd_req_queue DEQUE.tail PRTnum "> " PRTstring
+                
+                # 1. Haal de VVM-pointer op van het proces dat vooraan/achteraan de wachtrij staat
+                kbd_req_queue DEQUE.tail DEQUE.value AS _waiting_VVM
+                
+                # 2. Kijk of dit specifieke proces een opgeslagen prompt heeft in de dictionary
+                _waiting_VVM kbd_prompts DICT.has_key IF
+                    # 3. Haal de échte prompt-pointer op en print hem live!
+                    _waiting_VVM kbd_prompts DICT.get PRTstring
+                ELSE
+                    # Fallback voor het geval een proces op kbd wacht maar geen prompt stuurde
+                    "> " PRTstring
+                END
             END
 
             # Pol het toetsenbord non-blocking
