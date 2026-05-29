@@ -1,16 +1,16 @@
 # .HEADER
+. $VVM0 1
 . $VVM1 1
 . $VVM2 1
 . $VVM3 1
-. $VVM4 1
+. $VVM0_host_deque 1
 . $VVM1_host_deque 1
 . $VVM2_host_deque 1
 . $VVM3_host_deque 1
-. $VVM4_host_deque 1
+. $VVM0_kbd_deque 1
 . $VVM1_kbd_deque 1
 . $VVM2_kbd_deque 1
 . $VVM3_kbd_deque 1
-. $VVM4_kbd_deque 1
 . $SIMPL_code 1
 . $KERNEL_slots 1
 . $KERNEL_proces_list 1
@@ -296,7 +296,7 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :host_proc_resume_if_end_7
-    ldm A $VVM2
+    ldm A $VVM1
     sto A $_target_vvm
 :host_proc_resume_if_end_7
     ldm A $_target_slot
@@ -307,7 +307,7 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :host_proc_resume_if_end_8
-    ldm A $VVM3
+    ldm A $VVM2
     sto A $_target_vvm
 :host_proc_resume_if_end_8
     ldm A $_target_slot
@@ -318,7 +318,7 @@
     ustack A $DATASTACK_PTR
     tst A 0
     jmpt :host_proc_resume_if_end_9
-    ldm A $VVM4
+    ldm A $VVM3
     sto A $_target_vvm
 :host_proc_resume_if_end_9
     stack Z $DATASTACK_PTR
@@ -468,6 +468,9 @@
         int $INT_VECTORS         ; Interrupt to trigger the syscall
         call @DEQUE.new
     ustack A $DATASTACK_PTR
+    sto A $VVM0_host_deque
+    call @DEQUE.new
+    ustack A $DATASTACK_PTR
     sto A $VVM1_host_deque
     call @DEQUE.new
     ustack A $DATASTACK_PTR
@@ -477,7 +480,7 @@
     sto A $VVM3_host_deque
     call @DEQUE.new
     ustack A $DATASTACK_PTR
-    sto A $VVM4_host_deque
+    sto A $VVM0_kbd_deque
     call @DEQUE.new
     ustack A $DATASTACK_PTR
     sto A $VVM1_kbd_deque
@@ -487,35 +490,32 @@
     call @DEQUE.new
     ustack A $DATASTACK_PTR
     sto A $VVM3_kbd_deque
-    call @DEQUE.new
-    ustack A $DATASTACK_PTR
-    sto A $VVM4_kbd_deque
     ldi A 4
     stack A $DATASTACK_PTR
     call @NEW.list
     ustack A $DATASTACK_PTR
     sto A $KERNEL_slots
-    ldm A $VVM1
+    ldm A $VVM0
     stack A $DATASTACK_PTR
     stack Z $DATASTACK_PTR
     ldm A $KERNEL_slots
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldm A $VVM2
+    ldm A $VVM1
     stack A $DATASTACK_PTR
     ldi A 1
     stack A $DATASTACK_PTR
     ldm A $KERNEL_slots
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldm A $VVM3
+    ldm A $VVM2
     stack A $DATASTACK_PTR
     ldi A 2
     stack A $DATASTACK_PTR
     ldm A $KERNEL_slots
     stack A $DATASTACK_PTR
     call @LIST.put
-    ldm A $VVM4
+    ldm A $VVM3
     stack A $DATASTACK_PTR
     ldi A 3
     stack A $DATASTACK_PTR
@@ -538,7 +538,7 @@
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldm A $VVM1
+        ldm A $VVM0
     stack A $DATASTACK_PTR
     call @rt_print_tos
     ldi A $kernel_start_str_16
@@ -547,7 +547,7 @@
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldm A $VVM2
+        ldm A $VVM1
     stack A $DATASTACK_PTR
     call @rt_print_tos
     ldi A $kernel_start_str_17
@@ -556,7 +556,7 @@
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldm A $VVM3
+        ldm A $VVM2
     stack A $DATASTACK_PTR
     call @rt_print_tos
     ldi A $kernel_start_str_18
@@ -565,7 +565,7 @@
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldm A $VVM4
+        ldm A $VVM3
     stack A $DATASTACK_PTR
     call @rt_print_tos
     ldi A @host_gcd
@@ -1538,22 +1538,22 @@
     ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 114
+    ldi A 82
     stack A $DATASTACK_PTR
     ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 114
+    ldi A 82
     stack A $DATASTACK_PTR
     ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 111
+    ldi A 79
     stack A $DATASTACK_PTR
     ldm A $_sq_
     stack A $DATASTACK_PTR
     call @DEQUE.append
-    ldi A 114
+    ldi A 82
     stack A $DATASTACK_PTR
     ldm A $_sq_
     stack A $DATASTACK_PTR
@@ -1702,11 +1702,11 @@
     stack A $DATASTACK_PTR
     ldi A 1024
     stack A $DATASTACK_PTR
-    ldi A $VVM1_host_deque
+    ldi A $VVM0_host_deque
     stack A $DATASTACK_PTR
-    ldi A $VVM1_kbd_deque
+    ldi A $VVM0_kbd_deque
     stack A $DATASTACK_PTR
-    ldi A $VVM1
+    ldi A $VVM0
     stack A $DATASTACK_PTR
     call @VVM.create
     ldi A $kernel_start_str_19
@@ -2492,11 +2492,11 @@
     stack A $DATASTACK_PTR
     ldi A 1024
     stack A $DATASTACK_PTR
-    ldi A $VVM2_host_deque
+    ldi A $VVM1_host_deque
     stack A $DATASTACK_PTR
-    ldi A $VVM2_kbd_deque
+    ldi A $VVM1_kbd_deque
     stack A $DATASTACK_PTR
-    ldi A $VVM2
+    ldi A $VVM1
     stack A $DATASTACK_PTR
     call @VVM.create
     ldi A $kernel_start_str_20
@@ -4025,11 +4025,11 @@
     stack A $DATASTACK_PTR
     ldi A 1024
     stack A $DATASTACK_PTR
-    ldi A $VVM3_host_deque
+    ldi A $VVM2_host_deque
     stack A $DATASTACK_PTR
-    ldi A $VVM3_kbd_deque
+    ldi A $VVM2_kbd_deque
     stack A $DATASTACK_PTR
-    ldi A $VVM3
+    ldi A $VVM2
     stack A $DATASTACK_PTR
     call @VVM.create
     ldi A $kernel_start_str_21
@@ -4354,11 +4354,11 @@
     stack A $DATASTACK_PTR
     ldi A 1024
     stack A $DATASTACK_PTR
-    ldi A $VVM4_host_deque
+    ldi A $VVM3_host_deque
     stack A $DATASTACK_PTR
-    ldi A $VVM4_kbd_deque
+    ldi A $VVM3_kbd_deque
     stack A $DATASTACK_PTR
-    ldi A $VVM4
+    ldi A $VVM3
     stack A $DATASTACK_PTR
     call @VVM.create
     ldi A $kernel_start_str_22
@@ -4368,7 +4368,7 @@
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
     stack Z $DATASTACK_PTR
-    ldi A $VVM1
+    ldi A $VVM0
     stack A $DATASTACK_PTR
     call @VVM.start
     ldi A $kernel_start_str_23
@@ -4383,28 +4383,7 @@
     ustack A $DATASTACK_PTR
     sto A $KERNEL_proces_list
     stack Z $DATASTACK_PTR
-    ldm A $VVM1
-    stack A $DATASTACK_PTR
-    ldm A $KERNEL_proces_list
-    stack A $DATASTACK_PTR
-    call @DICT.put
-    ldi A 1
-    stack A $DATASTACK_PTR
-    ldm A $VVM2
-    stack A $DATASTACK_PTR
-    ldm A $KERNEL_proces_list
-    stack A $DATASTACK_PTR
-    call @DICT.put
-    ldi A 2
-    stack A $DATASTACK_PTR
-    ldm A $VVM3
-    stack A $DATASTACK_PTR
-    ldm A $KERNEL_proces_list
-    stack A $DATASTACK_PTR
-    call @DICT.put
-    ldi A 3
-    stack A $DATASTACK_PTR
-    ldm A $VVM4
+    ldm A $VVM0
     stack A $DATASTACK_PTR
     ldm A $KERNEL_proces_list
     stack A $DATASTACK_PTR
@@ -4690,18 +4669,18 @@
     ret
 
 # .DATA
-% $VVM1 30720
-% $VVM2 31744
-% $VVM3 32768
-% $VVM4 33792
+% $VVM0 30720
+% $VVM1 31744
+% $VVM2 32768
+% $VVM3 33792
+% $VVM0_host_deque 0
 % $VVM1_host_deque 0
 % $VVM2_host_deque 0
 % $VVM3_host_deque 0
-% $VVM4_host_deque 0
+% $VVM0_kbd_deque 0
 % $VVM1_kbd_deque 0
 % $VVM2_kbd_deque 0
 % $VVM3_kbd_deque 0
-% $VVM4_kbd_deque 0
 % $SIMPL_code 0
 % $KERNEL_slots 4
 % $KERNEL_proces_list 0
@@ -4733,15 +4712,15 @@
 % $_poll_loop_continue 0
 % $kernel_start_str_13 \P \o \o \l \space \i \n \i \t \i \a \l \i \z \e \d \space \( \s \i \z \e \space \5 \0 \) \. \Return \null
 % $kernel_start_str_14 \V \V \M \space \E \n \v \i \r \o \n \m \e \n \t \space \I \n \i \t \i \a \l \i \z \e \d \: \Return \null
-% $kernel_start_str_15 \V \V \M \1 \space \b \a \s \e \space \a \d \d \r \e \s \s \space \space \space \space \space \space \space \space \space \space \: \space \null
-% $kernel_start_str_16 \V \V \M \2 \space \b \a \s \e \space \a \d \d \r \e \s \s \space \space \space \space \space \space \space \space \space \space \: \space \null
-% $kernel_start_str_17 \V \V \M \3 \space \b \a \s \e \space \a \d \d \r \e \s \s \space \space \space \space \space \space \space \space \space \space \: \space \null
-% $kernel_start_str_18 \V \V \M \4 \space \b \a \s \e \space \a \d \d \r \e \s \s \space \space \space \space \space \space \space \space \space \space \: \space \null
-% $kernel_start_str_19 \V \V \M \1 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \Return \null
-% $kernel_start_str_20 \V \V \M \2 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \Return \null
-% $kernel_start_str_21 \V \V \M \3 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \Return \null
-% $kernel_start_str_22 \V \V \M \4 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \Return \null
-% $kernel_start_str_23 \V \V \M \1 \space \s \t \a \r \t \e \d \space \Return \null
+% $kernel_start_str_15 \V \V \M \0 \space \b \a \s \e \space \a \d \d \r \e \s \s \space \space \space \space \space \space \space \space \space \space \: \space \null
+% $kernel_start_str_16 \V \V \M \1 \space \b \a \s \e \space \a \d \d \r \e \s \s \space \space \space \space \space \space \space \space \space \space \: \space \null
+% $kernel_start_str_17 \V \V \M \2 \space \b \a \s \e \space \a \d \d \r \e \s \s \space \space \space \space \space \space \space \space \space \space \: \space \null
+% $kernel_start_str_18 \V \V \M \3 \space \b \a \s \e \space \a \d \d \r \e \s \s \space \space \space \space \space \space \space \space \space \space \: \space \null
+% $kernel_start_str_19 \V \V \M \0 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \Return \null
+% $kernel_start_str_20 \V \V \M \1 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \Return \null
+% $kernel_start_str_21 \V \V \M \2 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \Return \null
+% $kernel_start_str_22 \V \V \M \3 \space \i \n \s \t \a \n \c \e \space \c \r \e \a \t \e \d \space \Return \Return \null
+% $kernel_start_str_23 \V \V \M \0 \space \s \t \a \r \t \e \d \space \Return \null
 % $new_input_flag 1
 % $kernel_start_str_24 \> \space \null
 % $kernel_start_str_25 \K \e \r \n \e \l \: \space \I \n \v \o \e \r \space \g \e \n \e \g \e \e \r \d \, \space \g \e \e \n \space \w \a \c \h \t \e \n \d \space \p \r \o \c \e \s \. \Return \null

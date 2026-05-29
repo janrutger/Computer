@@ -195,10 +195,10 @@ MACRO load_simpl_kernel_cli {
     \"handle_error" _sq_ DEQUE.append
     \"STSTR"       _sq_ DEQUE.append
     69             _sq_ DEQUE.append
-    114            _sq_ DEQUE.append
-    114            _sq_ DEQUE.append
-    111            _sq_ DEQUE.append
-    114            _sq_ DEQUE.append
+    82             _sq_ DEQUE.append
+    82             _sq_ DEQUE.append
+    79             _sq_ DEQUE.append
+    82             _sq_ DEQUE.append
     32             _sq_ DEQUE.append
     \"STREND"      _sq_ DEQUE.append
     \"PRINTS"      _sq_ DEQUE.append
