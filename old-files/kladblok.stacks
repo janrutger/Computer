@@ -1,0 +1,46 @@
+# =============================================================================
+# FFI 102: host_proc_resume
+# Input vanaf de CLI-stack: ( slot_num -- )
+# Output naar de CLI-stack: ( KERNEL_succes_of_error -- )
+# =============================================================================
+
+DEF host_proc_resume {
+    # 1. Haal het doelslot van de stack van de aanroeper (de CLI)
+    AS _target_slot
+    
+    # Validatie: Slot moet 1, 2 of 3 zijn
+    _target_slot 1 < _target_slot 3 > + IF
+        KERNEL_err_invalid_slot 
+        GOTO RESUME_EXIT
+    END
+
+    # 2. Vertaal het hardware-slot naar het bijbehorende fysieke VVM-basisadres
+    VALUE _target_vvm 0
+    _target_slot 1 == IF VVM2 AS _target_vvm END
+    _target_slot 2 == IF VVM3 AS _target_vvm END
+    _target_slot 3 == IF VVM4 AS _target_vvm END
+
+    # 3. Krijg de actuele status-byte via offset VVM_status (0)
+    VVM_status _target_vvm VVMpeek AS _status
+
+    # 4. Controleer of de status ELIGIBLE is voor een resume (moet VVM_Halted zijn!)
+    _status VVM_Halted == IF
+        # A. Zet de status-byte in het VVM-geheugen terug op VVM_Running (0)
+        VVM_Running _target_vvm VVMpoke
+        
+        # B. Voeg de VVM (Key) en het Slot (Value) opnieuw toe aan de scheduler-dict
+        # De DICT.put signatuur is: ( value key dict_ptr -- )
+        # Dus bij jou: slot_num, vvm_ptr, dictionary
+        _target_slot _target_vvm KERNEL_proces_list DICT.put
+        
+        # # C. Update de globale teller van actieve processen in de kernel
+        # KERNEL_proces_list DICT.count AS KERNEL_number_of_processes
+
+        # Meld succes terug aan de CLI
+        KERNEL_succes 
+    ELSE
+        # Als het proces al draait (Running) of in Error staat, weigeren we de resume!
+        KERNEL_err_cannot_start 
+    END
+    :RESUME_EXIT
+}

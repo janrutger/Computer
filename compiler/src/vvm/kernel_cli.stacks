@@ -3,6 +3,7 @@
 # All used VAR declarations
 VALUE running 1
 VALUE input_token 0
+VALUE _slot_ 0
 
 
 # Define const for error handling
@@ -21,7 +22,7 @@ CONST KERNEL.kbd_flush  104 ; Syscall ID for the kbd_flush function
 
 
 DEF handle_error {
-    "Error " PRINTS PRINT "is the problem" PRINTS HALT
+    "ERROR " PRINTS PRINT "is the problem\n" PRINTS 
 }
 
 
@@ -42,7 +43,8 @@ MACRO run.start {
 }
 
 MACRO run.resume {
-    "Resume " PRINTS "Work to do here\n" PRINTS
+    AS _slot_
+    _slot_ 1 1 KERNEL.resume EXEC DUP IF handle_error ELSE DROP END
 }
 
 MACRO run.stop {
@@ -73,12 +75,16 @@ WHILE running DO
         GOTO LOOP_EXIT
     END
 
+    input_token \"resume" == IF
+        READ                ; Get the target VVM to resume
+        run.resume
+        GOTO LOOP_EXIT
+    END
 
 
 
 
-
-
+    "Unknown command: " PRINTS 
 
 :LOOP_EXIT
 DONE
