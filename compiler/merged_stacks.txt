@@ -3157,36 +3157,56 @@ USE parser_tools
 # Include the VVM Simpl code apps
 INCLUDE simpl_fly_lib
 INCLUDE simpl_chaos3_lib
-INCLUDE simpl_test_read_lib
+INCLUDE simpl_kernel_cli_lib
 INCLUDE simpl_fib_lib
 
-VALUE VVM1 30720        ; The memory address for VVM1, stored in a variable.
-VALUE VVM2 31744        ; The memory address for VVM2, stored in a variable.
+VALUE VVM0 30720        ; The memory address for VVM0, stored in a variable.
+VALUE VVM1 31744        ; The memory address for VVM1, stored in a variable.
+VALUE VVM2 32768        ; The memory address for VVM2, stored in a variable.
+VALUE VVM3 33792        ; The memory address for VVM3, stored in a variable.
 
+VALUE VVM0_host_deque 0
 VALUE VVM1_host_deque 0
 VALUE VVM2_host_deque 0
+VALUE VVM3_host_deque 0
 
+VALUE VVM0_kbd_deque 0
 VALUE VVM1_kbd_deque 0
 VALUE VVM2_kbd_deque 0
+VALUE VVM3_kbd_deque 0
 
 VALUE SIMPL_code 0
 
+VALUE KERNEL_slots 4
 VALUE KERNEL_proces_list 0
 VALUE KERNEL_number_of_processes 0
 VALUE KERNEL_current_process 0
 VALUE KERNEL_current_ptr 0
+VALUE KERNEL_current_burst 50
+CONST KERNEL_max_burst 300
 
 VALUE _binnengekomen_regel 0
 VALUE _wachtende_vvm 0
 VALUE _target_kbd_dq 0
 VALUE _rpn_input_ptr 0
 VALUE _tokens_geleverd 0
+VALUE _active_count 0
+
+VALUE _target_vvm 0
 
 
+CONST KERNEL_succes 0
+CONST KERNEL_err_invalid_slot 1
+CONST KERNEL_err_cannot_halt 2
+CONST KERNEL_err_cannot_start 3
+CONST KERNEL_err_loading_vvm 4
 
-
-
-
+# Define host side functions as syscalls-is's for the FFI interface
+CONST KERNEL.ps     100 ; Syscall ID for the PS function
+CONST KERNEL.start  101 ; Syscall ID for the start function
+CONST KERNEL.resume 102 ; Syscall ID for the resume function
+CONST KERNEL.stop   103 ; Syscall ID for the stop function
+CONST KERNEL.kbd_flush  104 ; Syscall ID for the kbd_flush function
 
 
 
@@ -3201,6 +3221,228 @@ DEF host_gcd {
     DONE
     DROP
 }
+
+# =============================================================================
+# FFI 100: host_proc_list (De 'ps' heavy lifter)
+# Signatuur vanuit CLI: 0 1 KERNEL.ps EXEC -> VVM-stack krijgt KERNEL_succes (0)
+# =============================================================================
+
+DEF host_proc_list {
+    # 1. Toon direct de geformatteerde tabel op de host-monitor
+    "\nSlot   VVM-Adres   Status\n" PRTstring
+    "---------------------------\n" PRTstring
+    
+    # Vraag aan de dictionary hoeveel actieve registraties er zijn
+    KERNEL_proces_list DICT.count AS _active_count
+    
+    0 AS _loop_idx
+    WHILE _loop_idx _active_count < DO
+        # CRUCIALE FIX: DICT.item legt (key value) op de stack.
+        # Value (Slot) ligt bovenop, dus die pakken we EERST met AS _slot_num.
+        # Key (&VVM) ligt daaronder, dus die pakken we DAARNA met AS _vvm_ptr.
+        _loop_idx KERNEL_proces_list DICT.item AS _slot_num AS _vvm_ptr
+        
+        # Nu bevat _vvm_ptr het echte adres (bijv. 30720). We kunnen veilig peeken!
+        VVM_status &_vvm_ptr VVMpeek AS _status
+        
+        # 2. Netjes geformatteerd printen
+        " " PRTstring 
+        _slot_num PRTnum 
+        "     " PRTstring 
+        _vvm_ptr PRTnum 
+        "       " PRTstring
+        
+        # 3. Evalueer de status exact volgens de vvm_env_lib_mt constants
+        _status VVM_Running == IF "RUNNING\n" PRTstring END
+        _status VVM_Sys     == IF "SYS_CALL\n" PRTstring END
+        _status VVM_Idle    == IF "IDLE\n"     PRTstring END
+        _status VVM_Error   == IF "ERROR\n"    PRTstring END
+        _status VVM_Halted  == IF "HALTED\n"   PRTstring END
+        _status VVM_WaitIO  == IF "WAIT_IO\n"  PRTstring END
+        
+        _loop_idx 1 + AS _loop_idx
+    DONE
+    "\n" PRTstring
+
+    # 4. De handshake terug naar de VVM-stack van de aanroeper (de CLI)
+    KERNEL_succes 
+}
+
+# =============================================================================
+# FFI 101: host_proc_start (Met statuscontrole en Full Reset)
+# Input vanaf de CLI-stack: ( slot_num -- )
+# Output naar de CLI-stack: ( KERNEL_succes_of_error -- )
+# =============================================================================
+
+DEF host_proc_start {
+    AS _target_slot
+    
+    # 1. Validatie van het slotnummer
+    _target_slot 1 < _target_slot 3 > + IF
+        KERNEL_err_invalid_slot 
+        GOTO START_EXIT
+    END
+
+    # 2. Vertaal slot naar het fysieke VVM-basisadres
+    _target_slot 1 == IF VVM1 AS _target_vvm END
+    _target_slot 2 == IF VVM2 AS _target_vvm END
+    _target_slot 3 == IF VVM3 AS _target_vvm END
+
+    # 3. CRUCIALE CHECK: Controleer de huidige status van de doeltarget!
+    VVM_status &_target_vvm VVMpeek AS _current_status
+    
+    # Een proces mag ALLEEN gestart worden als het momenteel Halted is.
+    # Als het al Running is, of in WaitIO staat, weigeren we de start!
+    _current_status VVM_Halted != IF
+        KERNEL_err_cannot_start     # Geef de juiste foutcode terug
+        GOTO START_EXIT
+    END
+
+    # =========================================================================
+    # Vanaf hier is het 100% veilig: DEKONTAMINATIE FASE (De Grote Schoonmaak)
+    # =========================================================================
+
+    # A. Trek de Host Deque volledig leeg
+    VVM_HOST_ptr &_target_vvm VVMpeek AS _target_host_dq
+    WHILE _target_host_dq DEQUE.is_empty 0 == DO
+        _target_host_dq DEQUE.pop DROP
+    DONE
+
+    # B. Trek de Keyboard Deque volledig leeg
+    VVM_kbdq &_target_vvm VVMpeek AS _target_kbd_dq
+    WHILE _target_kbd_dq DEQUE.is_empty 0 == DO
+        _target_kbd_dq DEQUE.pop DROP
+    DONE
+
+    # C. Reset alle 26 registers (A tot en met Z) naar 0
+    VALUE _reg_idx 0
+    0 AS _reg_idx
+    WHILE _reg_idx 26 < DO
+        0 VVM_regs _reg_idx + &_target_vvm VVMpoke
+        _reg_idx 1 + AS _reg_idx
+    DONE
+
+    # =========================================================================
+    # POINTER RESET FASE
+    # =========================================================================
+
+    # D. PC (Program Counter) terug naar het begin van de code-sectie
+    # We nemen de RAAUWE waarde van de VVM (bijv. 31744) en tellen daar VVM_code bij op.
+    _target_vvm VVM_code + VVM_PC &_target_vvm VVMpoke
+
+    # E. SP (Data Stack Pointer) terug naar de basis van de stack
+    _target_vvm VVM_stack + VVM_SP &_target_vvm VVMpoke
+
+    # F. RSP (Return Stack Pointer) terug naar de top van de return-stack
+    VVM_size &_target_vvm VVMpeek AS _vvm_size
+    _target_vvm _vvm_size + VVM_RSP &_target_vvm VVMpoke
+
+    # =========================================================================
+    # ACTIVATIE FASE
+    # =========================================================================
+
+    # G. Zet de status-byte in het VVM-geheugen op VVM_Running (0)
+    VVM_Running VVM_status &_target_vvm VVMpoke
+
+    # H. Meld de VVM aan bij de actieve scheduler-lijst
+    # _target_slot &_target_vvm KERNEL_proces_list DICT.put
+    _target_slot _target_vvm KERNEL_proces_list DICT.put
+
+    # Meld succes aan de CLI
+    KERNEL_succes
+
+    :START_EXIT
+}
+
+# =============================================================================
+# FFI 102: host_proc_resume
+# Input vanaf de CLI-stack: ( slot_num -- )
+# Output naar de CLI-stack: ( KERNEL_succes_of_error -- )
+# =============================================================================
+
+DEF host_proc_resume {
+    # 1. Haal het doelslot van de stack van de aanroeper (de CLI)
+    AS _target_slot
+    
+    # Validatie: Slot moet 1, 2 of 3 zijn
+    _target_slot 1 < _target_slot 3 > + IF
+        KERNEL_err_invalid_slot 
+        GOTO RESUME_EXIT
+    END
+
+    # 2. Vertaal het hardware-slot naar het bijbehorende fysieke VVM-basisadres
+    
+    _target_slot 1 == IF VVM1 AS _target_vvm END
+    _target_slot 2 == IF VVM2 AS _target_vvm END
+    _target_slot 3 == IF VVM3 AS _target_vvm END
+
+    # 3. Krijg de actuele status-byte via offset VVM_status (0)
+    VVM_status &_target_vvm VVMpeek AS _status
+
+    # 4. Controleer of de status ELIGIBLE is voor een resume (moet VVM_Halted zijn!)
+    _status VVM_Halted == IF
+        # A. Zet de status-byte in het VVM-geheugen terug op VVM_Running (0)
+        VVM_Running VVM_status &_target_vvm VVMpoke
+    
+        # B. Voeg de VVM (Key) en het Slot (Value) opnieuw toe aan de scheduler-dict
+        # De DICT.put signatuur is: ( value key dict_ptr -- )
+        # Dus bij jou: slot_num, vvm_ptr, dictionary
+        _target_slot _target_vvm KERNEL_proces_list DICT.put
+        
+        # # C. Update de globale teller van actieve processen in de kernel
+        # KERNEL_proces_list DICT.count AS KERNEL_number_of_processes
+
+        # Meld succes terug aan de CLI
+        KERNEL_succes 
+    ELSE
+        # Als het proces al draait (Running) of in Error staat, weigeren we de resume!
+        KERNEL_err_cannot_start 
+    END
+    :RESUME_EXIT
+}
+
+# =============================================================================
+# FFI 103: host_proc_stop
+# Input vanaf de CLI-stack: ( slot_num -- )
+# Output naar de CLI-stack: ( KERNEL_succes_of_error -- )
+# =============================================================================
+
+DEF host_proc_stop {
+    # 1. Haal het doelslot van de stack van de aanroeper (de CLI)
+    AS _target_slot
+    
+    # Validatie: Slot moet 1, 2 of 3 zijn
+    _target_slot 1 < _target_slot 3 > + IF
+        KERNEL_err_invalid_slot 
+        GOTO STOP_EXIT
+    END
+
+    # 2. Vertaal het hardware-slot naar het bijbehorende fysieke VVM-basisadres
+    _target_slot 1 == IF VVM1 AS _target_vvm END
+    _target_slot 2 == IF VVM2 AS _target_vvm END
+    _target_slot 3 == IF VVM3 AS _target_vvm END
+
+    # 3. Krijg de actuele status-byte via offset VVM_status
+    VVM_status &_target_vvm VVMpeek AS _status
+
+    # 4. Controleer de condities: 
+    # Mag NIET in VVM_Error staan én mag NIET al VVM_Halted zijn.
+    _status VVM_Error != _status VVM_Halted != * IF
+        
+        # BINGO! Zet de status-byte in het VVM-geheugen geforceerd op VVM_Halted
+        # De scheduler herkent dit bij de volgende tick en verwijdert het proces!
+        VVM_Halted VVM_status &_target_vvm VVMpoke
+        
+        # Meld succes terug aan de CLI
+        KERNEL_succes 
+    ELSE
+        # Als het proces al gecrasht is (Error) of al stilstaat, weigeren we de stop!
+        KERNEL_err_cannot_halt 
+    END
+
+    :STOP_EXIT
+}
+
 
 
 ## Kernel helpers
@@ -3282,15 +3524,29 @@ DEF kernel_start {
     HEAP.free
     50 DEQUE.init_pool "Pool initialized (size 50).\n" PRTstring
 
-    DEQUE.new AS VVM1_host_deque    ; Get a pointer for the host communication deque's
-    DEQUE.new AS VVM2_host_deque   
+    DEQUE.new AS VVM0_host_deque    ; Get a pointer for the host communication deque's
+    DEQUE.new AS VVM1_host_deque   
+    DEQUE.new AS VVM2_host_deque
+    DEQUE.new AS VVM3_host_deque
 
-    DEQUE.new AS VVM1_kbd_deque     ; Get a pointer for the keyboard communication deque's
-    DEQUE.new AS VVM2_kbd_deque    
+
+    DEQUE.new AS VVM0_kbd_deque     ; Get a pointer for the keyboard communication deque's
+    DEQUE.new AS VVM1_kbd_deque
+    DEQUE.new AS VVM2_kbd_deque
+    DEQUE.new AS VVM3_kbd_deque
+
+    4 NEW.list AS KERNEL_slots      ; A list for the availible VVM's
+    VVM0 0 KERNEL_slots LIST.put
+    VVM1 1 KERNEL_slots LIST.put
+    VVM2 2 KERNEL_slots LIST.put
+    VVM3 3 KERNEL_slots LIST.put
 
 
-    # 42 VVM1_kbd_deque DEQUE.push    ; fake an KDB entry
-    # 43 VVM2_kbd_deque DEQUE.push    ; fake an KDB entry
+
+
+   
+    # 42 VVM0_kbd_deque DEQUE.push    ; fake an KDB entry
+    # 43 VVM1_kbd_deque DEQUE.push    ; fake an KDB entry
 
 
 
@@ -3299,64 +3555,118 @@ DEF kernel_start {
 
     VVM.init                        ; init VVM environment
     "VVM Environment Initialized:\n" PRTstring
+    "VVM0 base address          : " PRTstring VVM0  PRINT
     "VVM1 base address          : " PRTstring VVM1  PRINT
     "VVM2 base address          : " PRTstring VVM2  PRINT
+    "VVM3 base address          : " PRTstring VVM3  PRINT
 
-    &host_gcd      101 VVM.bind ; as simpel host function to test teh FFI interface
 
-    # VVM1
+    &host_gcd      150 VVM.bind             ; as simpel host function to test teh FFI interface
+    &host_proc_list   KERNEL.ps     VVM.bind      ;
+    &host_proc_start  KERNEL.start  VVM.bind      ;
+    &host_proc_resume KERNEL.resume VVM.bind      ;
+    &host_proc_stop   KERNEL.stop   VVM.bind      ;
+
+    
+    # VVM0 ############
     # SIMPL_code load_simpl_test_read    ; to load static
-    SIMPL_code load_simpl_fly          ; to load static
+    SIMPL_code load_simpl_kernel_cli          ; to load static
     #SIMPL_code "sbc_stringtest" VVM.loadcode   ; toload dynamic 
+
+    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
+    &SIMPL_code 1024 &VVM0_host_deque &VVM0_kbd_deque &VVM0 VVM.create
+    "VVM0 instance created \n\n" PRTstring
+    ###################
+
+    # VVM1 ############
+    # SIMPL_code load_simpl_test_read    ; to load static
+    # SIMPL_code load_simpl_chaos3
+    SIMPL_code load_simpl_fly
+    # SIMPL_code "sbc_stringtest" VVM.loadcode 
 
     # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
     &SIMPL_code 1024 &VVM1_host_deque &VVM1_kbd_deque &VVM1 VVM.create
     "VVM1 instance created \n\n" PRTstring
+    ###################
 
+    # VVM2 ############
+    # SIMPL_code load_simpl_test_read    ; to load static
+    SIMPL_code load_simpl_chaos3
+    # SIMPL_code load_simpl_fib
+    # SIMPL_code "sbc_stringtest" VVM.loadcode 
 
-    # VVM2
+    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
+    &SIMPL_code 1024 &VVM2_host_deque &VVM2_kbd_deque &VVM2 VVM.create
+    "VVM2 instance created \n\n" PRTstring
+    ###################
+
+    # VVM3 ############
     # SIMPL_code load_simpl_test_read    ; to load static
     # SIMPL_code load_simpl_chaos3
     SIMPL_code load_simpl_fib
     # SIMPL_code "sbc_stringtest" VVM.loadcode 
 
     # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
-    &SIMPL_code 1024 &VVM2_host_deque &VVM2_kbd_deque &VVM2 VVM.create
-    "VVM2 instance created \n\n" PRTstring
+    &SIMPL_code 1024 &VVM3_host_deque &VVM3_kbd_deque &VVM3 VVM.create
+    "VVM3 instance created \n\n" PRTstring
+    ###################
+
+
 
 
     # Start the VVM
     # ( arg1 ... argn argc &VVM-pointer -- )
-    0 &VVM1 VVM.start
-    "VVM1 started \n" PRTstring
+    0 &VVM0 VVM.start                   # VVM0 starts here
+    "VVM0 started \n" PRTstring 
 
-    0 &VVM2 VVM.start
-    "VVM2 started \n" PRTstring
+    # 0 &VVM1 VVM.start                   # VVM1 starts here
+    # "VVM1 started \n" PRTstring
+
+    # 0 &VVM2 VVM.start                   # VVM2 starts here
+    # "VVM2 started \n" PRTstring
+
+    # 0 &VVM3 VVM.start                   # VVM3 starts here
+    # "VVM3 started \n" PRTstring
 
 
-    # when the kernel is ready only the CLI-VVM (VVM1) is running here
-    # for now VVM1 and VVM2 are loaded with an application script to test the scheduler so far
+
+    
+
+
+    # when the kernel is ready only the CLI-VVM (VVM0) is running here
+    # for now VVM0 and VVM1 are loaded with an application script to test the scheduler so far
     #
     # Create an dynamic proces list (must be an dict, for removing processes)
     4 DICT.new AS KERNEL_proces_list        ; room for finally 4 processes
-    0 VVM1 KERNEL_proces_list DICT.put      ; Always register the CLI-VVM (VVM1)
+    0 VVM0 KERNEL_proces_list DICT.put      ; Always register the CLI-VVM (VVM0)
 
-    1 VVM2 KERNEL_proces_list DICT.put      ; For now, also register a other proces
+    # 1 VVM1 KERNEL_proces_list DICT.put      ; For now, also register a other proces
+    # 2 VVM2 KERNEL_proces_list DICT.put      ; For now, also register a other proces
+    # 3 VVM3 KERNEL_proces_list DICT.put      ; For now, also register a other proces
+
+
 
     # Kernel scheduler loop
     KERNEL_proces_list DICT.count AS KERNEL_number_of_processes
     0 AS KERNEL_current_process
 
     1 TIME.start
-    
-    
-    VALUE new_input_flag 1
-
     WHILE KERNEL_number_of_processes 0 > DO
         kbd_req_queue DEQUE.is_empty 0 == IF
             new_input_flag IF 
                 0 AS new_input_flag
-                kbd_req_queue DEQUE.tail PRTnum "> " PRTstring
+                
+                # 1. Haal de VVM-pointer op van het proces dat vooraan/achteraan de wachtrij staat
+                kbd_req_queue DEQUE.tail DEQUE.value AS _waiting_VVM
+                
+                # 2. Kijk of dit specifieke proces een opgeslagen prompt heeft in de dictionary
+                _waiting_VVM kbd_prompts DICT.has_key IF
+                    # 3. Haal de échte prompt-pointer op en print hem live!
+                    _waiting_VVM kbd_prompts DICT.get PRTstring
+                ELSE
+                    # Fallback voor het geval een proces op kbd wacht maar geen prompt stuurde
+                    "> " PRTstring
+                END
             END
 
             # Pol het toetsenbord non-blocking
@@ -3415,10 +3725,12 @@ DEF kernel_start {
         # ---------------------------------------------------------------------
         KERNEL_current_process KERNEL_proces_list DICT.item DROP AS KERNEL_current_ptr
         VVM_status &KERNEL_current_ptr VVMpeek AS _proc_status
+
+        KERNEL_max_burst KERNEL_number_of_processes // AS KERNEL_current_burst
         
         VVM_status &KERNEL_current_ptr VVMpeek VVM_Halted != IF
             _proc_status VVM_WaitIO != IF
-                10 &KERNEL_current_ptr VVM.runbatch
+                KERNEL_current_burst &KERNEL_current_ptr VVM.runbatch
                 VVM_status &KERNEL_current_ptr VVMpeek VVM_Sys == IF &KERNEL_current_ptr VVM.check_syscalls END
             END
  
@@ -18116,6 +18428,9 @@ DEF VVM.runbatch {
 
 VALUE _host_dq 0
 VALUE _kbd_dq 0
+VALUE _prompt_pointer 0
+VALUE new_input_flag 1
+
 DEF VVM.check_syscalls {
     AS _VVMpointer
 
@@ -18124,11 +18439,17 @@ DEF VVM.check_syscalls {
 
         _host_dq DEQUE.tail DEQUE.value AS _syscall_id
         _syscall_id 20 == IF
+
+            _host_dq DEQUE.pop_tail DROP
+            _host_dq DEQUE.tail DEQUE.value AS _prompt_pointer
+            20 _host_dq DEQUE.append
+
             # Haal ook hier de deque op via de veilige VVMpeek route met het adres van de pointer
             VVM_kbdq _VVMpointer VVMpeek AS _kbd_dq
-            
             _kbd_dq DEQUE.is_empty 0 == IF
-                _host_dq DEQUE.pop_tail DROP  
+                _host_dq DEQUE.pop_tail DROP        ; Drop syscall ID
+                _host_dq DEQUE.pop_tail DROP        ; Drop prompt pointer
+
                 
                 20 syscall_table DICT.get AS _syscall_handler
                 _VVMpointer _syscall_handler EXEC
@@ -18137,11 +18458,15 @@ DEF VVM.check_syscalls {
             ELSE
                 VVM_status _VVMpointer VVMpeek VVM_WaitIO != IF
                     VVM_WaitIO VVM_status _VVMpointer VVMpoke
-                    *_VVMpointer kbd_req_queue DEQUE.push
+                    *_VVMpointer kbd_req_queue DEQUE.append
+
+                    _prompt_pointer *_VVMpointer kbd_prompts DICT.put
+                    1 AS new_input_flag   # Forceer de kernel-loop om direct de prompt te evalueren!
+
                 END
             END
         ELSE
-            _host_dq DEQUE.pop_tail AS _syscall_id
+            _host_dq DEQUE.pop_tail AS _syscall_id     # get the syscall
             
             _syscall_id syscall_table DICT.has_key IF
                 _syscall_id syscall_table DICT.get AS _syscall_handler
@@ -22738,6 +23063,7 @@ DEF s_READ {
 VALUE string_dict 0
 VALUE _vvm_temp_list_ptr 0
 VALUE kbd_req_queue 0
+VALUE kbd_prompts 0
 
 
 DEF VVM.init {
@@ -22746,12 +23072,13 @@ DEF VVM.init {
 
     100 DICT.new AS label_addresses
 
-    50 DICT.new AS syscall_table
+    50  DICT.new AS syscall_table
 
-    256 DICT.new AS string_dict
+    100 DICT.new AS string_dict
+    4   DICT.new AS kbd_prompts
 
-    DEQUE.new AS kbd_req_queue
-
+    DEQUE.new    AS kbd_req_queue
+    
 
 
 
@@ -23003,8 +23330,8 @@ VAR argc
 VAR arg1     # This will be register 1 (B), holds the first argument
 
 # A little test routine
-"Enter a number " PRINTS
-READ AS arg1
+"Enter a number " READ AS arg1
+
 
 # Now call fib with the value that was passed in
 arg1 fib PRINT
@@ -23046,7 +23373,7 @@ VALUE R 0
 
 WHILE N 700 < DO
     # P N gcd AS C 
-    P N 2 1 101 EXEC AS C 
+    P N 2 1 150 EXEC AS C 
 
     C 1 == IF
         P N 1 + + AS R 
@@ -23155,6 +23482,129 @@ dx dx * dy dy * + AS old_dist_sq
     END
 
     GOTO LOOP
+
+FILE: src/vvm/kernel_cli.stacks
+------------------------------------------------------------
+# The CLI process for the Mutli Tasking Kernel
+
+# All used VAR declarations
+VALUE running 0
+VALUE input_token 0
+VALUE _slot_ 0
+
+
+# Define const for error handling
+CONST KERNEL_succes 0
+CONST KERNEL_err_invalid_slot 1
+CONST KERNEL_err_cannot_halt  2
+CONST KERNEL_err_cannot_start 3
+CONST KERNEL_err_loading_vvm  4
+
+# Define host side functions as syscalls-is's for the FFI interface
+CONST KERNEL.ps     100 ; Syscall ID for the PS function
+CONST KERNEL.start  101 ; Syscall ID for the start function
+CONST KERNEL.resume 102 ; Syscall ID for the resume function
+CONST KERNEL.stop   103 ; Syscall ID for the stop function
+CONST KERNEL.kbd_flush  104 ; Syscall ID for the kbd_flush function
+
+
+DEF handle_error {
+    "ERROR " PRINTS PRINT "is the problem\n" PRINTS 
+}
+
+
+####################
+# For all FFI calls:
+# (Arg1 ... ArgN argc argr Syscall_ID -- [return values])
+# argr = number of return values
+# argc = number of arguments
+####################
+
+
+MACRO run.ps {
+    0 1 KERNEL.ps EXEC DUP IF handle_error ELSE DROP END
+}
+
+MACRO run.start {
+    AS _slot_
+    _slot_ 1 1 KERNEL.start EXEC DUP IF handle_error ELSE DROP END
+}
+
+MACRO run.resume {
+    AS _slot_
+    _slot_ 1 1 KERNEL.resume EXEC DUP IF handle_error ELSE DROP END
+}
+
+MACRO run.stop {
+    AS _slot_
+    _slot_ 1 1 KERNEL.stop EXEC DUP IF handle_error ELSE DROP END
+}
+
+MACRO run.kbd_flush {
+    "Kbd_flush " PRINTS "Work to do here\n" PRINTS
+}
+
+MACRO run.help {
+    "\n" PRINTS
+    "Availible commands: " PRINTS
+    "ps, resume, stop, help, quit\n\n" PRINTS
+}
+
+
+
+
+
+1 AS running
+WHILE running DO
+    "\nType help for help.\n" PRINTS
+    "SternOS > " READ AS input_token
+
+    
+
+    input_token \"ps" == IF
+        run.ps
+        GOTO LOOP_EXIT
+    END
+
+    input_token \"start" == IF
+        "instanceID " READ                ; Get the target VVM to start
+        run.start
+        GOTO LOOP_EXIT
+    END
+
+    input_token \"resume" == IF
+        "instanceID " READ                ; Get the target VVM to resume
+        run.resume
+        GOTO LOOP_EXIT
+    END
+
+    input_token \"stop" == IF
+        "instanceID " READ                ; Get the target VVM to resume
+        run.stop
+        GOTO LOOP_EXIT
+    END
+
+
+    input_token \"help" == IF
+        run.help
+        GOTO LOOP_EXIT
+    END
+
+    input_token \"quit" == IF
+        0 AS running
+        GOTO LOOP_EXIT
+    END
+
+
+
+    "Unknown command\n" PRINTS 
+
+:LOOP_EXIT
+DONE
+
+
+"\nQuiting Stern Mutli Tasking monitor\n" PRINTS
+
 
 FILE: src/vvm/stringtest.stacks
 ------------------------------------------------------------
@@ -23576,7 +24026,7 @@ MACRO load_simpl_fib {
     114            _sq_ DEQUE.append
     32             _sq_ DEQUE.append
     \"STREND"      _sq_ DEQUE.append
-    \"PRINTS"      _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     20             _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append
@@ -23699,7 +24149,7 @@ MACRO load_simpl_fly {
     \"PUSH"        _sq_ DEQUE.append
     1              _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
-    101            _sq_ DEQUE.append
+    150            _sq_ DEQUE.append
     \"EXEC"        _sq_ DEQUE.append
     \"SET"         _sq_ DEQUE.append
     2              _sq_ DEQUE.append
@@ -24119,6 +24569,463 @@ MACRO load_simpl_hunter_agent {
     \"BRA"         _sq_ DEQUE.append
     \"LOOP"        _sq_ DEQUE.append
     \"HALT"        _sq_ DEQUE.append
+}
+
+
+FILE: src/simpl_libs/simpl_kernel_cli_lib.stacks
+------------------------------------------------------------
+USE std_deque
+
+MACRO load_simpl_kernel_cli {
+    AS _sq_
+
+    \"PUSH"        _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"while_0"     _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"endwhile_0"  _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    84             _sq_ DEQUE.append
+    121            _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    104            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    102            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    104            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    46             _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    83             _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    79             _sq_ DEQUE.append
+    83             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    62             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    20             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    5863720        _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_0"       _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    100            _sq_ DEQUE.append
+    \"EXEC"        _sq_ DEQUE.append
+    \"DUP"         _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"else_1"      _sq_ DEQUE.append
+    \"CALL"        _sq_ DEQUE.append
+    \"handle_error" _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"end_1"       _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"else_1"      _sq_ DEQUE.append
+    \"DROP"        _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_1"       _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"LOOP_EXIT"   _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_0"       _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    210728208851   _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_2"       _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    99             _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    73             _sq_ DEQUE.append
+    68             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    20             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    \"EXEC"        _sq_ DEQUE.append
+    \"DUP"         _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"else_3"      _sq_ DEQUE.append
+    \"CALL"        _sq_ DEQUE.append
+    \"handle_error" _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"end_3"       _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"else_3"      _sq_ DEQUE.append
+    \"DROP"        _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_3"       _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"LOOP_EXIT"   _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_2"       _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    6953974617878  _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_4"       _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    99             _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    73             _sq_ DEQUE.append
+    68             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    20             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    102            _sq_ DEQUE.append
+    \"EXEC"        _sq_ DEQUE.append
+    \"DUP"         _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"else_5"      _sq_ DEQUE.append
+    \"CALL"        _sq_ DEQUE.append
+    \"handle_error" _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"end_5"       _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"else_5"      _sq_ DEQUE.append
+    \"DROP"        _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_5"       _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"LOOP_EXIT"   _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_4"       _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    6385703755     _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_6"       _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    99             _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    73             _sq_ DEQUE.append
+    68             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    20             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    103            _sq_ DEQUE.append
+    \"EXEC"        _sq_ DEQUE.append
+    \"DUP"         _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"else_7"      _sq_ DEQUE.append
+    \"CALL"        _sq_ DEQUE.append
+    \"handle_error" _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"end_7"       _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"else_7"      _sq_ DEQUE.append
+    \"DROP"        _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_7"       _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"LOOP_EXIT"   _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_6"       _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    6385292014     _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_8"       _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    65             _sq_ DEQUE.append
+    118            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    98             _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    99             _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    100            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    58             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    44             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    117            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    44             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    44             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    104            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    44             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    113            _sq_ DEQUE.append
+    117            _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"LOOP_EXIT"   _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_8"       _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    6385632776     _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_9"       _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"LOOP_EXIT"   _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_9"       _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    85             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    107            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    119            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    99             _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    100            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"LOOP_EXIT"   _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"while_0"     _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"endwhile_0"  _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    81             _sq_ DEQUE.append
+    117            _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    103            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    83             _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    77             _sq_ DEQUE.append
+    117            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    84             _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    107            _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    103            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"HALT"        _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"handle_error" _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    69             _sq_ DEQUE.append
+    82             _sq_ DEQUE.append
+    82             _sq_ DEQUE.append
+    79             _sq_ DEQUE.append
+    82             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    10             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    104            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    98             _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"RET"         _sq_ DEQUE.append
 }
 
 

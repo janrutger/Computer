@@ -44,7 +44,7 @@ VALUE KERNEL_number_of_processes 0
 VALUE KERNEL_current_process 0
 VALUE KERNEL_current_ptr 0
 VALUE KERNEL_current_burst 50
-CONST KERNEL_max_burst 200
+CONST KERNEL_max_burst 300
 
 VALUE _binnengekomen_regel 0
 VALUE _wachtende_vvm 0
@@ -65,7 +65,7 @@ CONST KERNEL_err_loading_vvm 4
 # Define host side functions as syscalls-is's for the FFI interface
 CONST KERNEL.ps     100 ; Syscall ID for the PS function
 CONST KERNEL.start  101 ; Syscall ID for the start function
-CONST KERNEL.resume 102 ; Syscall ID for the resume function
+# CONST KERNEL.resume 102 ; Syscall ID for the resume function
 CONST KERNEL.stop   103 ; Syscall ID for the stop function
 CONST KERNEL.kbd_flush  104 ; Syscall ID for the kbd_flush function
 
@@ -130,50 +130,178 @@ DEF host_proc_list {
 }
 
 # =============================================================================
-# FFI 102: host_proc_resume
+# FFI 101: host_proc_start (Met statuscontrole en Full Reset)
 # Input vanaf de CLI-stack: ( slot_num -- )
 # Output naar de CLI-stack: ( KERNEL_succes_of_error -- )
 # =============================================================================
 
-DEF host_proc_resume {
+DEF host_proc_start {
+    AS _target_slot
+    
+    # 1. Validatie van het slotnummer
+    _target_slot 1 < _target_slot 3 > + IF
+        KERNEL_err_invalid_slot 
+        GOTO START_EXIT
+    END
+
+    # 2. Vertaal slot naar het fysieke VVM-basisadres
+    _target_slot 1 == IF VVM1 AS _target_vvm END
+    _target_slot 2 == IF VVM2 AS _target_vvm END
+    _target_slot 3 == IF VVM3 AS _target_vvm END
+
+    # 3. CRUCIALE CHECK: Controleer de huidige status van de doeltarget!
+    VVM_status &_target_vvm VVMpeek AS _current_status
+    
+    # Een proces mag ALLEEN gestart worden als het momenteel Halted is.
+    # Als het al Running is, of in WaitIO staat, weigeren we de start!
+    _current_status VVM_Halted != IF
+        KERNEL_err_cannot_start     # Geef de juiste foutcode terug
+        GOTO START_EXIT
+    END
+
+    # =========================================================================
+    # Vanaf hier is het 100% veilig: DEKONTAMINATIE FASE (De Grote Schoonmaak)
+    # =========================================================================
+
+    # A. Trek de Host Deque volledig leeg
+    VVM_HOST_ptr &_target_vvm VVMpeek AS _target_host_dq
+    WHILE _target_host_dq DEQUE.is_empty 0 == DO
+        _target_host_dq DEQUE.pop DROP
+    DONE
+
+    # B. Trek de Keyboard Deque volledig leeg
+    VVM_kbdq &_target_vvm VVMpeek AS _target_kbd_dq
+    WHILE _target_kbd_dq DEQUE.is_empty 0 == DO
+        _target_kbd_dq DEQUE.pop DROP
+    DONE
+
+    # C. Reset alle 26 registers (A tot en met Z) naar 0
+    VALUE _reg_idx 0
+    0 AS _reg_idx
+    WHILE _reg_idx 26 < DO
+        0 VVM_regs _reg_idx + &_target_vvm VVMpoke
+        _reg_idx 1 + AS _reg_idx
+    DONE
+
+    # =========================================================================
+    # POINTER RESET FASE
+    # =========================================================================
+
+    # D. PC (Program Counter) terug naar het begin van de code-sectie
+    # We nemen de RAAUWE waarde van de VVM (bijv. 31744) en tellen daar VVM_code bij op.
+    _target_vvm VVM_code + VVM_PC &_target_vvm VVMpoke
+
+    # E. SP (Data Stack Pointer) terug naar de basis van de stack
+    _target_vvm VVM_stack + VVM_SP &_target_vvm VVMpoke
+
+    # F. RSP (Return Stack Pointer) terug naar de top van de return-stack
+    VVM_size &_target_vvm VVMpeek AS _vvm_size
+    _target_vvm _vvm_size + VVM_RSP &_target_vvm VVMpoke
+
+    # =========================================================================
+    # ACTIVATIE FASE
+    # =========================================================================
+
+    # G. Zet de status-byte in het VVM-geheugen op VVM_Running (0)
+    VVM_Running VVM_status &_target_vvm VVMpoke
+
+    # H. Meld de VVM aan bij de actieve scheduler-lijst
+    # _target_slot &_target_vvm KERNEL_proces_list DICT.put
+    _target_slot _target_vvm KERNEL_proces_list DICT.put
+
+    # Meld succes aan de CLI
+    KERNEL_succes
+
+    :START_EXIT
+}
+
+# # =============================================================================
+# # FFI 102: host_proc_resume
+# # Input vanaf de CLI-stack: ( slot_num -- )
+# # Output naar de CLI-stack: ( KERNEL_succes_of_error -- )
+# # =============================================================================
+
+# DEF host_proc_resume {
+#     # 1. Haal het doelslot van de stack van de aanroeper (de CLI)
+#     AS _target_slot
+    
+#     # Validatie: Slot moet 1, 2 of 3 zijn
+#     _target_slot 1 < _target_slot 3 > + IF
+#         KERNEL_err_invalid_slot 
+#         GOTO RESUME_EXIT
+#     END
+
+#     # 2. Vertaal het hardware-slot naar het bijbehorende fysieke VVM-basisadres
+    
+#     _target_slot 1 == IF VVM1 AS _target_vvm END
+#     _target_slot 2 == IF VVM2 AS _target_vvm END
+#     _target_slot 3 == IF VVM3 AS _target_vvm END
+
+#     # 3. Krijg de actuele status-byte via offset VVM_status (0)
+#     VVM_status &_target_vvm VVMpeek AS _status
+
+#     # 4. Controleer of de status ELIGIBLE is voor een resume (moet VVM_Halted zijn!)
+#     _status VVM_Halted == IF
+#         # A. Zet de status-byte in het VVM-geheugen terug op VVM_Running (0)
+#         VVM_Running VVM_status &_target_vvm VVMpoke
+    
+#         # B. Voeg de VVM (Key) en het Slot (Value) opnieuw toe aan de scheduler-dict
+#         # De DICT.put signatuur is: ( value key dict_ptr -- )
+#         # Dus bij jou: slot_num, vvm_ptr, dictionary
+#         _target_slot _target_vvm KERNEL_proces_list DICT.put
+        
+#         # # C. Update de globale teller van actieve processen in de kernel
+#         # KERNEL_proces_list DICT.count AS KERNEL_number_of_processes
+
+#         # Meld succes terug aan de CLI
+#         KERNEL_succes 
+#     ELSE
+#         # Als het proces al draait (Running) of in Error staat, weigeren we de resume!
+#         KERNEL_err_cannot_start 
+#     END
+#     :RESUME_EXIT
+# }
+
+# =============================================================================
+# FFI 103: host_proc_stop
+# Input vanaf de CLI-stack: ( slot_num -- )
+# Output naar de CLI-stack: ( KERNEL_succes_of_error -- )
+# =============================================================================
+
+DEF host_proc_stop {
     # 1. Haal het doelslot van de stack van de aanroeper (de CLI)
     AS _target_slot
     
     # Validatie: Slot moet 1, 2 of 3 zijn
     _target_slot 1 < _target_slot 3 > + IF
         KERNEL_err_invalid_slot 
-        GOTO RESUME_EXIT
+        GOTO STOP_EXIT
     END
 
     # 2. Vertaal het hardware-slot naar het bijbehorende fysieke VVM-basisadres
-    
     _target_slot 1 == IF VVM1 AS _target_vvm END
     _target_slot 2 == IF VVM2 AS _target_vvm END
     _target_slot 3 == IF VVM3 AS _target_vvm END
 
-    # 3. Krijg de actuele status-byte via offset VVM_status (0)
+    # 3. Krijg de actuele status-byte via offset VVM_status
     VVM_status &_target_vvm VVMpeek AS _status
 
-    # 4. Controleer of de status ELIGIBLE is voor een resume (moet VVM_Halted zijn!)
-    _status VVM_Halted == IF
-        # A. Zet de status-byte in het VVM-geheugen terug op VVM_Running (0)
-        VVM_Running VVM_status &_target_vvm VVMpoke
-    
-        # B. Voeg de VVM (Key) en het Slot (Value) opnieuw toe aan de scheduler-dict
-        # De DICT.put signatuur is: ( value key dict_ptr -- )
-        # Dus bij jou: slot_num, vvm_ptr, dictionary
-        _target_slot _target_vvm KERNEL_proces_list DICT.put
+    # 4. Controleer de condities: 
+    # Mag NIET in VVM_Error staan én mag NIET al VVM_Halted zijn.
+    _status VVM_Error != _status VVM_Halted != * IF
         
-        # # C. Update de globale teller van actieve processen in de kernel
-        # KERNEL_proces_list DICT.count AS KERNEL_number_of_processes
-
+        # BINGO! Zet de status-byte in het VVM-geheugen geforceerd op VVM_Halted
+        # De scheduler herkent dit bij de volgende tick en verwijdert het proces!
+        VVM_Halted VVM_status &_target_vvm VVMpoke
+        
         # Meld succes terug aan de CLI
         KERNEL_succes 
     ELSE
-        # Als het proces al draait (Running) of in Error staat, weigeren we de resume!
-        KERNEL_err_cannot_start 
+        # Als het proces al gecrasht is (Error) of al stilstaat, weigeren we de stop!
+        KERNEL_err_cannot_halt 
     END
-    :RESUME_EXIT
+
+    :STOP_EXIT
 }
 
 
@@ -274,95 +402,74 @@ DEF kernel_start {
     VVM2 2 KERNEL_slots LIST.put
     VVM3 3 KERNEL_slots LIST.put
 
-
-
-
-   
-    # 42 VVM0_kbd_deque DEQUE.push    ; fake an KDB entry
-    # 43 VVM1_kbd_deque DEQUE.push    ; fake an KDB entry
-
-
-
     DEQUE.new AS SIMPL_code         ; Get a pointer for the SIMPL code buffer
     
-
     VVM.init                        ; init VVM environment
-    "VVM Environment Initialized:\n" PRTstring
-    "VVM0 base address          : " PRTstring VVM0  PRINT
-    "VVM1 base address          : " PRTstring VVM1  PRINT
-    "VVM2 base address          : " PRTstring VVM2  PRINT
-    "VVM3 base address          : " PRTstring VVM3  PRINT
+    "VVM Environment Initialized!!\n\n" PRTstring
+    
 
-
+    ## FFI call bindings here
     &host_gcd      150 VVM.bind             ; as simpel host function to test teh FFI interface
     &host_proc_list   KERNEL.ps     VVM.bind      ;
-    &host_proc_resume KERNEL.resume VVM.bind      ;
+    &host_proc_start  KERNEL.start  VVM.bind      ;
+    # &host_proc_resume KERNEL.resume VVM.bind      ;
+    &host_proc_stop   KERNEL.stop   VVM.bind      ;
 
 
+
+    ## load the default apps in the VVM's
+    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
+  
     # VVM0 ############
-    # SIMPL_code load_simpl_test_read    ; to load static
+    "VVM0 base address          : " PRTstring VVM0  PRINT
     SIMPL_code load_simpl_kernel_cli          ; to load static
     #SIMPL_code "sbc_stringtest" VVM.loadcode   ; toload dynamic 
 
-    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
     &SIMPL_code 1024 &VVM0_host_deque &VVM0_kbd_deque &VVM0 VVM.create
-    "VVM0 instance created \n\n" PRTstring
+    "VVM0 (cli) instance created \n\n" PRTstring
     ###################
 
     # VVM1 ############
-    # SIMPL_code load_simpl_test_read    ; to load static
+    "VVM1 base address          : " PRTstring VVM1  PRINT
     # SIMPL_code load_simpl_chaos3
     SIMPL_code load_simpl_fly
     # SIMPL_code "sbc_stringtest" VVM.loadcode 
 
-    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
     &SIMPL_code 1024 &VVM1_host_deque &VVM1_kbd_deque &VVM1 VVM.create
-    "VVM1 instance created \n\n" PRTstring
+    "VVM1 (fly) instance created \n\n" PRTstring
     ###################
 
     # VVM2 ############
-    # SIMPL_code load_simpl_test_read    ; to load static
+    "VVM2 base address          : " PRTstring VVM2  PRINT
     SIMPL_code load_simpl_chaos3
     # SIMPL_code load_simpl_fib
     # SIMPL_code "sbc_stringtest" VVM.loadcode 
 
-    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
     &SIMPL_code 1024 &VVM2_host_deque &VVM2_kbd_deque &VVM2 VVM.create
-    "VVM2 instance created \n\n" PRTstring
+    "VVM2 (chaos3) instance created \n\n" PRTstring
     ###################
 
+
     # VVM3 ############
-    # SIMPL_code load_simpl_test_read    ; to load static
+    "VVM3 base address          : " PRTstring VVM3  PRINT
     # SIMPL_code load_simpl_chaos3
     SIMPL_code load_simpl_fib
     # SIMPL_code "sbc_stringtest" VVM.loadcode 
 
-    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
     &SIMPL_code 1024 &VVM3_host_deque &VVM3_kbd_deque &VVM3 VVM.create
-    "VVM3 instance created \n\n" PRTstring
+    "VVM3 (fib) nstance created \n\n" PRTstring
     ###################
+    
+    ## end off the VVM's loading
 
 
 
-
-    # Start the VVM
+    # Start the VVM CLI-VVM (VVM0)
     # ( arg1 ... argn argc &VVM-pointer -- )
     0 &VVM0 VVM.start                   # VVM0 starts here
     "VVM0 started \n" PRTstring 
 
-    # 0 &VVM1 VVM.start                   # VVM1 starts here
-    # "VVM1 started \n" PRTstring
-
-    # 0 &VVM2 VVM.start                   # VVM2 starts here
-    # "VVM2 started \n" PRTstring
-
-    # 0 &VVM3 VVM.start                   # VVM3 starts here
-    # "VVM3 started \n" PRTstring
-
-
-
-    
-
+   
 
     # when the kernel is ready only the CLI-VVM (VVM0) is running here
     # for now VVM0 and VVM1 are loaded with an application script to test the scheduler so far
@@ -371,21 +478,15 @@ DEF kernel_start {
     4 DICT.new AS KERNEL_proces_list        ; room for finally 4 processes
     0 VVM0 KERNEL_proces_list DICT.put      ; Always register the CLI-VVM (VVM0)
 
-    # 1 VVM1 KERNEL_proces_list DICT.put      ; For now, also register a other proces
-    # 2 VVM2 KERNEL_proces_list DICT.put      ; For now, also register a other proces
-    # 3 VVM3 KERNEL_proces_list DICT.put      ; For now, also register a other proces
+   
+    ############################ End of Start Sequence ############################
 
 
-
-    # Kernel scheduler loop
+    ############################ Kernel scheduler loop ############################
     KERNEL_proces_list DICT.count AS KERNEL_number_of_processes
     0 AS KERNEL_current_process
 
     1 TIME.start
-    
-    
-    # VALUE new_input_flag 1
-
     WHILE KERNEL_number_of_processes 0 > DO
         kbd_req_queue DEQUE.is_empty 0 == IF
             new_input_flag IF 

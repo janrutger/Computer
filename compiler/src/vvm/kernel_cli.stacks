@@ -1,7 +1,7 @@
 # The CLI process for the Mutli Tasking Kernel
 
 # All used VAR declarations
-VALUE running 1
+VALUE running 0
 VALUE input_token 0
 VALUE _slot_ 0
 
@@ -16,7 +16,7 @@ CONST KERNEL_err_loading_vvm  4
 # Define host side functions as syscalls-is's for the FFI interface
 CONST KERNEL.ps     100 ; Syscall ID for the PS function
 CONST KERNEL.start  101 ; Syscall ID for the start function
-CONST KERNEL.resume 102 ; Syscall ID for the resume function
+# CONST KERNEL.resume 102 ; Syscall ID for the resume function
 CONST KERNEL.stop   103 ; Syscall ID for the stop function
 CONST KERNEL.kbd_flush  104 ; Syscall ID for the kbd_flush function
 
@@ -39,16 +39,18 @@ MACRO run.ps {
 }
 
 MACRO run.start {
-    "Start " PRINTS "Work to do here\n" PRINTS
+    AS _slot_
+    _slot_ 1 1 KERNEL.start EXEC DUP IF handle_error ELSE DROP END
 }
 
-MACRO run.resume {
-    AS _slot_
-    _slot_ 1 1 KERNEL.resume EXEC DUP IF handle_error ELSE DROP END
-}
+# MACRO run.resume {
+#     AS _slot_
+#     _slot_ 1 1 KERNEL.resume EXEC DUP IF handle_error ELSE DROP END
+# }
 
 MACRO run.stop {
-    "Stop " PRINTS "Work to do here\n" PRINTS
+    AS _slot_
+    _slot_ 1 1 KERNEL.stop EXEC DUP IF handle_error ELSE DROP END
 }
 
 MACRO run.kbd_flush {
@@ -58,14 +60,14 @@ MACRO run.kbd_flush {
 MACRO run.help {
     "\n" PRINTS
     "Availible commands: " PRINTS
-    "ps, resume, help, quit\n\n" PRINTS
+    "start, stop, ps, help, quit\n\n" PRINTS
 }
 
 
 
 
 
-
+1 AS running
 WHILE running DO
     "\nType help for help.\n" PRINTS
     "SternOS > " READ AS input_token
@@ -77,9 +79,21 @@ WHILE running DO
         GOTO LOOP_EXIT
     END
 
-    input_token \"resume" == IF
+    input_token \"start" == IF
+        "instanceID " READ                ; Get the target VVM to start
+        run.start
+        GOTO LOOP_EXIT
+    END
+
+    # input_token \"resume" == IF
+    #     "instanceID " READ                ; Get the target VVM to resume
+    #     run.resume
+    #     GOTO LOOP_EXIT
+    # END
+
+    input_token \"stop" == IF
         "instanceID " READ                ; Get the target VVM to resume
-        run.resume
+        run.stop
         GOTO LOOP_EXIT
     END
 
