@@ -108,16 +108,11 @@ MACRO load_simpl_kernel_cli {
     \"BRZ"         _sq_ DEQUE.append
     \"end_2"       _sq_ DEQUE.append
     \"STSTR"       _sq_ DEQUE.append
-    105            _sq_ DEQUE.append
-    110            _sq_ DEQUE.append
-    115            _sq_ DEQUE.append
+    83             _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
     116            _sq_ DEQUE.append
-    97             _sq_ DEQUE.append
-    110            _sq_ DEQUE.append
-    99             _sq_ DEQUE.append
-    101            _sq_ DEQUE.append
-    73             _sq_ DEQUE.append
-    68             _sq_ DEQUE.append
+    35             _sq_ DEQUE.append
     32             _sq_ DEQUE.append
     \"STREND"      _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append
@@ -160,16 +155,11 @@ MACRO load_simpl_kernel_cli {
     \"BRZ"         _sq_ DEQUE.append
     \"end_4"       _sq_ DEQUE.append
     \"STSTR"       _sq_ DEQUE.append
-    105            _sq_ DEQUE.append
-    110            _sq_ DEQUE.append
-    115            _sq_ DEQUE.append
+    83             _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
     116            _sq_ DEQUE.append
-    97             _sq_ DEQUE.append
-    110            _sq_ DEQUE.append
-    99             _sq_ DEQUE.append
-    101            _sq_ DEQUE.append
-    73             _sq_ DEQUE.append
-    68             _sq_ DEQUE.append
+    35             _sq_ DEQUE.append
     32             _sq_ DEQUE.append
     \"STREND"      _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append
@@ -364,6 +354,22 @@ MACRO load_simpl_kernel_cli {
     \"LABEL"       _sq_ DEQUE.append
     \"handle_error" _sq_ DEQUE.append
     \"STSTR"       _sq_ DEQUE.append
+    84             _sq_ DEQUE.append
+    104            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    98             _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    58             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
     69             _sq_ DEQUE.append
     82             _sq_ DEQUE.append
     82             _sq_ DEQUE.append
@@ -377,24 +383,5 @@ MACRO load_simpl_kernel_cli {
     10             _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append
     \"SYS"         _sq_ DEQUE.append
-    \"STSTR"       _sq_ DEQUE.append
-    105            _sq_ DEQUE.append
-    115            _sq_ DEQUE.append
-    32             _sq_ DEQUE.append
-    116            _sq_ DEQUE.append
-    104            _sq_ DEQUE.append
-    101            _sq_ DEQUE.append
-    32             _sq_ DEQUE.append
-    112            _sq_ DEQUE.append
-    114            _sq_ DEQUE.append
-    111            _sq_ DEQUE.append
-    98             _sq_ DEQUE.append
-    108            _sq_ DEQUE.append
-    101            _sq_ DEQUE.append
-    109            _sq_ DEQUE.append
-    92             _sq_ DEQUE.append
-    110            _sq_ DEQUE.append
-    \"STREND"      _sq_ DEQUE.append
-    \"PRINTS"      _sq_ DEQUE.append
     \"RET"         _sq_ DEQUE.append
 }

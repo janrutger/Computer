@@ -1,8 +1,8 @@
 {
   "functions": [
-    "STRhash",
-    "STRatoi",
     "STRlen",
+    "STRatoi",
+    "STRhash",
     "STRcmp",
     "STRcopy",
     "STRfind"

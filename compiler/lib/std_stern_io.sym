@@ -1,14 +1,14 @@
 {
   "functions": [
-    "HALT",
-    "TOS.check",
-    "PRTcls",
-    "io_lib_init",
-    "KEYpressed",
-    "KEYchar",
-    "PRTnum",
-    "READline",
     "PRTchar",
+    "KEYchar",
+    "PRTcls",
+    "READline",
+    "io_lib_init",
+    "TOS.check",
+    "KEYpressed",
+    "PRTnum",
+    "HALT",
     "CURSORoff"
   ],
   "variables": [

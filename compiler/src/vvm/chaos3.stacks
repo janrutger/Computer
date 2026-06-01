@@ -36,16 +36,6 @@ DEF screen {
   2 IO 2 MODE   # Set to Pixel Mode, Double Buffering
 }
 
-# # Sets the X coordinate for drawing
-# MACRO setX {
-#   IO 2 X
-# }
-
-
-# # Sets the Y coordinate for drawing
-# MACRO setY {
-#   IO 2 Y
-# }
 
 # Selects one of the three vertices of the triangle
 MACRO select1 { A AS K  B AS L }
@@ -58,12 +48,23 @@ MACRO draw {
   IO 2 X  # Consumes X from stack
   RND 15 * 999 // 1 + # Calculate a random color
   IO 2 DRAW
+  0 == IF
+    IO 2 FLIP  # Flip buffer to show new points
+  END
 }
+
+# The draw_fast FFI calls does exactly the same
+# as the draw function, but on the hostside.
+# Big win, the drawfast is atomic, no ~3 yields anymore
+MACRO draw_fast {
+  3 0 151 EXEC
+}
+
 
 # --- Main Program ---
 screen
 
-WHILE 1500 N > DO
+WHILE 2000 N > DO
   # "From Chaos" PRINTS
   RND 3 * 999 // AS R
 
@@ -75,12 +76,10 @@ WHILE 1500 N > DO
   X K + 2 // AS X
   Y L + 2 // AS Y
 
-  X Y draw
 
   N 1 + AS N
-  N 25 % 0 == IF
-    IO 2 FLIP  # Flip buffer to show new points
-  END
+  N 50 % X Y draw_fast  # Use draw to draw slow, use draw_fast to draw fast
+
 
 DONE
 

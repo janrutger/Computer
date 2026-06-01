@@ -2651,6 +2651,16 @@
         ustack B $DATASTACK_PTR   ; 5. B = value (pop de waarde direct in B!)
         stx B $_start_memory_     ; 6. *I = B (schrijf B naar het doeladres)
         ret
+@VVMerror
+    ustack A $DATASTACK_PTR
+    sto A $_env_vvm_ptr
+    ldi A 3
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    ldm A $_env_vvm_ptr
+    stack A $DATASTACK_PTR
+    call @VVMpoke
+    ret
 @s_halt
     ustack A $DATASTACK_PTR
     sto A $_env_vvm_ptr
@@ -2665,6 +2675,8 @@
 
         ; --- 1. Haal de parameters van de host-stack (JUISTE VOLGORDE) ---
         ustack I $DATASTACK_PTR   ; 1. EERST POPPEN: I = &VVM-pointer (_env_vvm_ptr)
+        ld M I                    ; Save &VVM-pointer in M
+
         ustack Y $DATASTACK_PTR   ; 2. DAARNA POPPEN: Y = target address (_math_a)
         ldx B $_start_memory_     ; 3. B = basisadres van de VVM-struct (anker)
         
@@ -2710,7 +2722,10 @@
         ustack A $DATASTACK_PTR   ; Pop pointer van stack voor de syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS          ; Interrupt om de error te printen
-        call @HALT
+        # call @HALT
+        stack M $DATASTACK_PTR
+        call @VVMerror
+        
         
     :s_call_end
         ret
@@ -4762,17 +4777,7 @@
 :VVM.create_if_end_9
     jmp :VVM.create_while_start_0
 :VVM.create_while_end_0
-    ldm A $label_addresses
-    stack A $DATASTACK_PTR
-    call @DICT.count
-    call @PRTnum
-    ldi A $msg_labels_found
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-    :VVM.create_if_end_0
+:VVM.create_if_end_0
     ldm A $_VVMsize
     sto A $_vvm_max_size
     ldi A 50

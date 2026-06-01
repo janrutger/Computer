@@ -334,17 +334,7 @@
 :VVM.create_if_end_9
     jmp :VVM.create_while_start_0
 :VVM.create_while_end_0
-    ldm A $label_addresses
-    stack A $DATASTACK_PTR
-    call @DICT.count
-    call @PRTnum
-    ldi A $msg_labels_found
-    stack A $DATASTACK_PTR
-
-        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
-        ldi I ~SYS_PRINT_STRING
-        int $INT_VECTORS         ; Interrupt to trigger the syscall
-    :VVM.create_if_end_0
+:VVM.create_if_end_0
     ldm A $_VVMsize
     sto A $_vvm_max_size
     ldi A 50

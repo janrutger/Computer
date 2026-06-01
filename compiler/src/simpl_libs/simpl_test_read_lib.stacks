@@ -23,6 +23,7 @@ MACRO load_simpl_test_read {
     110            _sq_ DEQUE.append
     \"STREND"      _sq_ DEQUE.append
     \"PRINTS"      _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     20             _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append
@@ -32,6 +33,7 @@ MACRO load_simpl_test_read {
     10             _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append
     \"SYS"         _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     20             _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append
@@ -48,6 +50,7 @@ MACRO load_simpl_test_read {
     10             _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append
     \"SYS"         _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     20             _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append

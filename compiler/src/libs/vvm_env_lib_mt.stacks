@@ -26,6 +26,9 @@ VALUE _math_b 0
 
 STRING error_stack_collision "VVM Stack Collision (PC>=RSP). \n"
 
+
+
+
 # Peek a value from the VVM struct
 # ( index &VVM-pointer -- value )
 # DEF VVMpeek {
@@ -140,6 +143,12 @@ CONST _ststr_       90  ; Start van een Inline String (met pointer operand)
 CONST _strend_      91  ; Einde van een Inline String marker
 
 
+DEF VVMerror {
+    AS _env_vvm_ptr
+    VVM_Error VVM_status _env_vvm_ptr VVMpoke
+}
+
+
 ### end of the opcodes
 
 ### Setup the Syscalls constants
@@ -192,6 +201,8 @@ DEF s_call {
     ASM {
         ; --- 1. Haal de parameters van de host-stack (JUISTE VOLGORDE) ---
         ustack I $DATASTACK_PTR   ; 1. EERST POPPEN: I = &VVM-pointer (_env_vvm_ptr)
+        ld M I                    ; Save &VVM-pointer in M
+
         ustack Y $DATASTACK_PTR   ; 2. DAARNA POPPEN: Y = target address (_math_a)
         ldx B $_start_memory_     ; 3. B = basisadres van de VVM-struct (anker)
         
@@ -237,7 +248,10 @@ DEF s_call {
         ustack A $DATASTACK_PTR   ; Pop pointer van stack voor de syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS          ; Interrupt om de error te printen
-        call @HALT
+        # call @HALT
+        stack M $DATASTACK_PTR
+        call @VVMerror
+        
         
     :s_call_end
     }

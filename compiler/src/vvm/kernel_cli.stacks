@@ -16,13 +16,13 @@ CONST KERNEL_err_loading_vvm  4
 # Define host side functions as syscalls-is's for the FFI interface
 CONST KERNEL.ps     100 ; Syscall ID for the PS function
 CONST KERNEL.start  101 ; Syscall ID for the start function
-# CONST KERNEL.resume 102 ; Syscall ID for the resume function
+CONST KERNEL.reserved 102 ; Syscall ID for the old resume function
 CONST KERNEL.stop   103 ; Syscall ID for the stop function
 CONST KERNEL.kbd_flush  104 ; Syscall ID for the kbd_flush function
 
 
 DEF handle_error {
-    "ERROR " PRINTS PRINT "is the problem\n" PRINTS 
+    "The problem is: ERROR " PRINTS PRINT 
 }
 
 
@@ -43,10 +43,6 @@ MACRO run.start {
     _slot_ 1 1 KERNEL.start EXEC DUP IF handle_error ELSE DROP END
 }
 
-# MACRO run.resume {
-#     AS _slot_
-#     _slot_ 1 1 KERNEL.resume EXEC DUP IF handle_error ELSE DROP END
-# }
 
 MACRO run.stop {
     AS _slot_
@@ -80,19 +76,14 @@ WHILE running DO
     END
 
     input_token \"start" == IF
-        "instanceID " READ                ; Get the target VVM to start
+        "Slot# " READ                ; Get the target VVM to start
         run.start
         GOTO LOOP_EXIT
     END
 
-    # input_token \"resume" == IF
-    #     "instanceID " READ                ; Get the target VVM to resume
-    #     run.resume
-    #     GOTO LOOP_EXIT
-    # END
 
     input_token \"stop" == IF
-        "instanceID " READ                ; Get the target VVM to resume
+        "Slot# " READ                ; Get the target VVM to resume
         run.stop
         GOTO LOOP_EXIT
     END

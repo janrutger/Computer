@@ -161,7 +161,8 @@ DEF VVM.create {
             END
         DONE
         
-        label_addresses DICT.count PRTnum &msg_labels_found PRTstring
+        # Disable the Labels found message as cleanup, leave the line for debugging
+        #label_addresses DICT.count PRTnum &msg_labels_found PRTstring
     END
     
     VALUE _vvm_max_size 0
