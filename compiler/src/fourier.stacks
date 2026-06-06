@@ -151,11 +151,11 @@ i WORLD_X_MAX step_divider * > IF GOTO main_end END
     a4 f4 p4 wx f_sinus AS y4
     
     ; Teken de individuele componenten in het grijs
-    # gray TURTLE.color
-    # wx y1 draw_point
-    # wx y2 draw_point
-    # wx y3 draw_point
-    # wx y4 draw_point
+    gray TURTLE.color
+    wx y1 draw_point
+    wx y2 draw_point
+    wx y3 draw_point
+    wx y4 draw_point
     
     ; Bereken de som en teken deze in het rood
     red TURTLE.color

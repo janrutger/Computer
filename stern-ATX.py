@@ -30,7 +30,7 @@ MEM_SIZE = 24576
 # MEM_EXTEND_BLOCKS = 8
 MEM_EXTEND_BLOCKS = 10  # blocks for the HEAP 4 blocks for 4xVVM
 MEM_LOADER_START = 0
-MEM_KERNEL_START = 1024
+# MEM_KERNEL_START = 1024
 MEM_INT_VECTORS_START = 8192
 MEM_PROG_START = 9216
 MEM_VAR_START = 18432
@@ -46,8 +46,9 @@ CHAR_HEIGHT = 20
 WINDOW_WIDTH = SCREEN_WIDTH_CHARS * CHAR_WIDTH
 WINDOW_HEIGHT = SCREEN_HEIGHT_CHARS * CHAR_HEIGHT
 
-BG_COLOR = (0, 0, 20) # Dark Blue
-FG_COLOR = (200, 200, 200) # Light Grey
+BG_COLOR = (0, 0, 20)       # Dark Blue
+#FG_COLOR = (200, 200, 200) # Light Grey
+FG_COLOR = (14, 201, 52)    # Amber/Groen Hybride
 
 # Device Memory Locations
 MEM_KBD_I0_BASE   = MEM_VAR_START    - 8    # Keyboard device base adres (max 8 registers)

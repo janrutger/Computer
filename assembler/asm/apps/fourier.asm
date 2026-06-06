@@ -283,6 +283,29 @@
     call @f_sinus
     ustack A $DATASTACK_PTR
     sto A $y4
+    ldi A 12
+    stack A $DATASTACK_PTR
+    call @TURTLE.color
+    ldm A $wx
+    stack A $DATASTACK_PTR
+    ldm A $y1
+    stack A $DATASTACK_PTR
+    call @draw_point
+    ldm A $wx
+    stack A $DATASTACK_PTR
+    ldm A $y2
+    stack A $DATASTACK_PTR
+    call @draw_point
+    ldm A $wx
+    stack A $DATASTACK_PTR
+    ldm A $y3
+    stack A $DATASTACK_PTR
+    call @draw_point
+    ldm A $wx
+    stack A $DATASTACK_PTR
+    ldm A $y4
+    stack A $DATASTACK_PTR
+    call @draw_point
     ldi A 2
     stack A $DATASTACK_PTR
     call @TURTLE.color
