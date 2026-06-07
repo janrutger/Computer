@@ -1459,6 +1459,9 @@ VALUE string_dict 0
 VALUE _vvm_temp_list_ptr 0
 VALUE kbd_req_queue 0
 VALUE kbd_prompts 0
+VALUE _FIT16_table 0                # File Index Table
+VALUE filename_tmp 0                # 25 chars + NULL termination
+STRING index_file_name "_FIT16_"    # File naam op de fysieke disk
 
 
 DEF VVM.init {
@@ -1473,6 +1476,12 @@ DEF VVM.init {
     4   DICT.new AS kbd_prompts
 
     DEQUE.new    AS kbd_req_queue
+
+    16  DICT.new  AS _FIT16_table        # File Index Table
+    26  NEW.array AS filename_tmp        # 25 chars + NULL termination
+    
+    
+
     
 
 

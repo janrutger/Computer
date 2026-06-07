@@ -25,6 +25,8 @@ STRING error_div_zero       "VVM division by zero error. \n"
 STRING error_vvm_overflow   "VVM memory overflow. \n"
 STRING msg_labels_found     " labels found\n"
 STRING msg_loading          "Loading Image from disk \n"
+STRING msg_FITing           "Build FIT table \n"
+STRING error_fit_file       " not found on disk. \n"
 STRING error_invalid_syscall "VVM Illigal SYSCALL ID is used. \n"
 
 
@@ -475,9 +477,172 @@ DEF VVM.check_syscalls {
 }
 
 
+VALUE _FIT_file_on_disk 0
+VALUE _FIT_tempname 0
+VALUE _FIT_table 0
+VALUE _fit_char 0
+VALUE _fit_hash 0
+VALUE _fit_len 0
+VALUE _fit_str_ptr 0
 
+# maak een FIT-tabel (dictonay) voor de V-VVM-disk routines
+# ( FIT-ptr tmp_filename file_on_disk -- )
+DEF VVM.fit_init {
+    AS _FIT_file_on_disk
+    AS _FIT_tempname
+    AS _FIT_table
 
+    &msg_FITing PRTstring
 
+    # _FIT_table PRINT
+    # _FIT_tempname PRINT
+    # _FIT_file_on_disk PRTstring
+
+    ASM {
+        # Open _FIT16_ file expected the disk
+        # Retuns 1 on success, 0 on failure
+        ldm A $_FIT_file_on_disk
+        ldi I ~SYS_F_OPEN_READ
+        int $INT_VECTORS
+        
+        ldm A $SYSCALL_RETURN_STATUS
+        tste A Z
+        stack A $DATASTACK_PTR      ; return value on the Stack
+    }
+
+    0 == IF _FIT_file_on_disk PRTstring &error_fit_file PRTstring 
+        HALT
+    ELSE
+    # File is open here
+    # Laad eerst het allereerste schijfblok in de actieve buffer
+        ASM {
+            call @_read_disk_block
+            # Mocht dit block om vage redenen falen, spring naar close
+            jmpt :fit_init_close_early
+        }
+
+        _FIT_tempname ARRAY.clear
+
+        :fit_init_loop      # lees het hele bestand
+           
+        # get char
+        ASM {
+            :get_char_loop
+                inc I $disk_io_buffer_ptr
+                ldx C $disk_io_buffer_base
+                tst C \null
+                jmpf :FIT_process_char
+                    # End of block, read next
+                    call @_check_last_block
+                    jmpt :FIT_last_block
+                    call @_read_disk_block
+                    jmpt :FIT_close_and_end
+
+                    # Reset ptr and reload C
+                    # The _read_disk_block resets the internal pointer variable to 0.
+                    # The top of the loop increments before reading, which would skip the
+                    # first character of the new block.
+                    # We must manually load the first character here and jump past the loop's load.
+                    inc I $disk_io_buffer_ptr
+                    ldx C $disk_io_buffer_base
+                    jmp :FIT_process_char
+
+                :FIT_process_char                  
+                    stack C $DATASTACK_PTR
+                    jmp :FIT_get_char_exit
+
+                :FIT_last_block                 # no data left
+                    stack Z $DATASTACK_PTR
+                    jmp :FIT_get_char_exit
+
+            :FIT_get_char_exit    
+        }
+        AS _fit_char
+
+         # CONDITIE 1: De file is helemaal klaar (0)
+        _fit_char 0 == IF
+            GOTO FIT_close_and_end
+        END
+
+        _fit_char PRTchar       #DEbug line
+
+        # CONDITIE 2: Einde van een bestandsnaam (13 / \Return)
+        _fit_char 13 == IF
+            # Voeg de \null terminator toe met ARRAY.append!
+            0 _FIT_tempname ARRAY.append
+
+            # Controleer de lengte via de Array-header zelf (ARRAY.len)
+            _FIT_tempname ARRAY.len 1 > IF  
+                
+                # CRUCIAL: Verschuif de pointer met +2 om de header te skippen!
+                # Zo krijgen STRhash en STRlen de pure string-data te zien.
+                _FIT_tempname 2 + STRhash AS _fit_hash
+                _FIT_tempname ARRAY.len AS _fit_len  # is incl 0-termnination
+                
+
+                # Alloceer exacte ruimte op de heap (dit blijft een pure LIST/string)
+                _fit_len NEW.list AS _fit_str_ptr
+                
+                # Kopieer string vanaf de data-start (+2) naar de definitieve plek
+                _FIT_tempname 2 + _fit_str_ptr STRcopy
+                
+
+                # Sla op in de FIT dictionary
+                _fit_str_ptr _fit_hash _FIT_table DICT.put
+            END
+
+            # Maak de Array onmiddellijk leeg voor de volgende ronde!
+            # Dankzij jouw handige MACRO kost dit bijna geen cycles.
+            _FIT_tempname ARRAY.clear
+            
+            GOTO fit_init_loop
+        END
+        
+        # CONDITIE 3: Normaal karakter. Gewoon veilig append achteraan!
+        # ARRAY.append checkt zelf op bounds-overflow en verhoogt de count.
+        _fit_char _FIT_tempname ARRAY.append
+        
+        GOTO fit_init_loop
+    
+        ASM {
+                :fit_init_close_early
+            }
+
+    END
+
+    :FIT_close_and_end
+    ASM {
+        # Close _FIT16_ file
+        ldi I ~SYS_F_CLOSE
+        int $INT_VECTORS
+    }
+
+}
+
+VALUE _search_hash 0
+VALUE _found_file_ptr 0
+STRING msg_hash_not_found "VVM Kernel Error: Executable hash not found -> "
+
+# Zoekt een schijf-bestand pointer op basis van zijn unieke DJB2 hash
+# ( hash -- string_ptr_or_zero )
+DEF VVM.fit_lookup_by_hash {
+    AS _search_hash
+
+    # 1. Controleer EERST of de hash überhaupt bestaat in de FIT-tabel
+    _search_hash _FIT_table DICT.has_key IF
+        
+        # 2. Veilig! We weten 100% zeker dat DICT.get niet gaat HALTen
+        _search_hash _FIT_table DICT.get AS _found_file_ptr
+        
+        _found_file_ptr # Geef de stringpointer terug op de stack
+    ELSE
+        # Hash bestaat niet! Voorkom de crash, log het en retourneer 0
+        &msg_hash_not_found PRTstring
+        _search_hash PRINT              # PRINT end with a newline
+        
+        0 # Return 0 op de stack
+    END
+}
 
 VALUE _filename 0
 VALUE _code_queue 0

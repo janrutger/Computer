@@ -349,6 +349,8 @@ DEF kernel_start {
     HEAP.free
     50 DEQUE.init_pool "Deque Pool initialized (size 50).\n\n" PRTstring
 
+    
+
     DEQUE.new AS VVM0_host_deque    ; Get a pointer for the host communication deque's
     DEQUE.new AS VVM1_host_deque   
     DEQUE.new AS VVM2_host_deque
@@ -372,6 +374,9 @@ DEF kernel_start {
     "VVM Environment Initialized!!\n" PRTstring
     "VVM Loading slots....\n\n" PRTstring
 
+    # Table in memory, Temparry, _FIT_ file on the disk VVM.fit_init
+    # All ARGs are initialized in VVM.init
+    _FIT16_table filename_tmp &index_file_name VVM.fit_init  
 
     ## Application FFI call bindings 
     &host_gcd       150 VVM.bind             ; as simpel host function to test teh FFI interface

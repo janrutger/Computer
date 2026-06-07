@@ -1,1 +1,6 @@
 # For a new project
+USE std_stern_io
+USE std_string
+
+"sbc_chaos3" STRhash PRINT
+8246906014375474365 PRINT

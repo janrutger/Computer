@@ -768,7 +768,14 @@
         ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
-        ldi A @host_gcd
+        ldm A $_FIT16_table
+    stack A $DATASTACK_PTR
+    ldm A $filename_tmp
+    stack A $DATASTACK_PTR
+    ldi A $index_file_name
+    stack A $DATASTACK_PTR
+    call @VVM.fit_init
+    ldi A @host_gcd
     stack A $DATASTACK_PTR
     ldi A 150
     stack A $DATASTACK_PTR

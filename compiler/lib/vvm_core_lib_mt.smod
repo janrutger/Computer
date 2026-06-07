@@ -15,6 +15,8 @@
 . $error_vvm_overflow 23
 . $msg_labels_found 15
 . $msg_loading 26
+. $msg_FITing 22
+. $error_fit_file 22
 . $error_invalid_syscall 34
 . $_run_pc 1
 . $_run_opcode 1
@@ -47,6 +49,16 @@
 . $_kbd_dq 1
 . $_prompt_pointer 1
 . $new_input_flag 1
+. $_FIT_file_on_disk 1
+. $_FIT_tempname 1
+. $_FIT_table 1
+. $_fit_char 1
+. $_fit_hash 1
+. $_fit_len 1
+. $_fit_str_ptr 1
+. $_search_hash 1
+. $_found_file_ptr 1
+. $msg_hash_not_found 48
 . $_filename 1
 . $_code_queue 1
 . $_custom_id 1
@@ -1087,6 +1099,212 @@
 :VVM.check_syscalls_if_end_31
 :VVM.check_syscalls_if_end_30
     ret
+@VVM.fit_init
+    ustack A $DATASTACK_PTR
+    sto A $_FIT_file_on_disk
+    ustack A $DATASTACK_PTR
+    sto A $_FIT_tempname
+    ustack A $DATASTACK_PTR
+    sto A $_FIT_table
+    ldi A $msg_FITing
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+    
+        # Open _FIT16_ file expected the disk
+        # Retuns 1 on success, 0 on failure
+        ldm A $_FIT_file_on_disk
+        ldi I ~SYS_F_OPEN_READ
+        int $INT_VECTORS
+        
+        ldm A $SYSCALL_RETURN_STATUS
+        tste A Z
+        stack A $DATASTACK_PTR      ; return value on the Stack
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.fit_init_if_else_35
+    ldm A $_FIT_file_on_disk
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A $error_fit_file
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        call @HALT
+    jmp :VVM.fit_init_if_end_35
+:VVM.fit_init_if_else_35
+
+            call @_read_disk_block
+            # Mocht dit block om vage redenen falen, spring naar close
+            jmpt :fit_init_close_early
+    ldm B $_FIT_tempname
+    ldi A 1
+    add A B
+    sto A $_ARR_TEMP_PTR
+    ld B Z
+    ldm I $_ARR_TEMP_PTR
+    stx B $_start_memory_
+:fit_init_loop
+
+            :get_char_loop
+                inc I $disk_io_buffer_ptr
+                ldx C $disk_io_buffer_base
+                tst C \null
+                jmpf :FIT_process_char
+                    # End of block, read next
+                    call @_check_last_block
+                    jmpt :FIT_last_block
+                    call @_read_disk_block
+                    jmpt :FIT_close_and_end
+
+                    # Reset ptr and reload C
+                    # The _read_disk_block resets the internal pointer variable to 0.
+                    # The top of the loop increments before reading, which would skip the
+                    # first character of the new block.
+                    # We must manually load the first character here and jump past the loop's load.
+                    inc I $disk_io_buffer_ptr
+                    ldx C $disk_io_buffer_base
+                    jmp :FIT_process_char
+
+                :FIT_process_char                  
+                    stack C $DATASTACK_PTR
+                    jmp :FIT_get_char_exit
+
+                :FIT_last_block                 # no data left
+                    stack Z $DATASTACK_PTR
+                    jmp :FIT_get_char_exit
+
+            :FIT_get_char_exit    
+            ustack A $DATASTACK_PTR
+    sto A $_fit_char
+    stack A $DATASTACK_PTR
+    stack Z $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.fit_init_if_end_36
+    jmp :FIT_close_and_end
+:VVM.fit_init_if_end_36
+    ldm A $_fit_char
+    stack A $DATASTACK_PTR
+    call @PRTchar
+    ldm A $_fit_char
+    stack A $DATASTACK_PTR
+    ldi A 13
+    stack A $DATASTACK_PTR
+    call @rt_eq
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.fit_init_if_end_37
+    stack Z $DATASTACK_PTR
+    ldm A $_FIT_tempname
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    ldm A $_FIT_tempname
+    stack A $DATASTACK_PTR
+    call @ARRAY.len
+    ldi A 1
+    stack A $DATASTACK_PTR
+    call @rt_gt
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.fit_init_if_end_38
+    ldm B $_FIT_tempname
+    ldi A 2
+    add B A
+    stack B $DATASTACK_PTR
+    call @STRhash
+    ustack A $DATASTACK_PTR
+    sto A $_fit_hash
+    ldm A $_FIT_tempname
+    stack A $DATASTACK_PTR
+    call @ARRAY.len
+    ustack A $DATASTACK_PTR
+    sto A $_fit_len
+    stack A $DATASTACK_PTR
+    call @NEW.list
+    ustack A $DATASTACK_PTR
+    sto A $_fit_str_ptr
+    ldm B $_FIT_tempname
+    ldi A 2
+    add B A
+    stack B $DATASTACK_PTR
+    ldm A $_fit_str_ptr
+    stack A $DATASTACK_PTR
+    call @STRcopy
+    ldm A $_fit_str_ptr
+    stack A $DATASTACK_PTR
+    ldm A $_fit_hash
+    stack A $DATASTACK_PTR
+    ldm A $_FIT_table
+    stack A $DATASTACK_PTR
+    call @DICT.put
+:VVM.fit_init_if_end_38
+    ldm B $_FIT_tempname
+    ldi A 1
+    add A B
+    sto A $_ARR_TEMP_PTR
+    ld B Z
+    ldm I $_ARR_TEMP_PTR
+    stx B $_start_memory_
+    jmp :fit_init_loop
+:VVM.fit_init_if_end_37
+    ldm A $_fit_char
+    stack A $DATASTACK_PTR
+    ldm A $_FIT_tempname
+    stack A $DATASTACK_PTR
+    call @ARRAY.append
+    jmp :fit_init_loop
+
+                :fit_init_close_early
+            :VVM.fit_init_if_end_35
+:FIT_close_and_end
+
+        # Close _FIT16_ file
+        ldi I ~SYS_F_CLOSE
+        int $INT_VECTORS
+        ret
+@VVM.fit_lookup_by_hash
+    ustack A $DATASTACK_PTR
+    sto A $_search_hash
+    stack A $DATASTACK_PTR
+    ldm A $_FIT_table
+    stack A $DATASTACK_PTR
+    call @DICT.has_key
+    ustack A $DATASTACK_PTR
+    tst A 0
+    jmpt :VVM.fit_lookup_by_hash_if_else_39
+    ldm A $_search_hash
+    stack A $DATASTACK_PTR
+    ldm A $_FIT_table
+    stack A $DATASTACK_PTR
+    call @DICT.get
+    ustack A $DATASTACK_PTR
+    sto A $_found_file_ptr
+    stack A $DATASTACK_PTR
+    jmp :VVM.fit_lookup_by_hash_if_end_39
+:VVM.fit_lookup_by_hash_if_else_39
+    ldi A $msg_hash_not_found
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldm A $_search_hash
+    stack A $DATASTACK_PTR
+    call @rt_print_tos
+    stack Z $DATASTACK_PTR
+:VVM.fit_lookup_by_hash_if_end_39
+    ret
 @VVM.loadcode
     ustack A $DATASTACK_PTR
     sto A $_filename
@@ -1190,7 +1408,7 @@
     call @rt_lt
     ustack A $DATASTACK_PTR
     tst A 0
-    jmpt :VVM.bind_if_else_35
+    jmpt :VVM.bind_if_else_40
     ldi A $error_invalid_syscall
     stack A $DATASTACK_PTR
 
@@ -1198,8 +1416,8 @@
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS         ; Interrupt to trigger the syscall
         call @HALT
-    jmp :VVM.bind_if_end_35
-:VVM.bind_if_else_35
+    jmp :VVM.bind_if_end_40
+:VVM.bind_if_else_40
     ldm A $_function_ptr
     stack A $DATASTACK_PTR
     ldm A $_custom_id
@@ -1207,7 +1425,7 @@
     ldm A $syscall_table
     stack A $DATASTACK_PTR
     call @DICT.put
-:VVM.bind_if_end_35
+:VVM.bind_if_end_40
     ret
 
 # .DATA
@@ -1227,6 +1445,8 @@
 % $error_vvm_overflow \V \V \M \space \m \e \m \o \r \y \space \o \v \e \r \f \l \o \w \. \space \Return \null
 % $msg_labels_found \space \l \a \b \e \l \s \space \f \o \u \n \d \Return \null
 % $msg_loading \L \o \a \d \i \n \g \space \I \m \a \g \e \space \f \r \o \m \space \d \i \s \k \space \Return \null
+% $msg_FITing \C \r \e \a \t \t \i \n \g \space \F \I \T \space \t \a \b \l \e \space \Return \null
+% $error_fit_file \space \n \o \t \space \f \o \u \n \d \space \o \n \space \d \i \s \k \. \space \Return \null
 % $error_invalid_syscall \V \V \M \space \I \l \l \i \g \a \l \space \S \Y \S \C \A \L \L \space \I \D \space \i \s \space \u \s \e \d \. \space \Return \null
 % $_run_pc 0
 % $_run_opcode 0
@@ -1259,6 +1479,16 @@
 % $_kbd_dq 0
 % $_prompt_pointer 0
 % $new_input_flag 1
+% $_FIT_file_on_disk 0
+% $_FIT_tempname 0
+% $_FIT_table 0
+% $_fit_char 0
+% $_fit_hash 0
+% $_fit_len 0
+% $_fit_str_ptr 0
+% $_search_hash 0
+% $_found_file_ptr 0
+% $msg_hash_not_found \V \V \M \space \K \e \r \n \e \l \space \E \r \r \o \r \: \space \E \x \e \c \u \t \a \b \l \e \space \h \a \s \h \space \n \o \t \space \f \o \u \n \d \space \- \> \space \null
 % $_filename 0
 % $_code_queue 0
 % $_custom_id 0

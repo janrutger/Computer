@@ -15,7 +15,7 @@ from devices.memoryR3x import Memory
 from devices.interrupt_controller import InterruptController
 from devices.keyboard import Keyboard
 from devices.debugger import Debugger
-from devices.VirtualDisk import VirtualDisk
+from devices.VirtualDiskR1 import VirtualDisk
 from devices.UDC import UDC
 from devices.sensor import Sensor
 from devices.plotter import Plotter

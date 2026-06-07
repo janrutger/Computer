@@ -28,6 +28,9 @@
 . $_vvm_temp_list_ptr 1
 . $kbd_req_queue 1
 . $kbd_prompts 1
+. $_FIT16_table 1
+. $filename_tmp 1
+. $index_file_name 8
 # .FUNCTIONS
 @VVMpeek
 
@@ -1390,6 +1393,16 @@
     call @DEQUE.new
     ustack A $DATASTACK_PTR
     sto A $kbd_req_queue
+    ldi A 16
+    stack A $DATASTACK_PTR
+    call @DICT.new
+    ustack A $DATASTACK_PTR
+    sto A $_FIT16_table
+    ldi A 26
+    stack A $DATASTACK_PTR
+    call @NEW.array
+    ustack A $DATASTACK_PTR
+    sto A $filename_tmp
     stack Z $DATASTACK_PTR
     ldi A 6384101742
     stack A $DATASTACK_PTR
@@ -1921,3 +1934,6 @@
 % $_vvm_temp_list_ptr 0
 % $kbd_req_queue 0
 % $kbd_prompts 0
+% $_FIT16_table 0
+% $filename_tmp 0
+% $index_file_name \_ \F \I \T \1 \6 \_ \null
