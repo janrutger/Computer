@@ -28,6 +28,7 @@ STRING msg_loading          "Loading Image from disk \n"
 STRING msg_FITing           "Build FIT table \n"
 STRING error_fit_file       " not found on disk. \n"
 STRING error_invalid_syscall "VVM Illigal SYSCALL ID is used. \n"
+STRING tab                  "    "
 
 
 VALUE _run_pc 0
@@ -564,7 +565,7 @@ DEF VVM.fit_init {
             GOTO FIT_close_and_end
         END
 
-        _fit_char PRTchar       #DEbug line
+        # _fit_char PRTchar       #DEbug line
 
         # CONDITIE 2: Einde van een bestandsnaam (13 / \Return)
         _fit_char 13 == IF
@@ -576,7 +577,8 @@ DEF VVM.fit_init {
                 
                 # CRUCIAL: Verschuif de pointer met +2 om de header te skippen!
                 # Zo krijgen STRhash en STRlen de pure string-data te zien.
-                _FIT_tempname 2 + STRhash AS _fit_hash
+                _FIT_tempname 6 + STRhash AS _fit_hash          # skip 2 for array header, 
+                                                                # skip 4 For the "_sbc" prefix
                 _FIT_tempname ARRAY.len AS _fit_len  # is incl 0-termnination
                 
 
@@ -584,11 +586,12 @@ DEF VVM.fit_init {
                 _fit_len NEW.list AS _fit_str_ptr
                 
                 # Kopieer string vanaf de data-start (+2) naar de definitieve plek
-                _FIT_tempname 2 + _fit_str_ptr STRcopy
+                _FIT_tempname 2 + _fit_str_ptr STRcopy          # skip 2 for array header
                 
+                &tab PRTstring _fit_str_ptr 4 + PRTstring return PRTchar       # skip 4 For the "_sbc" prefix
 
                 # Sla op in de FIT dictionary
-                _fit_str_ptr _fit_hash _FIT_table DICT.put
+                _fit_str_ptr _fit_hash _FIT_table DICT.put      # Use the full filename in de _FIT_table
             END
 
             # Maak de Array onmiddellijk leeg voor de volgende ronde!

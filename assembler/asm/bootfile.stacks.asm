@@ -136,9 +136,10 @@
 . $error_vvm_overflow 23
 . $msg_labels_found 15
 . $msg_loading 26
-. $msg_FITing 22
+. $msg_FITing 18
 . $error_fit_file 22
 . $error_invalid_syscall 34
+. $tab 5
 . $_run_pc 1
 . $_run_opcode 1
 . $_run_handler 1
@@ -5652,9 +5653,6 @@
 :VVM.fit_init_if_end_36
     ldm A $_fit_char
     stack A $DATASTACK_PTR
-    call @PRTchar
-    ldm A $_fit_char
-    stack A $DATASTACK_PTR
     ldi A 13
     stack A $DATASTACK_PTR
     call @rt_eq
@@ -5675,7 +5673,7 @@
     tst A 0
     jmpt :VVM.fit_init_if_end_38
     ldm B $_FIT_tempname
-    ldi A 2
+    ldi A 6
     add B A
     stack B $DATASTACK_PTR
     call @STRhash
@@ -5697,6 +5695,23 @@
     ldm A $_fit_str_ptr
     stack A $DATASTACK_PTR
     call @STRcopy
+    ldi A $tab
+    stack A $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+    ldm B $_fit_str_ptr
+    ldi A 4
+    add B A
+    stack B $DATASTACK_PTR
+
+        ustack A $DATASTACK_PTR  ; Pop pointer from stack into A register for the syscall
+        ldi I ~SYS_PRINT_STRING
+        int $INT_VECTORS         ; Interrupt to trigger the syscall
+        ldi A 13
+    stack A $DATASTACK_PTR
+    call @PRTchar
     ldm A $_fit_str_ptr
     stack A $DATASTACK_PTR
     ldm A $_fit_hash
@@ -6029,9 +6044,10 @@
 % $error_vvm_overflow \V \V \M \space \m \e \m \o \r \y \space \o \v \e \r \f \l \o \w \. \space \Return \null
 % $msg_labels_found \space \l \a \b \e \l \s \space \f \o \u \n \d \Return \null
 % $msg_loading \L \o \a \d \i \n \g \space \I \m \a \g \e \space \f \r \o \m \space \d \i \s \k \space \Return \null
-% $msg_FITing \C \r \e \a \t \t \i \n \g \space \F \I \T \space \t \a \b \l \e \space \Return \null
+% $msg_FITing \B \u \i \l \d \space \F \I \T \space \t \a \b \l \e \space \Return \null
 % $error_fit_file \space \n \o \t \space \f \o \u \n \d \space \o \n \space \d \i \s \k \. \space \Return \null
 % $error_invalid_syscall \V \V \M \space \I \l \l \i \g \a \l \space \S \Y \S \C \A \L \L \space \I \D \space \i \s \space \u \s \e \d \. \space \Return \null
+% $tab \space \space \space \space \null
 % $_run_pc 0
 % $_run_opcode 0
 % $_run_handler 0

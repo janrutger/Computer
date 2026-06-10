@@ -3,27 +3,45 @@
 # All used VAR declarations
 VALUE running 0
 VALUE input_token 0
+VALUE errorcode 0
 VALUE _slot_ 0
+VALUE _file_hash_ 0
 
 
 # Define const for error handling
-CONST KERNEL_succes 0
-CONST KERNEL_err_invalid_slot 1
-CONST KERNEL_err_cannot_halt  2
-CONST KERNEL_err_cannot_start 3
-CONST KERNEL_err_loading_vvm  4
-
-# Define host side functions as syscalls-is's for the FFI interface
-CONST KERNEL.ps     100 ; Syscall ID for the PS function
-CONST KERNEL.start  101 ; Syscall ID for the start function
-CONST KERNEL.reserved 102 ; Syscall ID for the old resume function
-CONST KERNEL.stop   103 ; Syscall ID for the stop function
-CONST KERNEL.kbd_flush  104 ; Syscall ID for the kbd_flush function
+CONST KERNEL_succes                     0
+CONST KERNEL_err_invalid_slot           1
+CONST KERNEL_err_cannot_halt            2
+CONST KERNEL_err_cannot_start           3
+CONST KERNEL_err_loading_vvm            4
+CONST KERNEL_err_mount_umount_failed    5
+CONST KERNEL_err_file_not_found         6
 
 
 DEF handle_error {
-    "The problem is: ERROR " PRINTS PRINT 
+    AS errorcode
+    errorcode 1 == IF "Invalid slot\n"      PRINTS GOTO exit_errer END
+    errorcode 2 == IF "Cannot halt\n"       PRINTS GOTO exit_errer END
+    errorcode 3 == IF "Cannot start\n"      PRINTS GOTO exit_errer END
+    errorcode 4 == IF "Cannot load\n"       PRINTS GOTO exit_errer END
+    errorcode 5 == IF "Mount failed\n"      PRINTS GOTO exit_errer END
+    errorcode 6 == IF "File not found\n"    PRINTS GOTO exit_errer END
+
+    #fall back messegae
+    "The problem is: ERROR " PRINTS errorcode PRINT 
+:exit_errer
 }
+
+# Define host side functions as syscalls-is's for the FFI interface
+CONST KERNEL.ps         100 ; Syscall ID for the PS function
+CONST KERNEL.start      101 ; Syscall ID for the start function
+CONST KERNEL.reserved   102 ; Syscall ID for the old resume function  (not used)
+CONST KERNEL.stop       103 ; Syscall ID for the stop function
+CONST KERNEL.kbd_flush  104 ; Syscall ID for the kbd_flush function (not implemented)
+CONST KERNEL.mount      105 ; Syscall ID for the mount disk function
+CONST KERNEL.umount     106 ; Syscall ID for the umount disk function
+CONST KERNEL.load       107 ; Syscall ID for loading file from disk
+
 
 
 ####################
@@ -55,11 +73,26 @@ MACRO run.kbd_flush {
 
 MACRO run.help {
     "\n" PRINTS
-    "Availible commands: " PRINTS
-    "start, stop, ps, help, quit\n\n" PRINTS
+    "Availible commands: \n" PRINTS
+    "   start, stop,   ps\n" PRINTS
+    "   mount, umount, load\n\n" PRINTS
+    "   help,  exit\n" PRINTS
+    "\n" PRINTS
 }
 
+MACRO run.mount {
+    0 1 KERNEL.mount EXEC DUP IF handle_error ELSE DROP END
+}
 
+MACRO run.umount {
+    0 1 KERNEL.umount EXEC DUP IF handle_error ELSE DROP END
+}
+
+MACRO run.load_from_disk {
+    AS _slot_
+    AS _file_hash_
+    _file_hash_ _slot_ 2 1 KERNEL.load EXEC DUP IF handle_error ELSE DROP END
+}
 
 
 
@@ -76,25 +109,42 @@ WHILE running DO
     END
 
     input_token \"start" == IF
-        "Slot# " READ                ; Get the target VVM to start
+        "    Slot#: " READ                ; Get the target VVM to start
         run.start
         GOTO LOOP_EXIT
     END
 
 
     input_token \"stop" == IF
-        "Slot# " READ                ; Get the target VVM to resume
+        "    Slot#: " READ                ; Get the target VVM to resume
         run.stop
         GOTO LOOP_EXIT
     END
 
+    input_token \"mount" == IF
+        run.mount
+        GOTO LOOP_EXIT
+    END
+
+    input_token \"umount" == IF
+        run.umount
+        GOTO LOOP_EXIT
+    END
+
+    input_token \"load" == IF
+    # load file_name slot_num
+        "File name: " READ
+        "    Slot#: " READ
+        run.load_from_disk
+        GOTO LOOP_EXIT
+    END
 
     input_token \"help" == IF
         run.help
         GOTO LOOP_EXIT
     END
 
-    input_token \"quit" == IF
+    input_token \"exit" == IF
         0 AS running
         GOTO LOOP_EXIT
     END

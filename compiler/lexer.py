@@ -206,7 +206,7 @@ class Lexer:
     def get_identifier(self):
         result = ''
         start_column = self.column
-        while self.current_char is not None and (self.current_char.isalnum() or self.current_char == '_') or self.current_char == '.':
+        while self.current_char is not None and (self.current_char.isalnum() or self.current_char == '_') or self.current_char == '.' or self.current_char == '>':
             result += self.current_char
             self.advance()
         
@@ -321,7 +321,7 @@ class Lexer:
                 self.advance()
                 return token
             
-            if self.current_char == '>' :
+            if self.current_char == '>' and self.peek() == ' ':
                 token = Token(TokenType.GT, '>', self.line, self.column)
                 self.advance()
                 return token

@@ -44,6 +44,7 @@ VALUE KERNEL_number_of_processes 0
 VALUE KERNEL_current_process 0
 VALUE KERNEL_current_ptr 0
 VALUE KERNEL_current_burst 50
+VALUE KERNEL_disk_is_mounted 0
 CONST KERNEL_max_burst 300
 
 VALUE _binnengekomen_regel 0
@@ -56,18 +57,23 @@ VALUE _active_count 0
 VALUE _target_vvm 0
 
 
-CONST KERNEL_succes 0
-CONST KERNEL_err_invalid_slot 1
-CONST KERNEL_err_cannot_halt 2
-CONST KERNEL_err_cannot_start 3
-CONST KERNEL_err_loading_vvm 4
+CONST KERNEL_succes                     0
+CONST KERNEL_err_invalid_slot           1
+CONST KERNEL_err_cannot_halt            2
+CONST KERNEL_err_cannot_start           3
+CONST KERNEL_err_loading_vvm            4
+CONST KERNEL_err_mount_umount_failed    5
+CONST KERNEL_err_file_not_found         6
 
 # Define host side functions as syscalls-is's for the FFI interface
-CONST KERNEL.ps     100 ; Syscall ID for the PS function
-CONST KERNEL.start  101 ; Syscall ID for the start function
-CONST KERNEL.reserved 102 ; Syscall ID for the old resume function
-CONST KERNEL.stop   103 ; Syscall ID for the stop function
-CONST KERNEL.kbd_flush  104 ; Syscall ID for the kbd_flush function
+CONST KERNEL.ps         100 ; Syscall ID for the PS function
+CONST KERNEL.start      101 ; Syscall ID for the start function
+CONST KERNEL.reserved   102 ; Syscall ID for the old resume function  (not used)
+CONST KERNEL.stop       103 ; Syscall ID for the stop function
+CONST KERNEL.kbd_flush  104 ; Syscall ID for the kbd_flush function (not implemented)
+CONST KERNEL.mount      105 ; Syscall ID for the mount disk function
+CONST KERNEL.umount     106 ; Syscall ID for the umount disk function
+CONST KERNEL.load       107 ; Syscall ID for loading file from disk
 
 
 
@@ -268,9 +274,109 @@ DEF host_proc_stop {
     :STOP_EXIT
 }
 
+# =============================================================================
+# FFI 105: host_mount
+# Input vanaf de CLI-stack: ( -- )
+# Output naar de CLI-stack: ( KERNEL_succes_of_error -- )
+# CONST KERNEL_err_mount_umount_failed    5
+# =============================================================================
+DEF host_mount {
+    KERNEL_disk_is_mounted IF GOTO MOUNT_EXIT END   ; Quick exit when already mounted
+
+    # Table in memory, Temp_array, _FIT_ file on the disk VVM.fit_init
+    # All ARGs are initialized in VVM.init
+    _FIT16_table filename_tmp &index_file_name VVM.fit_init  # it will halt on failure
+
+    1 AS KERNEL_disk_is_mounted    
+
+    :MOUNT_EXIT
+    KERNEL_succes
+}
+
+# =============================================================================
+# FFI 106: host_umount
+# Input vanaf de CLI-stack: ( -- )
+# Output naar de CLI-stack: ( KERNEL_succes_of_error -- )
+# CONST KERNEL_err_mount_umount_failed    5
+# =============================================================================
+DEF host_umount {
+    KERNEL_disk_is_mounted 0 AS KERNEL_disk_is_mounted
+    KERNEL_succes
+}
+
+VALUE _load_slot 0
+VALUE _load_hash 0
+VALUE _resolved_filename_ptr 0
+
+# =============================================================================
+# FFI 107: host_load        (loads a file from the mounted disk)
+# Input vanaf de CLI-stack: ( file_hash slot_num -- )
+# Output naar de CLI-stack: ( KERNEL_succes_of_error -- )
+# CONST KERNEL_err_file_not_found         6
+# CONST KERNEL_err_invalid_slot           1
+# =============================================================================
+DEF host_load {
+    AS _load_slot
+    AS _load_hash
+
+    # 1. Controleer eerst of de disk überhaupt wel gemount is!
+    KERNEL_disk_is_mounted 0 == IF
+        KERNEL_err_mount_umount_failed
+        GOTO LOAD_EXIT
+    END
+
+    # 2. Validatie van het slotnummer (Slot 0 is de CLI zelf, dus 1 t/m 3)
+    _load_slot 1 < _load_slot 3 > + IF
+        KERNEL_err_invalid_slot
+        GOTO LOAD_EXIT
+    END
+
+    # 3. Gebruik jouw vlijmscherpe hash-lookup poortwachter!
+    _load_hash VVM.fit_lookup_by_hash AS _resolved_filename_ptr
+
+    # Als de lookup 0 teruggeeft, bestond de hash niet in de FIT-tabel
+    _resolved_filename_ptr 0 == IF
+        KERNEL_err_file_not_found
+        GOTO LOAD_EXIT
+    END
+
+    # =========================================================================
+    # Vanaf hier is het veilig: De schijf-pomp mag lopen!
+    # =========================================================================
+    
+    # 4. Maak de centrale transpile-buffer van de VVM leeg
+    # SIMPL_code DEQUE.clear  # DEQUE must be empty here, DEQUE.clear does not exist
+    # _resolved_filename_ptr PRTstring  #debug line
+    # 5. Pompt de tokens vanaf de schijf-pointer de queue in
+    SIMPL_code _resolved_filename_ptr VVM.loadcode
+
+    # 6. JOUW INZICHT: Voer per specifiek slot de VVM.create uit
+    _load_slot 1 == IF
+        &SIMPL_code 1024 &VVM1_host_deque &VVM1_kbd_deque &VVM1 VVM.create
+        GOTO LOAD_succes
+    END
+    
+    _load_slot 2 == IF
+        &SIMPL_code 1024 &VVM2_host_deque &VVM2_kbd_deque &VVM2 VVM.create
+        GOTO LOAD_succes
+    END
+    
+    _load_slot 3 == IF
+        &SIMPL_code 1024 &VVM3_host_deque &VVM3_kbd_deque &VVM3 VVM.create
+    END
+
+    :LOAD_succes
+    KERNEL_succes
+
+    :LOAD_EXIT
+}
 
 
-## Kernel helpers
+
+
+## Kernel helpers ################################################################
+
+
 
 # nonblocking poll line
 
@@ -344,6 +450,10 @@ DEF POLLline {
 
 
 
+
+
+########### KERNEL START HERE ##################################################
+
 # The main program
 DEF kernel_start {
     HEAP.free
@@ -374,10 +484,6 @@ DEF kernel_start {
     "VVM Environment Initialized!!\n" PRTstring
     "VVM Loading slots....\n\n" PRTstring
 
-    # Table in memory, Temparry, _FIT_ file on the disk VVM.fit_init
-    # All ARGs are initialized in VVM.init
-    _FIT16_table filename_tmp &index_file_name VVM.fit_init  
-
     ## Application FFI call bindings 
     &host_gcd       150 VVM.bind             ; as simpel host function to test teh FFI interface
     &host_draw_fast 151 VVM.bind             ; as simpel host function to test teh FFI interface
@@ -387,6 +493,9 @@ DEF kernel_start {
     &host_proc_list   KERNEL.ps     VVM.bind      ;
     &host_proc_start  KERNEL.start  VVM.bind      ;
     &host_proc_stop   KERNEL.stop   VVM.bind      ;
+    &host_mount       KERNEL.mount  VVM.bind      ;
+    &host_umount      KERNEL.umount VVM.bind      ;
+    &host_load        KERNEL.load   VVM.bind      ;
 
 
 

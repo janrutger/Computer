@@ -1444,6 +1444,7 @@ DEF draw {
   IO 2 DRAW
 }
 
+
 0 TIME.start
 
 # --- Main Program ---
@@ -3110,11 +3111,11 @@ i WORLD_X_MAX step_divider * > IF GOTO main_end END
     a4 f4 p4 wx f_sinus AS y4
     
     ; Teken de individuele componenten in het grijs
-    # gray TURTLE.color
-    # wx y1 draw_point
-    # wx y2 draw_point
-    # wx y3 draw_point
-    # wx y4 draw_point
+    gray TURTLE.color
+    wx y1 draw_point
+    wx y2 draw_point
+    wx y3 draw_point
+    wx y4 draw_point
     
     ; Bereken de som en teken deze in het rood
     red TURTLE.color
@@ -3137,6 +3138,8 @@ TURTLE.flip
 
 FILE: src/kernel_mt.stacks
 ------------------------------------------------------------
+# Kernel_mt.stacks 
+
 USE vvm_env_lib_mt
 USE vvm_core_lib_mt
 
@@ -3155,36 +3158,62 @@ USE parser_tools
 # Include the VVM Simpl code apps
 INCLUDE simpl_fly_lib
 INCLUDE simpl_chaos3_lib
-INCLUDE simpl_test_read_lib
-
+INCLUDE simpl_kernel_cli_lib
+INCLUDE simpl_fib_lib
 
 VALUE VVM0 30720        ; The memory address for VVM0, stored in a variable.
 VALUE VVM1 31744        ; The memory address for VVM1, stored in a variable.
+VALUE VVM2 32768        ; The memory address for VVM2, stored in a variable.
+VALUE VVM3 33792        ; The memory address for VVM3, stored in a variable.
 
 VALUE VVM0_host_deque 0
 VALUE VVM1_host_deque 0
+VALUE VVM2_host_deque 0
+VALUE VVM3_host_deque 0
 
 VALUE VVM0_kbd_deque 0
 VALUE VVM1_kbd_deque 0
+VALUE VVM2_kbd_deque 0
+VALUE VVM3_kbd_deque 0
 
 VALUE SIMPL_code 0
 
+VALUE KERNEL_slots 4
 VALUE KERNEL_proces_list 0
 VALUE KERNEL_number_of_processes 0
 VALUE KERNEL_current_process 0
 VALUE KERNEL_current_ptr 0
+VALUE KERNEL_current_burst 50
+VALUE KERNEL_disk_is_mounted 0
+CONST KERNEL_max_burst 300
 
 VALUE _binnengekomen_regel 0
 VALUE _wachtende_vvm 0
 VALUE _target_kbd_dq 0
 VALUE _rpn_input_ptr 0
 VALUE _tokens_geleverd 0
+VALUE _active_count 0
+
+VALUE _target_vvm 0
 
 
+CONST KERNEL_succes                     0
+CONST KERNEL_err_invalid_slot           1
+CONST KERNEL_err_cannot_halt            2
+CONST KERNEL_err_cannot_start           3
+CONST KERNEL_err_loading_vvm            4
+CONST KERNEL_err_mount_umount_failed    5
+CONST KERNEL_err_file_not_found         6
 
-
-
-
+# Define host side functions as syscalls-is's for the FFI interface
+CONST KERNEL.ps         100 ; Syscall ID for the PS function
+CONST KERNEL.start      101 ; Syscall ID for the start function
+CONST KERNEL.reserved   102 ; Syscall ID for the old resume function  (not used)
+CONST KERNEL.stop       103 ; Syscall ID for the stop function
+CONST KERNEL.kbd_flush  104 ; Syscall ID for the kbd_flush function (not implemented)
+CONST KERNEL.mount      105 ; Syscall ID for the mount disk function
+CONST KERNEL.umount     106 ; Syscall ID for the umount disk function
+CONST KERNEL.load       107 ; Syscall ID for loading file from disk
 
 
 
@@ -3200,8 +3229,294 @@ DEF host_gcd {
     DROP
 }
 
+DEF host_draw_fast {
+    IO 2 Y 
+    IO 2 X 
+    RND 15 * 999 // 1 +         ; Random color
+    IO 2 DRAW
+    0 == IF
+        IO 2 FLIP
+    END
+}
 
-## Kernel helpers
+# =============================================================================
+# FFI 100: host_proc_list (De 'ps' heavy lifter)
+# Signatuur vanuit CLI: 0 1 KERNEL.ps EXEC -> VVM-stack krijgt KERNEL_succes (0)
+# =============================================================================
+
+DEF host_proc_list {
+    # 1. Toon direct de geformatteerde tabel op de host-monitor
+    "\nSlot   VVM-Adres   Status\n" PRTstring
+    "---------------------------\n" PRTstring
+    
+    # Vraag aan de dictionary hoeveel actieve registraties er zijn
+    KERNEL_proces_list DICT.count AS _active_count
+    
+    0 AS _loop_idx
+    WHILE _loop_idx _active_count < DO
+        # CRUCIALE FIX: DICT.item legt (key value) op de stack.
+        # Value (Slot) ligt bovenop, dus die pakken we EERST met AS _slot_num.
+        # Key (&VVM) ligt daaronder, dus die pakken we DAARNA met AS _vvm_ptr.
+        _loop_idx KERNEL_proces_list DICT.item AS _slot_num AS _vvm_ptr
+        
+        # Nu bevat _vvm_ptr het echte adres (bijv. 30720). We kunnen veilig peeken!
+        VVM_status &_vvm_ptr VVMpeek AS _status
+        
+        # 2. Netjes geformatteerd printen
+        " " PRTstring 
+        _slot_num PRTnum 
+        "     " PRTstring 
+        _vvm_ptr PRTnum 
+        "       " PRTstring
+        
+        # 3. Evalueer de status exact volgens de vvm_env_lib_mt constants
+        _status VVM_Running == IF "RUNNING\n" PRTstring END
+        _status VVM_Sys     == IF "SYS_CALL\n" PRTstring END
+        _status VVM_Idle    == IF "IDLE\n"     PRTstring END
+        _status VVM_Error   == IF "ERROR\n"    PRTstring END
+        _status VVM_Halted  == IF "HALTED\n"   PRTstring END
+        _status VVM_WaitIO  == IF "WAIT_IO\n"  PRTstring END
+        
+        _loop_idx 1 + AS _loop_idx
+    DONE
+    "\n" PRTstring
+
+    # 4. De handshake terug naar de VVM-stack van de aanroeper (de CLI)
+    KERNEL_succes 
+}
+
+# =============================================================================
+# FFI 101: host_proc_start (Met statuscontrole en Full Reset)
+# Input vanaf de CLI-stack: ( slot_num -- )
+# Output naar de CLI-stack: ( KERNEL_succes_of_error -- )
+# =============================================================================
+
+DEF host_proc_start {
+    AS _target_slot
+    
+    # 1. Validatie van het slotnummer
+    _target_slot 1 < _target_slot 3 > + IF
+        KERNEL_err_invalid_slot 
+        GOTO START_EXIT
+    END
+
+    # 2. Vertaal slot naar het fysieke VVM-basisadres
+    _target_slot 1 == IF VVM1 AS _target_vvm END
+    _target_slot 2 == IF VVM2 AS _target_vvm END
+    _target_slot 3 == IF VVM3 AS _target_vvm END
+
+    # 3. CRUCIALE CHECK: Controleer de huidige status van de doeltarget!
+    VVM_status &_target_vvm VVMpeek AS _current_status
+    
+    # Een proces mag ALLEEN gestart worden als het momenteel Halted is.
+    # Als het al Running is, of in WaitIO staat, weigeren we de start!
+    _current_status VVM_Halted != IF
+        KERNEL_err_cannot_start     # Geef de juiste foutcode terug
+        GOTO START_EXIT
+    END
+
+    # =========================================================================
+    # Vanaf hier is het 100% veilig: DEKONTAMINATIE FASE (De Grote Schoonmaak)
+    # =========================================================================
+
+    # A. Trek de Host Deque volledig leeg
+    VVM_HOST_ptr &_target_vvm VVMpeek AS _target_host_dq
+    WHILE _target_host_dq DEQUE.is_empty 0 == DO
+        _target_host_dq DEQUE.pop DROP
+    DONE
+
+    # B. Trek de Keyboard Deque volledig leeg
+    VVM_kbdq &_target_vvm VVMpeek AS _target_kbd_dq
+    WHILE _target_kbd_dq DEQUE.is_empty 0 == DO
+        _target_kbd_dq DEQUE.pop DROP
+    DONE
+
+    # C. Reset alle 26 registers (A tot en met Z) naar 0
+    VALUE _reg_idx 0
+    0 AS _reg_idx
+    WHILE _reg_idx 26 < DO
+        0 VVM_regs _reg_idx + &_target_vvm VVMpoke
+        _reg_idx 1 + AS _reg_idx
+    DONE
+
+    # =========================================================================
+    # POINTER RESET FASE
+    # =========================================================================
+
+    # D. PC (Program Counter) terug naar het begin van de code-sectie
+    # We nemen de RAAUWE waarde van de VVM (bijv. 31744) en tellen daar VVM_code bij op.
+    _target_vvm VVM_code + VVM_PC &_target_vvm VVMpoke
+
+    # E. SP (Data Stack Pointer) terug naar de basis van de stack
+    _target_vvm VVM_stack + VVM_SP &_target_vvm VVMpoke
+
+    # F. RSP (Return Stack Pointer) terug naar de top van de return-stack
+    VVM_size &_target_vvm VVMpeek AS _vvm_size
+    _target_vvm _vvm_size + VVM_RSP &_target_vvm VVMpoke
+
+    # =========================================================================
+    # ACTIVATIE FASE
+    # =========================================================================
+
+    # G. Zet de status-byte in het VVM-geheugen op VVM_Running (0)
+    VVM_Running VVM_status &_target_vvm VVMpoke
+
+    # H. Meld de VVM aan bij de actieve scheduler-lijst
+    # _target_slot &_target_vvm KERNEL_proces_list DICT.put
+    _target_slot _target_vvm KERNEL_proces_list DICT.put
+
+    # Meld succes aan de CLI
+    KERNEL_succes
+
+    :START_EXIT
+}
+
+
+# =============================================================================
+# FFI 103: host_proc_stop
+# Input vanaf de CLI-stack: ( slot_num -- )
+# Output naar de CLI-stack: ( KERNEL_succes_of_error -- )
+# =============================================================================
+
+DEF host_proc_stop {
+    # 1. Haal het doelslot van de stack van de aanroeper (de CLI)
+    AS _target_slot
+    
+    # Validatie: Slot moet 1, 2 of 3 zijn
+    _target_slot 1 < _target_slot 3 > + IF
+        KERNEL_err_invalid_slot 
+        GOTO STOP_EXIT
+    END
+
+    # 2. Vertaal het hardware-slot naar het bijbehorende fysieke VVM-basisadres
+    _target_slot 1 == IF VVM1 AS _target_vvm END
+    _target_slot 2 == IF VVM2 AS _target_vvm END
+    _target_slot 3 == IF VVM3 AS _target_vvm END
+
+    # 3. Krijg de actuele status-byte via offset VVM_status
+    VVM_status &_target_vvm VVMpeek AS _status
+
+    # 4. Controleer de condities: 
+    # Mag NIET in VVM_Error staan én mag NIET al VVM_Halted zijn.
+    _status VVM_Error != _status VVM_Halted != * IF
+        
+        # BINGO! Zet de status-byte in het VVM-geheugen geforceerd op VVM_Halted
+        # De scheduler herkent dit bij de volgende tick en verwijdert het proces!
+        VVM_Halted VVM_status &_target_vvm VVMpoke
+        
+        # Meld succes terug aan de CLI
+        KERNEL_succes 
+    ELSE
+        # Als het proces al gecrasht is (Error) of al stilstaat, weigeren we de stop!
+        KERNEL_err_cannot_halt 
+    END
+
+    :STOP_EXIT
+}
+
+# =============================================================================
+# FFI 105: host_mount
+# Input vanaf de CLI-stack: ( -- )
+# Output naar de CLI-stack: ( KERNEL_succes_of_error -- )
+# CONST KERNEL_err_mount_umount_failed    5
+# =============================================================================
+DEF host_mount {
+    KERNEL_disk_is_mounted IF GOTO MOUNT_EXIT END   ; Quick exit when already mounted
+
+    # Table in memory, Temp_array, _FIT_ file on the disk VVM.fit_init
+    # All ARGs are initialized in VVM.init
+    _FIT16_table filename_tmp &index_file_name VVM.fit_init  # it will halt on failure
+
+    1 AS KERNEL_disk_is_mounted    
+
+    :MOUNT_EXIT
+    KERNEL_succes
+}
+
+# =============================================================================
+# FFI 106: host_umount
+# Input vanaf de CLI-stack: ( -- )
+# Output naar de CLI-stack: ( KERNEL_succes_of_error -- )
+# CONST KERNEL_err_mount_umount_failed    5
+# =============================================================================
+DEF host_umount {
+    KERNEL_disk_is_mounted 0 AS KERNEL_disk_is_mounted
+    KERNEL_succes
+}
+
+VALUE _load_slot 0
+VALUE _load_hash 0
+VALUE _resolved_filename_ptr 0
+
+# =============================================================================
+# FFI 107: host_load        (loads a file from the mounted disk)
+# Input vanaf de CLI-stack: ( file_hash slot_num -- )
+# Output naar de CLI-stack: ( KERNEL_succes_of_error -- )
+# CONST KERNEL_err_file_not_found         6
+# CONST KERNEL_err_invalid_slot           1
+# =============================================================================
+DEF host_load {
+    AS _load_slot
+    AS _load_hash
+
+    # 1. Controleer eerst of de disk überhaupt wel gemount is!
+    KERNEL_disk_is_mounted 0 == IF
+        KERNEL_err_mount_umount_failed
+        GOTO LOAD_EXIT
+    END
+
+    # 2. Validatie van het slotnummer (Slot 0 is de CLI zelf, dus 1 t/m 3)
+    _load_slot 1 < _load_slot 3 > + IF
+        KERNEL_err_invalid_slot
+        GOTO LOAD_EXIT
+    END
+
+    # 3. Gebruik jouw vlijmscherpe hash-lookup poortwachter!
+    _load_hash VVM.fit_lookup_by_hash AS _resolved_filename_ptr
+
+    # Als de lookup 0 teruggeeft, bestond de hash niet in de FIT-tabel
+    _resolved_filename_ptr 0 == IF
+        KERNEL_err_file_not_found
+        GOTO LOAD_EXIT
+    END
+
+    # =========================================================================
+    # Vanaf hier is het veilig: De schijf-pomp mag lopen!
+    # =========================================================================
+    
+    # 4. Maak de centrale transpile-buffer van de VVM leeg
+    # SIMPL_code DEQUE.clear  # DEQUE must be empty here, DEQUE.clear does not exist
+    # _resolved_filename_ptr PRTstring  #debug line
+    # 5. Pompt de tokens vanaf de schijf-pointer de queue in
+    SIMPL_code _resolved_filename_ptr VVM.loadcode
+
+    # 6. JOUW INZICHT: Voer per specifiek slot de VVM.create uit
+    _load_slot 1 == IF
+        &SIMPL_code 1024 &VVM1_host_deque &VVM1_kbd_deque &VVM1 VVM.create
+        GOTO LOAD_succes
+    END
+    
+    _load_slot 2 == IF
+        &SIMPL_code 1024 &VVM2_host_deque &VVM2_kbd_deque &VVM2 VVM.create
+        GOTO LOAD_succes
+    END
+    
+    _load_slot 3 == IF
+        &SIMPL_code 1024 &VVM3_host_deque &VVM3_kbd_deque &VVM3 VVM.create
+    END
+
+    :LOAD_succes
+    KERNEL_succes
+
+    :LOAD_EXIT
+}
+
+
+
+
+## Kernel helpers ################################################################
+
+
 
 # nonblocking poll line
 
@@ -3275,59 +3590,100 @@ DEF POLLline {
 
 
 
+
+
+########### KERNEL START HERE ##################################################
+
 # The main program
 DEF kernel_start {
     HEAP.free
-    50 DEQUE.init_pool "Pool initialized (size 50).\n" PRTstring
+    50 DEQUE.init_pool "Deque Pool initialized (size 50).\n\n" PRTstring
+
+    
 
     DEQUE.new AS VVM0_host_deque    ; Get a pointer for the host communication deque's
     DEQUE.new AS VVM1_host_deque   
+    DEQUE.new AS VVM2_host_deque
+    DEQUE.new AS VVM3_host_deque
+
 
     DEQUE.new AS VVM0_kbd_deque     ; Get a pointer for the keyboard communication deque's
-    DEQUE.new AS VVM1_kbd_deque    
+    DEQUE.new AS VVM1_kbd_deque
+    DEQUE.new AS VVM2_kbd_deque
+    DEQUE.new AS VVM3_kbd_deque
 
-
-    # 42 VVM0_kbd_deque DEQUE.push    ; fake an KDB entry
-    # 43 VVM1_kbd_deque DEQUE.push    ; fake an KDB entry
-
-
+    4 NEW.list AS KERNEL_slots      ; A list for the availible VVM's
+    VVM0 0 KERNEL_slots LIST.put
+    VVM1 1 KERNEL_slots LIST.put
+    VVM2 2 KERNEL_slots LIST.put
+    VVM3 3 KERNEL_slots LIST.put
 
     DEQUE.new AS SIMPL_code         ; Get a pointer for the SIMPL code buffer
     
-
     VVM.init                        ; init VVM environment
-    "VVM Environment Initialized:\n" PRTstring
-    "VVM0 base address          : " PRTstring VVM0  PRINT
-    "VVM1 base address          : " PRTstring VVM1  PRINT
+    "VVM Environment Initialized!!\n" PRTstring
+    "VVM Loading slots....\n\n" PRTstring
 
-    &host_gcd      101 VVM.bind ; as simpel host function to test teh FFI interface
+    ## Application FFI call bindings 
+    &host_gcd       150 VVM.bind             ; as simpel host function to test teh FFI interface
+    &host_draw_fast 151 VVM.bind             ; as simpel host function to test teh FFI interface
 
 
-    #SIMPL_code load_simpl_test_read    ; to load static
-    SIMPL_code load_simpl_fly          ; to load static
+    ## Kernel FFI bindings 
+    &host_proc_list   KERNEL.ps     VVM.bind      ;
+    &host_proc_start  KERNEL.start  VVM.bind      ;
+    &host_proc_stop   KERNEL.stop   VVM.bind      ;
+    &host_mount       KERNEL.mount  VVM.bind      ;
+    &host_umount      KERNEL.umount VVM.bind      ;
+    &host_load        KERNEL.load   VVM.bind      ;
+
+
+
+    ## load the default apps in the VVM's
+    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
+  
+    # VVM0 ############
+    SIMPL_code load_simpl_kernel_cli          ; to load static
     #SIMPL_code "sbc_stringtest" VVM.loadcode   ; toload dynamic 
-
-    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
     &SIMPL_code 1024 &VVM0_host_deque &VVM0_kbd_deque &VVM0 VVM.create
-    "VVM0 instance created \n\n" PRTstring
+    "SLOT 0: cli    Instance created @" PRTstring VVM0 PRINT
+    ###################
 
-    # SIMPL_code load_simpl_test_read    ; to load static
-    SIMPL_code load_simpl_chaos3
-    # SIMPL_code "sbc_stringtest" VVM.loadcode 
-
-    # &SIMPL-code VVM-size &VVM-HOST-pointer &VVM-pointer VVM.create
+    # VVM1 ############
+    # SIMPL_code load_simpl_chaos3
+    SIMPL_code load_simpl_fly
+    # SIMPL_code load_simpl_fib
     &SIMPL_code 1024 &VVM1_host_deque &VVM1_kbd_deque &VVM1 VVM.create
-    "VVM1 instance created \n\n" PRTstring
+    "SLOT 1: fly    Instance created @" PRTstring VVM1 PRINT
+    ###################
+
+    # VVM2 ############
+    SIMPL_code load_simpl_chaos3
+    # SIMPL_code load_simpl_fib
+    # SIMPL_code "sbc_stringtest" VVM.loadcode 
+    &SIMPL_code 1024 &VVM2_host_deque &VVM2_kbd_deque &VVM2 VVM.create
+    "SLOT 2: chaos3 Instance created @" PRTstring VVM2 PRINT
+    ###################
 
 
-    # Start the VVM
+    # VVM3 ############
+    # SIMPL_code load_simpl_chaos3
+    SIMPL_code load_simpl_fib
+    # SIMPL_code "sbc_stringtest" VVM.loadcode 
+    &SIMPL_code 1024 &VVM3_host_deque &VVM3_kbd_deque &VVM3 VVM.create
+    "SLOT 3: fib    Instance created @" PRTstring VVM3 PRINT
+    ###################
+
+    ## end off the VVM's loading
+
+
+
+    # Start the VVM CLI-VVM (VVM0)
     # ( arg1 ... argn argc &VVM-pointer -- )
-    0 &VVM0 VVM.start
-    "VVM0 started \n" PRTstring
+    0 &VVM0 VVM.start                   # VVM0 starts here
+    "\nCLI started \n" PRTstring 
 
-    0 &VVM1 VVM.start
-    "VVM1 started \n" PRTstring
-
+   
 
     # when the kernel is ready only the CLI-VVM (VVM0) is running here
     # for now VVM0 and VVM1 are loaded with an application script to test the scheduler so far
@@ -3336,22 +3692,31 @@ DEF kernel_start {
     4 DICT.new AS KERNEL_proces_list        ; room for finally 4 processes
     0 VVM0 KERNEL_proces_list DICT.put      ; Always register the CLI-VVM (VVM0)
 
-    1 VVM1 KERNEL_proces_list DICT.put      ; For now, also register a other proces
+   
+    ############################ End of Start Sequence ############################
 
-    # Kernel scheduler loop
+
+    ############################ Kernel scheduler loop ############################
     KERNEL_proces_list DICT.count AS KERNEL_number_of_processes
     0 AS KERNEL_current_process
 
     1 TIME.start
-    
-    
-    VALUE new_input_flag 1
-
     WHILE KERNEL_number_of_processes 0 > DO
         kbd_req_queue DEQUE.is_empty 0 == IF
             new_input_flag IF 
                 0 AS new_input_flag
-                kbd_req_queue DEQUE.tail PRTnum "> " PRTstring
+                
+                # 1. Haal de VVM-pointer op van het proces dat vooraan/achteraan de wachtrij staat
+                kbd_req_queue DEQUE.tail DEQUE.value AS _waiting_VVM
+                
+                # 2. Kijk of dit specifieke proces een opgeslagen prompt heeft in de dictionary
+                _waiting_VVM kbd_prompts DICT.has_key IF
+                    # 3. Haal de échte prompt-pointer op en print hem live!
+                    _waiting_VVM kbd_prompts DICT.get PRTstring
+                ELSE
+                    # Fallback voor het geval een proces op kbd wacht maar geen prompt stuurde
+                    "> " PRTstring
+                END
             END
 
             # Pol het toetsenbord non-blocking
@@ -3410,10 +3775,12 @@ DEF kernel_start {
         # ---------------------------------------------------------------------
         KERNEL_current_process KERNEL_proces_list DICT.item DROP AS KERNEL_current_ptr
         VVM_status &KERNEL_current_ptr VVMpeek AS _proc_status
+
+        KERNEL_max_burst KERNEL_number_of_processes // AS KERNEL_current_burst
         
         VVM_status &KERNEL_current_ptr VVMpeek VVM_Halted != IF
             _proc_status VVM_WaitIO != IF
-                10 &KERNEL_current_ptr VVM.runbatch
+                KERNEL_current_burst &KERNEL_current_ptr VVM.runbatch
                 VVM_status &KERNEL_current_ptr VVMpeek VVM_Sys == IF &KERNEL_current_ptr VVM.check_syscalls END
             END
  
@@ -4358,9 +4725,9 @@ WHILE sim_running DO
     vvm_timeslice AS loop_counter
     WHILE loop_counter DO
         loop_counter 5 % IF
-            VVM_status &VVM0 VVMpeek VVM_Halted != IF 10 &VVM0 VVM.runbatch END
+            VVM_status &VVM0 VVMpeek VVM_Halted != IF 5 &VVM0 VVM.runbatch END
         ELSE
-            VVM_status &VVM1 VVMpeek VVM_Halted != IF 10 &VVM1 VVM.runbatch END
+            VVM_status &VVM1 VVMpeek VVM_Halted != IF 5 &VVM1 VVM.runbatch END
         END
 
         loop_counter 1 - AS loop_counter
@@ -5799,6 +6166,11 @@ main
 FILE: src/test.stacks
 ------------------------------------------------------------
 # For a new project
+USE std_stern_io
+USE std_string
+
+"sbc_chaos3" STRhash PRINT
+8246906014375474365 PRINT
 
 FILE: src/test_dict.stacks
 ------------------------------------------------------------
@@ -17715,7 +18087,10 @@ STRING error_div_zero       "VVM division by zero error. \n"
 STRING error_vvm_overflow   "VVM memory overflow. \n"
 STRING msg_labels_found     " labels found\n"
 STRING msg_loading          "Loading Image from disk \n"
+STRING msg_FITing           "Build FIT table \n"
+STRING error_fit_file       " not found on disk. \n"
 STRING error_invalid_syscall "VVM Illigal SYSCALL ID is used. \n"
+STRING tab                  "    "
 
 
 VALUE _run_pc 0
@@ -17851,7 +18226,8 @@ DEF VVM.create {
             END
         DONE
         
-        label_addresses DICT.count PRTnum &msg_labels_found PRTstring
+        # Disable the Labels found message as cleanup, leave the line for debugging
+        #label_addresses DICT.count PRTnum &msg_labels_found PRTstring
     END
     
     VALUE _vvm_max_size 0
@@ -18111,6 +18487,9 @@ DEF VVM.runbatch {
 
 VALUE _host_dq 0
 VALUE _kbd_dq 0
+VALUE _prompt_pointer 0
+VALUE new_input_flag 1
+
 DEF VVM.check_syscalls {
     AS _VVMpointer
 
@@ -18119,11 +18498,17 @@ DEF VVM.check_syscalls {
 
         _host_dq DEQUE.tail DEQUE.value AS _syscall_id
         _syscall_id 20 == IF
+
+            _host_dq DEQUE.pop_tail DROP
+            _host_dq DEQUE.tail DEQUE.value AS _prompt_pointer
+            20 _host_dq DEQUE.append
+
             # Haal ook hier de deque op via de veilige VVMpeek route met het adres van de pointer
             VVM_kbdq _VVMpointer VVMpeek AS _kbd_dq
-            
             _kbd_dq DEQUE.is_empty 0 == IF
-                _host_dq DEQUE.pop_tail DROP  
+                _host_dq DEQUE.pop_tail DROP        ; Drop syscall ID
+                _host_dq DEQUE.pop_tail DROP        ; Drop prompt pointer
+
                 
                 20 syscall_table DICT.get AS _syscall_handler
                 _VVMpointer _syscall_handler EXEC
@@ -18132,11 +18517,15 @@ DEF VVM.check_syscalls {
             ELSE
                 VVM_status _VVMpointer VVMpeek VVM_WaitIO != IF
                     VVM_WaitIO VVM_status _VVMpointer VVMpoke
-                    *_VVMpointer kbd_req_queue DEQUE.push
+                    *_VVMpointer kbd_req_queue DEQUE.append
+
+                    _prompt_pointer *_VVMpointer kbd_prompts DICT.put
+                    1 AS new_input_flag   # Forceer de kernel-loop om direct de prompt te evalueren!
+
                 END
             END
         ELSE
-            _host_dq DEQUE.pop_tail AS _syscall_id
+            _host_dq DEQUE.pop_tail AS _syscall_id     # get the syscall
             
             _syscall_id syscall_table DICT.has_key IF
                 _syscall_id syscall_table DICT.get AS _syscall_handler
@@ -18151,9 +18540,174 @@ DEF VVM.check_syscalls {
 }
 
 
+VALUE _FIT_file_on_disk 0
+VALUE _FIT_tempname 0
+VALUE _FIT_table 0
+VALUE _fit_char 0
+VALUE _fit_hash 0
+VALUE _fit_len 0
+VALUE _fit_str_ptr 0
 
+# maak een FIT-tabel (dictonay) voor de V-VVM-disk routines
+# ( FIT-ptr tmp_filename file_on_disk -- )
+DEF VVM.fit_init {
+    AS _FIT_file_on_disk
+    AS _FIT_tempname
+    AS _FIT_table
 
+    &msg_FITing PRTstring
 
+    # _FIT_table PRINT
+    # _FIT_tempname PRINT
+    # _FIT_file_on_disk PRTstring
+
+    ASM {
+        # Open _FIT16_ file expected the disk
+        # Retuns 1 on success, 0 on failure
+        ldm A $_FIT_file_on_disk
+        ldi I ~SYS_F_OPEN_READ
+        int $INT_VECTORS
+        
+        ldm A $SYSCALL_RETURN_STATUS
+        tste A Z
+        stack A $DATASTACK_PTR      ; return value on the Stack
+    }
+
+    0 == IF _FIT_file_on_disk PRTstring &error_fit_file PRTstring 
+        HALT
+    ELSE
+    # File is open here
+    # Laad eerst het allereerste schijfblok in de actieve buffer
+        ASM {
+            call @_read_disk_block
+            # Mocht dit block om vage redenen falen, spring naar close
+            jmpt :fit_init_close_early
+        }
+
+        _FIT_tempname ARRAY.clear
+
+        :fit_init_loop      # lees het hele bestand
+           
+        # get char
+        ASM {
+            :get_char_loop
+                inc I $disk_io_buffer_ptr
+                ldx C $disk_io_buffer_base
+                tst C \null
+                jmpf :FIT_process_char
+                    # End of block, read next
+                    call @_check_last_block
+                    jmpt :FIT_last_block
+                    call @_read_disk_block
+                    jmpt :FIT_close_and_end
+
+                    # Reset ptr and reload C
+                    # The _read_disk_block resets the internal pointer variable to 0.
+                    # The top of the loop increments before reading, which would skip the
+                    # first character of the new block.
+                    # We must manually load the first character here and jump past the loop's load.
+                    inc I $disk_io_buffer_ptr
+                    ldx C $disk_io_buffer_base
+                    jmp :FIT_process_char
+
+                :FIT_process_char                  
+                    stack C $DATASTACK_PTR
+                    jmp :FIT_get_char_exit
+
+                :FIT_last_block                 # no data left
+                    stack Z $DATASTACK_PTR
+                    jmp :FIT_get_char_exit
+
+            :FIT_get_char_exit    
+        }
+        AS _fit_char
+
+         # CONDITIE 1: De file is helemaal klaar (0)
+        _fit_char 0 == IF
+            GOTO FIT_close_and_end
+        END
+
+        # _fit_char PRTchar       #DEbug line
+
+        # CONDITIE 2: Einde van een bestandsnaam (13 / \Return)
+        _fit_char 13 == IF
+            # Voeg de \null terminator toe met ARRAY.append!
+            0 _FIT_tempname ARRAY.append
+
+            # Controleer de lengte via de Array-header zelf (ARRAY.len)
+            _FIT_tempname ARRAY.len 1 > IF  
+                
+                # CRUCIAL: Verschuif de pointer met +2 om de header te skippen!
+                # Zo krijgen STRhash en STRlen de pure string-data te zien.
+                _FIT_tempname 6 + STRhash AS _fit_hash          # skip 2 for array header, 
+                                                                # skip 4 For the "_sbc" prefix
+                _FIT_tempname ARRAY.len AS _fit_len  # is incl 0-termnination
+                
+
+                # Alloceer exacte ruimte op de heap (dit blijft een pure LIST/string)
+                _fit_len NEW.list AS _fit_str_ptr
+                
+                # Kopieer string vanaf de data-start (+2) naar de definitieve plek
+                _FIT_tempname 2 + _fit_str_ptr STRcopy          # skip 2 for array header
+                
+                &tab PRTstring _fit_str_ptr 4 + PRTstring return PRTchar       # skip 4 For the "_sbc" prefix
+
+                # Sla op in de FIT dictionary
+                _fit_str_ptr _fit_hash _FIT_table DICT.put      # Use the full filename in de _FIT_table
+            END
+
+            # Maak de Array onmiddellijk leeg voor de volgende ronde!
+            # Dankzij jouw handige MACRO kost dit bijna geen cycles.
+            _FIT_tempname ARRAY.clear
+            
+            GOTO fit_init_loop
+        END
+        
+        # CONDITIE 3: Normaal karakter. Gewoon veilig append achteraan!
+        # ARRAY.append checkt zelf op bounds-overflow en verhoogt de count.
+        _fit_char _FIT_tempname ARRAY.append
+        
+        GOTO fit_init_loop
+    
+        ASM {
+                :fit_init_close_early
+            }
+
+    END
+
+    :FIT_close_and_end
+    ASM {
+        # Close _FIT16_ file
+        ldi I ~SYS_F_CLOSE
+        int $INT_VECTORS
+    }
+
+}
+
+VALUE _search_hash 0
+VALUE _found_file_ptr 0
+STRING msg_hash_not_found "VVM Kernel Error: Executable hash not found -> "
+
+# Zoekt een schijf-bestand pointer op basis van zijn unieke DJB2 hash
+# ( hash -- string_ptr_or_zero )
+DEF VVM.fit_lookup_by_hash {
+    AS _search_hash
+
+    # 1. Controleer EERST of de hash überhaupt bestaat in de FIT-tabel
+    _search_hash _FIT_table DICT.has_key IF
+        
+        # 2. Veilig! We weten 100% zeker dat DICT.get niet gaat HALTen
+        _search_hash _FIT_table DICT.get AS _found_file_ptr
+        
+        _found_file_ptr # Geef de stringpointer terug op de stack
+    ELSE
+        # Hash bestaat niet! Voorkom de crash, log het en retourneer 0
+        &msg_hash_not_found PRTstring
+        _search_hash PRINT              # PRINT end with a newline
+        
+        0 # Return 0 op de stack
+    END
+}
 
 VALUE _filename 0
 VALUE _code_queue 0
@@ -21315,6 +21869,9 @@ VALUE _math_b 0
 
 STRING error_stack_collision "VVM Stack Collision (PC>=RSP). \n"
 
+
+
+
 # Peek a value from the VVM struct
 # ( index &VVM-pointer -- value )
 # DEF VVMpeek {
@@ -21429,6 +21986,12 @@ CONST _ststr_       90  ; Start van een Inline String (met pointer operand)
 CONST _strend_      91  ; Einde van een Inline String marker
 
 
+DEF VVMerror {
+    AS _env_vvm_ptr
+    VVM_Error VVM_status _env_vvm_ptr VVMpoke
+}
+
+
 ### end of the opcodes
 
 ### Setup the Syscalls constants
@@ -21481,6 +22044,8 @@ DEF s_call {
     ASM {
         ; --- 1. Haal de parameters van de host-stack (JUISTE VOLGORDE) ---
         ustack I $DATASTACK_PTR   ; 1. EERST POPPEN: I = &VVM-pointer (_env_vvm_ptr)
+        ld M I                    ; Save &VVM-pointer in M
+
         ustack Y $DATASTACK_PTR   ; 2. DAARNA POPPEN: Y = target address (_math_a)
         ldx B $_start_memory_     ; 3. B = basisadres van de VVM-struct (anker)
         
@@ -21526,7 +22091,10 @@ DEF s_call {
         ustack A $DATASTACK_PTR   ; Pop pointer van stack voor de syscall
         ldi I ~SYS_PRINT_STRING
         int $INT_VECTORS          ; Interrupt om de error te printen
-        call @HALT
+        # call @HALT
+        stack M $DATASTACK_PTR
+        call @VVMerror
+        
         
     :s_call_end
     }
@@ -22733,6 +23301,10 @@ DEF s_READ {
 VALUE string_dict 0
 VALUE _vvm_temp_list_ptr 0
 VALUE kbd_req_queue 0
+VALUE kbd_prompts 0
+VALUE _FIT16_table 0                # File Index Table
+VALUE filename_tmp 0                # 25 chars + NULL termination
+STRING index_file_name "_FIT16_"    # File naam op de fysieke disk
 
 
 DEF VVM.init {
@@ -22741,12 +23313,19 @@ DEF VVM.init {
 
     100 DICT.new AS label_addresses
 
-    50 DICT.new AS syscall_table
+    50  DICT.new AS syscall_table
 
-    256 DICT.new AS string_dict
+    100 DICT.new AS string_dict
+    4   DICT.new AS kbd_prompts
 
-    DEQUE.new AS kbd_req_queue
+    DEQUE.new    AS kbd_req_queue
 
+    16  DICT.new  AS _FIT16_table        # File Index Table
+    26  NEW.array AS filename_tmp        # 25 chars + NULL termination
+    
+    
+
+    
 
 
 
@@ -22893,16 +23472,6 @@ DEF screen {
   2 IO 2 MODE   # Set to Pixel Mode, Double Buffering
 }
 
-# # Sets the X coordinate for drawing
-# MACRO setX {
-#   IO 2 X
-# }
-
-
-# # Sets the Y coordinate for drawing
-# MACRO setY {
-#   IO 2 Y
-# }
 
 # Selects one of the three vertices of the triangle
 MACRO select1 { A AS K  B AS L }
@@ -22915,12 +23484,23 @@ MACRO draw {
   IO 2 X  # Consumes X from stack
   RND 15 * 999 // 1 + # Calculate a random color
   IO 2 DRAW
+  0 == IF
+    IO 2 FLIP  # Flip buffer to show new points
+  END
 }
+
+# The draw_fast FFI calls does exactly the same
+# as the draw function, but on the hostside.
+# Big win, the drawfast is atomic, no ~3 yields anymore
+MACRO draw_fast {
+  3 0 151 EXEC
+}
+
 
 # --- Main Program ---
 screen
 
-WHILE 500 N > DO
+WHILE 2000 N > DO
   # "From Chaos" PRINTS
   RND 3 * 999 // AS R
 
@@ -22932,12 +23512,10 @@ WHILE 500 N > DO
   X K + 2 // AS X
   Y L + 2 // AS Y
 
-  X Y draw
 
   N 1 + AS N
-  N 25 % 0 == IF
-    IO 2 FLIP  # Flip buffer to show new points
-  END
+  N 50 % X Y draw_fast  # Use draw to draw slow, use draw_fast to draw fast
+
 
 DONE
 
@@ -22997,6 +23575,10 @@ DEF fib {
 VAR argc
 VAR arg1     # This will be register 1 (B), holds the first argument
 
+# A little test routine
+"Enter a number " READ AS arg1
+
+
 # Now call fib with the value that was passed in
 arg1 fib PRINT
 
@@ -23037,7 +23619,7 @@ VALUE R 0
 
 WHILE N 700 < DO
     # P N gcd AS C 
-    P N 2 1 101 EXEC AS C 
+    P N 2 1 150 EXEC AS C 
 
     C 1 == IF
         P N 1 + + AS R 
@@ -23147,6 +23729,170 @@ dx dx * dy dy * + AS old_dist_sq
 
     GOTO LOOP
 
+FILE: src/vvm/kernel_cli.stacks
+------------------------------------------------------------
+# The CLI process for the Mutli Tasking Kernel
+
+# All used VAR declarations
+VALUE running 0
+VALUE input_token 0
+VALUE errorcode 0
+VALUE _slot_ 0
+VALUE _file_hash_ 0
+
+
+# Define const for error handling
+CONST KERNEL_succes                     0
+CONST KERNEL_err_invalid_slot           1
+CONST KERNEL_err_cannot_halt            2
+CONST KERNEL_err_cannot_start           3
+CONST KERNEL_err_loading_vvm            4
+CONST KERNEL_err_mount_umount_failed    5
+CONST KERNEL_err_file_not_found         6
+
+
+DEF handle_error {
+    AS errorcode
+    errorcode 1 == IF "Invalid slot\n"      PRINTS GOTO exit_errer END
+    errorcode 2 == IF "Cannot halt\n"       PRINTS GOTO exit_errer END
+    errorcode 3 == IF "Cannot start\n"      PRINTS GOTO exit_errer END
+    errorcode 4 == IF "Cannot load\n"       PRINTS GOTO exit_errer END
+    errorcode 5 == IF "Mount failed\n"      PRINTS GOTO exit_errer END
+    errorcode 6 == IF "File not found\n"    PRINTS GOTO exit_errer END
+
+    #fall back messegae
+    "The problem is: ERROR " PRINTS errorcode PRINT 
+:exit_errer
+}
+
+# Define host side functions as syscalls-is's for the FFI interface
+CONST KERNEL.ps         100 ; Syscall ID for the PS function
+CONST KERNEL.start      101 ; Syscall ID for the start function
+CONST KERNEL.reserved   102 ; Syscall ID for the old resume function  (not used)
+CONST KERNEL.stop       103 ; Syscall ID for the stop function
+CONST KERNEL.kbd_flush  104 ; Syscall ID for the kbd_flush function (not implemented)
+CONST KERNEL.mount      105 ; Syscall ID for the mount disk function
+CONST KERNEL.umount     106 ; Syscall ID for the umount disk function
+CONST KERNEL.load       107 ; Syscall ID for loading file from disk
+
+
+
+####################
+# For all FFI calls:
+# (Arg1 ... ArgN argc argr Syscall_ID -- [return values])
+# argr = number of return values
+# argc = number of arguments
+####################
+
+
+MACRO run.ps {
+    0 1 KERNEL.ps EXEC DUP IF handle_error ELSE DROP END
+}
+
+MACRO run.start {
+    AS _slot_
+    _slot_ 1 1 KERNEL.start EXEC DUP IF handle_error ELSE DROP END
+}
+
+
+MACRO run.stop {
+    AS _slot_
+    _slot_ 1 1 KERNEL.stop EXEC DUP IF handle_error ELSE DROP END
+}
+
+MACRO run.kbd_flush {
+    "Kbd_flush " PRINTS "Work to do here\n" PRINTS
+}
+
+MACRO run.help {
+    "\n" PRINTS
+    "Availible commands: \n" PRINTS
+    "   start, stop,   ps\n" PRINTS
+    "   mount, umount, load\n\n" PRINTS
+    "   help,  exit\n" PRINTS
+    "\n" PRINTS
+}
+
+MACRO run.mount {
+    0 1 KERNEL.mount EXEC DUP IF handle_error ELSE DROP END
+}
+
+MACRO run.umount {
+    0 1 KERNEL.umount EXEC DUP IF handle_error ELSE DROP END
+}
+
+MACRO run.load_from_disk {
+    AS _slot_
+    AS _file_hash_
+    _file_hash_ _slot_ 2 1 KERNEL.load EXEC DUP IF handle_error ELSE DROP END
+}
+
+
+
+1 AS running
+WHILE running DO
+    "\nType help for help.\n" PRINTS
+    "SternOS > " READ AS input_token
+
+    
+
+    input_token \"ps" == IF
+        run.ps
+        GOTO LOOP_EXIT
+    END
+
+    input_token \"start" == IF
+        "    Slot#: " READ                ; Get the target VVM to start
+        run.start
+        GOTO LOOP_EXIT
+    END
+
+
+    input_token \"stop" == IF
+        "    Slot#: " READ                ; Get the target VVM to resume
+        run.stop
+        GOTO LOOP_EXIT
+    END
+
+    input_token \"mount" == IF
+        run.mount
+        GOTO LOOP_EXIT
+    END
+
+    input_token \"umount" == IF
+        run.umount
+        GOTO LOOP_EXIT
+    END
+
+    input_token \"load" == IF
+    # load file_name slot_num
+        "File name: " READ
+        "    Slot#: " READ
+        run.load_from_disk
+        GOTO LOOP_EXIT
+    END
+
+    input_token \"help" == IF
+        run.help
+        GOTO LOOP_EXIT
+    END
+
+    input_token \"exit" == IF
+        0 AS running
+        GOTO LOOP_EXIT
+    END
+
+
+
+    "Unknown command\n" PRINTS 
+
+:LOOP_EXIT
+DONE
+
+
+"\nQuiting Stern Mutli Tasking monitor\n" PRINTS
+
+
 FILE: src/vvm/stringtest.stacks
 ------------------------------------------------------------
 12 30 + PRINT
@@ -23159,6 +23905,9 @@ FILE: src/vvm/stringtest.stacks
 FILE: src/vvm/test_read.stacks
 ------------------------------------------------------------
 "Dit is een test\n" PRINTS
+READ PRINT
+READ PRINT
+\"jrk" PRINT
 READ PRINT
 
 "test done\n" PRINTS
@@ -23285,7 +24034,7 @@ MACRO load_simpl_chaos3 {
     \"LABEL"       _sq_ DEQUE.append
     \"while_0"     _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
-    500            _sq_ DEQUE.append
+    2000           _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append
     10             _sq_ DEQUE.append
     \"GT"          _sq_ DEQUE.append
@@ -23372,53 +24121,6 @@ MACRO load_simpl_chaos3 {
     \"SET"         _sq_ DEQUE.append
     7              _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append
-    6              _sq_ DEQUE.append
-    \"GET"         _sq_ DEQUE.append
-    7              _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    2              _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    16             _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    50             _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"SYS"         _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    2              _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    15             _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    50             _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"SYS"         _sq_ DEQUE.append
-    \"RND"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    15             _sq_ DEQUE.append
-    \"MUL"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    999            _sq_ DEQUE.append
-    \"DIV"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    1              _sq_ DEQUE.append
-    \"ADD"         _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    2              _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    17             _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    50             _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"SYS"         _sq_ DEQUE.append
-    \"GET"         _sq_ DEQUE.append
     10             _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     1              _sq_ DEQUE.append
@@ -23428,28 +24130,19 @@ MACRO load_simpl_chaos3 {
     \"GET"         _sq_ DEQUE.append
     10             _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
-    25             _sq_ DEQUE.append
-    \"MOD"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    0              _sq_ DEQUE.append
-    \"EQ"          _sq_ DEQUE.append
-    \"BRZ"         _sq_ DEQUE.append
-    \"end_3"       _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    0              _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    2              _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
-    18             _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"PUSH"        _sq_ DEQUE.append
     50             _sq_ DEQUE.append
-    \"OUT"         _sq_ DEQUE.append
-    \"SYS"         _sq_ DEQUE.append
-    \"LABEL"       _sq_ DEQUE.append
-    \"end_3"       _sq_ DEQUE.append
+    \"MOD"         _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    6              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    7              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    3              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    151            _sq_ DEQUE.append
+    \"EXEC"        _sq_ DEQUE.append
     \"BRA"         _sq_ DEQUE.append
     \"while_0"     _sq_ DEQUE.append
     \"LABEL"       _sq_ DEQUE.append
@@ -23547,6 +24240,30 @@ USE std_deque
 MACRO load_simpl_fib {
     AS _sq_
 
+    \"STSTR"       _sq_ DEQUE.append
+    69             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    117            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    98             _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    20             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
     \"GET"         _sq_ DEQUE.append
     1              _sq_ DEQUE.append
     \"CALL"        _sq_ DEQUE.append
@@ -23663,7 +24380,7 @@ MACRO load_simpl_fly {
     \"PUSH"        _sq_ DEQUE.append
     1              _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
-    101            _sq_ DEQUE.append
+    150            _sq_ DEQUE.append
     \"EXEC"        _sq_ DEQUE.append
     \"SET"         _sq_ DEQUE.append
     2              _sq_ DEQUE.append
@@ -24086,6 +24803,769 @@ MACRO load_simpl_hunter_agent {
 }
 
 
+FILE: src/simpl_libs/simpl_kernel_cli_lib.stacks
+------------------------------------------------------------
+USE std_deque
+
+MACRO load_simpl_kernel_cli {
+    AS _sq_
+
+    \"PUSH"        _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    3              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    4              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"while_0"     _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"endwhile_0"  _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    84             _sq_ DEQUE.append
+    121            _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    104            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    102            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    104            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    46             _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    83             _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    79             _sq_ DEQUE.append
+    83             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    62             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    20             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    5863720        _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_6"       _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    100            _sq_ DEQUE.append
+    \"EXEC"        _sq_ DEQUE.append
+    \"DUP"         _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"else_7"      _sq_ DEQUE.append
+    \"CALL"        _sq_ DEQUE.append
+    \"handle_error" _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"end_7"       _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"else_7"      _sq_ DEQUE.append
+    \"DROP"        _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_7"       _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"LOOP_EXIT"   _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_6"       _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    210728208851   _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_8"       _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    83             _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    35             _sq_ DEQUE.append
+    58             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    20             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    3              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    3              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    \"EXEC"        _sq_ DEQUE.append
+    \"DUP"         _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"else_9"      _sq_ DEQUE.append
+    \"CALL"        _sq_ DEQUE.append
+    \"handle_error" _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"end_9"       _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"else_9"      _sq_ DEQUE.append
+    \"DROP"        _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_9"       _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"LOOP_EXIT"   _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_8"       _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    6385703755     _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_10"      _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    83             _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    35             _sq_ DEQUE.append
+    58             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    20             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    3              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    3              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    103            _sq_ DEQUE.append
+    \"EXEC"        _sq_ DEQUE.append
+    \"DUP"         _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"else_11"     _sq_ DEQUE.append
+    \"CALL"        _sq_ DEQUE.append
+    \"handle_error" _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"end_11"      _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"else_11"     _sq_ DEQUE.append
+    \"DROP"        _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_11"      _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"LOOP_EXIT"   _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_10"      _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    210720935288   _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_12"      _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    \"EXEC"        _sq_ DEQUE.append
+    \"DUP"         _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"else_13"     _sq_ DEQUE.append
+    \"CALL"        _sq_ DEQUE.append
+    \"handle_error" _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"end_13"      _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"else_13"     _sq_ DEQUE.append
+    \"DROP"        _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_13"      _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"LOOP_EXIT"   _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_12"      _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    6954101367725  _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_14"      _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    106            _sq_ DEQUE.append
+    \"EXEC"        _sq_ DEQUE.append
+    \"DUP"         _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"else_15"     _sq_ DEQUE.append
+    \"CALL"        _sq_ DEQUE.append
+    \"handle_error" _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"end_15"      _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"else_15"     _sq_ DEQUE.append
+    \"DROP"        _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_15"      _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"LOOP_EXIT"   _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_14"      _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    6385446277     _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_16"      _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    70             _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    58             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    20             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    83             _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    35             _sq_ DEQUE.append
+    58             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    20             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    3              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    4              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    4              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    3              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    107            _sq_ DEQUE.append
+    \"EXEC"        _sq_ DEQUE.append
+    \"DUP"         _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"else_17"     _sq_ DEQUE.append
+    \"CALL"        _sq_ DEQUE.append
+    \"handle_error" _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"end_17"      _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"else_17"     _sq_ DEQUE.append
+    \"DROP"        _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_17"      _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"LOOP_EXIT"   _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_16"      _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    6385292014     _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_18"      _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    65             _sq_ DEQUE.append
+    118            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    98             _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    99             _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    100            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    58             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    44             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    44             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    117            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    44             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    117            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    117            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    44             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    100            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    104            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    44             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    120            _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"LOOP_EXIT"   _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_18"      _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    6385204799     _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_19"      _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    0              _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"LOOP_EXIT"   _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_19"      _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    85             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    107            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    119            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    99             _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    100            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"LOOP_EXIT"   _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"while_0"     _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"endwhile_0"  _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    81             _sq_ DEQUE.append
+    117            _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    103            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    83             _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    77             _sq_ DEQUE.append
+    117            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    84             _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    107            _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    103            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"HALT"        _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"handle_error" _sq_ DEQUE.append
+    \"SET"         _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    1              _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_0"       _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    73             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    118            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    100            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"exit_errer"  _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_0"       _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_1"       _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    67             _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    104            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"exit_errer"  _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_1"       _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    3              _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_2"       _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    67             _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"exit_errer"  _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_2"       _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    4              _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_3"       _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    67             _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    100            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"exit_errer"  _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_3"       _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    5              _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_4"       _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    77             _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    117            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    102            _sq_ DEQUE.append
+    97             _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    100            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"exit_errer"  _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_4"       _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    6              _sq_ DEQUE.append
+    \"EQ"          _sq_ DEQUE.append
+    \"BRZ"         _sq_ DEQUE.append
+    \"end_5"       _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    70             _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    116            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    102            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    117            _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    100            _sq_ DEQUE.append
+    92             _sq_ DEQUE.append
+    110            _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"BRA"         _sq_ DEQUE.append
+    \"exit_errer"  _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"end_5"       _sq_ DEQUE.append
+    \"STSTR"       _sq_ DEQUE.append
+    84             _sq_ DEQUE.append
+    104            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    112            _sq_ DEQUE.append
+    114            _sq_ DEQUE.append
+    111            _sq_ DEQUE.append
+    98             _sq_ DEQUE.append
+    108            _sq_ DEQUE.append
+    101            _sq_ DEQUE.append
+    109            _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    105            _sq_ DEQUE.append
+    115            _sq_ DEQUE.append
+    58             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    69             _sq_ DEQUE.append
+    82             _sq_ DEQUE.append
+    82             _sq_ DEQUE.append
+    79             _sq_ DEQUE.append
+    82             _sq_ DEQUE.append
+    32             _sq_ DEQUE.append
+    \"STREND"      _sq_ DEQUE.append
+    \"PRINTS"      _sq_ DEQUE.append
+    \"GET"         _sq_ DEQUE.append
+    2              _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    10             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"LABEL"       _sq_ DEQUE.append
+    \"exit_errer"  _sq_ DEQUE.append
+    \"RET"         _sq_ DEQUE.append
+}
+
+
 FILE: src/simpl_libs/simpl_stringtest_lib.stacks
 ------------------------------------------------------------
 USE std_deque
@@ -24164,6 +25644,34 @@ MACRO load_simpl_test_read {
     110            _sq_ DEQUE.append
     \"STREND"      _sq_ DEQUE.append
     \"PRINTS"      _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    20             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    10             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    20             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    10             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    193496300      _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"PUSH"        _sq_ DEQUE.append
+    10             _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
+    \"SYS"         _sq_ DEQUE.append
+    \"OUT"         _sq_ DEQUE.append
     \"PUSH"        _sq_ DEQUE.append
     20             _sq_ DEQUE.append
     \"OUT"         _sq_ DEQUE.append

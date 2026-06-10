@@ -1,46 +1,66 @@
+VALUE _load_slot 0
+VALUE _load_hash 0
+VALUE _resolved_filename_ptr 0
+
 # =============================================================================
-# FFI 102: host_proc_resume
-# Input vanaf de CLI-stack: ( slot_num -- )
+# FFI 107: host_load        (loads a file from the mounted disk)
+# Input vanaf de CLI-stack: ( file_hash slot_num -- )
 # Output naar de CLI-stack: ( KERNEL_succes_of_error -- )
+# CONST KERNEL_err_file_not_found         6
+# CONST KERNEL_err_invalid_slot           1
 # =============================================================================
+DEF host_load {
+    AS _load_slot
+    AS _load_hash
 
-DEF host_proc_resume {
-    # 1. Haal het doelslot van de stack van de aanroeper (de CLI)
-    AS _target_slot
+    # 1. Controleer eerst of de disk überhaupt wel gemount is!
+    KERNEL_disk_is_mounted 0 == IF
+        KERNEL_err_mount_umount_failed
+        GOTO LOAD_EXIT
+    END
+
+    # 2. Validatie van het slotnummer (Slot 0 is de CLI zelf, dus 1 t/m 3)
+    _load_slot 1 < _load_slot 3 > + IF
+        KERNEL_err_invalid_slot
+        GOTO LOAD_EXIT
+    END
+
+    # 3. Gebruik jouw vlijmscherpe hash-lookup poortwachter!
+    _load_hash VVM.fit_lookup_by_hash AS _resolved_filename_ptr
+
+    # Als de lookup 0 teruggeeft, bestond de hash niet in de FIT-tabel
+    _resolved_filename_ptr 0 == IF
+        KERNEL_err_file_not_found
+        GOTO LOAD_EXIT
+    END
+
+    # =========================================================================
+    # Vanaf hier is het veilig: De schijf-pomp mag lopen!
+    # =========================================================================
     
-    # Validatie: Slot moet 1, 2 of 3 zijn
-    _target_slot 1 < _target_slot 3 > + IF
-        KERNEL_err_invalid_slot 
-        GOTO RESUME_EXIT
+    # 4. Maak de centrale transpile-buffer van de VVM leeg
+    # SIMPL_code DEQUE.clear  # DEQUE must be empty here, DEQUE.clear does not exist
+    _resolved_filename_ptr PRTstring
+    # 5. Pompt de tokens vanaf de schijf-pointer de queue in
+    SIMPL_code _resolved_filename_ptr VVM.loadcode
+
+    # 6. JOUW INZICHT: Voer per specifiek slot de VVM.create uit
+    _load_slot 1 == IF
+        &SIMPL_code 1024 &VVM1_host_deque &VVM1_kbd_deque &VVM1 VVM.create
+        GOTO LOAD_succes
+    END
+    
+    _load_slot 2 == IF
+        &SIMPL_code 1024 &VVM2_host_deque &VVM2_kbd_deque &VVM2 VVM.create
+        GOTO LOAD_succes
+    END
+    
+    _load_slot 3 == IF
+        &SIMPL_code 1024 &VVM3_host_deque &VVM3_kbd_deque &VVM3 VVM.create
     END
 
-    # 2. Vertaal het hardware-slot naar het bijbehorende fysieke VVM-basisadres
-    VALUE _target_vvm 0
-    _target_slot 1 == IF VVM2 AS _target_vvm END
-    _target_slot 2 == IF VVM3 AS _target_vvm END
-    _target_slot 3 == IF VVM4 AS _target_vvm END
+    :LOAD_succes
+    KERNEL_succes
 
-    # 3. Krijg de actuele status-byte via offset VVM_status (0)
-    VVM_status _target_vvm VVMpeek AS _status
-
-    # 4. Controleer of de status ELIGIBLE is voor een resume (moet VVM_Halted zijn!)
-    _status VVM_Halted == IF
-        # A. Zet de status-byte in het VVM-geheugen terug op VVM_Running (0)
-        VVM_Running _target_vvm VVMpoke
-        
-        # B. Voeg de VVM (Key) en het Slot (Value) opnieuw toe aan de scheduler-dict
-        # De DICT.put signatuur is: ( value key dict_ptr -- )
-        # Dus bij jou: slot_num, vvm_ptr, dictionary
-        _target_slot _target_vvm KERNEL_proces_list DICT.put
-        
-        # # C. Update de globale teller van actieve processen in de kernel
-        # KERNEL_proces_list DICT.count AS KERNEL_number_of_processes
-
-        # Meld succes terug aan de CLI
-        KERNEL_succes 
-    ELSE
-        # Als het proces al draait (Running) of in Error staat, weigeren we de resume!
-        KERNEL_err_cannot_start 
-    END
-    :RESUME_EXIT
+    :LOAD_EXIT
 }
